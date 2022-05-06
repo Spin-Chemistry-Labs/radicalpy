@@ -4,7 +4,7 @@ on: push
 jobs:
   run-radicalpy-tests:
     name: Run test for RadicalPy
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Install unittest
       run: >-
