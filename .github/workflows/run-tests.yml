@@ -6,12 +6,6 @@ jobs:
     name: Run test for RadicalPy
     runs-on: ubuntu-20.04
     steps:
-    - name: Install unittest
-      run: >-
-        python -m
-        pip install
-        unittest
-        --user
     - name: Run tests
       run: >-
         python -m
