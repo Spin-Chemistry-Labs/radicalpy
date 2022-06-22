@@ -6,8 +6,11 @@ from src.radicalpy import Sim
 
 class DummyTests(unittest.TestCase):
     def setUp(self):
-        self.n = 10
-        self.sim = Sim(self.n)
+        self.spin_halves = 3
+        self.spin_ones = 2
+        self.sim = Sim(self.spin_halves, self.spin_ones)
 
-    def test_succeed(self):
-        assert np.all(self.sim.data == np.ones(self.n))
+    def test_shared_sigmas(self):
+        self.sim.sigmas[0][0, 1, 1] = 42
+        print(self.sim.sigmas[0])
+        assert self.sim.sigmas[2][0, 1, 1] == 42
