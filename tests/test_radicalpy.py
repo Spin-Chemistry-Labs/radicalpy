@@ -12,5 +12,4 @@ class DummyTests(unittest.TestCase):
 
     def test_shared_sigmas(self):
         self.sim.sigmas[0][0, 1, 1] = 42
-        print(self.sim.sigmas[0])
         assert self.sim.sigmas[2][0, 1, 1] == 42
