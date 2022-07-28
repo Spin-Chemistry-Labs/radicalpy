@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
+from pathlib import Path
+
 from setuptools import find_packages, setup
+
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="radicalpy",
-    version="0.1rc3",
+    version="0.1rc4",
     license="MIT",
     author="Lewis M. Antill",
     author_email="lewismantill@gmail.com",
@@ -16,6 +21,8 @@ setup(
     keywords="quantum spin chemistry",
     install_requires=["numpy", "scipy"],
     include_package_data=True,
+    long_description=long_description,
+    long_description_content_type="text/markdown",
 )
 
 # Build with:
