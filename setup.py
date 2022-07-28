@@ -18,6 +18,11 @@ setup(
     include_package_data=True,
 )
 
-# install with
+# Build with:
 # python setup.py sdist
+#
+# Local install with:
 # pip install dist/*.tar.gz --user
+#
+# Upload:
+# twine upload dist/*
