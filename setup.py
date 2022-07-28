@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="radicalpy",
-    version="0.1rc1",
+    version="0.1rc2",
     license="MIT",
     author="Lewis M. Antill",
     author_email="lewismantill@gmail.com",
