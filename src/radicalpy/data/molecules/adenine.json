@@ -1,0 +1,24 @@
+{
+  "data": {
+    "N6-H1": {
+      "hfc": -0.63,
+      "element": "1H"
+    },
+    "N6-H2": {
+      "hfc": -0.66,
+      "element": "1H"
+    },
+    "C8-H": {
+      "hfc": -0.55,
+      "element": "1H"
+    }
+  },
+  "info": {
+    "units": "mT",
+    "source": "Table 3 in Wetmore et al., JPC B, 1998, 102, 10602",
+    "name": "Adenine radical cation",
+    "structure": {
+      "SMILES": "PUBCHEM"
+    }
+  }
+}

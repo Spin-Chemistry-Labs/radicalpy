@@ -1,0 +1,1505 @@
+{
+  "G": {
+    "name": "Ghost spin",
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin zero particle"
+  },
+  "E": {
+    "name": "Electron",
+    "multiplicity": 2,
+    "gamma": -176085963023.0,
+    "source": "CODATA 2018"
+  },
+  "N": {
+    "name": "Neutron",
+    "multiplicity": 2,
+    "gamma": -183247171.0,
+    "source": "CODATA 2018"
+  },
+  "M": {
+    "name": "Muon",
+    "multiplicity": 2,
+    "gamma": -851615503.0,
+    "source": "CODATA 2010"
+  },
+  "P": {
+    "name": "Proton",
+    "multiplicity": 2,
+    "gamma": 267522187.44,
+    "source": "CODATA 2018"
+  },
+  "1H": {
+    "multiplicity": 2,
+    "gamma": 267522187.44,
+    "source": "CODATA 2018"
+  },
+  "2H": {
+    "multiplicity": 3,
+    "gamma": 41066279.1,
+    "source": "NMR Enc. 1996"
+  },
+  "3H": {
+    "multiplicity": 2,
+    "gamma": 285349779.0,
+    "source": "NMR Enc. 1996"
+  },
+  "3He": {
+    "multiplicity": 2,
+    "gamma": -203801587.0,
+    "source": "NMR Enc. 1996"
+  },
+  "4He": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "6Li": {
+    "multiplicity": 3,
+    "gamma": 39371709.0,
+    "source": "NMR Enc. 1996"
+  },
+  "7Li": {
+    "multiplicity": 4,
+    "gamma": 103977013.0,
+    "source": "NMR Enc. 1996"
+  },
+  "9Be": {
+    "multiplicity": 4,
+    "gamma": -37596660.0,
+    "source": "NMR Enc. 1996"
+  },
+  "10B": {
+    "multiplicity": 7,
+    "gamma": 28746786.0,
+    "source": "NMR Enc. 1996"
+  },
+  "11B": {
+    "multiplicity": 4,
+    "gamma": 85847044.0,
+    "source": "NMR Enc. 1996"
+  },
+  "12C": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "13C": {
+    "multiplicity": 2,
+    "gamma": 67282840.0,
+    "source": "NMR Enc. 1996"
+  },
+  "14N": {
+    "multiplicity": 3,
+    "gamma": 19337792.0,
+    "source": "NMR Enc. 1996"
+  },
+  "15N": {
+    "multiplicity": 2,
+    "gamma": -27126180.4,
+    "source": "NMR Enc. 1996"
+  },
+  "16O": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "17O": {
+    "multiplicity": 6,
+    "gamma": -36280800.0,
+    "source": "NMR Enc. 1996"
+  },
+  "18O": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "19F": {
+    "multiplicity": 2,
+    "gamma": 251814800.0,
+    "source": "NMR Enc. 1996"
+  },
+  "20Ne": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "21Ne": {
+    "multiplicity": 4,
+    "gamma": -21130800.0,
+    "source": "NMR Enc. 1996"
+  },
+  "22Ne": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "23Na": {
+    "multiplicity": 4,
+    "gamma": 70808493.0,
+    "source": "NMR Enc. 1996"
+  },
+  "24Mg": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "25Mg": {
+    "multiplicity": 6,
+    "gamma": -16388700.0,
+    "source": "NMR Enc. 1996"
+  },
+  "26Mg": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "27Al": {
+    "multiplicity": 6,
+    "gamma": 69762715.0,
+    "source": "NMR Enc. 1996"
+  },
+  "28Si": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "29Si": {
+    "multiplicity": 2,
+    "gamma": -53190000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "30Si": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "31P": {
+    "multiplicity": 2,
+    "gamma": 108394000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "32S": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "33S": {
+    "multiplicity": 4,
+    "gamma": 20556850.0,
+    "source": "NMR Enc. 1996"
+  },
+  "34S": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "36S": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "35Cl": {
+    "multiplicity": 4,
+    "gamma": 26241980.0,
+    "source": "NMR Enc. 1996"
+  },
+  "37Cl": {
+    "multiplicity": 4,
+    "gamma": 21843680.0,
+    "source": "NMR Enc. 1996"
+  },
+  "36Ar": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "38Ar": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "39Ar": {
+    "multiplicity": 8,
+    "gamma": -17800000.0,
+    "source": "Needs checking"
+  },
+  "40Ar": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "39K": {
+    "multiplicity": 4,
+    "gamma": 12500608.0,
+    "source": "NMR Enc. 1996"
+  },
+  "40K": {
+    "multiplicity": 9,
+    "gamma": -15542854.0,
+    "source": "NMR Enc. 1996"
+  },
+  "41K": {
+    "multiplicity": 4,
+    "gamma": 6860680.8,
+    "source": "NMR Enc. 1996"
+  },
+  "40Ca": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "41Ca": {
+    "multiplicity": 8,
+    "gamma": -21823050.0,
+    "source": "http://dx.doi.org/10.1103/PhysRevC.63.037301"
+  },
+  "42Ca": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "43Ca": {
+    "multiplicity": 8,
+    "gamma": -18030690.0,
+    "source": "NMR Enc. 1996"
+  },
+  "44Ca": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "45Sc": {
+    "multiplicity": 8,
+    "gamma": 65087973.0,
+    "source": "NMR Enc. 1996"
+  },
+  "46Ti": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "47Ti": {
+    "multiplicity": 6,
+    "gamma": -15105000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "48Ti": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "49Ti": {
+    "multiplicity": 8,
+    "gamma": -15109500.0,
+    "source": "NMR Enc. 1996"
+  },
+  "50Ti": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "50V": {
+    "multiplicity": 13,
+    "gamma": 26706490.0,
+    "source": "NMR Enc. 1996"
+  },
+  "51V": {
+    "multiplicity": 8,
+    "gamma": 70455117.0,
+    "source": "NMR Enc. 1996"
+  },
+  "52Cr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "53Cr": {
+    "multiplicity": 4,
+    "gamma": -15152000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "54Cr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "55Mn": {
+    "multiplicity": 6,
+    "gamma": 66452546.0,
+    "source": "NMR Enc. 1996"
+  },
+  "54Fe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "56Fe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "57Fe": {
+    "multiplicity": 2,
+    "gamma": 8680624.0,
+    "source": "NMR Enc. 1996"
+  },
+  "58Fe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "59Co": {
+    "multiplicity": 8,
+    "gamma": 63320000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "60Ni": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "61Ni": {
+    "multiplicity": 4,
+    "gamma": -23948000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "62Ni": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "64Ni": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "63Cu": {
+    "multiplicity": 4,
+    "gamma": 71117890.0,
+    "source": "NMR Enc. 1996"
+  },
+  "65Cu": {
+    "multiplicity": 4,
+    "gamma": 76043500.0,
+    "source": "NMR Enc. 1996"
+  },
+  "64Zn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "66Zn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "67Zn": {
+    "multiplicity": 6,
+    "gamma": 16766880.0,
+    "source": "NMR Enc. 1996"
+  },
+  "68Zn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "69Ga": {
+    "multiplicity": 4,
+    "gamma": 64388550.0,
+    "source": "NMR Enc. 1996"
+  },
+  "71Ga": {
+    "multiplicity": 4,
+    "gamma": 81811710.0,
+    "source": "NMR Enc. 1996"
+  },
+  "70Ge": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "72Ge": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "73Ge": {
+    "multiplicity": 10,
+    "gamma": -9722881.0,
+    "source": "NMR Enc. 1996"
+  },
+  "74Ge": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "75As": {
+    "multiplicity": 4,
+    "gamma": 45961630.0,
+    "source": "NMR Enc. 1996"
+  },
+  "74Se": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "76Se": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "77Se": {
+    "multiplicity": 2,
+    "gamma": 51253857.0,
+    "source": "NMR Enc. 1996"
+  },
+  "78Se": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "79Br": {
+    "multiplicity": 4,
+    "gamma": 67256160.0,
+    "source": "NMR Enc. 1996"
+  },
+  "81Br": {
+    "multiplicity": 4,
+    "gamma": 72497760.0,
+    "source": "NMR Enc. 1996"
+  },
+  "80Kr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "82Kr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "83Kr": {
+    "multiplicity": 10,
+    "gamma": -10331000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "84Kr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "86Kr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "85Rb": {
+    "multiplicity": 6,
+    "gamma": 25927050.0,
+    "source": "NMR Enc. 1996"
+  },
+  "87Rb": {
+    "multiplicity": 4,
+    "gamma": 87864000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "84Sr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "86Sr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "87Sr": {
+    "multiplicity": 10,
+    "gamma": -11639376.0,
+    "source": "NMR Enc. 1996"
+  },
+  "88Sr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "89Y": {
+    "multiplicity": 2,
+    "gamma": -13162791.0,
+    "source": "NMR Enc. 1996"
+  },
+  "90Zr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "91Zr": {
+    "multiplicity": 6,
+    "gamma": -24974300.0,
+    "source": "NMR Enc. 1996"
+  },
+  "92Zr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "94Zr": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "93Nb": {
+    "multiplicity": 10,
+    "gamma": 65674000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "92Mo": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "94Mo": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "95Mo": {
+    "multiplicity": 6,
+    "gamma": -17514000.0,
+    "source": "Needs checking"
+  },
+  "96Mo": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "97Mo": {
+    "multiplicity": 6,
+    "gamma": -17884000.0,
+    "source": "Needs checking"
+  },
+  "98Mo": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "99Tc": {
+    "multiplicity": 10,
+    "gamma": 60503000.0,
+    "source": "Needs checking"
+  },
+  "96Ru": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "98Ru": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "99Ru": {
+    "multiplicity": 6,
+    "gamma": -12286000.0,
+    "source": "Needs checking"
+  },
+  "100Ru": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "101Ru": {
+    "multiplicity": 6,
+    "gamma": -13773000.0,
+    "source": "Needs checking"
+  },
+  "102Ru": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "104Ru": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "103Rh": {
+    "multiplicity": 2,
+    "gamma": -8468000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "102Pd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "104Pd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "105Pd": {
+    "multiplicity": 6,
+    "gamma": -12305000.0,
+    "source": "Needs checking"
+  },
+  "106Pd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "108Pd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "110Pd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "107Ag": {
+    "multiplicity": 2,
+    "gamma": -10889181.0,
+    "source": "NMR Enc. 1996"
+  },
+  "109Ag": {
+    "multiplicity": 2,
+    "gamma": -12518634.0,
+    "source": "NMR Enc. 1996"
+  },
+  "106Cd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "108Cd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "110Cd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "111Cd": {
+    "multiplicity": 2,
+    "gamma": -56983131.0,
+    "source": "NMR Enc. 1996"
+  },
+  "112Cd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "113Cd": {
+    "multiplicity": 2,
+    "gamma": -59609153.0,
+    "source": "NMR Enc. 1996"
+  },
+  "114Cd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "116Cd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "113In": {
+    "multiplicity": 10,
+    "gamma": 58845000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "115In": {
+    "multiplicity": 10,
+    "gamma": 58972000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "112Sn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "114Sn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "115Sn": {
+    "multiplicity": 2,
+    "gamma": -88013000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "116Sn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "117Sn": {
+    "multiplicity": 2,
+    "gamma": -95887900.0,
+    "source": "NMR Enc. 1996"
+  },
+  "118Sn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "119Sn": {
+    "multiplicity": 2,
+    "gamma": -100317000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "120Sn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "122Sn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "124Sn": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "121Sb": {
+    "multiplicity": 6,
+    "gamma": 64435000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "123Sb": {
+    "multiplicity": 8,
+    "gamma": 34892000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "120Te": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "122Te": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "123Te": {
+    "multiplicity": 2,
+    "gamma": -70590980.0,
+    "source": "NMR Enc. 1996"
+  },
+  "124Te": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "125Te": {
+    "multiplicity": 2,
+    "gamma": -85108404.0,
+    "source": "NMR Enc. 1996"
+  },
+  "126Te": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "128Te": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "130Te": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "127I": {
+    "multiplicity": 6,
+    "gamma": 53895730.0,
+    "source": "NMR Enc. 1996"
+  },
+  "124Xe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "126Xe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "128Xe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "129Xe": {
+    "multiplicity": 2,
+    "gamma": -74521030.0,
+    "source": "NMR Enc. 1996"
+  },
+  "130Xe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "131Xe": {
+    "multiplicity": 4,
+    "gamma": 22090760.0,
+    "source": "NMR Enc. 1996"
+  },
+  "132Xe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "134Xe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "136Xe": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "133Cs": {
+    "multiplicity": 8,
+    "gamma": 35332539.0,
+    "source": "NMR Enc. 1996"
+  },
+  "130Ba": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "132Ba": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "134Ba": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "135Ba": {
+    "multiplicity": 4,
+    "gamma": 26575000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "136Ba": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "137Ba": {
+    "multiplicity": 4,
+    "gamma": 29929500.0,
+    "source": "NMR Enc. 1996"
+  },
+  "138Ba": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "138La": {
+    "multiplicity": 11,
+    "gamma": 35572390.0,
+    "source": "NMR Enc. 1996"
+  },
+  "139La": {
+    "multiplicity": 8,
+    "gamma": 38083318.0,
+    "source": "NMR Enc. 1996"
+  },
+  "136Ce": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "138Ce": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "139Ce": {
+    "multiplicity": 6,
+    "gamma": 29060000.0,
+    "source": "Needs checking"
+  },
+  "140Ce": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "142Ce": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "141Pr": {
+    "multiplicity": 6,
+    "gamma": 81907000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "142Nd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "143Nd": {
+    "multiplicity": 8,
+    "gamma": -14570000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "144Nd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "145Nd": {
+    "multiplicity": 8,
+    "gamma": -8980000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "146Nd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "148Nd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "150Nd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "147Pm": {
+    "multiplicity": 8,
+    "gamma": 36130000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "144Sm": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "147Sm": {
+    "multiplicity": 8,
+    "gamma": -11150000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "148Sm": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "149Sm": {
+    "multiplicity": 8,
+    "gamma": -9192000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "150Sm": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "152Sm": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "154Sm": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "151Eu": {
+    "multiplicity": 6,
+    "gamma": 66510000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "153Eu": {
+    "multiplicity": 6,
+    "gamma": 29369000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "152Gd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "154Gd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "155Gd": {
+    "multiplicity": 4,
+    "gamma": -8213200.0,
+    "source": "NMR Enc. 1996"
+  },
+  "156Gd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "157Gd": {
+    "multiplicity": 4,
+    "gamma": -10769000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "158Gd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "160Gd": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "159Tb": {
+    "multiplicity": 4,
+    "gamma": 64306000.0,
+    "source": "Needs checking"
+  },
+  "156Dy": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "158Dy": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "160Dy": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "161Dy": {
+    "multiplicity": 6,
+    "gamma": -9201000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "162Dy": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "163Dy": {
+    "multiplicity": 6,
+    "gamma": 12890000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "164Dy": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "165Ho": {
+    "multiplicity": 8,
+    "gamma": 57100000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "162Er": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "164Er": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "166Er": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "167Er": {
+    "multiplicity": 8,
+    "gamma": -7715700.0,
+    "source": "NMR Enc. 1996"
+  },
+  "168Er": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "170Er": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "169Tm": {
+    "multiplicity": 2,
+    "gamma": -22180000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "168Yb": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "170Yb": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "171Yb": {
+    "multiplicity": 2,
+    "gamma": 47288000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "172Yb": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "173Yb": {
+    "multiplicity": 6,
+    "gamma": -13025000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "174Yb": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "176Yb": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "175Lu": {
+    "multiplicity": 8,
+    "gamma": 30552000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "176Lu": {
+    "multiplicity": 15,
+    "gamma": 21684000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "174Hf": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "176Hf": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "177Hf": {
+    "multiplicity": 8,
+    "gamma": 10860000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "178Hf": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "179Hf": {
+    "multiplicity": 10,
+    "gamma": -6821000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "180Hf": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "180Ta": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "181Ta": {
+    "multiplicity": 8,
+    "gamma": 32438000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "180W": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "182W": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "183W": {
+    "multiplicity": 2,
+    "gamma": 11282403.0,
+    "source": "NMR Enc. 1996"
+  },
+  "184W": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "186W": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "185Re": {
+    "multiplicity": 6,
+    "gamma": 61057000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "187Re": {
+    "multiplicity": 6,
+    "gamma": 61682000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "184Os": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "186Os": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "187Os": {
+    "multiplicity": 2,
+    "gamma": 6192895.0,
+    "source": "NMR Enc. 1996"
+  },
+  "188Os": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "189Os": {
+    "multiplicity": 4,
+    "gamma": 21071300.0,
+    "source": "NMR Enc. 1996"
+  },
+  "190Os": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "192Os": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "191Ir": {
+    "multiplicity": 4,
+    "gamma": 4812000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "193Ir": {
+    "multiplicity": 4,
+    "gamma": 5227000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "190Pt": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "192Pt": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "194Pt": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "195Pt": {
+    "multiplicity": 2,
+    "gamma": 58385000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "196Pt": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "198Pt": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "197Au": {
+    "multiplicity": 4,
+    "gamma": 4730600.0,
+    "source": "NMR Enc. 1996"
+  },
+  "196Hg": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "198Hg": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "199Hg": {
+    "multiplicity": 2,
+    "gamma": 48457916.0,
+    "source": "NMR Enc. 1996"
+  },
+  "200Hg": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "201Hg": {
+    "multiplicity": 4,
+    "gamma": -17887690.0,
+    "source": "NMR Enc. 1996"
+  },
+  "202Hg": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "204Hg": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "203Tl": {
+    "multiplicity": 2,
+    "gamma": 155393338.0,
+    "source": "NMR Enc. 1996"
+  },
+  "205Tl": {
+    "multiplicity": 2,
+    "gamma": 156921808.0,
+    "source": "NMR Enc. 1996"
+  },
+  "204Pb": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "206Pb": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "207Pb": {
+    "multiplicity": 2,
+    "gamma": 55804600.0,
+    "source": "NMR Enc. 1996"
+  },
+  "208Pb": {
+    "multiplicity": 1,
+    "gamma": 0,
+    "source": "Spin 0 nucleus"
+  },
+  "209Bi": {
+    "multiplicity": 10,
+    "gamma": 43750000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "209Po": {
+    "multiplicity": 2,
+    "gamma": 74000000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "227Ac": {
+    "multiplicity": 4,
+    "gamma": 35000000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "229Th": {
+    "multiplicity": 6,
+    "gamma": 4000000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "231Pa": {
+    "multiplicity": 4,
+    "gamma": 32100000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "235U": {
+    "multiplicity": 8,
+    "gamma": -4926000.0,
+    "source": "Needs checking"
+  },
+  "237Np": {
+    "multiplicity": 6,
+    "gamma": 31000000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "239Pu": {
+    "multiplicity": 2,
+    "gamma": 9720000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "241Am": {
+    "multiplicity": 6,
+    "gamma": 15400000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "243Am": {
+    "multiplicity": 6,
+    "gamma": 15400000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "247Cm": {
+    "multiplicity": 10,
+    "gamma": 2000000.0,
+    "source": "NMR Enc. 1996"
+  },
+  "210At": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "222Rn": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "223Fr": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "226Ra": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "247Bk": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "251Cf": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "252Es": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "253Es": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "257Fm": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "258Md": {
+    "comment": "no data available in the current NMR literature."
+  },
+  "259No": {
+    "comment": "no data available in the current NMR literature."
+  }
+}

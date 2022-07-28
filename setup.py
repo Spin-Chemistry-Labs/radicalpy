@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="radicalpy",
-    version="0.1b",
+    version="0.1c",
     license="MIT",
     author="Lewis M. Antill",
     author_email="lewismantill@gmail.com",
@@ -14,7 +14,10 @@ setup(
     package_dir={"": "src"},
     url="https://github.com/Spin-Chemistry-Labs/radicalpy",
     keywords="quantum spin chemistry",
-    install_requires=[
-        "numpy",
-    ],
+    install_requires=["numpy", "scipy"],
+    include_package_data=True,
 )
+
+# install with
+# python setup.py sdist
+# pip install dist/*.tar.gz --user
