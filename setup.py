@@ -26,3 +26,5 @@ setup(
 #
 # Upload:
 # twine upload dist/*
+#
+# Create tag/release to upload from github
