@@ -6,7 +6,7 @@ SPIN_DATA_JSON = "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
 
 
-def get_molecules(molecules_dir=MOLECULES_DIR):
+def _get_molecules(molecules_dir=MOLECULES_DIR):
     molecules = {}
     for json_path in molecules_dir.glob("*.json"):
         molecule_name = json_path.with_suffix("").name
@@ -15,4 +15,4 @@ def get_molecules(molecules_dir=MOLECULES_DIR):
 
 
 spin = json.load(open(DATA_DIR / SPIN_DATA_JSON))
-molecules = get_molecules()
+molecules = _get_molecules()
