@@ -14,5 +14,8 @@ def _get_molecules(molecules_dir=MOLECULES_DIR):
     return molecules
 
 
+#: Spin data.
 spin = json.load(open(DATA_DIR / SPIN_DATA_JSON))
+
 molecules = _get_molecules()
+"""Dictionary containing data for each molecule."""
