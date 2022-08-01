@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent / "data"
-SPIN_DATA_JSON = "spin_data.json"
+DATA_DIR = Path(__file__).parent
+SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
 
 
@@ -14,8 +14,12 @@ def _get_molecules(molecules_dir=MOLECULES_DIR):
     return molecules
 
 
-#: Spin data.
-spin = json.load(open(DATA_DIR / SPIN_DATA_JSON))
+SPIN_DATA = json.load(open(SPIN_DATA_JSON))  #: :meta hide-value:
+"""Dictionary containing spin data for elements.
 
-molecules = _get_molecules()
-"""Dictionary containing data for each molecule."""
+:meta hide-value:"""
+
+MOLECULE_DATA = _get_molecules()
+"""Dictionary containing data for each molecule.
+
+:meta hide-value: """
