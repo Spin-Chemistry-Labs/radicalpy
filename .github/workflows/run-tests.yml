@@ -6,6 +6,7 @@ jobs:
     name: Run test for RadicalPy
     runs-on: ubuntu-20.04
     steps:
+    - uses: actions/checkout@master
     - name: PWD
       run: >-
         pwd
