@@ -1,46 +1,101 @@
 #!/usr/bin/env python
 
-from typing import Iterable
+from math import prod
 
 import numpy as np
 
-from .pauli_matrices import SIGMA_SPIN_HALF, SIGMA_SPIN_ONE
+from .data import MOLECULE_DATA, SPIN_DATA
+from .pauli_matrices import pauli
 
 # This is just something based on some earlier scripts... nothing is
 # set in stone yet.
 
 
-def spin_operator_axis(partice_index: int | Iterable[int], axis: int) -> np.array:
+class Molecule:
+    def __init__(self, rad, hfc):
+        self._check_rad_and_hfc(rad, hfc)
+        self.rad, self.hfc = rad, hfc
+        self.data = MOLECULE_DATA[rad]["data"]
+
+    def _check_rad_and_hfc(self, rad, hfc):
+        assert rad in MOLECULE_DATA.keys()
+        rad_data = MOLECULE_DATA[rad]["data"]
+        for c in hfc:
+            assert c in rad_data.keys()
+
+    def get_data(self, idx: int, data: str):
+        return self.data[self.hfc[idx]][data]
+
+    def data_generator(self, data: str):
+        for hfc in self.hfc:
+            yield self.data[hfc][data]
+
+    # def get_elemprop(self, idx: int, property: str):
+    #     return SPIN_DATA[self.get_data(idx, "element")][property]
+
+    # def elemprop_generator(self, property: str):
+    #     for hfc in self.data_generator("element"):
+    #         yield SPIN_DATA[hfc][property]
+
+
+def spinop(mult: list[int], idx: int, axis: str) -> np.array:
     """Spin operator."""
-    result = 1.0
-    for i in range(self.num_particles):
-        m = SIGMA[axis]
-        if partice_index != i:
-            m = np.eye(*m.shape)
-        result = np.kron(result, m)
-    return result
+    assert 0 <= idx and idx < len(mult)
+
+    sigma = pauli(mult[idx])[axis]
+    eye_before = np.eye(prod(m for m in mult[:idx]))
+    eye_after = np.eye(prod(m for m in mult[idx + 1 :]))
+
+    return np.kron(np.kron(eye_before, sigma), eye_after)
 
 
 class Sim:
-    """Simulation class foo bar."""
+    """Simulation class foo bar.
 
-    def __init__(self, rad1, hfc1, rad2, hfc2, kinetics=None):
-        self.num_particles = len(hfc1) + len(hfc2)
+    .. todo::
+       Move const to json."""
 
-        self.sigmas = spin_halves * [SIGMA_SPIN_HALF]
-        self.sigmas += spin_ones * [SIGMA_SPIN_ONE]
+    def __init__(self, molecules: list[Molecule], kinetics=None):
+        self.molecules = molecules
+        self.particles = ["E", "E"] + sum(
+            [list(m.data_generator("element")) for m in molecules], []
+        )
+        self.multiplicities = list(
+            map(lambda t: SPIN_DATA[t]["multiplicity"], self.particles)
+        )
 
-        self.hamiltonians["zeeman"] = self.Hzeeman(rad1, hfc1, rad2, hfc2)
-        if kinetics:
-            self.hamiltonians["kinetics"] = self.kinetics(**kinetics)
+        self.const = dict(
+            ge=1.760859644e8,
+            gn=267.513e3,
+        )
 
-    def Hzeeman(self):
-        """Calculate the Zeeman Hamiltonian."""
-        omega0 = self.const["ge"] * self.const["B0"]  # Electron Larmor freq.
-        self.Hzee = omega0 * self.sum(spin_op_axis(electron_idxs, self.axis))
-        omega0n = -self.const["gn"] * self.const["B0"]  # Nuclear Larmor freq.
-        self.Hzee += omega0n * self.sum(spin_op_axis(nucleus_idxs, self.axis))
+        self.hamiltonians = {}
+        self.hamiltonians["zeeman"] = self.Hzeeman(0.5)
+
+        # if kinetics:
+        #     self.hamiltonians["kinetics"] = self.kinetics(**kinetics)
+
+    def Hzeeman(self, B0):
+        """Calculate the Zeeman Hamiltonian.
+
+        .. todo::
+           Fix :code:`self.const`."""
+
+        mult = self.multiplicities
+
+        omega0 = self.const["ge"] * B0  # Electron Larmor freq.
+        Hzee = omega0 * sum(spinop(mult, i, "z") for i in range(2))
+
+        omega0n = -self.const["gn"] * B0  # Nuclear Larmor freq.
+        Hzee += omega0n * sum(
+            spinop(mult, i, "z") for i in range(2, len(self.particles))
+        )
+
         # self.update_hamiltonian()
+        return Hzee
+
+    def hyperfine(self):
+        pass
 
     def kinetics(self, model, rate):
         """Calculate the kinetic superoperator."""
