@@ -4,7 +4,7 @@ from math import prod
 
 import numpy as np
 
-from .data import MOLECULE_DATA, SPIN_DATA
+from .data import MOLECULE_DATA, SPIN_DATA, multiplicity
 from .pauli_matrices import pauli
 
 # This is just something based on some earlier scripts... nothing is
@@ -23,12 +23,15 @@ class Molecule:
         for c in hfc:
             assert c in rad_data.keys()
 
-    def get_data(self, idx: int, data: str):
-        return self.data[self.hfc[idx]][data]
+    def get_data(self, idx: int, key: str):
+        return self.data[self.hfc[idx]][key]
 
     def data_generator(self, data: str):
         for hfc in self.hfc:
             yield self.data[hfc][data]
+
+    def elements(self):
+        return self.data_generator("element")
 
     # def get_elemprop(self, idx: int, property: str):
     #     return SPIN_DATA[self.get_data(idx, "element")][property]
@@ -57,12 +60,8 @@ class Sim:
 
     def __init__(self, molecules: list[Molecule], kinetics=None):
         self.molecules = molecules
-        self.particles = ["E", "E"] + sum(
-            [list(m.data_generator("element")) for m in molecules], []
-        )
-        self.multiplicities = list(
-            map(lambda t: SPIN_DATA[t]["multiplicity"], self.particles)
-        )
+        self.particles = ["E", "E"] + sum([list(m.elements()) for m in molecules], [])
+        self.multiplicities = list(map(multiplicity, self.particles))
 
         self.const = dict(
             ge=1.760859644e8,

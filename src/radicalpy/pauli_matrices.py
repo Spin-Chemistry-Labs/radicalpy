@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-# from .data import spin
+from .data import SPIN_DATA
 
 
 def pauli(mult: int):

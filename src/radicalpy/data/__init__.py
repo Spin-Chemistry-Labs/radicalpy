@@ -5,6 +5,11 @@ DATA_DIR = Path(__file__).parent
 SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
 
+SPIN_DATA = json.load(open(SPIN_DATA_JSON))
+"""Dictionary containing spin data for elements.
+
+:meta hide-value:"""
+
 
 def _get_molecules(molecules_dir=MOLECULES_DIR):
     molecules = {}
@@ -14,12 +19,11 @@ def _get_molecules(molecules_dir=MOLECULES_DIR):
     return molecules
 
 
-SPIN_DATA = json.load(open(SPIN_DATA_JSON))  #: :meta hide-value:
-"""Dictionary containing spin data for elements.
-
-:meta hide-value:"""
-
 MOLECULE_DATA = _get_molecules()
 """Dictionary containing data for each molecule.
 
 :meta hide-value: """
+
+
+def multiplicity(element: str):
+    return SPIN_DATA[element]["multiplicity"]
