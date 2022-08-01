@@ -7,12 +7,15 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@master
-    - name: PWD
+    - name: Set up Python 3.9 🐍
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
+    - name: Install packages 📦
       run: >-
-        pwd
-    - name: ls
-      run: >-
-        ls
+        python -m
+        pip install --user
+        numpy scipy
     - name: Run tests
       run: >-
         python -m
