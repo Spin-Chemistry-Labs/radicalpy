@@ -33,13 +33,28 @@ class DummyTests(unittest.TestCase):
 
         #########################
         # Assume this is correct!
-        omega_e = B * 1.760859644e8
+        omega_e = B * rp.data.SPIN_DATA["E"]["gamma"] * 0.001
         electrons = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2)])
-        omega_n = B * 267.513e3
+        omega_n = B * rp.data.SPIN_DATA["1H"]["gamma"] * 0.001
         nuclei = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)])
-        HZ_true = omega_e * electrons - omega_n * nuclei
+        HZ_true = -omega_e * electrons - omega_n * nuclei
 
-        assert np.all(HZ == HZ_true), "Zeeman Hamiltonian not calculated properly."
+        # There is a slight discrepancy because of numerical
+        # error. `sum(omega * H_i)` is not the same as `omega *
+        # sum(H_i)`...  For exact match:
+        #
+        # omega_e = B * rp.data.SPIN_DATA["E"]["gamma"] * 0.001
+        # electrons = sum(
+        #     [omega_e * radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2)]
+        # )
+        # omega_n = B * rp.data.SPIN_DATA["1H"]["gamma"] * 0.001
+        # HZ_true = -sum(
+        #     [omega_n * radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)],
+        #     electrons,
+        # )
+        assert np.all(
+            np.isclose(HZ, HZ_true)
+        ), "Zeeman Hamiltonian not calculated properly."
 
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
@@ -72,8 +87,6 @@ class DummyTests(unittest.TestCase):
         omega_n = B * 267.513e3
         nuclei = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)])
         HZ_true = omega_e * electrons - omega_n * nuclei
-
-        assert np.all(HZ == HZ_true), "Zeeman Hamiltonian not calculated properly."
 
         sim.hyperfine()
 
