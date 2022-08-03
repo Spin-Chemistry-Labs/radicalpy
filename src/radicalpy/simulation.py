@@ -56,13 +56,13 @@ def Hzeeman(mult, idcs, axis="z"):
     return sum(spinop(mult, i, axis) for i in idcs)
 
 
-class Sim:
+class Quantum:
     """Simulation class foo bar.
 
     .. todo::
        Move const to json."""
 
-    def __init__(self, molecules: list[Molecule], B, kinetics=None):
+    def __init__(self, molecules: list[Molecule], kinetics=None):
         self.molecules = molecules
         self.particles = ["E", "E"] + sum([list(m.elements()) for m in molecules], [])
         self.multiplicities = list(map(multiplicity, self.particles))
@@ -72,12 +72,13 @@ class Sim:
             gn=267.513e3,
         )
 
-        self.hamiltonians = {}
-        self.hamiltonians["HZ"] = self.HZ(B)
-
         # if kinetics:
         #     self.hamiltonians["kinetics"] = self.kinetics(**kinetics)
         pass
+
+    @property
+    def num_particles(self):
+        return len(self.particles)
 
     def HZ(self, B, nelectrons=2):
         """Calculate the Zeeman Hamiltonian.
