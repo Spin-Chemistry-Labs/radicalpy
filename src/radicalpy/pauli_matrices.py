@@ -7,6 +7,9 @@ from .data import SPIN_DATA
 def pauli(mult: int):
     """Generate Pauli matrices.
 
+    Generates the Pauli matrices corresponding to a given
+    multiplicity.
+
     Args:
         mult (int): The multiplicity of the element.
 
@@ -19,7 +22,6 @@ def pauli(mult: int):
             - Pauli matrix for x axis :code:`result["x"]`,
             - Pauli matrix for y axis :code:`result["y"]`,
             - Pauli matrix for z axis :code:`result["z"]`.
-
     """
 
     assert mult > 1

@@ -12,38 +12,52 @@ from .pauli_matrices import pauli
 
 
 class Molecule:
-    def __init__(self, rad, hfc):
-        self._check_rad_and_hfc(rad, hfc)
-        self.rad, self.hfc = rad, hfc
-        self.data = MOLECULE_DATA[rad]["data"]
+    """Class representing a molecule in a simulation."""
 
-    def _check_rad_and_hfc(self, rad, hfc):
+    def __init__(self, rad: str, hfc: list[str]):
+        """Construct a Molecule object."""
         assert rad in MOLECULE_DATA.keys()
         rad_data = MOLECULE_DATA[rad]["data"]
         for c in hfc:
             assert c in rad_data.keys()
+        self.rad, self.hfc = rad, hfc
+        self.data = MOLECULE_DATA[rad]["data"]
 
     def data_generator(self, data: str):
+        """Construct a generator for a given property.
+
+        Args:
+            data (str): the property.
+        Returns:
+            List generator.
+        """
         for hfc in self.hfc:
             yield self.data[hfc][data]
 
     def elements(self):
+        """Construct a generator for the elements of different nuclei.
+
+        Returns:
+            Return a generator of element names.
+
+        """
         return self.data_generator("element")
 
     def get_data(self, idx: int, key: str):
+        """Get data of a nucleus.
+
+        Utility for used only for testing currently.
+
+        .. todo::
+        Make tests better and probably remove this functions.
+        """
         return self.data[self.hfc[idx]][key]
-
-    # def get_elemprop(self, idx: int, property: str):
-    #     return SPIN_DATA[self.get_data(idx, "element")][property]
-
-    # def elemprop_generator(self, property: str):
-    #     for hfc in self.data_generator("element"):
-    #         yield SPIN_DATA[hfc][property]
 
 
 def spinop(mult: list[int], idx: int, axis: str) -> np.array:
-    """Spin operator."""
+    """Make a spin operator."""
     assert 0 <= idx and idx < len(mult)
+    assert axis in "xyz"
 
     sigma = pauli(mult[idx])[axis]
     eye_before = np.eye(prod(m for m in mult[:idx]))
@@ -52,17 +66,17 @@ def spinop(mult: list[int], idx: int, axis: str) -> np.array:
     return np.kron(np.kron(eye_before, sigma), eye_after)
 
 
-def Hzeeman(mult, idcs, axis="z"):
-    return sum(spinop(mult, i, axis) for i in idcs)
-
-
 class Quantum:
-    """Simulation class foo bar.
-
-    .. todo::
-       Move const to json."""
+    """Quantum simulation class."""
 
     def __init__(self, molecules: list[Molecule], kinetics=None):
+        """Construct the object.
+
+        Args:
+            molecules (list[Molecule]): List of two `Molecule`
+            objects.
+
+        """
         self.molecules = molecules
         self.particles = ["E", "E"] + sum([list(m.elements()) for m in molecules], [])
         self.multiplicities = list(map(multiplicity, self.particles))
@@ -79,16 +93,23 @@ class Quantum:
 
     @property
     def num_particles(self):
+        """Return the number of paricles."""
         return len(self.particles)
 
-    def HZ(self, B):
+    def HZ(self, B: float) -> np.array:
         """Calculate the Zeeman Hamiltonian.
 
-        .. todo::
-           Fix :code:`self.const`."""
+        Calculate the Zeeman Hamiltonian based on the magnetic field.
 
-        electrons = range(0, 2)
-        nuclei = range(2, len(self.particles))
+        Args:
+            B (float): Magnetic field intensity (milli Tesla).
+
+        Returns:
+            np.array: The Zeeman Hamiltonian corresponding to the
+            system described by the `Quantum` simulation object and
+            the magnetic intensity `B`.
+
+        """
         axis = "z"
         Hzee = sum(
             B * g * 0.001 * spinop(self.multiplicities, i, axis)
@@ -99,32 +120,3 @@ class Quantum:
 
         # self.update_hamiltonian()
         return -Hzee
-
-    def hyperfine(self):
-        pass
-
-    def kinetics(self, model, rate):
-        """Calculate the kinetic superoperator."""
-        self.update_hamiltonian()
-
-    def update_hamiltonian(self):
-        self.H = sum(self.hamiltonians.values())
-
-    def spin_operator_axis(self, partice_index: int, axis: int) -> np.array:
-        """Spin operator for a single axis."""
-
-        print("AXIS", self.sigmas[0].shape[0])
-        assert partice_index < self.num_particles
-        assert axis < self.sigmas[0].shape[0]
-        kron_pre_identity_size = 0
-        kron_post_identity_size = 0
-        for i, mats in enumerate(self.sigmas):
-            size = mats.shape[-1]
-            if partice_index < i:
-                kron_pre_identity_size += size
-            if partice_index > i:
-                kron_pre_identity_size += size
-        result = self.sigmas[partice_index][axis]
-        result = np.kron(np.eye(kron_pre_identity_size), result)
-        result = np.kron(result, np.eye(kron_post_identity_size))
-        return result
