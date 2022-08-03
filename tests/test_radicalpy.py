@@ -27,9 +27,9 @@ class DummyTests(unittest.TestCase):
             rp.Molecule("adenine", ["C8-H"]),
         ]
         B = 0.5
-        spins = 2 + sum([len(t.hfc) for t in rad_pair])
-        sim = rp.Sim(rad_pair)
-        HZ = B * sim.hamiltonians["Zeeman"]
+        sim = rp.simulation.Quantum(rad_pair)
+        spins = sim.num_particles
+        HZ = sim.HZ(B)
 
         #########################
         # Assume this is correct!
@@ -41,7 +41,8 @@ class DummyTests(unittest.TestCase):
 
         assert np.all(HZ == HZ_true), "Zeeman Hamiltonian not calculated properly."
 
-    def test_zeeman(self):
+    @unittest.skip("Keeping only for the notes from earlier")
+    def test_dummy(self):
         rad_pair = [
             rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
             rp.Molecule("adenine", ["C8-H"]),
@@ -51,7 +52,7 @@ class DummyTests(unittest.TestCase):
         spins = 2 + sum([len(t.hfc) for t in rad_pair])
 
         # calculates HZ, HH
-        sim = rp.Sim(
+        sim = rp.Quantum(
             rad_pair,
             # hfc1_custom=[0.5, 0.6], # mT
             # atom1_custom=["H", "N"]
@@ -59,7 +60,6 @@ class DummyTests(unittest.TestCase):
             # multiplicity1_custom=[1, 3] # or spin1_custom?
             # gamma1_custom=[0.1, 0.4] ???
             # mT vs MHz!
-            B=B,
             kinetics=dict(model="Haberkorn", recombination=3e6, escape=1e6),
         )
         # SAIA, SAIB, SBIC
