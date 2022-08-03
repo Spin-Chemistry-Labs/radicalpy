@@ -23,15 +23,15 @@ class Molecule:
         for c in hfc:
             assert c in rad_data.keys()
 
-    def get_data(self, idx: int, key: str):
-        return self.data[self.hfc[idx]][key]
-
     def data_generator(self, data: str):
         for hfc in self.hfc:
             yield self.data[hfc][data]
 
     def elements(self):
         return self.data_generator("element")
+
+    def get_data(self, idx: int, key: str):
+        return self.data[self.hfc[idx]][key]
 
     # def get_elemprop(self, idx: int, property: str):
     #     return SPIN_DATA[self.get_data(idx, "element")][property]
@@ -52,13 +52,17 @@ def spinop(mult: list[int], idx: int, axis: str) -> np.array:
     return np.kron(np.kron(eye_before, sigma), eye_after)
 
 
+def Hzeeman(mult, idcs, axis="z"):
+    return sum(spinop(mult, i, axis) for i in idcs)
+
+
 class Sim:
     """Simulation class foo bar.
 
     .. todo::
        Move const to json."""
 
-    def __init__(self, molecules: list[Molecule], kinetics=None):
+    def __init__(self, molecules: list[Molecule], B, kinetics=None):
         self.molecules = molecules
         self.particles = ["E", "E"] + sum([list(m.elements()) for m in molecules], [])
         self.multiplicities = list(map(multiplicity, self.particles))
@@ -69,26 +73,22 @@ class Sim:
         )
 
         self.hamiltonians = {}
-        self.hamiltonians["zeeman"] = self.Hzeeman(0.5)
+        self.hamiltonians["HZ"] = self.HZ(B)
 
         # if kinetics:
         #     self.hamiltonians["kinetics"] = self.kinetics(**kinetics)
+        pass
 
-    def Hzeeman(self, B0):
+    def HZ(self, B, nelectrons=2):
         """Calculate the Zeeman Hamiltonian.
 
         .. todo::
            Fix :code:`self.const`."""
 
-        mult = self.multiplicities
-
-        omega0 = self.const["ge"] * B0  # Electron Larmor freq.
-        Hzee = omega0 * sum(spinop(mult, i, "z") for i in range(2))
-
-        omega0n = -self.const["gn"] * B0  # Nuclear Larmor freq.
-        Hzee += omega0n * sum(
-            spinop(mult, i, "z") for i in range(2, len(self.particles))
-        )
+        electrons = range(0, 2)
+        nuclei = range(2, len(self.particles))
+        Hzee = B * self.const["ge"] * Hzeeman(self.multiplicities, electrons)
+        Hzee += -B * self.const["gn"] * Hzeeman(self.multiplicities, nuclei)
 
         # self.update_hamiltonian()
         return Hzee
