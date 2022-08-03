@@ -25,5 +25,9 @@ MOLECULE_DATA = _get_molecules()
 :meta hide-value: """
 
 
+def gamma(element: str):
+    return SPIN_DATA[element]["gamma"]
+
+
 def multiplicity(element: str):
     return SPIN_DATA[element]["multiplicity"]

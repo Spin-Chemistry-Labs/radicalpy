@@ -4,7 +4,7 @@ from math import prod
 
 import numpy as np
 
-from .data import MOLECULE_DATA, SPIN_DATA, multiplicity
+from .data import MOLECULE_DATA, SPIN_DATA, gamma, multiplicity
 from .pauli_matrices import pauli
 
 # This is just something based on some earlier scripts... nothing is
@@ -66,9 +66,10 @@ class Quantum:
         self.molecules = molecules
         self.particles = ["E", "E"] + sum([list(m.elements()) for m in molecules], [])
         self.multiplicities = list(map(multiplicity, self.particles))
+        self.gamma = list(map(gamma, self.particles))
 
         self.const = dict(
-            ge=1.760859644e8,
+            ge=-1.760859644e8,
             gn=267.513e3,
         )
 
@@ -80,7 +81,7 @@ class Quantum:
     def num_particles(self):
         return len(self.particles)
 
-    def HZ(self, B, nelectrons=2):
+    def HZ(self, B):
         """Calculate the Zeeman Hamiltonian.
 
         .. todo::
@@ -88,11 +89,16 @@ class Quantum:
 
         electrons = range(0, 2)
         nuclei = range(2, len(self.particles))
-        Hzee = B * self.const["ge"] * Hzeeman(self.multiplicities, electrons)
-        Hzee += -B * self.const["gn"] * Hzeeman(self.multiplicities, nuclei)
+        axis = "z"
+        Hzee = sum(
+            B * g * 0.001 * spinop(self.multiplicities, i, axis)
+            for i, g in enumerate(self.gamma)
+        )
+        # Hzee = B * self.const["ge"] * Hzeeman(self.multiplicities, electrons)
+        # Hzee += B * self.const["gn"] * Hzeeman(self.multiplicities, nuclei)
 
         # self.update_hamiltonian()
-        return Hzee
+        return -Hzee
 
     def hyperfine(self):
         pass
