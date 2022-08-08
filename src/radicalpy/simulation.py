@@ -136,6 +136,17 @@ class Quantum:
         return -sum(B * g * self.spinop(i, axis) for i, g in gammas)
 
     def HH(self) -> np.array:
+        """Calculate the Hyperfine Hamiltonian.
+
+        Calculate the Hyperfine Hamiltonian based on the magnetic
+        field.
+
+        Returns:
+            np.array: The Hyperfine Hamiltonian corresponding to the
+            system described by the `Quantum` simulation object and
+            the magnetic intensity `B`.
+
+        """
         return sum(
             [
                 gamma_mT(self.electrons[ei]) * self.hfcs[ni] * self.prodop(ei, ni)
