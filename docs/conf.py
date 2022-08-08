@@ -18,7 +18,6 @@ release = "0.1rc4"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.todo",
@@ -33,6 +32,7 @@ extensions = [
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+autoclass_content = "both"
 todo_include_todos = True
 
 # -- Options for HTML output -------------------------------------------------
@@ -40,4 +40,4 @@ todo_include_todos = True
 
 # html_theme = "alabaster"
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
+# html_static_path = ["_static"]

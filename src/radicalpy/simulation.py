@@ -47,7 +47,8 @@ class Molecule:
         Utility for used only for testing currently.
 
         .. todo::
-        Make tests better and probably remove this functions.
+            Make tests better and probably remove this functions.
+
         """
         return self.data[self.hfc[idx]][key]
 

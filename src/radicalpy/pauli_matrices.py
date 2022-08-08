@@ -1,29 +1,25 @@
 import numpy as np
 import scipy.sparse as sp
 
-from .data import SPIN_DATA
-
 
 def pauli(mult: int):
     """Generate Pauli matrices.
 
-    Generates the Pauli matrices corresponding to a given
-    multiplicity.
+    Generates the Pauli matrices corresponding to a given multiplicity.
 
     Args:
         mult (int): The multiplicity of the element.
 
-    Returns:
-        dict: A dictionary containing 6 :code:`np.array` matrices of
-        shape `(mult, mult)`:
+    Returns: dict: A dictionary containing 6 :code:`np.array` matrices
+        of shape `(mult, mult)`:
             - the unit operator :code:`result["u"]`,
             - raising operator :code:`result["p"]`,
             - lowering operator :code:`result["m"]`,
             - Pauli matrix for x axis :code:`result["x"]`,
             - Pauli matrix for y axis :code:`result["y"]`,
             - Pauli matrix for z axis :code:`result["z"]`.
-    """
 
+    """
     assert mult > 1
     result = {}
     if mult == 2:
