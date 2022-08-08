@@ -4,7 +4,7 @@ from math import prod
 
 import numpy as np
 
-from .data import MOLECULE_DATA, SPIN_DATA, gamma, multiplicity
+from .data import MOLECULE_DATA, gamma, multiplicity
 from .pauli_matrices import pauli
 
 # This is just something based on some earlier scripts... nothing is
