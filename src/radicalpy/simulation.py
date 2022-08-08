@@ -82,15 +82,6 @@ class Quantum:
         self.multiplicities = list(map(multiplicity, self.particles))
         self.gamma = list(map(gamma, self.particles))
 
-        self.const = dict(
-            ge=-1.760859644e8,
-            gn=267.513e3,
-        )
-
-        # if kinetics:
-        #     self.hamiltonians["kinetics"] = self.kinetics(**kinetics)
-        pass
-
     @property
     def num_particles(self):
         """Return the number of paricles."""
