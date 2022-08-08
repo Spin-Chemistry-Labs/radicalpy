@@ -153,3 +153,9 @@ class Quantum:
                 for ni, ei in enumerate(self.coupling)
             ]
         )
+
+    def HJ():
+        pass
+
+    def HD():
+        pass
