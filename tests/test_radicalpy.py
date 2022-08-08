@@ -64,7 +64,7 @@ class DummyTests(unittest.TestCase):
         ]
         B = 0.5
         # print(rad_pair[0].hfc)
-        spins = 2 + sum([len(t.hfc) for t in rad_pair])
+        spins = 2 + sum([len(t.nuclei) for t in rad_pair])
 
         # calculates HZ, HH
         sim = rp.Quantum(
