@@ -101,3 +101,6 @@ class Quantum:
         axis = "z"
         gammas = enumerate(self.gamma)
         return -sum(B * g * 0.001 * self.spinop(i, axis) for i, g in gammas)
+
+    def HH(self) -> np.array:
+        pass
