@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
 from math import prod
+from typing import Iterable
 
 import numpy as np
 
 from .data import MOLECULE_DATA, gamma, multiplicity
 from .pauli_matrices import pauli
-
-# This is just something based on some earlier scripts... nothing is
-# set in stone yet.
 
 
 class Molecule:
@@ -23,7 +21,7 @@ class Molecule:
         self.rad, self.hfc = rad, hfc
         self.data = MOLECULE_DATA[rad]["data"]
 
-    def data_generator(self, data: str):
+    def data_generator(self, data: str) -> Iterable:
         """Construct a generator for a given property.
 
         Args:
@@ -34,7 +32,7 @@ class Molecule:
         for hfc in self.hfc:
             yield self.data[hfc][data]
 
-    def elements(self):
+    def elements(self) -> Iterable:
         """Construct a generator for the elements of different nuclei.
 
         Returns:
@@ -54,22 +52,10 @@ class Molecule:
         return self.data[self.hfc[idx]][key]
 
 
-def spinop(mult: list[int], idx: int, axis: str) -> np.array:
-    """Make a spin operator."""
-    assert 0 <= idx and idx < len(mult)
-    assert axis in "xyz"
-
-    sigma = pauli(mult[idx])[axis]
-    eye_before = np.eye(prod(m for m in mult[:idx]))
-    eye_after = np.eye(prod(m for m in mult[idx + 1 :]))
-
-    return np.kron(np.kron(eye_before, sigma), eye_after)
-
-
 class Quantum:
     """Quantum simulation class."""
 
-    def __init__(self, molecules: list[Molecule], kinetics=None):
+    def __init__(self, molecules: list[Molecule]):
         """Construct the object.
 
         Args:
@@ -83,9 +69,20 @@ class Quantum:
         self.gamma = list(map(gamma, self.particles))
 
     @property
-    def num_particles(self):
+    def num_particles(self) -> int:
         """Return the number of paricles."""
         return len(self.particles)
+
+    def spinop(self, idx: int, axis: str) -> np.array:
+        """Make a spin operator."""
+        assert 0 <= idx and idx < len(self.multiplicities)
+        assert axis in "xyz"
+
+        sigma = pauli(self.multiplicities[idx])[axis]
+        eye_before = np.eye(prod(m for m in self.multiplicities[:idx]))
+        eye_after = np.eye(prod(m for m in self.multiplicities[idx + 1 :]))
+
+        return np.kron(np.kron(eye_before, sigma), eye_after)
 
     def HZ(self, B: float) -> np.array:
         """Calculate the Zeeman Hamiltonian.
@@ -102,12 +99,5 @@ class Quantum:
 
         """
         axis = "z"
-        Hzee = sum(
-            B * g * 0.001 * spinop(self.multiplicities, i, axis)
-            for i, g in enumerate(self.gamma)
-        )
-        # Hzee = B * self.const["ge"] * Hzeeman(self.multiplicities, electrons)
-        # Hzee += B * self.const["gn"] * Hzeeman(self.multiplicities, nuclei)
-
-        # self.update_hamiltonian()
-        return -Hzee
+        gammas = enumerate(self.gamma)
+        return -sum(B * g * 0.001 * self.spinop(i, axis) for i, g in gammas)
