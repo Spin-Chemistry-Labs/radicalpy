@@ -8,18 +8,62 @@ import tests.radpy as radpy
 
 class DummyTests(unittest.TestCase):
     def setUp(self):
-        self.m = rp.Molecule("adenine", ["N6-H1", "C8-H"])
+        self.data = rp.data.MOLECULE_DATA["adenine"]["data"]
 
-    # def test_shared_sigmas(self):
-    #     self.sim.sigmas[0][0, 1, 1] = 42
-    #     assert self.sim.sigmas[2][0, 1, 1] == 42
-
-    def test_molecule_data(self):
+    def test_molecule_properties(self):
+        molecule = rp.Molecule("adenine", ["N6-H1", "C8-H"])
         for prop in ["hfc", "element"]:
-            for i, h in enumerate(self.m._get_properties(prop)):
-                assert h == self.m._get_property(i, prop)
+            for i, h in enumerate(molecule._get_properties(prop)):
+                assert h == molecule._get_property(i, prop)
 
-    def test_zeeman(self):
+    def test_molecule_name(self):
+        molecule = rp.Molecule("adenine", ["N6-H1", "C8-H"])
+        for i, h in enumerate(molecule.hfcs):
+            assert h == self.data[molecule.nuclei[i]]["hfc"]
+        for i, g in enumerate(molecule.gammas_mT):
+            elem = self.data[molecule.nuclei[i]]["element"]
+            assert g == rp.data.SPIN_DATA[elem]["gamma"] * 0.001
+        for i, m in enumerate(molecule.multis):
+            elem = self.data[molecule.nuclei[i]]["element"]
+            assert m == rp.data.SPIN_DATA[elem]["multiplicity"]
+
+    def test_molecule_altenative(self):
+        hfcs = [0.1, 0.2]
+        multis = [2, 3]
+        gammas_mT = [3.14, 2.71]
+
+        molecule = rp.Molecule(hfcs=hfcs, multis=multis, gammas_mT=gammas_mT)
+        for i in range(2):
+            assert hfcs[i] == molecule.hfcs[i]
+            assert multis[i] == molecule.multis[i]
+            assert gammas_mT[i] == molecule.gammas_mT[i]
+
+    def test_HZ_raw(self):
+        ################
+        # RadicalPy code
+        gamma_mT = 3.14
+        rad_pair = [
+            rp.Molecule(hfcs=[1, 2], multis=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
+            rp.Molecule(hfcs=[3, 4], multis=[2], gammas_mT=[gamma_mT]),
+        ]
+        B = 0.5
+        sim = rp.simulation.Quantum(rad_pair)
+        spins = sim.num_particles
+        HZ = sim.HZ(B)
+
+        #########################
+        # Assume this is correct!
+        omega_e = B * rp.data.SPIN_DATA["E"]["gamma"] * 0.001
+        electrons = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2)])
+        omega_n = B * gamma_mT
+        nuclei = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)])
+        HZ_true = -omega_e * electrons - omega_n * nuclei
+
+        assert np.all(
+            np.isclose(HZ, HZ_true)
+        ), "Zeeman Hamiltonian not calculated properly."
+
+    def test_HZ_json(self):
         ################
         # RadicalPy code
         rad_pair = [
@@ -39,19 +83,6 @@ class DummyTests(unittest.TestCase):
         nuclei = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)])
         HZ_true = -omega_e * electrons - omega_n * nuclei
 
-        # There is a slight discrepancy because of numerical
-        # error. `sum(omega * H_i)` is not the same as `omega *
-        # sum(H_i)`...  For exact match:
-        #
-        # omega_e = B * rp.data.SPIN_DATA["E"]["gamma"] * 0.001
-        # electrons = sum(
-        #     [omega_e * radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2)]
-        # )
-        # omega_n = B * rp.data.SPIN_DATA["1H"]["gamma"] * 0.001
-        # HZ_true = -sum(
-        #     [omega_n * radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)],
-        #     electrons,
-        # )
         assert np.all(
             np.isclose(HZ, HZ_true)
         ), "Zeeman Hamiltonian not calculated properly."

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from math import prod
-from typing import Iterable
+from typing import Iterable, Optional
 
 import numpy as np
 
@@ -14,30 +14,36 @@ class Molecule:
 
     def __init__(
         self,
-        rad: str,
-        nuclei: list[str],
-        hfcs=None,
-        multis=None,
-        gammas_mT=None,
+        radical: str = None,
+        nuclei: list[str] = None,
+        hfcs: list[float] = None,
+        multis: list[int] = None,
+        gammas_mT: list[float] = None,
     ):
         """Construct a Molecule object."""
-        assert rad in MOLECULE_DATA
-        self.data = MOLECULE_DATA[rad]["data"]
-        for nucleus in nuclei:
-            assert nucleus in self.data
-        self.rad = rad
+        if radical is not None:
+            assert radical in MOLECULE_DATA
+            self.data = MOLECULE_DATA[radical]["data"]
+            for nucleus in nuclei:
+                assert nucleus in self.data
+        self.radical = radical
         self.nuclei = nuclei
 
         if nuclei is not None:
             self.elements = self._get_properties("element")
+        else:
+            self.elements = ["G"] * len(multis)
 
-        self.hfcs = hfcs
-        if hfcs is None:
-            self.hfcs = self._get_properties("hfc")
+        self.hfcs = self._cond_value(hfcs, "hfc")
+        self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
+        self.multis = self._cond_value(multis, multiplicity)
 
-        self.gammas_mT = gammas_mT
-        if gammas_mT is None:
-            self.gammas_mT = list(map(gamma_mT, self.elements))
+    def _cond_value(self, value, func):
+        if value is None:
+            if isinstance(func, str):
+                return self._get_properties(func)
+            return list(map(func, self.elements))
+        return value
 
     def _get_properties(self, data: str) -> Iterable:
         """Construct a list for a given property.
@@ -82,8 +88,10 @@ class Quantum:
         self.nuclei = sum([m.elements for m in molecules], [])
         self.hfcs = sum([m.hfcs for m in molecules], [])
         self.particles = self.electrons + self.nuclei
-        self.multiplicities = list(map(multiplicity, self.particles))
-        self.gammas_mT = list(map(gamma_mT, self.particles))
+        self.multiplicities = list(map(multiplicity, self.electrons))
+        self.multiplicities += sum([molecule.multis for molecule in molecules], [])
+        self.gammas_mT = list(map(gamma_mT, self.electrons))
+        self.gammas_mT += sum([molecule.gammas_mT for molecule in molecules], [])
 
     @property
     def num_particles(self) -> int:
