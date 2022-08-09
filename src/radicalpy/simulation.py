@@ -91,11 +91,11 @@ class Quantum:
         self.molecules = molecules
         self.coupling = [i for i, m in enumerate(molecules) for p in m.elements]
 
-        self.nelectrons = 2
-        self.electrons = ["E"] * self.nelectrons
+        self.num_electrons = 2
+        self.electrons = ["E"] * self.num_electrons
         self.nuclei = sum([m.elements for m in molecules], [])
         self.hfcs = sum([m.hfcs for m in molecules], [])
-        self.num_particles = self.nelectrons
+        self.num_particles = self.num_electrons
         self.num_particles += sum([m.num_particles for m in molecules])
         self.multiplicities = list(map(multiplicity, self.electrons))
         self.multiplicities += sum([m.multis for m in molecules], [])
