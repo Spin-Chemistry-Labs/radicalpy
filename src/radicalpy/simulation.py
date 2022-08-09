@@ -21,6 +21,20 @@ class Molecule:
         gammas_mT: list[float] = None,
     ):
         """Construct a Molecule object."""
+        self._check_input(radical, nuclei)
+        self.radical = radical
+        self.nuclei = nuclei
+        if nuclei is not None:
+            self.elements = self._get_properties("element")
+        else:
+            self.elements = len(hfcs) * ["dummy"]
+        self.hfcs = self._cond_value(hfcs, "hfc")
+        self.multis = self._cond_value(multis, multiplicity)
+        self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
+        assert len(self.hfcs) == len(self.multis)
+        assert len(self.multis) == len(self.gammas_mT)
+
+    def _check_input(self, radical, nuclei):
         if radical is None:
             assert nuclei is None
         else:
@@ -28,16 +42,6 @@ class Molecule:
             self.data = MOLECULE_DATA[radical]["data"]
             for nucleus in nuclei:
                 assert nucleus in self.data
-
-        self.radical = radical
-        self.nuclei = nuclei
-        if nuclei is not None:
-            self.elements = self._get_properties("element")
-        else:
-            self.elements = ["G"] * len(multis)
-        self.hfcs = self._cond_value(hfcs, "hfc")
-        self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
-        self.multis = self._cond_value(multis, multiplicity)
 
     def _cond_value(self, value, func):
         if value is None:
