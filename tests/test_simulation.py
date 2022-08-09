@@ -44,7 +44,7 @@ class DummyTests(unittest.TestCase):
         gamma_mT = 3.14
         rad_pair = [
             rp.Molecule(hfcs=[1, 2], multis=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
-            rp.Molecule(hfcs=[3, 4], multis=[2], gammas_mT=[gamma_mT]),
+            rp.Molecule(hfcs=[3], multis=[2], gammas_mT=[gamma_mT]),
         ]
         B = 0.5
         sim = rp.simulation.Quantum(rad_pair)
