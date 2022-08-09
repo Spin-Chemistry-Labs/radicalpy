@@ -16,8 +16,8 @@ class DummyTests(unittest.TestCase):
 
     def test_molecule_data(self):
         for prop in ["hfc", "element"]:
-            for i, h in enumerate(self.m.data_generator(prop)):
-                assert h == self.m.get_data(i, prop)
+            for i, h in enumerate(self.m._get_properties(prop)):
+                assert h == self.m._get_property(i, prop)
 
     def test_zeeman(self):
         ################
@@ -64,7 +64,7 @@ class DummyTests(unittest.TestCase):
         ]
         B = 0.5
         # print(rad_pair[0].hfc)
-        spins = 2 + sum([len(t.nuclei) for t in rad_pair])
+        spins = 2 + sum([len(t.nuclei_list) for t in rad_pair])
 
         # calculates HZ, HH
         sim = rp.Quantum(

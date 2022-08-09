@@ -12,46 +12,44 @@ from .pauli_matrices import pauli
 class Molecule:
     """Class representing a molecule in a simulation."""
 
-    def __init__(self, rad: str, nuclei: list[str]):
+    def __init__(
+        self,
+        rad: str,
+        nuclei: list[str],
+        hfcs=None,
+        multis=None,
+        gammas_mT=None,
+    ):
         """Construct a Molecule object."""
-        assert rad in MOLECULE_DATA.keys()
-        rad_data = MOLECULE_DATA[rad]["data"]
+        assert rad in MOLECULE_DATA
+        self.data = MOLECULE_DATA[rad]["data"]
         for nucleus in nuclei:
-            assert nucleus in rad_data.keys()
+            assert nucleus in self.data
         self.rad = rad
         self.nuclei = nuclei
-        self.data = MOLECULE_DATA[rad]["data"]
 
-    def data_generator(self, data: str) -> Iterable:
-        """Construct a generator for a given property.
+        if nuclei is not None:
+            self.elements = self._get_properties("element")
+
+        self.hfcs = hfcs
+        if hfcs is None:
+            self.hfcs = self._get_properties("hfc")
+
+        self.gammas_mT = gammas_mT
+        if gammas_mT is None:
+            self.gammas_mT = list(map(gamma_mT, self.elements))
+
+    def _get_properties(self, data: str) -> Iterable:
+        """Construct a list for a given property.
 
         Args:
             data (str): the property.
         Returns:
             List generator.
         """
-        for nucleus in self.nuclei:
-            yield self.data[nucleus][data]
+        return [self.data[n][data] for n in self.nuclei]
 
-    def elements(self) -> Iterable[str]:
-        """Construct a generator for the elements of different nuclei.
-
-        Returns:
-            Return a generator of element names.
-
-        """
-        return self.data_generator("element")
-
-    def hfcs(self) -> Iterable[float]:
-        """Construct a generator for the HFCs of different nuclei.
-
-        Returns:
-            Return a generator of HFC values.
-
-        """
-        return self.data_generator("hfc")
-
-    def get_data(self, idx: int, key: str):
+    def _get_property(self, idx: int, key: str):
         """Get data of a nucleus.
 
         Utility for used only for testing currently.
@@ -77,16 +75,15 @@ class Quantum:
         assert len(molecules) == 2
 
         self.molecules = molecules
-        self.coupling = [i for i, m in enumerate(molecules) for p in m.elements()]
+        self.coupling = [i for i, m in enumerate(molecules) for p in m.elements]
 
         self.nelectrons = 2
         self.electrons = ["E"] * self.nelectrons
-        self.nuclei = sum([list(m.elements()) for m in molecules], [])
-        self.hfcs = sum([list(m.hfcs()) for m in molecules], [])
+        self.nuclei = sum([m.elements for m in molecules], [])
+        self.hfcs = sum([m.hfcs for m in molecules], [])
         self.particles = self.electrons + self.nuclei
         self.multiplicities = list(map(multiplicity, self.particles))
         self.gammas_mT = list(map(gamma_mT, self.particles))
-        print(self.total_hamiltonian(0.5))
 
     @property
     def num_particles(self) -> int:
