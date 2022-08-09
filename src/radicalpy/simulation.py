@@ -25,14 +25,17 @@ class Molecule:
         self.radical = radical
         self.nuclei = nuclei
         if nuclei is not None:
+            self.num_particles = len(nuclei)
             self.elements = self._get_properties("element")
         else:
-            self.elements = len(hfcs) * ["dummy"]
+            self.num_particles = len(hfcs)
+            self.elements = self.num_particles * ["dummy"]
         self.hfcs = self._cond_value(hfcs, "hfc")
         self.multis = self._cond_value(multis, multiplicity)
         self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
-        assert len(self.hfcs) == len(self.multis)
-        assert len(self.multis) == len(self.gammas_mT)
+        assert len(self.hfcs) == self.num_particles
+        assert len(self.multis) == self.num_particles
+        assert len(self.gammas_mT) == self.num_particles
 
     def _check_input(self, radical, nuclei):
         if radical is None:
@@ -92,16 +95,12 @@ class Quantum:
         self.electrons = ["E"] * self.nelectrons
         self.nuclei = sum([m.elements for m in molecules], [])
         self.hfcs = sum([m.hfcs for m in molecules], [])
-        self.particles = self.electrons + self.nuclei
+        self.num_particles = self.nelectrons
+        self.num_particles += sum([m.num_particles for m in molecules])
         self.multiplicities = list(map(multiplicity, self.electrons))
-        self.multiplicities += sum([molecule.multis for molecule in molecules], [])
+        self.multiplicities += sum([m.multis for m in molecules], [])
         self.gammas_mT = list(map(gamma_mT, self.electrons))
-        self.gammas_mT += sum([molecule.gammas_mT for molecule in molecules], [])
-
-    @property
-    def num_particles(self) -> int:
-        """Return the number of paricles."""
-        return len(self.particles)
+        self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
 
     def spinop(self, idx: int, axis: str) -> np.array:
         """Make a spin operator."""
