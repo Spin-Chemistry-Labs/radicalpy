@@ -16,9 +16,9 @@ class Molecule:
         self,
         radical: str = None,
         nuclei: list[str] = None,
-        hfcs: list[float] = None,
         multis: list[int] = None,
         gammas_mT: list[float] = None,
+        hfcs: list[float] = None,
     ):
         """Construct a Molecule object."""
         self.radical, self.nuclei = self._check_input(radical, nuclei)
@@ -26,12 +26,14 @@ class Molecule:
             self.num_particles = len(nuclei)
             self.elements = self._get_properties("element")
         else:
-            self.num_particles = len(hfcs)
+            self.num_particles = len(multis)
             self.elements = self.num_particles * ["dummy"]
-        self.hfcs = self._cond_value(hfcs, "hfc")
+        if hfcs is None and nuclei is not None:
+            self.hfcs = self._get_properties("hfc")
+        else:
+            self.hfcs = hfcs
         self.multis = self._cond_value(multis, multiplicity)
         self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
-        assert len(self.hfcs) == self.num_particles
         assert len(self.multis) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
 
@@ -49,8 +51,6 @@ class Molecule:
 
     def _cond_value(self, value, func):
         if value is None:
-            if isinstance(func, str):
-                return self._get_properties(func)
             return list(map(func, self._get_properties("element")))
         return value
 
@@ -90,7 +90,7 @@ class Quantum:
         assert len(molecules) == 2
 
         self.molecules = molecules
-        self.coupling = [i for i, m in enumerate(molecules) for _ in m.hfcs]
+        self.coupling = [i for i, m in enumerate(molecules) for _ in m.gammas_mT]
 
         self.num_electrons = 2
         self.electrons = ["E"] * self.num_electrons
