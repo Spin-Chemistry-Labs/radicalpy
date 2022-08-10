@@ -99,9 +99,9 @@ class DummyTests(unittest.TestCase):
                 for ni, ei in enumerate(couplings)
             ]
         )
-        print(self.sim.HH())
-        print(HH_true)
-        print(self.sim.HH() - HH_true)
+        print(f"{self.sim.HH()=}")
+        print(f"{HH_true=}")
+        print(f"{self.sim.HH() - HH_true=}")
         assert np.all(
             np.isclose(self.sim.HH(), HH_true)
         ), "Hyperfine Hamiltonian not calculated properly."
@@ -152,3 +152,4 @@ class DummyTests(unittest.TestCase):
         # sim.time_evolution(time=np.linspace())
         # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
         # sim.angle(time=np.linspace(), theta=np.linspace(), phi=np.linspace())
+        pass
