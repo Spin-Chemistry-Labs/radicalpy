@@ -35,7 +35,7 @@ class DummyTests(unittest.TestCase):
             elem = self.data[molecule.nuclei[i]]["element"]
             assert m == rp.data.SPIN_DATA[elem]["multiplicity"]
 
-    def test_molecule_altenative(self):
+    def test_molecule_raw(self):
         hfcs = [0.1, 0.2]
         multis = [2, 3]
         gammas_mT = [3.14, 2.71]
@@ -43,6 +43,15 @@ class DummyTests(unittest.TestCase):
         molecule = rp.Molecule(hfcs=hfcs, multis=multis, gammas_mT=gammas_mT)
         for i in range(2):
             assert hfcs[i] == molecule.hfcs[i]
+            assert multis[i] == molecule.multis[i]
+            assert gammas_mT[i] == molecule.gammas_mT[i]
+
+    def test_molecule_raw_nohfcs(self):
+        multis = [2, 3]
+        gammas_mT = [3.14, 2.71]
+
+        molecule = rp.Molecule(multis=multis, gammas_mT=gammas_mT)
+        for i in range(2):
             assert multis[i] == molecule.multis[i]
             assert gammas_mT[i] == molecule.gammas_mT[i]
 
