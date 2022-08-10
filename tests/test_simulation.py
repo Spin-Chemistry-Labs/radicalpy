@@ -91,17 +91,13 @@ class DummyTests(unittest.TestCase):
         spins = self.sim.num_particles
         couplings = self.sim.coupling
         hfcs = self.sim.hfcs
-        for ni, ei in enumerate(couplings):
-            print([(spins, ei, 2 + ni, hfcs[ni])])
+        gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
         HH_true = sum(
             [
-                radpy.HamiltonianHyperfine(spins, ei, 2 + ni, hfcs[ni])
+                radpy.HamiltonianHyperfine(spins, ei, 2 + ni, hfcs[ni], gamma_mT)
                 for ni, ei in enumerate(couplings)
             ]
         )
-        print(f"{self.sim.HH()=}")
-        print(f"{HH_true=}")
-        print(f"{self.sim.HH() - HH_true=}")
         assert np.all(
             np.isclose(self.sim.HH(), HH_true)
         ), "Hyperfine Hamiltonian not calculated properly."
