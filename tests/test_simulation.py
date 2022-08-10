@@ -57,6 +57,23 @@ class DummyTests(unittest.TestCase):
             assert multiplicities[i] == molecule.multiplicities[i]
             assert gammas_mT[i] == molecule.gammas_mT[i]
 
+    def test_molecule_empty(self):
+        """Test empty molecule.
+
+        A silly test which verifies that the "empty" molecule has:
+        - shape = (4, 4)
+        - exactly two non-zero entries, and
+        - those entries have opposite signs.
+
+        """
+        mol = rp.Molecule()
+        sim = rp.simulation.Quantum([mol, mol])
+        HZ = sim.HZ(0.5)
+        nz = HZ != 0
+        assert HZ.shape == (4, 4)
+        assert len(HZ[nz]) == 2
+        assert np.sum(HZ) == 0
+
     def test_HZ_raw(self):
         ################
         # RadicalPy code
@@ -120,7 +137,6 @@ class DummyTests(unittest.TestCase):
             rp.Molecule("adenine", ["C8-H"]),
         ]
         B = 0.5
-        # print(rad_pair[0].hfc)
         spins = 2 + sum([len(t.nuclei_list) for t in rad_pair])
 
         # calculates HZ, HH
