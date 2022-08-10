@@ -22,15 +22,15 @@ class Molecule:
     ):
         """Construct a Molecule object."""
         self._set_radical_and_nuclei(radical, nuclei)
+        self.multiplicities = self._cond_value(multiplicities, multiplicity)
+        self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
         if nuclei is not None:
             self.num_particles = len(nuclei)
             self.elements = self._get_properties("element")
         else:
-            self.num_particles = len(multiplicities)
+            self.num_particles = len(self.multiplicities)
             self.elements = self.num_particles * ["dummy"]
         self._set_hfcs(nuclei, hfcs)
-        self.multiplicities = self._cond_value(multiplicities, multiplicity)
-        self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
 
@@ -68,7 +68,7 @@ class Molecule:
         Returns:
             List generator.
         """
-        return [self.data[n][data] for n in self.nuclei]
+        return [] if self.nuclei is None else [self.data[n][data] for n in self.nuclei]
 
     def _get_property(self, idx: int, key: str):
         """Get data of a nucleus.
