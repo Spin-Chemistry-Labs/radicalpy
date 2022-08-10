@@ -161,7 +161,7 @@ class Quantum:
             the magnetic intensity `B`.
 
         """
-        return sum([self.HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
+        return -sum([self.HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
 
     def HJ():
         pass
