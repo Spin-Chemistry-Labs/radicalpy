@@ -147,7 +147,7 @@ class Quantum:
     def HH_term(self, ei, ni) -> np.array:
         g = gamma_mT(self.electrons[ei])
         h = self.hfcs[ni]
-        return g * h * self.prodop(ei, self.num_electrons + ni)
+        return -g * h * self.prodop(ei, self.num_electrons + ni)
 
     def HH(self) -> np.array:
         """Calculate the Hyperfine Hamiltonian.
