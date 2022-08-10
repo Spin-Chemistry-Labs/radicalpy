@@ -31,28 +31,30 @@ class DummyTests(unittest.TestCase):
         for i, g in enumerate(molecule.gammas_mT):
             elem = self.data[molecule.nuclei[i]]["element"]
             assert g == rp.data.SPIN_DATA[elem]["gamma"] * 0.001
-        for i, m in enumerate(molecule.multis):
+        for i, m in enumerate(molecule.multiplicities):
             elem = self.data[molecule.nuclei[i]]["element"]
             assert m == rp.data.SPIN_DATA[elem]["multiplicity"]
 
     def test_molecule_raw(self):
         hfcs = [0.1, 0.2]
-        multis = [2, 3]
+        multiplicities = [2, 3]
         gammas_mT = [3.14, 2.71]
 
-        molecule = rp.Molecule(hfcs=hfcs, multis=multis, gammas_mT=gammas_mT)
+        molecule = rp.Molecule(
+            hfcs=hfcs, multiplicities=multiplicities, gammas_mT=gammas_mT
+        )
         for i in range(2):
             assert hfcs[i] == molecule.hfcs[i]
-            assert multis[i] == molecule.multis[i]
+            assert multiplicities[i] == molecule.multiplicities[i]
             assert gammas_mT[i] == molecule.gammas_mT[i]
 
     def test_molecule_raw_nohfcs(self):
-        multis = [2, 3]
+        multiplicities = [2, 3]
         gammas_mT = [3.14, 2.71]
 
-        molecule = rp.Molecule(multis=multis, gammas_mT=gammas_mT)
+        molecule = rp.Molecule(multiplicities=multiplicities, gammas_mT=gammas_mT)
         for i in range(2):
-            assert multis[i] == molecule.multis[i]
+            assert multiplicities[i] == molecule.multiplicities[i]
             assert gammas_mT[i] == molecule.gammas_mT[i]
 
     def test_HZ_raw(self):
@@ -60,8 +62,8 @@ class DummyTests(unittest.TestCase):
         # RadicalPy code
         gamma_mT = 3.14
         rad_pair = [
-            rp.Molecule(hfcs=[1, 2], multis=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
-            rp.Molecule(hfcs=[3], multis=[2], gammas_mT=[gamma_mT]),
+            rp.Molecule(multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
+            rp.Molecule(multiplicities=[2], gammas_mT=[gamma_mT]),
         ]
         B = 0.5
         sim = rp.simulation.Quantum(rad_pair)

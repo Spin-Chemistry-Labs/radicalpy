@@ -16,28 +16,33 @@ class Molecule:
         self,
         radical: str = None,
         nuclei: list[str] = None,
-        multis: list[int] = None,
+        multiplicities: list[int] = None,
         gammas_mT: list[float] = None,
         hfcs: list[float] = None,
     ):
         """Construct a Molecule object."""
-        self.radical, self.nuclei = self._check_input(radical, nuclei)
+        self._set_radical_and_nuclei(radical, nuclei)
         if nuclei is not None:
             self.num_particles = len(nuclei)
             self.elements = self._get_properties("element")
         else:
-            self.num_particles = len(multis)
+            self.num_particles = len(multiplicities)
             self.elements = self.num_particles * ["dummy"]
-        if hfcs is None and nuclei is not None:
-            self.hfcs = self._get_properties("hfc")
-        else:
-            self.hfcs = hfcs
-        self.multis = self._cond_value(multis, multiplicity)
+        self._set_hfcs(nuclei, hfcs)
+        self.multiplicities = self._cond_value(multiplicities, multiplicity)
         self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
-        assert len(self.multis) == self.num_particles
+        assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
 
-    def _check_input(self, radical, nuclei):
+    def _set_hfcs(self, nuclei, hfcs):
+        self.hfcs = []
+        if hfcs is None:
+            if nuclei is not None:
+                self.hfcs = self._get_properties("hfc")
+        else:
+            self.hfcs = hfcs
+
+    def _set_radical_and_nuclei(self, radical, nuclei):
         if radical is None:
             # Idea: nuclie = ["1H", "14N"] list of elements.
             assert nuclei is None
@@ -47,7 +52,8 @@ class Molecule:
             self.data = MOLECULE_DATA[radical]["data"]
             for nucleus in nuclei:
                 assert nucleus in self.data
-        return radical, nuclei
+        self.radical = radical
+        self.nuclei = nuclei
 
     def _cond_value(self, value, func):
         if value is None:
@@ -98,7 +104,7 @@ class Quantum:
         self.num_particles = self.num_electrons
         self.num_particles += sum([m.num_particles for m in molecules])
         self.multiplicities = list(map(multiplicity, self.electrons))
-        self.multiplicities += sum([m.multis for m in molecules], [])
+        self.multiplicities += sum([m.multiplicities for m in molecules], [])
         self.gammas_mT = list(map(gamma_mT, self.electrons))
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
 
