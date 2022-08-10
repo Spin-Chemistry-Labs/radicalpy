@@ -21,9 +21,7 @@ class Molecule:
         gammas_mT: list[float] = None,
     ):
         """Construct a Molecule object."""
-        self._check_input(radical, nuclei)
-        self.radical = radical
-        self.nuclei = nuclei
+        self.radical, self.nuclei = self._check_input(radical, nuclei)
         if nuclei is not None:
             self.num_particles = len(nuclei)
             self.elements = self._get_properties("element")
@@ -39,18 +37,21 @@ class Molecule:
 
     def _check_input(self, radical, nuclei):
         if radical is None:
+            # Idea: nuclie = ["1H", "14N"] list of elements.
             assert nuclei is None
         else:
             assert radical in MOLECULE_DATA
+            # todo cleanup
             self.data = MOLECULE_DATA[radical]["data"]
             for nucleus in nuclei:
                 assert nucleus in self.data
+        return radical, nuclei
 
     def _cond_value(self, value, func):
         if value is None:
             if isinstance(func, str):
                 return self._get_properties(func)
-            return list(map(func, self.elements))
+            return list(map(func, self._get_properties("element")))
         return value
 
     def _get_properties(self, data: str) -> Iterable:
@@ -89,11 +90,10 @@ class Quantum:
         assert len(molecules) == 2
 
         self.molecules = molecules
-        self.coupling = [i for i, m in enumerate(molecules) for p in m.elements]
+        self.coupling = [i for i, m in enumerate(molecules) for _ in m.hfcs]
 
         self.num_electrons = 2
         self.electrons = ["E"] * self.num_electrons
-        self.nuclei = sum([m.elements for m in molecules], [])
         self.hfcs = sum([m.hfcs for m in molecules], [])
         self.num_particles = self.num_electrons
         self.num_particles += sum([m.num_particles for m in molecules])
