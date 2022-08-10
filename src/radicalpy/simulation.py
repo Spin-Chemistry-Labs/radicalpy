@@ -144,6 +144,11 @@ class Quantum:
         gammas = enumerate(self.gammas_mT)
         return -sum(B * g * self.spinop(i, axis) for i, g in gammas)
 
+    def HH_term(self, ei, ni) -> np.array:
+        g = gamma_mT(self.electrons[ei])
+        h = self.hfcs[ni]
+        return g * h * self.prodop(ei, self.num_electrons + ni)
+
     def HH(self) -> np.array:
         """Calculate the Hyperfine Hamiltonian.
 
@@ -156,12 +161,7 @@ class Quantum:
             the magnetic intensity `B`.
 
         """
-        return sum(
-            [
-                gamma_mT(self.electrons[ei]) * self.hfcs[ni] * self.prodop(ei, ni)
-                for ni, ei in enumerate(self.coupling)
-            ]
-        )
+        return sum([self.HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
 
     def HJ():
         pass

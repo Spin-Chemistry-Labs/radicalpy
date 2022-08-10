@@ -9,6 +9,14 @@ import tests.radpy as radpy
 class DummyTests(unittest.TestCase):
     def setUp(self):
         self.data = rp.data.MOLECULE_DATA["adenine"]["data"]
+        ################
+        # RadicalPy code
+        self.rad_pair = [
+            rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
+            rp.Molecule("adenine", ["C8-H"]),
+        ]
+        self.B = 0.5
+        self.sim = rp.simulation.Quantum(self.rad_pair)
 
     def test_molecule_properties(self):
         molecule = rp.Molecule("adenine", ["N6-H1", "C8-H"])
@@ -63,29 +71,40 @@ class DummyTests(unittest.TestCase):
             np.isclose(HZ, HZ_true)
         ), "Zeeman Hamiltonian not calculated properly."
 
-    def test_HZ_json(self):
-        ################
-        # RadicalPy code
-        rad_pair = [
-            rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
-            rp.Molecule("adenine", ["C8-H"]),
-        ]
-        B = 0.5
-        sim = rp.simulation.Quantum(rad_pair)
-        spins = sim.num_particles
-        HZ = sim.HZ(B)
+    def test_HZ(self):
+        HZ = self.sim.HZ(self.B)
 
         #########################
         # Assume this is correct!
-        omega_e = B * rp.data.SPIN_DATA["E"]["gamma"] * 0.001
+        spins = self.sim.num_particles
+        omega_e = self.B * rp.data.SPIN_DATA["E"]["gamma"] * 0.001
         electrons = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2)])
-        omega_n = B * rp.data.SPIN_DATA["1H"]["gamma"] * 0.001
+        omega_n = self.B * rp.data.SPIN_DATA["1H"]["gamma"] * 0.001
         nuclei = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)])
         HZ_true = -omega_e * electrons - omega_n * nuclei
 
         assert np.all(
             np.isclose(HZ, HZ_true)
         ), "Zeeman Hamiltonian not calculated properly."
+
+    def test_HH(self):
+        spins = self.sim.num_particles
+        couplings = self.sim.coupling
+        hfcs = self.sim.hfcs
+        for ni, ei in enumerate(couplings):
+            print([(spins, ei, 2 + ni, hfcs[ni])])
+        HH_true = sum(
+            [
+                radpy.HamiltonianHyperfine(spins, ei, 2 + ni, hfcs[ni])
+                for ni, ei in enumerate(couplings)
+            ]
+        )
+        print(self.sim.HH())
+        print(HH_true)
+        print(self.sim.HH() - HH_true)
+        assert np.all(
+            np.isclose(self.sim.HH(), HH_true)
+        ), "Hyperfine Hamiltonian not calculated properly."
 
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
