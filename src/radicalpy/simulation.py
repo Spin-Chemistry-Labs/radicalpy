@@ -33,6 +33,7 @@ class Molecule:
         self._set_hfcs(nuclei, hfcs)
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
+        assert len(self.hfcs) in {0, self.num_particles}
 
     def _set_hfcs(self, nuclei, hfcs):
         self.hfcs = []
