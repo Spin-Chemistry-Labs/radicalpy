@@ -122,9 +122,7 @@ class Quantum:
 
     def prodop_axis(self, p1: int, p2: int, axis: int) -> np.array:
         """Projection operator for a given axis."""
-        op1 = self.spinop(p1, axis)
-        op2 = self.spinop(p2, axis)
-        return op1.dot(op2)
+        return self.spinop(p1, axis).dot(self.spinop(p2, axis))
 
     def prodop(self, particle1: int, particle2: int) -> np.array:
         """Projection operator."""
@@ -181,7 +179,7 @@ class Quantum:
         """
         return -sum([self._HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
 
-    def HE(self, J: float):
+    def HE(self, J: float) -> np.array:
         """Calculate the Exchange Hamiltonian.
 
         Calculate the Exchange (J-coupling) Hamiltonian based on the
@@ -200,7 +198,7 @@ class Quantum:
         SASB = self.prodop(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
-    def HD(self, D: float):
+    def HD(self, D: float) -> np.array:
         """Calculate the Dipolar Hamiltonian.
 
         Calculate the Dipolar Hamiltonian based on ...
@@ -219,3 +217,50 @@ class Quantum:
         SBz = self.spinop(1, "z")
         omega = (2 / 3) * gamma_mT("E") * D
         return omega * (3 * SAz * SBz - SASB)
+
+    def dipolar_interaction(self, r: float) -> np.array:
+        """Calculate the Dipolar interaction constant.
+
+        Calculate the Dipolar interaction based on the radius `r`.
+
+        .. todo::
+            Write proper docs.
+        """
+        return -2.785 / r**3
+
+    @staticmethod
+    def exchange_int_solution(r: float) -> float:
+        """Calculate the exchange interaction constant in a solution.
+
+        .. todo::
+            Write proper docs.
+        """
+        J0rad = 1.7e17
+        rj = 0.049e-9
+        gamma = 1.76e8
+        J0 = J0rad / gamma / 10  # convert to mT?????????
+        return J0 * np.exp(-r / rj)
+
+    @staticmethod
+    def exchange_int_protein(r: float) -> float:
+        """Calculate the exchange interaction constant in a protein.
+
+        .. todo::
+            Write proper docs.
+        """
+        beta = 1.4e10
+        J0 = 8e13
+        return J0 * np.exp(-beta * r)
+
+    @staticmethod
+    def exchange_interaction(r: float, model: str = "solution"):
+        """Calculate the exchange interaction constant in a solution.
+
+        .. todo::
+            Write proper docs.
+        """
+        methods = {
+            "solution": __class__.exchange_int_solution,
+            "protein": __class__.exchange_int_protein,
+        }
+        return methods[model](r)
