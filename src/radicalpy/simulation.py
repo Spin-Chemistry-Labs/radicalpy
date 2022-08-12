@@ -206,4 +206,5 @@ class Quantum:
         SASB = self.prodop(0, 1)
         SAz = self.spinop(0, "z")
         SBz = self.spinop(1, "z")
-        return (2 / 3) * gamma_mT("E") * D * (3 * SAz * SBz - SASB)
+        omega = (2 / 3) * gamma_mT("E") * D
+        return omega * (3 * SAz * SBz - SASB)
