@@ -130,8 +130,14 @@ class Quantum:
         """Projection operator."""
         return sum([self.prodop_axis(particle1, particle2, axis) for axis in "xyz"])
 
-    def total_hamiltonian(self, B: float) -> np.array:
-        return self.HZ(B) + self.HH()
+    def total_hamiltonian(self, B: float, J: float, D: float) -> np.array:
+        """Calculate the final (total) Hamiltonian.
+
+        .. todo::
+            Write proper docs.
+
+        """
+        return self.HZ(B) + self.HH() + self.HE(J) + self.HD(D)
 
     def HZ(self, B: float) -> np.array:
         """Calculate the Zeeman Hamiltonian.
