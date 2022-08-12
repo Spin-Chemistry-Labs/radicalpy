@@ -151,7 +151,7 @@ class Quantum:
         gammas = enumerate(self.gammas_mT)
         return -sum(B * g * self.spinop(i, axis) for i, g in gammas)
 
-    def HH_term(self, ei, ni) -> np.array:
+    def HH_term(self, ei: int, ni: int) -> np.array:
         g = gamma_mT(self.electrons[ei])
         h = self.hfcs[ni]
         return -g * h * self.prodop(ei, self.num_electrons + ni)
@@ -170,8 +170,40 @@ class Quantum:
         """
         return -sum([self.HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
 
-    def HJ():
-        pass
+    def HE(self, J: float):
+        """Calculate the Exchange Hamiltonian.
 
-    def HD():
-        pass
+        Calculate the Exchange (J-coupling) Hamiltonian based on the
+        ...
+
+        .. todo::
+            Write proper docs.
+
+        Returns:
+            np.array: The Exchange (J-coupling) Hamiltonian
+            corresponding to the system described by the `Quantum`
+            simulation object and the magnetic intensity `B`.
+
+        """
+        Jcoupling = gamma_mT("E") * J
+        SASB = self.prodop(0, 1)
+        return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
+
+    def HD(self, D: float):
+        """Calculate the Dipolar Hamiltonian.
+
+        Calculate the Dipolar Hamiltonian based on ...
+
+        .. todo::
+            Write proper docs.
+
+        Returns:
+            np.array: The Dipolar Hamiltonian corresponding to the
+            system described by the `Quantum` simulation object and
+            the magnetic intensity `B`.
+
+        """
+        SASB = self.prodop(0, 1)
+        SAz = self.spinop(0, "z")
+        SBz = self.spinop(1, "z")
+        return (2 / 3) * gamma_mT("E") * D * (3 * SAz * SBz - SASB)

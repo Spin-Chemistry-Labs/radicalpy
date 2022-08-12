@@ -15,8 +15,10 @@ class DummyTests(unittest.TestCase):
             rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
             rp.Molecule("adenine", ["C8-H"]),
         ]
-        self.B = 0.5
+        self.B = np.random.uniform()
         self.sim = rp.simulation.Quantum(self.rad_pair)
+        self.spins = self.sim.num_particles
+        self.gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
 
     def test_molecule_properties(self):
         molecule = rp.Molecule("adenine", ["N6-H1", "C8-H"])
@@ -82,17 +84,18 @@ class DummyTests(unittest.TestCase):
             rp.Molecule(multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
             rp.Molecule(multiplicities=[2], gammas_mT=[gamma_mT]),
         ]
-        B = 0.5
+        B = np.random.uniform()
         sim = rp.simulation.Quantum(rad_pair)
-        spins = sim.num_particles
         HZ = sim.HZ(B)
 
         #########################
         # Assume this is correct!
-        omega_e = B * rp.data.SPIN_DATA["E"]["gamma"] * 0.001
-        electrons = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2)])
+        omega_e = B * self.gamma_mT
+        electrons = sum([radpy.np_spinop(radpy.np_Sz, i, self.spins) for i in range(2)])
         omega_n = B * gamma_mT
-        nuclei = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)])
+        nuclei = sum(
+            [radpy.np_spinop(radpy.np_Sz, i, self.spins) for i in range(2, self.spins)]
+        )
         HZ_true = -omega_e * electrons - omega_n * nuclei
 
         assert np.all(
@@ -104,11 +107,12 @@ class DummyTests(unittest.TestCase):
 
         #########################
         # Assume this is correct!
-        spins = self.sim.num_particles
-        omega_e = self.B * rp.data.SPIN_DATA["E"]["gamma"] * 0.001
-        electrons = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2)])
+        omega_e = self.B * self.gamma_mT
+        electrons = sum([radpy.np_spinop(radpy.np_Sz, i, self.spins) for i in range(2)])
         omega_n = self.B * rp.data.SPIN_DATA["1H"]["gamma"] * 0.001
-        nuclei = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)])
+        nuclei = sum(
+            [radpy.np_spinop(radpy.np_Sz, i, self.spins) for i in range(2, self.spins)]
+        )
         HZ_true = -omega_e * electrons - omega_n * nuclei
 
         assert np.all(
@@ -116,19 +120,33 @@ class DummyTests(unittest.TestCase):
         ), "Zeeman Hamiltonian not calculated properly."
 
     def test_HH(self):
-        spins = self.sim.num_particles
         couplings = self.sim.coupling
         hfcs = self.sim.hfcs
-        gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
         HH_true = sum(
             [
-                radpy.HamiltonianHyperfine(spins, ei, 2 + ni, hfcs[ni], gamma_mT)
+                radpy.HamiltonianHyperfine(
+                    self.spins, ei, 2 + ni, hfcs[ni], self.gamma_mT
+                )
                 for ni, ei in enumerate(couplings)
             ]
         )
         assert np.all(
             np.isclose(self.sim.HH(), HH_true)
         ), "Hyperfine Hamiltonian not calculated properly."
+
+    def test_HE(self):
+        J = np.random.uniform()
+        HE_true = radpy.HamiltonianExchange(self.spins, J, gamma=self.gamma_mT)
+        assert np.all(
+            np.isclose(self.sim.HE(J), HE_true)
+        ), "Exchange (J-coupling) Hamiltonian not calculated properly."
+
+    def test_HD(self):
+        D = np.random.uniform()
+        HD_true = radpy.HamiltonianDipolar(self.spins, D, self.gamma_mT)
+        assert np.all(
+            np.isclose(self.sim.HD(D), HD_true)
+        ), "Dipolar Hamiltonian not calculated properly."
 
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
