@@ -152,6 +152,11 @@ class Quantum:
         return -sum(B * g * self.spinop(i, axis) for i, g in gammas)
 
     def HH_term(self, ei: int, ni: int) -> np.array:
+        """Calculate a term of the Hyperfine Hamiltonian.
+
+        .. todo::
+            Write proper docs.
+        """
         g = gamma_mT(self.electrons[ei])
         h = self.hfcs[ni]
         return -g * h * self.prodop(ei, self.num_electrons + ni)
