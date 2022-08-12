@@ -157,7 +157,7 @@ class Quantum:
         gammas = enumerate(self.gammas_mT)
         return -sum(B * g * self.spinop(i, axis) for i, g in gammas)
 
-    def HH_term(self, ei: int, ni: int) -> np.array:
+    def _HH_term(self, ei: int, ni: int) -> np.array:
         """Calculate a term of the Hyperfine Hamiltonian.
 
         .. todo::
@@ -179,7 +179,7 @@ class Quantum:
             the magnetic intensity `B`.
 
         """
-        return -sum([self.HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
+        return -sum([self._HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
 
     def HE(self, J: float):
         """Calculate the Exchange Hamiltonian.
