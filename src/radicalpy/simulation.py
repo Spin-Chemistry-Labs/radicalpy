@@ -4,6 +4,7 @@ from math import prod
 from typing import Iterable, Optional
 
 import numpy as np
+import scipy as sp
 
 from .data import MOLECULE_DATA, gamma_mT, multiplicity
 from .pauli_matrices import pauli
@@ -264,3 +265,256 @@ class Quantum:
             "protein": __class__.exchange_int_protein,
         }
         return methods[model](r)
+
+    def projop(self, state):
+        """Calculate.
+
+        .. todo::
+            Write proper docs.
+        """
+        # Spin operators
+        SAx, SAy, SAz = [self.spinop(0, ax) for ax in "xyz"]
+        SBx, SBy, SBz = [self.spinop(1, ax) for ax in "xyz"]
+
+        # Product operators
+        SASB = self.prodop(0, 1)
+
+        eye = np.eye(len(SASB))
+
+        # Projection operators
+        match state:
+            case "S":
+                return (1 / 4) * eye - SASB
+            case "T":
+                return (3 / 4) * eye + SASB
+            case "Tp":
+                return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
+            case "Tm":
+                return (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz)
+            case "T0":
+                return (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz
+            case "Tpm":
+                return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz) + (
+                    2 * SAz**2 - SAz
+                ) * (2 * SBz**2 - SBz)
+            case "Eq":
+                return 1.05459e-34 / (1.38e-23 * 298)
+
+    def hilbert_initial(self, state, H):
+        """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
+
+        Args:
+            state: a string = spin state projection operator
+            H: a matrix = spin Hamiltonian in Hilbert space
+
+        Returns:
+            A matrix in Hilbert space
+
+        Example:
+            rho0 = Hilbert_initial("S", 3, H)
+
+        """
+        Pi = self.projop(state)
+
+        if np.array_equal(Pi, self.projop("Eq")):
+            rho0eq = np.expm(-1j * H * Pi)
+            rho0 = rho0eq / np.trace(rho0eq)
+        else:
+            rho0 = Pi / np.trace(Pi)
+        return rho0
+
+    def hilbert_observable(self, state):
+        """
+        Create an observable density matrix for time evolution of the spin Hamiltonian density matrix.
+
+        Arguments:
+            state: a string = spin state projection operator
+            spins: an integer = sum of the number of electrons and nuclei
+
+        Returns:
+            Two matrices in Hilbert space
+
+        Example:
+            obs, Pobs = Hilbert_observable("S", 3)
+
+        """
+        Pobs = self.projop(state)
+
+        rhoobs = Pobs / np.trace(Pobs)
+
+        # Observables
+        if np.array_equal(Pobs, self.projop("T")):
+            M = (self.projop("S") @ (self.projop("S") / np.trace(self.projop("S"))),)
+            obs = 1 - np.real(np.trace(M))
+        else:
+            obs = np.real(np.trace(np.matmul(Pobs, rhoobs)))
+        return [obs, Pobs]
+
+    @staticmethod
+    def unitary_propagator(H, dt, space="Hilbert"):
+        """Create unitary propagator matrices for time evolution of the spin Hamiltonian density matrix in both Hilbert and Liouville space.
+
+        Arguments:
+            H: a matrix = spin Hamiltonian in Hilbert or Liouville space
+            dt: a floating point number = time evolution timestep
+            space: a string = select the spin space
+
+        Returns:
+            Matrices in either Hilbert or Liouville space
+
+        Example:
+            Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
+            UL = UnitaryPropagator(HL, 3e-9, "Liouville")
+
+        """
+        match space:
+            case "Hilbert":
+                UnitaryPropagator_plus = np.expm(1j * H * dt)
+                UnitaryPropagator_minus = np.expm(-1j * H * dt)
+                return [UnitaryPropagator_plus, UnitaryPropagator_minus]
+            case "Liouville":
+                return np.expm(H * dt)
+
+    def TimeEvolution(
+        self,
+        initial,
+        observable,
+        t_max,
+        t_stepsize,
+        k,
+        B,
+        H,
+        space="Hilbert",
+        model="Exponential",
+    ):
+
+        #     time = np.linspace(t_min, t_max, t_stepsize)
+        #     dt = time[1] - time[0]
+        time = np.arange(0, t_max, t_stepsize)
+        dt = t_stepsize
+        evol = np.zeros(len(time))
+
+        match space:
+            case "Hilbert":
+
+                HZ = self.HZ(B)
+                H_total = H + HZ
+                rho0 = self.hilbert_initial(initial, H_total)
+                obs, Pobs = self.hilbert_observable(observable)
+
+                Up, Um = self.unitary_propagator(H_total, dt, space="Hilbert")
+                evol[0] = obs
+
+                for i, dt in enumerate(time):
+                    rhot = Um @ rho0 @ Up
+                    rhot = rhot / np.trace(rhot)
+                    rho0 = rhot
+
+                    evol[i] = np.real(np.trace(np.matmul(Pobs, rhot)))
+
+                # K = self.Kinetics(k, time, model=model)
+                K = print(k, time)
+                evol = evol * K
+
+            case "Liouville":
+
+                # HZ = HamiltonianZeeman_RadicalPair(spins, B)
+                # HZ = Hilbert2Liouville(HZ)
+                # H_total = H + HZ
+                # rho0 = Liouville_initial(initial, spins, H_total)
+                # obs, Pobs = Liouville_observable(observable, spins)
+
+                UL = self.unitary_propagator(H_total, dt, space="Liouville")
+                evol = np.zeros(len(time))
+
+                for i, dt in enumerate(time):
+                    rhot = UL @ rho0
+                    rho0 = rhot
+
+                    evol[i] = np.real(np.trace(np.matmul(Pobs.T, rhot)))
+
+        ProductYield = sp.integrate.cumtrapz(evol, time, initial=0) * k
+        ProductYieldSum = np.max(ProductYield)
+        return [time, evol, ProductYield, ProductYieldSum, rhot]
+
+    # def Liouville_initial(state, spins, H):
+
+    #     """
+    #     Creates an initial density matrix for time evolution of the spin Hamiltonian density matrix
+
+    #     Arguments:
+    #         state: a string = spin state projection operator
+    #         spins: an integer = sum of the number of electrons and nuclei
+    #         H: a matrix = spin Hamiltonian in Hilbert space
+
+    #     Returns:
+    #         A matrix in Liouville space
+
+    #     Example:
+    #         rho0 = Liouville_initial("S", 3, H)
+    #     """
+
+    #     Pi = projop_Liouville(spins, state)
+
+    #     if np.array_equal(Pi, projop_Liouville(spins, "Eq")):
+    #         rho0eq = expm(-1j * H * Pi)
+    #         rho0 = rho0eq / np.trace(rho0eq)
+    #         rho0 = np.reshape(rho0, (len(H) ** 2, 1))
+    #     else:
+    #         rho0 = Pi / np.vdot(Pi, Pi)
+    #     return rho0
+
+    # def Liouville_observable(state, spins):
+
+    #     """
+    #     Creates an observable density matrix for time evolution of the spin Hamiltonian density matrix
+
+    #     Arguments:
+    #         state: a string = spin state projection operator
+    #         spins: an integer = sum of the number of electrons and nuclei
+
+    #     Returns:
+    #         Two matrices in Liouville space
+
+    #     Example:
+    #         obs, Pobs = Liouville_observable("S", 3)
+    #     """
+
+    #     Pobs = projop_Liouville(spins, state)
+
+    #     rhoobs = Pobs / np.vdot(Pobs, Pobs)
+
+    #     # Observables
+    #     if np.array_equal(Pobs, projop_Liouville(spins, "T")):
+    #         obs = 1 - np.real(
+    #             np.trace(
+    #                 np.matmul(
+    #                     projop_Liouville(spins, "S").T,
+    #                     (
+    #                         projop_Liouville(spins, "S")
+    #                         / np.vdot(
+    #                             projop_Liouville(spins, "S"), projop_Liouville(spins, "S")
+    #                         )
+    #                     ),
+    #                 )
+    #             )
+    #         )
+    #     else:
+    #         obs = np.real(np.trace(np.matmul(Pobs.T, rhoobs)))
+    #     return [obs, Pobs]
+
+    # def MARY(spins, initial, observable, t_max, t_stepsize, k, B, Hplot, space="Hilbert"):
+
+    #     timing = np.arange(0, t_max, t_stepsize)
+    #     MFE = np.zeros((len(B), len(timing)))
+
+    #     for i, B0 in enumerate(B):
+    #         time, MFE[i, :], productyield, ProductYieldSum, rhot = TimeEvolution(
+    #             spins, initial, observable, t_max, t_stepsize, k, B0, Hplot, space=space
+    #         )
+
+    #     raw = MFE
+    #     dt = t_stepsize
+    #     MARY = np.sum(raw, axis=1) * dt * k
+    #     MARY = ((MARY - MARY[0]) / MARY[0]) * 100
+    #     return [time, MFE, MARY, productyield, ProductYieldSum, rhot]
