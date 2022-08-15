@@ -111,7 +111,7 @@ class Quantum:
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
 
     def spinop(self, idx: int, axis: str) -> np.array:
-        """Make a spin operator."""
+        """Construct the spin operator for a particle."""
         assert 0 <= idx and idx < len(self.multiplicities)
         assert axis in "xyz"
 
@@ -129,145 +129,8 @@ class Quantum:
         """Projection operator."""
         return sum([self.prodop_axis(particle1, particle2, axis) for axis in "xyz"])
 
-    def total_hamiltonian(self, B: float, J: float, D: float) -> np.array:
-        """Calculate the final (total) Hamiltonian.
-
-        .. todo::
-            Write proper docs.
-
-        """
-        return self.HZ(B) + self.HH() + self.HE(J) + self.HD(D)
-
-    def HZ(self, B: float) -> np.array:
-        """Calculate the Zeeman Hamiltonian.
-
-        Calculate the Zeeman Hamiltonian based on the magnetic field.
-
-        Args:
-            B (float): Magnetic field intensity (milli Tesla).
-
-        Returns:
-            np.array: The Zeeman Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object and
-            the magnetic intensity `B`.
-
-        """
-        axis = "z"
-        gammas = enumerate(self.gammas_mT)
-        return -sum(B * g * self.spinop(i, axis) for i, g in gammas)
-
-    def _HH_term(self, ei: int, ni: int) -> np.array:
-        """Calculate a term of the Hyperfine Hamiltonian.
-
-        .. todo::
-            Write proper docs.
-        """
-        g = gamma_mT(self.electrons[ei])
-        h = self.hfcs[ni]
-        return -g * h * self.prodop(ei, self.num_electrons + ni)
-
-    def HH(self) -> np.array:
-        """Calculate the Hyperfine Hamiltonian.
-
-        Calculate the Hyperfine Hamiltonian based on the magnetic
-        field.
-
-        Returns:
-            np.array: The Hyperfine Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object and
-            the magnetic intensity `B`.
-
-        """
-        return -sum([self._HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
-
-    def HE(self, J: float) -> np.array:
-        """Calculate the Exchange Hamiltonian.
-
-        Calculate the Exchange (J-coupling) Hamiltonian based on the
-        ...
-
-        .. todo::
-            Write proper docs.
-
-        Returns:
-            np.array: The Exchange (J-coupling) Hamiltonian
-            corresponding to the system described by the `Quantum`
-            simulation object and the magnetic intensity `B`.
-
-        """
-        Jcoupling = gamma_mT("E") * J
-        SASB = self.prodop(0, 1)
-        return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
-
-    def HD(self, D: float) -> np.array:
-        """Calculate the Dipolar Hamiltonian.
-
-        Calculate the Dipolar Hamiltonian based on ...
-
-        .. todo::
-            Write proper docs.
-
-        Returns:
-            np.array: The Dipolar Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object and
-            the magnetic intensity `B`.
-
-        """
-        SASB = self.prodop(0, 1)
-        SAz = self.spinop(0, "z")
-        SBz = self.spinop(1, "z")
-        omega = (2 / 3) * gamma_mT("E") * D
-        return omega * (3 * SAz * SBz - SASB)
-
-    def dipolar_interaction(self, r: float) -> np.array:
-        """Calculate the Dipolar interaction constant.
-
-        Calculate the Dipolar interaction based on the radius `r`.
-
-        .. todo::
-            Write proper docs.
-        """
-        return -2.785 / r**3
-
-    @staticmethod
-    def exchange_int_solution(r: float) -> float:
-        """Calculate the exchange interaction constant in a solution.
-
-        .. todo::
-            Write proper docs.
-        """
-        J0rad = 1.7e17
-        rj = 0.049e-9
-        gamma = 1.76e8
-        J0 = J0rad / gamma / 10  # convert to mT?????????
-        return J0 * np.exp(-r / rj)
-
-    @staticmethod
-    def exchange_int_protein(r: float) -> float:
-        """Calculate the exchange interaction constant in a protein.
-
-        .. todo::
-            Write proper docs.
-        """
-        beta = 1.4e10
-        J0 = 8e13
-        return J0 * np.exp(-beta * r)
-
-    @staticmethod
-    def exchange_interaction(r: float, model: str = "solution"):
-        """Calculate the exchange interaction constant in a solution.
-
-        .. todo::
-            Write proper docs.
-        """
-        methods = {
-            "solution": __class__.exchange_int_solution,
-            "protein": __class__.exchange_int_protein,
-        }
-        return methods[model](r)
-
     def projop(self, state):
-        """Calculate.
+        """Construct.
 
         .. todo::
             Write proper docs.
@@ -299,6 +162,153 @@ class Quantum:
                 ) * (2 * SBz**2 - SBz)
             case "Eq":
                 return 1.05459e-34 / (1.38e-23 * 298)
+
+    def HZ(self, B0: float) -> np.array:
+        """Construct the Zeeman Hamiltonian.
+
+        Construct the Zeeman Hamiltonian based on the external
+        magnetic field `B`.
+
+        Args:
+            B0 (float): External magnetic field intensity (milli
+            Tesla).
+
+        Returns:
+            np.array: The Zeeman Hamiltonian corresponding to the
+            system described by the `Quantum` simulation object and
+            the external magnetic field intensity `B`.
+
+        """
+        axis = "z"
+        gammas = enumerate(self.gammas_mT)
+        return -sum(B0 * g * self.spinop(i, axis) for i, g in gammas)
+
+    def _HH_term(self, ei: int, ni: int) -> np.array:
+        """Construct a term of the Hyperfine Hamiltonian.
+
+        .. todo::
+            Write proper docs.
+        """
+        g = gamma_mT(self.electrons[ei])
+        h = self.hfcs[ni]
+        return -g * h * self.prodop(ei, self.num_electrons + ni)
+
+    def HH(self) -> np.array:
+        """Construct the Hyperfine Hamiltonian.
+
+        Construct the Hyperfine Hamiltonian based on the magnetic
+        field.
+
+        Returns:
+            np.array: The Hyperfine Hamiltonian corresponding to the
+            system described by the `Quantum` simulation object.
+
+        """
+        return -sum([self._HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
+
+    @staticmethod
+    def exchange_interaction_solution(r: float) -> float:
+        """Construct the exchange interaction constant in a solution.
+
+        .. todo::
+            Write proper docs.
+        """
+        J0rad = 1.7e17
+        rj = 0.049e-9
+        gamma = 1.76e8
+        J0 = J0rad / gamma / 10  # convert to mT?????????
+        return J0 * np.exp(-r / rj)
+
+    @staticmethod
+    def exchange_interaction_protein(r: float) -> float:
+        """Construct the exchange interaction constant in a protein.
+
+        .. todo::
+            Write proper docs.
+        """
+        beta = 1.4e10
+        J0 = 8e13
+        return J0 * np.exp(-beta * r)
+
+    @staticmethod
+    def exchange_interaction(r: float, model: str = "solution"):
+        """Construct the exchange interaction constant in a solution.
+
+        .. todo::
+            Write proper docs.
+        """
+        methods = {
+            "solution": __class__.exchange_int_solution,
+            "protein": __class__.exchange_int_protein,
+        }
+        return methods[model](r)
+
+    def HE(self, J: float) -> np.array:
+        """Construct the Exchange Hamiltonian.
+
+        Construct the Exchange (J-coupling) Hamiltonian based on the
+        coupling constant J between two electrons, which can be obtain
+        from the radical pair separation `r` using :py:`TODO` method.
+
+        .. todo::
+            Write proper docs.
+
+        Returns:
+            np.array: The Exchange (J-coupling) Hamiltonian
+            corresponding to the system described by the `Quantum`
+            simulation object and the coupling constant `J`.
+
+        """
+        Jcoupling = gamma_mT("E") * J
+        SASB = self.prodop(0, 1)
+        return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
+
+    @staticmethod
+    def dipolar_interaction(r: float) -> np.array:
+        """Construct the Dipolar interaction constant.
+
+        Construct the Dipolar interaction based on the radius `r`.
+
+        .. todo::
+            Cite source.
+
+        Returns:
+            float: The dipolar coupling constant in milli Tesla (mT).
+
+        """
+        return -2.785 / r**3
+
+    def HD(self, D: float) -> np.array:
+        """Construct the Dipolar Hamiltonian.
+
+        Construct the Dipolar Hamiltonian based on dipolar coupling
+        constant `D` between two electrons.
+
+        .. todo::
+            Write proper docs.
+
+        Returns:
+            np.array: The Dipolar Hamiltonian corresponding to the
+            system described by the `Quantum` simulation object and
+            dipolar coupling constant `D`.
+
+        """
+        SASB = self.prodop(0, 1)
+        SAz = self.spinop(0, "z")
+        SBz = self.spinop(1, "z")
+        omega = (2 / 3) * gamma_mT("E") * D
+        return omega * (3 * SAz * SBz - SASB)
+
+    def total_hamiltonian(self, B: float, J: float, D: float) -> np.array:
+        """Construct the final (total) Hamiltonian.
+
+        Construct the final (total)
+
+        .. todo::
+            Write proper docs.
+
+        """
+        return self.HZ(B) + self.HH() + self.HE(J) + self.HD(D)
 
     def hilbert_initial(self, state, H):
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
@@ -409,12 +419,7 @@ class Quantum:
                     rhot = Um @ rho0 @ Up
                     rhot = rhot / np.trace(rhot)
                     rho0 = rhot
-
                     evol[i] = np.real(np.trace(np.matmul(Pobs, rhot)))
-
-                # K = self.Kinetics(k, time, model=model)
-                K = print(k, time)
-                evol = evol * K
 
             case "Liouville":
 
