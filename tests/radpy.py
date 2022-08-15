@@ -8,6 +8,8 @@ import seaborn as sns
 import sympy as smp
 from scipy import integrate, linalg
 from scipy.linalg import expm
+from scipy.optimize import curve_fit
+from sklearn.metrics import r2_score
 
 sns.set_theme()
 
@@ -117,7 +119,7 @@ def projop_Liouville(spins, state):
     if state == "Eq":
         return 1.05459e-34 / (1.38e-23 * 298)
     else:
-        return np.reshape(projop(spins, state), ((2**spins) ** 2, 1))
+        return np.reshape(projop(spins, state), (-1, 1))
 
 
 def projop_3spin(spins, pos1, pos2, state):
@@ -178,8 +180,8 @@ def HamiltonianZeeman3D(spins, B, theta=0, phi=0, gamma=1.76e8):
     return omega * rotate(particles, theta, phi)
 
 
-def HamiltonianHyperfine(spins, pos, pos2, HFC, gamma=1.76e8):
-    omega = HFC * gamma
+def HamiltonianHyperfine(spins, pos, pos2, HFC, gamma_mT):
+    omega = HFC * gamma_mT
     particles = prodop(pos, pos2, spins)
     return omega * particles
 
@@ -187,12 +189,14 @@ def HamiltonianHyperfine(spins, pos, pos2, HFC, gamma=1.76e8):
 def ExchangeInteraction(r, model="solution"):
     match model:
         case "solution":
-            J0rad, rj, gamma = 1.7e17, 0.049e-9, 1.76e8
-            J0 = J0rad / gamma / 10  # convert to mT
-            return J0 * np.exp(-r / rj)
+            J0, alpha = -570e-3, 2e10
+            return -J0 * np.exp(-alpha * r)
+        #             J0rad, rj, gamma = 1.7e17, 0.049e-9, 1.76e8
+        #             J0 = J0rad / gamma / 10 # convert to mT
+        #             return J0 * np.exp(-r / rj)
         case "protein":
             beta, J0 = 1.4e10, 8e13
-            return J0 * np.exp(-beta * r)
+            return (J0 * np.exp(-beta * r)) / 1000
 
 
 def HamiltonianExchange(spins, J, gamma=1.76e8):
@@ -309,8 +313,9 @@ def Relaxation(spins, k=0, model="ST-Dephasing"):
     Relaxation models include:
     Singlet-Triplet Dephasing (STD)
     Triplet-Triplet Dephasing (TTD)
+    Triplet-Triplet Relaxation (TTR)
     Random Field Relaxation (RFR)
-    Dipolar Modulation
+    Dipolar Modulation (DM)
 
     Arguments:
         spins: an integer = sum of the number of electrons and nuclei
@@ -321,7 +326,7 @@ def Relaxation(spins, k=0, model="ST-Dephasing"):
         A superoperator matrix (Liouville space)
 
     Example:
-        R = Relaxation(3, 1e6, "ST-Dephasing")
+        R = Relaxation(3, 1e6, "STD")
     """
 
     SAx, SAy, SAz = spinops(0, spins)
@@ -334,9 +339,9 @@ def Relaxation(spins, k=0, model="ST-Dephasing"):
     QT0 = projop(spins, "T0")
 
     match model:
-        case "ST-Dephasing":
+        case "STD":
             return k * (np.kron(QS, QT) + np.kron(QT, QS))
-        case "TT-Dephasing":
+        case "TTD":
             return k * (
                 np.kron(QTp, QTm)
                 + np.kron(QTm, QTp)
@@ -345,7 +350,33 @@ def Relaxation(spins, k=0, model="ST-Dephasing"):
                 + np.kron(QTp, QT0)
                 + np.kron(QT0, QTp)
             )
-        case "RandomFields":
+        case "TTR":
+            return k * (
+                (
+                    2 / 3 * (np.kron(QT0, QT0))
+                    + (
+                        1
+                        / 3
+                        * (
+                            (
+                                np.kron(QTp, QTp)
+                                + np.kron(QTm, QTm)
+                                + np.kron(QTp, QTm)
+                                + np.kron(QTm, QTp)
+                            )
+                            - (
+                                np.kron(QTp, QT0)
+                                - np.kron(QT0, QTp)
+                                - np.kron(QTm, QT0)
+                                - np.kron(QT0, QTm)
+                                - np.kron(QTp, QTm)
+                                - np.kron(QTm, QTp)
+                            )
+                        )
+                    )
+                )
+            )
+        case "RFR":
             return k * (
                 1.5 * np.kron(np.eye(len(QS)), np.eye(len(QS)))
                 - np.kron(SAx, SAx.T)
@@ -355,7 +386,7 @@ def Relaxation(spins, k=0, model="ST-Dephasing"):
                 - np.kron(SBy, SBy.T)
                 - np.kron(SBz, SBz.T)
             )
-        case "DipolarModulation":
+        case "DM":
             return k * (
                 1 / 9 * np.kron(QS, QTp)
                 + 1 / 9 * np.kron(QTp, QS)
@@ -550,7 +581,7 @@ def TimeEvolution(
     initial,
     observable,
     t_max,
-    t_stepsize,
+    dt,
     k,
     B,
     H,
@@ -560,8 +591,7 @@ def TimeEvolution(
 
     #     time = np.linspace(t_min, t_max, t_stepsize)
     #     dt = time[1] - time[0]
-    time = np.arange(0, t_max, t_stepsize)
-    dt = t_stepsize
+    time = np.arange(0, t_max, dt)
 
     match space:
         case "Hilbert":
@@ -574,13 +604,15 @@ def TimeEvolution(
             Up, Um = UnitaryPropagator(H_total, dt, space="Hilbert")
             evol = np.zeros(len(time))
             evol[0] = obs
+            rho = []
 
-            for i, dt in enumerate(time):
+            for i in range(len(time)):
                 rhot = Um @ rho0 @ Up
                 rhot = rhot / np.trace(rhot)
                 rho0 = rhot
 
                 evol[i] = np.real(np.trace(np.matmul(Pobs, rhot)))
+                rho.append(rhot)
 
             K = Kinetics(spins, k, time, model=model)
             evol_reaction = evol * K
@@ -589,7 +621,7 @@ def TimeEvolution(
             ProductYieldSum = np.max(ProductYield)
             # print('Product yield: ', '%.2f' % ProductYieldSum)
 
-            return [time, evol_reaction, ProductYield, ProductYieldSum, rhot]
+            return [time, evol_reaction, ProductYield, ProductYieldSum, rho]
 
         case "Liouville":
 
@@ -602,18 +634,20 @@ def TimeEvolution(
             UL = UnitaryPropagator(H_total, dt, space="Liouville")
             evol = np.zeros(len(time))
             evol[0] = obs
+            rho = []
 
-            for i, dt in enumerate(time):
+            for i in range(len(time)):
                 rhotL = UL @ rho0
                 rho0 = rhotL
 
                 evol[i] = np.real(np.trace(np.matmul(Pobs.T, rhotL)))
+                rho.append(rhotL)
 
             ProductYield = integrate.cumtrapz(evol, time, initial=0) * k
             ProductYieldSum = np.max(ProductYield)
             #             print('Product yield: ', '%.2f' % ProductYieldSum)
 
-            return [time, evol, ProductYield, ProductYieldSum, rhotL]
+            return [time, evol, ProductYield, ProductYieldSum, rho]
 
 
 def MARY(spins, initial, observable, t_max, t_stepsize, k, B, Hplot, space="Hilbert"):
@@ -622,15 +656,51 @@ def MARY(spins, initial, observable, t_max, t_stepsize, k, B, Hplot, space="Hilb
     MFE = np.zeros((len(B), len(timing)))
 
     for i, B0 in enumerate(B):
-        time, MFE[i, :], productyield, ProductYieldSum, rhot = TimeEvolution(
+        time, MFE[i, :], productyield, ProductYieldSum, rho = TimeEvolution(
             spins, initial, observable, t_max, t_stepsize, k, B0, Hplot, space=space
         )
 
     raw = MFE
     dt = t_stepsize
     MARY = np.sum(raw, axis=1) * dt * k
-    MARY = ((MARY - MARY[0]) / MARY[0]) * 100
-    return [time, MFE, MARY, productyield, ProductYieldSum, rhot]
+
+    if B[0] != 0:
+        middle = int(len(MARY) / 2)
+        HFE = ((MARY[-1] - MARY[middle]) / MARY[middle]) * 100
+        if initial == "S":
+            LFE = ((max(MARY) - MARY[middle]) / MARY[middle]) * 100
+        else:
+            LFE = ((min(MARY) - MARY[middle]) / MARY[middle]) * 100
+        MARY = ((MARY - MARY[middle]) / MARY[middle]) * 100
+    else:
+        HFE = ((MARY[-1] - MARY[0]) / MARY[0]) * 100
+        if initial == "S":
+            LFE = ((max(MARY) - MARY[0]) / MARY[0]) * 100
+        else:
+            LFE = ((min(MARY) - MARY[0]) / MARY[0]) * 100
+        MARY = ((MARY - MARY[0]) / MARY[0]) * 100
+    return [time, MFE, HFE, LFE, MARY, productyield, ProductYieldSum, rho]
+
+
+def Lorentzian_fit(x, A, Bhalf):
+    return (A / Bhalf**2) - (A / (x**2 + Bhalf**2))
+
+
+def Bhalf_fit(B, MARY):
+    popt_MARY, pcov_MARY = curve_fit(
+        Lorentzian_fit, B, MARY, p0=[MARY[-1], int(len(B) / 2)]
+    )
+    MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
+
+    A_opt_MARY, Bhalf_opt_MARY = popt_MARY
+    x_model_MARY = np.linspace(min(B), max(B), len(B))
+    y_model_MARY = Lorentzian_fit(x_model_MARY, *popt_MARY)
+    Bhalf = np.abs(Bhalf_opt_MARY)
+
+    y_pred_MARY = Lorentzian_fit(B, *popt_MARY)
+    R2 = r2_score(MARY, y_pred_MARY)
+
+    return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
 
 
 def RotationalCorrelationTime_protein(Mr, temp):
@@ -1032,7 +1102,7 @@ def DensityMatrixPlot2D(
                 yticklabels=y_axis_labels,
             )
             figure.set_size_inches(5, 5)
-            plt.show()
+        #             plt.show()
 
         case "Liouville":
             dims = np.int64(np.sqrt(len(rhot)))
@@ -1041,7 +1111,7 @@ def DensityMatrixPlot2D(
             x_axis_labels = x_axis_labels
             y_axis_labels = y_axis_labels
             sns.heatmap(
-                np.abs(np.reshape(rhotL, (dims, dims))),
+                np.abs(np.reshape(rhot, (dims, dims))),
                 annot=True,
                 linewidths=0.5,
                 cmap=colourmap,
@@ -1050,7 +1120,9 @@ def DensityMatrixPlot2D(
                 yticklabels=y_axis_labels,
             )
             figure.set_size_inches(5, 5)
-            plt.show()
+
+
+#             plt.show()
 
 
 def LinearEnergyLevelPlot2D(H, B, linecolour, title):
@@ -1090,17 +1162,16 @@ def EnergyLevelPlot2D(spins, HFC, B_max, B_steps, J, D, xlabel, title):
     plt.tick_params(labelsize=14)
 
 
-def MARYplot2D(B, MARY, linecolour, title):
+def MARYplot2D(B, MARY, x_model_MARY, y_model_MARY, linecolour, title):
     fig = plt.figure()
     figure = plt.gcf()
     fig.set_facecolor("none")
     mpl.style.use("default")
     ax = fig.add_axes([0, 0, 1, 1])
     ax.grid(False)
-    ax.plot(B, np.real(MARY), linecolour, linewidth=2)  # , label='simulation')
-    # ax.plot(B, min(np.real(mary))+out.init_fit, 'b--', label='initial fit')
-    # ax.plot(B, min(np.real(mary))+out.best_fit, 'k--', label='best fit')
-    # ax.legend()
+    ax.plot(B, np.real(MARY), linecolour, linewidth=2, label="Simulation")
+    ax.plot(x_model_MARY, y_model_MARY, "k--", linewidth=1, label="Lorentzian fit")
+    ax.legend()
     ax.set_title(title, size=16)
     ax.set_xlabel("$B_0$ ($mT$)", size=16)
     ax.set_ylabel("$MFE$ ($\%$)", size=16)
@@ -1153,7 +1224,7 @@ def plot3Dlog(X, Y, Z, xlabel, ylabel, zlabel, title, colourmap):
 # Monte Carlo random walk molecular diffusion -----------------------------------------------------------
 
 
-def randomwalk3D(n_steps, x_0, y_0, z_0, mut_D, del_T):
+def MC_randomwalk3D(n_steps, r_max, x_0, y_0, z_0, mut_D, del_T):
     Dab = mut_D
     deltaT = del_T
     deltaR = np.sqrt(6 * Dab * deltaT)  # diffusional motion
@@ -1185,15 +1256,33 @@ def randomwalk3D(n_steps, x_0, y_0, z_0, mut_D, del_T):
         y[i] += y[i - 1]
         z[i] += z[i - 1]
 
+    f = 1e9
+
+    fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "3d", "aspect": "auto"})
+    ax.set_facecolor("none")
+    ax.grid(False)
+    plt.axis("on")
+    ax.plot(x * f, y * f, z * f, alpha=0.9, color="cyan")
+    ax.plot(x[0] * f, y[0] * f, z[0] * f, "bo", markersize=15)
+    ax.plot(0, 0, 0, "mo", markersize=15)
+    ax.set_title(
+        "3D Monte Carlo random walk simulation for a radical pair in water", size=16
+    )
+    ax.set_xlabel("$X$ (nm)", size=14)
+    ax.set_ylabel("$Y$ (nm)", size=14)
+    ax.set_zlabel("$Z$ (nm)", size=14)
+    # plt.xlim([-1, 1]); plt.ylim([-1, 1])
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 10)
+    plt.show()
+
     return x, y, z, dist, angle
 
 
-def randomwalk3D_cage(n_steps, r_min, r_max, x_0, y_0, z_0, mut_D, del_T):
+def MC_randomwalk3D_cage(n_steps, r_max, x_0, y_0, z_0, mut_D, del_T):
     Dab = mut_D
     deltaT = del_T
     deltaR = np.sqrt(6 * Dab * deltaT)  # diffusional motion
-
-    # r = r_min + np.random.sample() * (r_max - r_min)
 
     x, y, z, dist, angle = (
         np.zeros(n_steps),
@@ -1218,7 +1307,7 @@ def randomwalk3D_cage(n_steps, r_min, r_max, x_0, y_0, z_0, mut_D, del_T):
         )
         dist[i] = np.sqrt(dist_sq)
 
-        if dist_sq > r_max**2:  # or dist_sq < r_min**2:
+        if dist_sq > r_max**2:
             x[i] = x[i - 1] - x[i]
             y[i] = y[i - 1] - y[i]
             z[i] = z[i - 1] - z[i]
@@ -1227,7 +1316,131 @@ def randomwalk3D_cage(n_steps, r_min, r_max, x_0, y_0, z_0, mut_D, del_T):
             y[i] += y[i - 1]
             z[i] += z[i - 1]
 
+    phi = np.linspace(0, np.pi, 20)
+    theta = np.linspace(0, 2 * np.pi, 40)
+    x_frame = r_max * np.outer(np.sin(theta), np.cos(phi))
+    y_frame = r_max * np.outer(np.sin(theta), np.sin(phi))
+    z_frame = r_max * np.outer(np.cos(theta), np.ones_like(phi))
+
+    f = 1e9
+
+    fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "3d", "aspect": "auto"})
+    ax.set_facecolor("none")
+    ax.grid(False)
+    plt.axis("on")
+    ax.plot_wireframe(
+        x_frame * f,
+        y_frame * f,
+        z_frame * f,
+        color="k",
+        alpha=0.1,
+        rstride=1,
+        cstride=1,
+    )
+    ax.plot(x * f, y * f, z * f, alpha=0.9, color="cyan")
+    ax.plot(x[0] * f, y[0] * f, z[0] * f, "bo", markersize=15)
+    ax.plot(0, 0, 0, "ro", markersize=15)
+    #     ax.set_title("3D Monte Carlo random walk simulation for an encapsulated radical pair", size=16)
+    ax.set_xlabel("$X$ (nm)", size=14)
+    ax.set_ylabel("$Y$ (nm)", size=14)
+    ax.set_zlabel("$Z$ (nm)", size=14)
+    # plt.xlim([-1, 1]); plt.ylim([-1, 1])
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 10)
+    plt.show()
+
     return x, y, z, dist, angle
+
+
+def MC_exchange_dipolar(n_steps, r_min, del_T, radA_x, dist, angle):
+
+    r_min = radA_x[0]
+    t = np.linspace(0, n_steps, n_steps)
+    dist[0] = r_min
+    r = dist
+    t_tot = n_steps * del_T * 1e9
+    t = np.linspace(0, t_tot, n_steps)
+
+    # Constants and variables
+    mu0 = 8.85418782e-12
+    g = 2.0023
+    muB = 9.274e-24
+    hbar = 1.054e-34
+    theta = angle[1::]
+    r_D = r + r_min
+    J0 = -570e-3
+    alpha = 2e10
+
+    # J-coupling
+    J = -J0 * np.exp(-alpha * (r))
+
+    # D-coupling
+    D = (
+        -(3 / 2)
+        * (mu0 / (4 * np.pi))
+        * ((g**2 * muB**2) / (hbar * r_D**3))
+        * (3 * np.cos(theta) ** 2 - 1)
+    ) / 1e3
+
+    fig = plt.figure()
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_facecolor("none")
+    ax.grid(False)
+    plt.axis("on")
+    plt.rc("axes", edgecolor="k")
+    plt.plot(t, (r + r_min) * 1e9, "r")
+    ax.set_title("Time evolution of radical pair separation", size=16)
+    ax.set_xlabel("$t$ (ns)", size=14)
+    ax.set_ylabel("$r$ (nm)", size=14)
+    plt.tick_params(labelsize=14)
+    plt.show()
+
+    fig = plt.figure()
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_facecolor("none")
+    ax.grid(False)
+    plt.axis("on")
+    plt.rc("axes", edgecolor="k")
+    plt.plot(t, -J * 1e3)
+    ax.set_title("Time evolution of the exchange interaction", size=16)
+    ax.set_xlabel("$t$ (ns)", size=14)
+    ax.set_ylabel("$J$ (mT)", size=14)
+    plt.tick_params(labelsize=14)
+    plt.show()
+
+    fig = plt.figure()
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_facecolor("none")
+    ax.grid(False)
+    plt.axis("on")
+    plt.rc("axes", edgecolor="k")
+    plt.plot(t, D, "g")
+    ax.set_title("Time evolution of the dipolar interaction", size=16)
+    ax.set_xlabel("$t$ (ns)", size=14)
+    ax.set_ylabel("$D$ (mT)", size=14)
+    plt.tick_params(labelsize=14)
+    plt.show()
+
+    return t, J, D
+
+
+def MC_kSTD_kD(J, D, tau_c):
+    mT2MHz = 28.025  # Conversion factor for mT to MHz
+
+    # J-modulation rate
+    JJ = np.var(J * 1e3)
+    kSTD = (4 * tau_c) * JJ * 4 * np.pi**2 * 1e12 * mT2MHz  # (s^-1) J-modulation rate
+    print("J-modulation rate (s^-1) =", "{:.2e}".format(kSTD))
+    print("J-modulation rate (s) =", "{:.2e}".format(1 / kSTD))
+    print()
+
+    # D-modulation rate
+    DD = np.var(D)
+    kD = tau_c * DD * 4 * np.pi**2 * 1e12 * mT2MHz  # (s^-1) D-modulation rate
+    print("D-modulation rate (s^-1) =", "{:.2e}".format(kD))
+    print("D-modulation rate (s) =", "{:.2e}".format(1 / kD))
+
+    return kSTD, kD
 
 
 # ---------------------------------------------------------------------------------------------
