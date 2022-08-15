@@ -9,8 +9,6 @@ import tests.radpy as radpy
 class DummyTests(unittest.TestCase):
     def setUp(self):
         self.data = rp.data.MOLECULE_DATA["adenine"]["data"]
-        ################
-        # RadicalPy code
         self.rad_pair = [
             rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
             rp.Molecule("adenine", ["C8-H"]),
@@ -19,6 +17,7 @@ class DummyTests(unittest.TestCase):
         self.sim = rp.simulation.Quantum(self.rad_pair)
         self.spins = self.sim.num_particles
         self.gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
+        self.states = ["S", "Tm", "T0", "Tp", "Tpm"]
 
     def test_molecule_properties(self):
         molecule = rp.Molecule("adenine", ["N6-H1", "C8-H"])
@@ -147,6 +146,58 @@ class DummyTests(unittest.TestCase):
         assert np.all(
             np.isclose(self.sim.dipolar_hamiltonian(D), HD_true)
         ), "Dipolar Hamiltonian not calculated properly."
+
+    def test_hilbert_initial(self):
+        B = np.random.uniform()
+        J = np.random.uniform()
+        D = np.random.uniform()
+        H = self.sim.total_hamiltonian(B, J, D)
+        state = "S"
+        for state in self.states:
+            rho0 = self.sim.hilbert_initial(state, H)
+            rho0_true = radpy.Hilbert_initial(state, self.spins, H)
+            assert np.all(
+                np.isclose(rho0, rho0_true)
+            ), "Initial density not calculated properly."
+
+    def test_hilbert_observable(self):
+        for state in self.states:
+            obs = self.sim.hilbert_observable(state)
+            obs_true = radpy.Hilbert_observable(state, self.spins)
+            for pair in zip(obs, obs_true):
+                assert np.all(
+                    np.isclose(*pair)
+                ), "Initial density not calculated properly."
+
+    def test_hilbert_unitary_propagator(self):
+        B = np.random.uniform()
+        J = np.random.uniform()
+        D = np.random.uniform()
+        dt = np.random.uniform()
+        H = self.sim.total_hamiltonian(B, J, D)
+        U_true = radpy.UnitaryPropagator(H, dt, "Hilbert")
+        Utensor = self.sim.hilbert_unitary_propagator(H, dt)
+        for pair in zip(U_true, Utensor):
+            assert np.all(np.isclose(*pair))
+
+    def test_hilbert_time_evolution(self):
+        dt = 0.01
+        t_max = 1.0
+        time = np.arange(0, t_max, dt)
+        k = 1e-10
+
+        B = np.random.uniform()
+        J = np.random.uniform()
+        D = np.random.uniform()
+        H = self.sim.total_hamiltonian(B, J, D)
+        for init_state in self.states:
+            for obs_state in self.states:
+                evol = self.sim.hilbert_time_evolution(init_state, obs_state, time, H)
+                evol_true = radpy.TimeEvolution(
+                    self.spins, init_state, obs_state, t_max, dt, k, 0, H, "Hilbert"
+                )
+                assert np.all(np.isclose(evol["evol"], evol_true[1]))
+                assert np.all(np.isclose(evol["rho"], evol_true[-1]))
 
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
