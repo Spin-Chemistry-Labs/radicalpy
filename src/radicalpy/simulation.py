@@ -163,7 +163,7 @@ class Quantum:
             case "Eq":
                 return 1.05459e-34 / (1.38e-23 * 298)
 
-    def HZ(self, B0: float) -> np.array:
+    def zeeman_hamiltonian(self, B0: float) -> np.array:
         """Construct the Zeeman Hamiltonian.
 
         Construct the Zeeman Hamiltonian based on the external
@@ -193,7 +193,7 @@ class Quantum:
         h = self.hfcs[ni]
         return -g * h * self.prodop(ei, self.num_electrons + ni)
 
-    def HH(self) -> np.array:
+    def hyperfine_hamiltonian(self) -> np.array:
         """Construct the Hyperfine Hamiltonian.
 
         Construct the Hyperfine Hamiltonian based on the magnetic
@@ -243,7 +243,7 @@ class Quantum:
         }
         return methods[model](r)
 
-    def HE(self, J: float) -> np.array:
+    def exchange_hamiltonian(self, J: float) -> np.array:
         """Construct the Exchange Hamiltonian.
 
         Construct the Exchange (J-coupling) Hamiltonian based on the
@@ -278,7 +278,7 @@ class Quantum:
         """
         return -2.785 / r**3
 
-    def HD(self, D: float) -> np.array:
+    def dipolar_hamiltonian(self, D: float) -> np.array:
         """Construct the Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
@@ -308,7 +308,12 @@ class Quantum:
             Write proper docs.
 
         """
-        return self.HZ(B) + self.HH() + self.HE(J) + self.HD(D)
+        return (
+            self.zeeman_hamiltonian(B)
+            + self.hyperfine_hamiltonian()
+            + self.exchange_hamiltonian(J)
+            + self.dipolar_hamiltonian(D)
+        )
 
     def hilbert_initial(self, state, H):
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
@@ -407,7 +412,7 @@ class Quantum:
         match space:
             case "Hilbert":
 
-                HZ = self.HZ(B)
+                HZ = self.zeeman_hamiltonian(B)
                 H_total = H + HZ
                 rho0 = self.hilbert_initial(initial, H_total)
                 obs, Pobs = self.hilbert_observable(observable)
