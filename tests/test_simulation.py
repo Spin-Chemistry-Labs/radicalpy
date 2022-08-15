@@ -70,7 +70,7 @@ class DummyTests(unittest.TestCase):
         """
         mol = rp.Molecule()
         sim = rp.simulation.Quantum([mol, mol])
-        HZ = sim.HZ(0.5)
+        HZ = sim.zeeman_hamiltonian(0.5)
         nz = HZ != 0
         assert HZ.shape == (4, 4)
         assert len(HZ[nz]) == 2
@@ -86,7 +86,7 @@ class DummyTests(unittest.TestCase):
         ]
         B = np.random.uniform()
         sim = rp.simulation.Quantum(rad_pair)
-        HZ = sim.HZ(B)
+        HZ = sim.zeeman_hamiltonian(B)
 
         #########################
         # Assume this is correct!
@@ -103,7 +103,7 @@ class DummyTests(unittest.TestCase):
         ), "Zeeman Hamiltonian not calculated properly."
 
     def test_HZ(self):
-        HZ = self.sim.HZ(self.B)
+        HZ = self.sim.zeeman_hamiltonian(self.B)
 
         #########################
         # Assume this is correct!
@@ -131,21 +131,21 @@ class DummyTests(unittest.TestCase):
             ]
         )
         assert np.all(
-            np.isclose(self.sim.HH(), HH_true)
+            np.isclose(self.sim.hyperfine_hamiltonian(), HH_true)
         ), "Hyperfine Hamiltonian not calculated properly."
 
     def test_HE(self):
         J = np.random.uniform()
         HE_true = radpy.HamiltonianExchange(self.spins, J, gamma=self.gamma_mT)
         assert np.all(
-            np.isclose(self.sim.HE(J), HE_true)
+            np.isclose(self.sim.exchange_hamiltonian(J), HE_true)
         ), "Exchange (J-coupling) Hamiltonian not calculated properly."
 
     def test_HD(self):
         D = np.random.uniform()
         HD_true = radpy.HamiltonianDipolar(self.spins, D, self.gamma_mT)
         assert np.all(
-            np.isclose(self.sim.HD(D), HD_true)
+            np.isclose(self.sim.dipolar_hamiltonian(D), HD_true)
         ), "Dipolar Hamiltonian not calculated properly."
 
     @unittest.skip("Keeping only for the notes from earlier")
