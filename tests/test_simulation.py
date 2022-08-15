@@ -150,37 +150,6 @@ class DummyTests(unittest.TestCase):
 
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
-        rad_pair = [
-            rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
-            rp.Molecule("adenine", ["C8-H"]),
-        ]
-        B = 0.5
-        spins = 2 + sum([len(t.nuclei_list) for t in rad_pair])
-
-        # calculates HZ, HH
-        sim = rp.Quantum(
-            rad_pair,
-            # hfc1_custom=[0.5, 0.6], # mT
-            # atom1_custom=["H", "N"]
-            # or
-            # multiplicity1_custom=[1, 3] # or spin1_custom?
-            # gamma1_custom=[0.1, 0.4] ???
-            # mT vs MHz!
-            kinetics=dict(model="Haberkorn", recombination=3e6, escape=1e6),
-        )
-        # SAIA, SAIB, SBIC
-
-        HZ = sim.hamiltonians["HZ"]
-
-        # Assume this is correct!
-        omega_e = (B * 1.760859644e8,)
-        electrons = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2)])
-        omega_n = B * 267.513e3
-        nuclei = sum([radpy.np_spinop(radpy.np_Sz, i, spins) for i in range(2, spins)])
-        HZ_true = omega_e * electrons - omega_n * nuclei
-
-        sim.hyperfine()
-
         # # creates K "Hamiltonian"
         # sim.kinetics(model="Haberkorn", recombination=3e6, escape=1e6)
         # # creates Relaxation "Hamiltonian"
