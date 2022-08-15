@@ -111,7 +111,22 @@ class Quantum:
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
 
     def spinop(self, idx: int, axis: str) -> np.array:
-        """Construct the spin operator for a particle."""
+        """Construct the spin operator for a particle.
+
+        Construct the spin operator for the particle with index
+        ``idx`` in the :class:`Quantum` system.
+
+        Args:
+
+            idx (int): Index of the particle.
+
+            axis (str): Axis, i.e. ``"x"``, ``"y"`` or ``"z"``.
+
+        Returns:
+            np.array: Spin operator for a particle in the
+            :class:`Quantum` system simulated.
+
+        """
         assert 0 <= idx and idx < len(self.multiplicities)
         assert axis in "xyz"
 
@@ -316,132 +331,137 @@ class Quantum:
         )
 
     def hilbert_initial(self, state, H):
-        """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
+        """Create an initial desity matrix.
+
+        Create an initial density matrix for time evolution of the
+        spin Hamiltonian density matrix.
 
         Args:
-            state: a string = spin state projection operator
-            H: a matrix = spin Hamiltonian in Hilbert space
+            state (str): Spin state projection operator.
+            H (np.array): Spin Hamiltonian in Hilbert space.
 
         Returns:
-            A matrix in Hilbert space
-
-        Example:
-            rho0 = Hilbert_initial("S", 3, H)
+            np.array: A matrix in Hilbert space representing...
 
         """
         Pi = self.projop(state)
 
         if np.array_equal(Pi, self.projop("Eq")):
-            rho0eq = np.expm(-1j * H * Pi)
+            rho0eq = sp.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
         else:
             rho0 = Pi / np.trace(Pi)
         return rho0
 
     def hilbert_observable(self, state):
-        """
-        Create an observable density matrix for time evolution of the spin Hamiltonian density matrix.
+        """Create an observable density matrix.
+
+        Create an observable density matrix for time evolution of the
+        spin Hamiltonian density matrix.
 
         Arguments:
             state: a string = spin state projection operator
             spins: an integer = sum of the number of electrons and nuclei
 
         Returns:
-            Two matrices in Hilbert space
+            list[np.array]: Two matrices in Hilbert space.
 
         Example:
             obs, Pobs = Hilbert_observable("S", 3)
 
         """
         Pobs = self.projop(state)
-
         rhoobs = Pobs / np.trace(Pobs)
 
         # Observables
         if np.array_equal(Pobs, self.projop("T")):
-            M = (self.projop("S") @ (self.projop("S") / np.trace(self.projop("S"))),)
+            M = self.projop("S") @ (self.projop("S") / np.trace(self.projop("S")))
             obs = 1 - np.real(np.trace(M))
         else:
             obs = np.real(np.trace(np.matmul(Pobs, rhoobs)))
         return [obs, Pobs]
 
     @staticmethod
-    def unitary_propagator(H, dt, space="Hilbert"):
-        """Create unitary propagator matrices for time evolution of the spin Hamiltonian density matrix in both Hilbert and Liouville space.
+    def hilbert_unitary_propagator(H, dt):
+        """Create unitary propagator (Hilbert space).
+
+        Create unitary propagator matrices for time evolution of the
+        spin Hamiltonian density matrix in Hilbert space.
 
         Arguments:
-            H: a matrix = spin Hamiltonian in Hilbert or Liouville space
-            dt: a floating point number = time evolution timestep
-            space: a string = select the spin space
+            H (np.array): Spin Hamiltonian in Hilbert space.
+            dt (float): Time evolution timestep.
 
         Returns:
-            Matrices in either Hilbert or Liouville space
+            np.array : Two matrices (a tensor) in either Hilbert.
+
+        .. todo::
+            https://docs.python.org/3/library/doctest.html
 
         Example:
-            Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
-            UL = UnitaryPropagator(HL, 3e-9, "Liouville")
+            >>> Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
+            >>> UL = UnitaryPropagator(HL, 3e-9, "Liouville")
 
         """
-        match space:
-            case "Hilbert":
-                UnitaryPropagator_plus = np.expm(1j * H * dt)
-                UnitaryPropagator_minus = np.expm(-1j * H * dt)
-                return [UnitaryPropagator_plus, UnitaryPropagator_minus]
-            case "Liouville":
-                return np.expm(H * dt)
+        Up = sp.linalg.expm(1j * H * dt)
+        Um = sp.linalg.expm(-1j * H * dt)
+        return np.array([Up, Um])
 
-    def TimeEvolution(
+    def hilbert_time_evolution(
         self,
-        initial,
-        observable,
-        t_max,
-        t_stepsize,
-        k,
-        B,
-        H,
-        space="Hilbert",
-        model="Exponential",
+        init_state: np.array,
+        obs_state: np.array,
+        time: np.array,
+        H: np.array,
     ):
+        """Generate time evolution."""
+        dt = time[1] - time[0]
+        rho0 = self.hilbert_initial(init_state, H)
+        obs, Pobs = self.hilbert_observable(obs_state)
+        Up, Um = self.hilbert_unitary_propagator(H, dt)
 
-        #     time = np.linspace(t_min, t_max, t_stepsize)
-        #     dt = time[1] - time[0]
-        time = np.arange(0, t_max, t_stepsize)
-        dt = t_stepsize
+        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        evol = np.zeros(len(time))
+        evol[0] = obs
+        for t in range(len(time)):
+            rhot = Um @ rho0 @ Up
+            rhot = rhot / np.trace(rhot)
+            rho0 = rhot
+            evol[t] = np.real(np.trace(Pobs @ rhot))
+            rhos[t] = rhot
+        return {"evol": evol, "rho": rhos}
+
+    @staticmethod
+    def liouville_unitary_propagator(H, dt, space="Hilbert"):
+        """Create unitary propagator.
+
+        Create unitary propagator matrices for time evolution of the
+        spin Hamiltonian density matrix in both Hilbert and Liouville
+        space.
+
+        Arguments:
+            H (np.array): Spin Hamiltonian in Hilbert or Liouville space
+            dt (float): Time evolution timestep.
+            space (str): Select the spin space.
+        """
+        return sp.linalg.expm(H * dt)
+
+    def liouville_time_evolution(self):
+
+        # HZ = HamiltonianZeeman_RadicalPair(spins, B)
+        # HZ = Hilbert2Liouville(HZ)
+        # H_total = H + HZ
+        # rho0 = Liouville_initial(initial, spins, H_total)
+        # obs, Pobs = Liouville_observable(observable, spins)
+
+        UL = self.unitary_propagator(H_total, dt, space="Liouville")
         evol = np.zeros(len(time))
 
-        match space:
-            case "Hilbert":
+        for i, dt in enumerate(time):
+            rhot = UL @ rho0
+            rho0 = rhot
 
-                HZ = self.zeeman_hamiltonian(B)
-                H_total = H + HZ
-                rho0 = self.hilbert_initial(initial, H_total)
-                obs, Pobs = self.hilbert_observable(observable)
-
-                Up, Um = self.unitary_propagator(H_total, dt, space="Hilbert")
-                evol[0] = obs
-
-                for i, dt in enumerate(time):
-                    rhot = Um @ rho0 @ Up
-                    rhot = rhot / np.trace(rhot)
-                    rho0 = rhot
-                    evol[i] = np.real(np.trace(np.matmul(Pobs, rhot)))
-
-            case "Liouville":
-
-                # HZ = HamiltonianZeeman_RadicalPair(spins, B)
-                # HZ = Hilbert2Liouville(HZ)
-                # H_total = H + HZ
-                # rho0 = Liouville_initial(initial, spins, H_total)
-                # obs, Pobs = Liouville_observable(observable, spins)
-
-                UL = self.unitary_propagator(H_total, dt, space="Liouville")
-                evol = np.zeros(len(time))
-
-                for i, dt in enumerate(time):
-                    rhot = UL @ rho0
-                    rho0 = rhot
-
-                    evol[i] = np.real(np.trace(np.matmul(Pobs.T, rhot)))
+            evol[i] = np.real(np.trace(np.matmul(Pobs.T, rhot)))
 
         ProductYield = sp.integrate.cumtrapz(evol, time, initial=0) * k
         ProductYieldSum = np.max(ProductYield)
