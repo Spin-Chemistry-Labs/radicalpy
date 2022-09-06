@@ -188,16 +188,12 @@ class SimulationTests(unittest.TestCase):
                 evol_true = radpy.TimeEvolution(
                     self.spins, init_state, obs, t_max, dt, k, 0, H, "Hilbert"
                 )
-                prob_true = evol_true[1][:-1]
-                rhos_true = evol_true[-1][:-1]
                 prob = self.sim.probability_from_density(obs, rhos)
-                prob *= Kexp
-
                 assert np.all(
-                    np.isclose(rhos, rhos_true)
+                    np.isclose(rhos, evol_true[-1][:-1])
                 ), "Time evolution (rho) failed)"
                 assert np.all(
-                    np.isclose(prob, prob_true)
+                    np.isclose(prob * Kexp, evol_true[1][:-1])
                 ), "Time evolution (probability or kinetics) failed)"
 
     @unittest.skip("Keeping only for the notes from earlier")
