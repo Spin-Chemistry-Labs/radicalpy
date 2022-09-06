@@ -5,6 +5,8 @@ import src.radicalpy as rp
 
 import tests.radpy as radpy
 
+RUN_SLOW_TESTS = False
+
 
 class SimulationTests(unittest.TestCase):
     def setUp(self):
@@ -218,6 +220,7 @@ class SimulationTests(unittest.TestCase):
         U_prop = self.sim.liouville_unitary_propagator(H, dt)
         assert np.all(np.isclose(U_true, U_prop))
 
+    @unittest.skipIf(RUN_SLOW_TESTS, "slow")
     def test_liouville_time_evolution(self):
         dt = 0.01
         t_max = 1.0
@@ -242,19 +245,3 @@ class SimulationTests(unittest.TestCase):
                 assert np.all(
                     np.isclose(prob, evol_true[1][:-1])
                 ), "Time evolution (probability) failed)"
-
-    @unittest.skip("Keeping only for the notes from earlier")
-    def test_dummy(self):
-        # # creates K "Hamiltonian"
-        # sim.kinetics(model="Haberkorn", recombination=3e6, escape=1e6)
-        # # creates Relaxation "Hamiltonian"
-        # sim.relaxation(model="STD", rate=1e6)
-        # # create HJ
-        # sim.J_coupling(0.0)
-        # # create HD
-        # sim.dipolar_coupling(0.0)
-
-        # sim.time_evolution(time=np.linspace())
-        # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
-        # sim.angle(time=np.linspace(), theta=np.linspace(), phi=np.linspace())
-        pass

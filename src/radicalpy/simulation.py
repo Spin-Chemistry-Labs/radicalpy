@@ -460,10 +460,10 @@ class Quantum:
                 )
 
     def liouville_projop(self, state: str) -> np.array:
-        if state == "Eq":
-            return 1.05459e-34 / (1.38e-23 * 298)
-        else:
-            return np.reshape(self.projop(state), (-1, 1))
+        # if state == "Eq":
+        #     return 1.05459e-34 / (1.38e-23 * 298)
+        # else:
+        return np.reshape(self.projop(state), (-1, 1))
 
     def liouville_initial(self, state: str, H: np.array) -> np.array:
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
@@ -524,6 +524,8 @@ class Quantum:
             rhos[t] = UL @ rhos[t - 1]
         return rhos
 
+    # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
+    # sim.angle(time=np.linspace(), theta=np.linspace(), phi=np.linspace())
 
     # def MARY(spins, initial, observable, t_max, t_stepsize, k, B, Hplot, space="Hilbert"):
 
