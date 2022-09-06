@@ -460,9 +460,6 @@ class Quantum:
                 )
 
     def liouville_projop(self, state: str) -> np.array:
-        # if state == "Eq":
-        #     return 1.05459e-34 / (1.38e-23 * 298)
-        # else:
         return np.reshape(self.projop(state), (-1, 1))
 
     def liouville_initial(self, state: str, H: np.array) -> np.array:
@@ -510,19 +507,39 @@ class Quantum:
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
     def liouville_time_evolution(
-        self, state: str, time: np.array, H: np.array
+        self, init_state: str, time: np.array, H: np.array
     ) -> np.array:
         """Generate the density time evolution."""
-
         dt = time[1] - time[0]
         HL = self.hilbert_to_liouville(H)
-        rho0 = self.liouville_initial(state, HL)
+        rho0 = self.liouville_initial(init_state, HL)
         rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
         UL = self.liouville_unitary_propagator(HL, dt)
         rhos[0] = rho0
         for t in range(1, len(time)):
             rhos[t] = UL @ rhos[t - 1]
         return rhos
+
+    def liouville_time_evolution_fast(
+        self, init_state: str, obs_state: str, time: np.array, H: np.array
+    ) -> np.array:
+        """Generate the density time evolution.
+
+        I wanted to make a 'faster' version, by not storing `rhos` and
+        just recording the probabilities of the observable.
+
+        """
+        dt = time[1] - time[0]
+        HL = self.hilbert_to_liouville(H)
+        rho0 = self.liouville_initial(init_state, HL)
+        UL = self.liouville_unitary_propagator(HL, dt)
+        obs_prob = np.zeros(len(time))
+        obs = self.liouville_projop(obs_state)
+        for t in range(len(time)):
+            obs_prob[t] = self.probability_from_density(obs.T, rho0)
+            rho0 = UL @ rho0
+
+        return obs_prob
 
     # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
     # sim.angle(time=np.linspace(), theta=np.linspace(), phi=np.linspace())
