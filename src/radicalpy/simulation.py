@@ -380,27 +380,24 @@ class Quantum:
         return np.array([Up, Um])
 
     def hilbert_time_evolution(
-        self,
-        init_state: np.array,
-        obs_state: str,
-        time: np.array,
-        H: np.array,
-    ):
+        self, init_state: np.array, time: np.array, H: np.array
+    ) -> np.array:
         """Evolve the system through time."""
         dt = time[1] - time[0]
-        obs = self.projop(obs_state)
         Up, Um = self.hilbert_unitary_propagator(H, dt)
 
         rho0 = self.hilbert_initial(init_state, H)
         rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        evol = np.zeros(len(time))
         rhos[0] = rho0 / np.trace(rho0)
-        evol[0] = np.real(np.trace(obs @ rhos[0]))
         for t in range(1, len(time)):
             rho = Um @ rhos[t - 1] @ Up
             rhos[t] = rho / np.trace(rho)
-            evol[t] = np.real(np.trace(obs @ rho))
-        return {"evol": evol, "rho": rhos}
+        return rhos
+
+    def probability_from_density(self, obs_state: str, rhos: np.array) -> np.array:
+        obs = self.projop(obs_state)
+        return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
+
 
     @staticmethod
     def liouville_unitary_propagator(H, dt, space="Hilbert"):
