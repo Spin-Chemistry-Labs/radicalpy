@@ -20,4 +20,4 @@ jobs:
       run: >-
         python -m
         unittest
-        discover
+        discover -v
