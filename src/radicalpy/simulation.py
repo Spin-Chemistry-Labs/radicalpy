@@ -330,7 +330,7 @@ class Quantum:
             + self.dipolar_hamiltonian(D)
         )
 
-    def hilbert_initial(self, state, H):
+    def hilbert_initial(self, state: str, H: np.array) -> np.array:
         """Create an initial desity matrix.
 
         Create an initial density matrix for time evolution of the
@@ -354,7 +354,7 @@ class Quantum:
         return rho0
 
     @staticmethod
-    def hilbert_unitary_propagator(H, dt):
+    def hilbert_unitary_propagator(H: np.array, dt: float) -> np.array:
         """Create unitary propagator (Hilbert space).
 
         Create unitary propagator matrices for time evolution of the
@@ -377,7 +377,7 @@ class Quantum:
         """
         Up = sp.linalg.expm(1j * H * dt)
         Um = sp.linalg.expm(-1j * H * dt)
-        return np.array([Up, Um])
+        return Up, Um
 
     def hilbert_time_evolution(
         self, init_state: np.array, time: np.array, H: np.array
@@ -399,7 +399,7 @@ class Quantum:
         obs = self.projop(obs_state)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
-    def kinetics_exponential(self, k, time: np.array) -> np.array:
+    def kinetics_exponential(self, k: float, time: np.array) -> np.array:
         """Return exponential kinetics."""
         return np.exp(-k * time)
 
