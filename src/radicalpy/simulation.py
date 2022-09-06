@@ -394,14 +394,76 @@ class Quantum:
             rhos[t] = rho / np.trace(rho)
         return rhos
 
-    def probability_from_density(self, obs_state: str, rhos: np.array) -> np.array:
+    def probability_from_density(self, obs: np.array, rhos: np.array) -> np.array:
         """Calculate the probability of the observable from the densities."""
-        obs = self.projop(obs_state)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
     def kinetics_exponential(self, k: float, time: np.array) -> np.array:
         """Return exponential kinetics."""
         return np.exp(-k * time)
+
+    def kinetics_general(self, model, k=0, time=0):
+        """Construct kinetics.
+
+        Kinetic models include:
+        "Exponential"
+        "Diffusion"
+        Haberkorn superoperators (singlet and triplet recombination, free radical (RP2) production)
+        Jones-Hore superoperator
+
+        Arguments:
+            spins: an integer = sum of the number of electrons and nuclei
+            k: a floating point number = kinetic rate constant in s^-1
+            time: evenly spaced sequence in a specified interval i.e., np.linspace = used for "Exponential" and "Diffusion" model only
+            model: string = select the kinetic model
+
+        Returns:
+            An array for "Exponential" and "Diffusion" models
+            A superoperator matrix (Liouville space)
+
+        Example:
+            K = Kinetics(3, 1e6, 0, "Haberkorn-singlet")
+        """
+        QS = self.projop("S")
+        QT = self.projop("T")
+        match model:
+            case "Diffusion":
+                rsig = 5e-10  # Recombination distance
+                r0 = 9e-10  # Created separation distance
+                Dif = 1e-5 / 10000  # m^2/s Relative diffusion coefficient
+                a_dif = (rsig * (r0 - rsig)) / (r0 * np.sqrt(4 * np.pi * Dif))
+                b_dif = ((r0 - rsig) ** 2) / (4 * Dif)
+                return a_dif * time ** (-3 / 2) * np.exp(-b_dif / time)
+            case "Haberkorn-singlet":
+                return (
+                    0.5
+                    * k
+                    * (np.kron(QS, np.eye(len(QS))) + (np.kron(np.eye(len(QS)), QS)))
+                )
+            case "Haberkorn-triplet":
+                return (
+                    0.5
+                    * k
+                    * (np.kron(QT, np.eye(len(QT))) + (np.kron(np.eye(len(QT)), QT)))
+                )
+            case "Haberkorn-free":
+                return k * np.kron(np.eye(len(QS)), np.eye(len(QS)))
+            case "Jones-Hore":
+                return (
+                    0.5
+                    * k
+                    * (np.kron(QS, np.eye(len(QS))) + (np.kron(np.eye(len(QS)), QS)))
+                    + 0.5
+                    * kt
+                    * (np.kron(QT, np.eye(len(QT))) + (np.kron(np.eye(len(QT)), QT)))
+                    + (0.5 * (ks + kt)) * (np.kron(QS, QT) + np.kron(QT, QS))
+                )
+
+    def liouville_projop(self, state: str) -> np.array:
+        if state == "Eq":
+            return 1.05459e-34 / (1.38e-23 * 298)
+        else:
+            return np.reshape(self.projop(state), (-1, 1))
 
     def liouville_initial(self, state: str, H: np.array) -> np.array:
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
@@ -417,13 +479,12 @@ class Quantum:
         Example:
             rho0 = Liouville_initial("S", 3, H)
         """
+        Pi = self.liouville_projop(state)
         if state == "Eq":
-            tmp = 1.05459e-34 / (1.38e-23 * 298)
-            rho0eq = sp.linalg.expm(-1j * H * tmp)
+            rho0eq = sp.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
             rho0 = np.reshape(rho0, (len(H) ** 2, 1))
         else:
-            Pi = np.reshape(self.projop(state), (-1, 1))
             rho0 = Pi / np.vdot(Pi, Pi)
         return rho0
 
@@ -442,66 +503,27 @@ class Quantum:
         """
         return sp.linalg.expm(H * dt)
 
-    def liouville_time_evolution(self):
+    @staticmethod
+    def hilbert_to_liouville(H: np.array) -> np.array:
+        """Convert the Hamiltonian from Hilbert to Liouville space."""
+        eye = np.eye(len(H))
+        return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
-        # HZ = HamiltonianZeeman_RadicalPair(spins, B)
-        # HZ = Hilbert2Liouville(HZ)
-        # H_total = H + HZ
-        # rho0 = Liouville_initial(initial, spins, H_total)
-        # obs, Pobs = Liouville_observable(observable, spins)
+    def liouville_time_evolution(
+        self, state: str, time: np.array, H: np.array
+    ) -> np.array:
+        """Generate the density time evolution."""
 
-        UL = self.unitary_propagator(H_total, dt, space="Liouville")
-        evol = np.zeros(len(time))
+        dt = time[1] - time[0]
+        HL = self.hilbert_to_liouville(H)
+        rho0 = self.liouville_initial(state, HL)
+        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        UL = self.liouville_unitary_propagator(HL, dt)
+        rhos[0] = rho0
+        for t in range(1, len(time)):
+            rhos[t] = UL @ rhos[t - 1]
+        return rhos
 
-        for i, dt in enumerate(time):
-            rhot = UL @ rho0
-            rho0 = rhot
-
-            evol[i] = np.real(np.trace(np.matmul(Pobs.T, rhot)))
-
-        ProductYield = sp.integrate.cumtrapz(evol, time, initial=0) * k
-        ProductYieldSum = np.max(ProductYield)
-        return [time, evol, ProductYield, ProductYieldSum, rhot]
-
-
-    # def Liouville_observable(state, spins):
-
-    #     """
-    #     Creates an observable density matrix for time evolution of the spin Hamiltonian density matrix
-
-    #     Arguments:
-    #         state: a string = spin state projection operator
-    #         spins: an integer = sum of the number of electrons and nuclei
-
-    #     Returns:
-    #         Two matrices in Liouville space
-
-    #     Example:
-    #         obs, Pobs = Liouville_observable("S", 3)
-    #     """
-
-    #     Pobs = projop_Liouville(spins, state)
-
-    #     rhoobs = Pobs / np.vdot(Pobs, Pobs)
-
-    #     # Observables
-    #     if np.array_equal(Pobs, projop_Liouville(spins, "T")):
-    #         obs = 1 - np.real(
-    #             np.trace(
-    #                 np.matmul(
-    #                     projop_Liouville(spins, "S").T,
-    #                     (
-    #                         projop_Liouville(spins, "S")
-    #                         / np.vdot(
-    #                             projop_Liouville(spins, "S"), projop_Liouville(spins, "S")
-    #                         )
-    #                     ),
-    #                 )
-    #             )
-    #         )
-    #     else:
-    #         obs = np.real(np.trace(np.matmul(Pobs.T, rhoobs)))
-    #     return [obs, Pobs]
 
     # def MARY(spins, initial, observable, t_max, t_stepsize, k, B, Hplot, space="Hilbert"):
 

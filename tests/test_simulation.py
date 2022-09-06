@@ -182,11 +182,12 @@ class SimulationTests(unittest.TestCase):
         H = self.sim.total_hamiltonian(B, J, D)
         Kexp = self.sim.kinetics_exponential(k, time)[:-1]
         for init_state in self.states:
-            for obs in self.states:
+            for obs_state in self.states:
                 rhos = self.sim.hilbert_time_evolution(init_state, time, H)[1:]
                 evol_true = radpy.TimeEvolution(
-                    self.spins, init_state, obs, t_max, dt, k, 0, H, "Hilbert"
+                    self.spins, init_state, obs_state, t_max, dt, k, 0, H, "Hilbert"
                 )
+                obs = self.sim.projop(obs_state)
                 prob = self.sim.probability_from_density(obs, rhos)
                 assert np.all(
                     np.isclose(rhos, evol_true[-1][:-1])
@@ -218,7 +219,29 @@ class SimulationTests(unittest.TestCase):
         assert np.all(np.isclose(U_true, U_prop))
 
     def test_liouville_time_evolution(self):
-        pass
+        dt = 0.01
+        t_max = 1.0
+        time = np.arange(0, t_max, dt)
+
+        B = np.random.uniform()
+        J = np.random.uniform()
+        D = np.random.uniform()
+        H = self.sim.total_hamiltonian(B, J, D)
+        HL = self.sim.hilbert_to_liouville(H)
+        for init_state in self.states:
+            for obs_state in self.states:
+                rhos = self.sim.liouville_time_evolution(init_state, time, H)[1:]
+                evol_true = radpy.TimeEvolution(
+                    self.spins, init_state, obs_state, t_max, dt, 0, 0, HL, "Liouville"
+                )
+                obs = self.sim.liouville_projop(obs_state).T
+                prob = self.sim.probability_from_density(obs, rhos)
+                # assert np.all(
+                #     np.isclose(rhos, evol_true[-1][:-1])
+                # ), "Time evolution (rho) failed)"
+                assert np.all(
+                    np.isclose(prob, evol_true[1][:-1])
+                ), "Time evolution (probability) failed)"
 
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
