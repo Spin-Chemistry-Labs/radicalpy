@@ -410,7 +410,7 @@ class Quantum:
     def hilbert_time_evolution(
         self,
         init_state: np.array,
-        obs_state: np.array,
+        obs_state: str,
         time: np.array,
         H: np.array,
     ):
