@@ -380,7 +380,7 @@ class Quantum:
         return Up, Um
 
     def hilbert_time_evolution(
-        self, init_state: np.array, time: np.array, H: np.array
+        self, init_state: str, time: np.array, H: np.array
     ) -> np.array:
         """Evolve the system through time."""
         dt = time[1] - time[0]
