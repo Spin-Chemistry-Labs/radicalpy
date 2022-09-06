@@ -144,7 +144,7 @@ class Quantum:
         """Projection operator."""
         return sum([self.prodop_axis(particle1, particle2, axis) for axis in "xyz"])
 
-    def projop(self, state):
+    def projop(self, state: str):
         """Construct.
 
         .. todo::
