@@ -353,34 +353,6 @@ class Quantum:
             rho0 = Pi / np.trace(Pi)
         return rho0
 
-    def hilbert_observable(self, state):
-        """Create an observable density matrix.
-
-        Create an observable density matrix for time evolution of the
-        spin Hamiltonian density matrix.
-
-        Arguments:
-            state: a string = spin state projection operator
-            spins: an integer = sum of the number of electrons and nuclei
-
-        Returns:
-            list[np.array]: Two matrices in Hilbert space.
-
-        Example:
-            obs, Pobs = Hilbert_observable("S", 3)
-
-        """
-        Pobs = self.projop(state)
-        rhoobs = Pobs / np.trace(Pobs)
-
-        # Observables
-        if np.array_equal(Pobs, self.projop("T")):
-            M = self.projop("S") @ (self.projop("S") / np.trace(self.projop("S")))
-            obs = 1 - np.real(np.trace(M))
-        else:
-            obs = np.real(np.trace(np.matmul(Pobs, rhoobs)))
-        return [obs, Pobs]
-
     @staticmethod
     def hilbert_unitary_propagator(H, dt):
         """Create unitary propagator (Hilbert space).
@@ -416,19 +388,18 @@ class Quantum:
     ):
         """Evolve the system through time."""
         dt = time[1] - time[0]
-        rho0 = self.hilbert_initial(init_state, H)
-        obs, Pobs = self.hilbert_observable(obs_state)
+        obs = self.projop(obs_state)
         Up, Um = self.hilbert_unitary_propagator(H, dt)
 
+        rho0 = self.hilbert_initial(init_state, H)
         rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
         evol = np.zeros(len(time))
-        evol[0] = obs
-        for t in range(len(time)):
-            rhot = Um @ rho0 @ Up
-            rhot = rhot / np.trace(rhot)
-            rho0 = rhot
-            evol[t] = np.real(np.trace(Pobs @ rhot))
-            rhos[t] = rhot
+        rhos[0] = rho0 / np.trace(rho0)
+        evol[0] = np.real(np.trace(obs @ rhos[0]))
+        for t in range(1, len(time)):
+            rho = Um @ rhos[t - 1] @ Up
+            rhos[t] = rho / np.trace(rho)
+            evol[t] = np.real(np.trace(obs @ rho))
         return {"evol": evol, "rho": rhos}
 
     @staticmethod

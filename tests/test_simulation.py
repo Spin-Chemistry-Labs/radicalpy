@@ -160,15 +160,6 @@ class SimulationTests(unittest.TestCase):
                 np.isclose(rho0, rho0_true)
             ), "Initial density not calculated properly."
 
-    def test_hilbert_observable(self):
-        for state in self.states:
-            obs = self.sim.hilbert_observable(state)
-            obs_true = radpy.Hilbert_observable(state, self.spins)
-            for pair in zip(obs, obs_true):
-                assert np.all(
-                    np.isclose(*pair)
-                ), "Initial density not calculated properly."
-
     def test_hilbert_unitary_propagator(self):
         B = np.random.uniform()
         J = np.random.uniform()
@@ -184,7 +175,7 @@ class SimulationTests(unittest.TestCase):
         dt = 0.01
         t_max = 1.0
         time = np.arange(0, t_max, dt)
-        k = 1e-10
+        k = 0  # 1e-10
 
         B = np.random.uniform()
         J = np.random.uniform()
@@ -196,8 +187,13 @@ class SimulationTests(unittest.TestCase):
                 evol_true = radpy.TimeEvolution(
                     self.spins, init_state, obs_state, t_max, dt, k, 0, H, "Hilbert"
                 )
-                assert np.all(np.isclose(evol["evol"], evol_true[1]))
-                assert np.all(np.isclose(evol["rho"], evol_true[-1]))
+                assert np.all(
+                    np.isclose(evol["evol"][1:], evol_true[1][:-1])
+                ), "Time evolution failed"
+                assert np.all(
+                    np.isclose(evol["rho"][1:], evol_true[-1][:-1])
+                ), "Time evolution (rho) failed)"
+
 
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
