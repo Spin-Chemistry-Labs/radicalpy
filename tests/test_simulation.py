@@ -152,7 +152,6 @@ class SimulationTests(unittest.TestCase):
         J = np.random.uniform()
         D = np.random.uniform()
         H = self.sim.total_hamiltonian(B, J, D)
-        state = "S"
         for state in self.states:
             rho0 = self.sim.hilbert_initial(state, H)
             rho0_true = radpy.Hilbert_initial(state, self.spins, H)
@@ -164,7 +163,7 @@ class SimulationTests(unittest.TestCase):
         B = np.random.uniform()
         J = np.random.uniform()
         D = np.random.uniform()
-        dt = np.random.uniform()
+        dt = np.random.uniform(1e-6)
         H = self.sim.total_hamiltonian(B, J, D)
         U_true = radpy.UnitaryPropagator(H, dt, "Hilbert")
         Utensor = self.sim.hilbert_unitary_propagator(H, dt)
@@ -201,7 +200,6 @@ class SimulationTests(unittest.TestCase):
         J = np.random.uniform()
         D = np.random.uniform()
         H = self.sim.total_hamiltonian(B, J, D)
-        state = "S"
         for state in self.states:
             rho0 = self.sim.liouville_initial(state, H)
             rho0_true = radpy.Liouville_initial(state, self.spins, H)
@@ -210,7 +208,14 @@ class SimulationTests(unittest.TestCase):
             ), "Initial density not calculated properly."
 
     def test_liouville_unitary_propagator(self):
-        pass
+        B = np.random.uniform()
+        J = np.random.uniform()
+        D = np.random.uniform()
+        dt = np.random.uniform(0, 1e-6)
+        H = self.sim.total_hamiltonian(B, J, D)
+        U_true = radpy.UnitaryPropagator(H, dt, "Liouville")
+        U_prop = self.sim.liouville_unitary_propagator(H, dt)
+        assert np.all(np.isclose(U_true, U_prop))
 
     def test_liouville_time_evolution(self):
         pass
