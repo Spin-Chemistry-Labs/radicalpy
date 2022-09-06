@@ -404,9 +404,7 @@ class Quantum:
         return np.exp(-k * time)
 
     def liouville_initial(self, state: str, H: np.array) -> np.array:
-
-        """
-        Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
+        """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
 
         Arguments:
             state: a string = spin state projection operator
