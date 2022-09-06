@@ -190,21 +190,28 @@ class SimulationTests(unittest.TestCase):
         J = np.random.uniform()
         D = np.random.uniform()
         H = self.sim.total_hamiltonian(B, J, D)
-        Kexp = self.sim.kinetics_exponential(k, ts)[:-1]
+        Kexp = self.sim.kinetics_exponential(k, ts)
         for init_state in self.states:
             for obs_state in self.states:
-                rhos = self.sim.hilbert_time_evolution(init_state, ts, H)[1:]
+                rhos = self.sim.hilbert_time_evolution(init_state, ts, H)
                 evol_true = radpy.TimeEvolution(
                     self.spins, init_state, obs_state, t_max, dt, k, 0, H, "Hilbert"
                 )
                 obs = self.sim.projop(obs_state)
                 prob = self.sim.probability_from_density(obs, rhos)
                 assert np.all(
-                    np.isclose(rhos, evol_true[-1][:-1])
-                ), "Time evolution (rho) failed)"
+                    np.isclose(rhos[1:], evol_true[-1][:-1])
+                ), "Time evolution (rho) failed."
+                prob_kinetics = prob[1:] * Kexp[:-1]
                 assert np.all(
-                    np.isclose(prob * Kexp, evol_true[1][:-1])
-                ), "Time evolution (probability or kinetics) failed)"
+                    np.isclose(prob_kinetics, evol_true[1][:-1])
+                ), "Time evolution (probability or kinetics) failed."
+                prod_yield, prod_yield_sum = self.sim.product_yield(
+                    prob_kinetics, ts[:-1], k
+                )
+                assert np.all(
+                    np.isclose(prod_yield, evol_true[2][:-1])
+                ), "Time evolution (product yield) failed."
 
     def test_liouville_initial(self):
         B = np.random.uniform()

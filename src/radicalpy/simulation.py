@@ -398,6 +398,12 @@ class Quantum:
         """Calculate the probability of the observable from the densities."""
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
+    @staticmethod
+    def product_yield(prob, time, k):
+        product_yield = sp.integrate.cumtrapz(prob, time, initial=0) * k
+        product_yield_sum = np.max(product_yield)
+        return product_yield, product_yield_sum
+
     def kinetics_exponential(self, k: float, time: np.array) -> np.array:
         """Return exponential kinetics."""
         return np.exp(-k * time)
