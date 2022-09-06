@@ -398,6 +398,10 @@ class Quantum:
         obs = self.projop(obs_state)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
+    def kinetics_exponential(self, k, time: np.array) -> np.array:
+        """Return exponential kinetics."""
+        return np.exp(-k * time)
+
 
     @staticmethod
     def liouville_unitary_propagator(H, dt, space="Hilbert"):

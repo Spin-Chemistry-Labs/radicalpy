@@ -175,26 +175,30 @@ class SimulationTests(unittest.TestCase):
         dt = 0.01
         t_max = 1.0
         time = np.arange(0, t_max, dt)
-        k = 0  # 1e-10
 
+        k = np.random.uniform()
         B = np.random.uniform()
         J = np.random.uniform()
         D = np.random.uniform()
         H = self.sim.total_hamiltonian(B, J, D)
+        Kexp = self.sim.kinetics_exponential(k, time)[:-1]
         for init_state in self.states:
-            for obs_state in self.states:
+            for obs in self.states:
                 rhos = self.sim.hilbert_time_evolution(init_state, time, H)[1:]
                 evol_true = radpy.TimeEvolution(
-                    self.spins, init_state, obs_state, t_max, dt, k, 0, H, "Hilbert"
+                    self.spins, init_state, obs, t_max, dt, k, 0, H, "Hilbert"
                 )
                 prob_true = evol_true[1][:-1]
                 rhos_true = evol_true[-1][:-1]
-                prob = self.sim.probability_from_density(obs_state, rhos)
+                prob = self.sim.probability_from_density(obs, rhos)
+                prob *= Kexp
 
-                chk_prob = np.isclose(prob, prob_true)
-                assert np.all(chk_prob), "Time evolution (probability) failed)"
-                chk_rhos = np.isclose(rhos, rhos_true)
-                assert np.all(chk_rhos), "Time evolution (rho) failed)"
+                assert np.all(
+                    np.isclose(rhos, rhos_true)
+                ), "Time evolution (rho) failed)"
+                assert np.all(
+                    np.isclose(prob, prob_true)
+                ), "Time evolution (probability or kinetics) failed)"
 
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
