@@ -414,7 +414,7 @@ class Quantum:
         time: np.array,
         H: np.array,
     ):
-        """Generate time evolution."""
+        """Evolve the system through time."""
         dt = time[1] - time[0]
         rho0 = self.hilbert_initial(init_state, H)
         obs, Pobs = self.hilbert_observable(obs_state)
