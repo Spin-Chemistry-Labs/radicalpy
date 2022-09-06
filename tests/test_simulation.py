@@ -6,7 +6,7 @@ import src.radicalpy as rp
 import tests.radpy as radpy
 
 
-class DummyTests(unittest.TestCase):
+class SimulationTests(unittest.TestCase):
     def setUp(self):
         self.data = rp.data.MOLECULE_DATA["adenine"]["data"]
         self.rad_pair = [
