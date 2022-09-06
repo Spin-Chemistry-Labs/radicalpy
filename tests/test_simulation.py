@@ -1,3 +1,4 @@
+import time
 import unittest
 
 import numpy as np
@@ -6,10 +7,13 @@ import src.radicalpy as rp
 import tests.radpy as radpy
 
 RUN_SLOW_TESTS = False
+MEASURE_TIME = False
 
 
 class SimulationTests(unittest.TestCase):
     def setUp(self):
+        if MEASURE_TIME:
+            self.start_time = time.time()
         self.data = rp.data.MOLECULE_DATA["adenine"]["data"]
         self.rad_pair = [
             rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
@@ -20,6 +24,10 @@ class SimulationTests(unittest.TestCase):
         self.spins = self.sim.num_particles
         self.gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
         self.states = ["S", "Tm", "T0", "Tp", "Tpm"]
+
+    def tearDown(self):
+        if MEASURE_TIME:
+            print(f"Time: {time.time() - self.start_time}")
 
     def test_molecule_properties(self):
         molecule = rp.Molecule("adenine", ["N6-H1", "C8-H"])
@@ -175,17 +183,17 @@ class SimulationTests(unittest.TestCase):
     def test_hilbert_time_evolution(self):
         dt = 0.01
         t_max = 1.0
-        time = np.arange(0, t_max, dt)
+        ts = np.arange(0, t_max, dt)
 
         k = np.random.uniform()
         B = np.random.uniform()
         J = np.random.uniform()
         D = np.random.uniform()
         H = self.sim.total_hamiltonian(B, J, D)
-        Kexp = self.sim.kinetics_exponential(k, time)[:-1]
+        Kexp = self.sim.kinetics_exponential(k, ts)[:-1]
         for init_state in self.states:
             for obs_state in self.states:
-                rhos = self.sim.hilbert_time_evolution(init_state, time, H)[1:]
+                rhos = self.sim.hilbert_time_evolution(init_state, ts, H)[1:]
                 evol_true = radpy.TimeEvolution(
                     self.spins, init_state, obs_state, t_max, dt, k, 0, H, "Hilbert"
                 )
@@ -220,11 +228,11 @@ class SimulationTests(unittest.TestCase):
         U_prop = self.sim.liouville_unitary_propagator(H, dt)
         assert np.all(np.isclose(U_true, U_prop))
 
-    @unittest.skipIf(RUN_SLOW_TESTS, "slow")
+    @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_liouville_time_evolution(self):
         dt = 0.01
         t_max = 1.0
-        time = np.arange(0, t_max, dt)
+        ts = np.arange(0, t_max, dt)
 
         B = np.random.uniform()
         J = np.random.uniform()
@@ -233,15 +241,38 @@ class SimulationTests(unittest.TestCase):
         HL = self.sim.hilbert_to_liouville(H)
         for init_state in self.states:
             for obs_state in self.states:
-                rhos = self.sim.liouville_time_evolution(init_state, time, H)[1:]
+                rhos = self.sim.liouville_time_evolution(init_state, ts, H)[1:]
                 evol_true = radpy.TimeEvolution(
                     self.spins, init_state, obs_state, t_max, dt, 0, 0, HL, "Liouville"
                 )
-                obs = self.sim.liouville_projop(obs_state).T
-                prob = self.sim.probability_from_density(obs, rhos)
+                obs = self.sim.liouville_projop(obs_state)
+                prob = self.sim.probability_from_density(obs.T, rhos)
                 # assert np.all(
                 #     np.isclose(rhos, evol_true[-1][:-1])
                 # ), "Time evolution (rho) failed)"
+                assert np.all(
+                    np.isclose(prob, evol_true[1][:-1])
+                ), "Time evolution (probability) failed)"
+
+    @unittest.skip("It's not (much) faster")
+    def test_liouville_time_evolution_fast(self):
+        dt = 0.01
+        t_max = 1.0
+        ts = np.arange(0, t_max, dt)
+
+        B = np.random.uniform()
+        J = np.random.uniform()
+        D = np.random.uniform()
+        H = self.sim.total_hamiltonian(B, J, D)
+        HL = self.sim.hilbert_to_liouville(H)
+        for init_state in self.states:
+            for obs_state in self.states:
+                prob = self.sim.liouville_time_evolution_fast(
+                    init_state, obs_state, ts, H
+                )[1:]
+                evol_true = radpy.TimeEvolution(
+                    self.spins, init_state, obs_state, t_max, dt, 0, 0, HL, "Liouville"
+                )
                 assert np.all(
                     np.isclose(prob, evol_true[1][:-1])
                 ), "Time evolution (probability) failed)"
