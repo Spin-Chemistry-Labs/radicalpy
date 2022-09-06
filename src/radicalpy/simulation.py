@@ -403,6 +403,36 @@ class Quantum:
         """Return exponential kinetics."""
         return np.exp(-k * time)
 
+    def liouville_initial(self, state: str, H: np.array) -> np.array:
+
+        """
+        Creates an initial density matrix for time evolution of the spin Hamiltonian density matrix
+
+        Arguments:
+            state: a string = spin state projection operator
+            spins: an integer = sum of the number of electrons and nuclei
+            H: a matrix = spin Hamiltonian in Hilbert space
+
+        Returns:
+            A matrix in Liouville space
+
+        Example:
+            rho0 = Liouville_initial("S", 3, H)
+        """
+
+        Pi = (
+            1.05459e-34 / (1.38e-23 * 298)
+            if state == "Eq"
+            else np.reshape(self.projop(state), (-1, 1))
+        )
+
+        if state == "Eq":
+            rho0eq = sp.linalg.expm(-1j * H * Pi)
+            rho0 = rho0eq / np.trace(rho0eq)
+            rho0 = np.reshape(rho0, (len(H) ** 2, 1))
+        else:
+            rho0 = Pi / np.vdot(Pi, Pi)
+        return rho0
 
     @staticmethod
     def liouville_unitary_propagator(H, dt, space="Hilbert"):

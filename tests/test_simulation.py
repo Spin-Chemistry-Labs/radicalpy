@@ -196,6 +196,25 @@ class SimulationTests(unittest.TestCase):
                     np.isclose(prob * Kexp, evol_true[1][:-1])
                 ), "Time evolution (probability or kinetics) failed)"
 
+    def test_liouville_initial(self):
+        B = np.random.uniform()
+        J = np.random.uniform()
+        D = np.random.uniform()
+        H = self.sim.total_hamiltonian(B, J, D)
+        state = "S"
+        for state in self.states:
+            rho0 = self.sim.liouville_initial(state, H)
+            rho0_true = radpy.Liouville_initial(state, self.spins, H)
+            assert np.all(
+                np.isclose(rho0, rho0_true)
+            ), "Initial density not calculated properly."
+
+    def test_liouville_unitary_propagator(self):
+        pass
+
+    def test_liouville_time_evolution(self):
+        pass
+
     @unittest.skip("Keeping only for the notes from earlier")
     def test_dummy(self):
         # # creates K "Hamiltonian"
