@@ -465,32 +465,6 @@ class Quantum:
         ProductYieldSum = np.max(ProductYield)
         return [time, evol, ProductYield, ProductYieldSum, rhot]
 
-    # def Liouville_initial(state, spins, H):
-
-    #     """
-    #     Creates an initial density matrix for time evolution of the spin Hamiltonian density matrix
-
-    #     Arguments:
-    #         state: a string = spin state projection operator
-    #         spins: an integer = sum of the number of electrons and nuclei
-    #         H: a matrix = spin Hamiltonian in Hilbert space
-
-    #     Returns:
-    #         A matrix in Liouville space
-
-    #     Example:
-    #         rho0 = Liouville_initial("S", 3, H)
-    #     """
-
-    #     Pi = projop_Liouville(spins, state)
-
-    #     if np.array_equal(Pi, projop_Liouville(spins, "Eq")):
-    #         rho0eq = expm(-1j * H * Pi)
-    #         rho0 = rho0eq / np.trace(rho0eq)
-    #         rho0 = np.reshape(rho0, (len(H) ** 2, 1))
-    #     else:
-    #         rho0 = Pi / np.vdot(Pi, Pi)
-    #     return rho0
 
     # def Liouville_observable(state, spins):
 
