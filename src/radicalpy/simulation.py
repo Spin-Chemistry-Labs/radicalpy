@@ -395,6 +395,7 @@ class Quantum:
         return rhos
 
     def probability_from_density(self, obs_state: str, rhos: np.array) -> np.array:
+        """Calculate the probability of the observable from the densities."""
         obs = self.projop(obs_state)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
