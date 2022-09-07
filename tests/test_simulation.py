@@ -195,7 +195,7 @@ class SimulationTests(unittest.TestCase):
                     "Hilbert",
                 )
                 obs = self.sim.projop(obs_state)
-                prob = self.sim.probability_from_density(obs, rhos)
+                prob = self.sim.product_probability(obs, rhos)
                 assert np.all(
                     np.isclose(rhos[1:], evol_true[-1][:-1])
                 ), "Time evolution (rho) failed."
@@ -245,7 +245,7 @@ class SimulationTests(unittest.TestCase):
                     space="Liouville",
                 )
                 obs = self.sim.liouville_projop(obs_state)
-                prob = self.sim.probability_from_density(obs.T, rhos)
+                prob = self.sim.product_probability(obs.T, rhos)
                 # assert np.all(
                 #     np.isclose(rhos, evol_true[-1][:-1])
                 # ), "Time evolution (rho) failed)"
@@ -277,7 +277,7 @@ class SimulationTests(unittest.TestCase):
                     np.isclose(prob, evol_true[1][:-1])
                 ), "Time evolution (probability) failed)"
 
-    # @unittest.skip("Not ready yet")
+    @unittest.skip("Not ready yet")
     def test_mary(self):
         k = np.random.uniform()
         H = self.sim.total_hamiltonian(0, self.J, self.D)
