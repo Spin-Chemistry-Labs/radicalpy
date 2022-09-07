@@ -196,7 +196,7 @@ class Quantum:
         """
         axis = "z"
         gammas = enumerate(self.gammas_mT)
-        return -sum(B0 * g * self.spinop(i, axis) for i, g in gammas)
+        return -B0 * sum(g * self.spinop(i, axis) for i, g in gammas)
 
     def _HH_term(self, ei: int, ni: int) -> np.array:
         """Construct a term of the Hyperfine Hamiltonian.
