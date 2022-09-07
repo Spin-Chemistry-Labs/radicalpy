@@ -398,6 +398,7 @@ class Quantum:
 
     @staticmethod
     def product_yield(prob, time, k):
+        """Calculate the product yield and the product yield sum."""
         product_yield = sp.integrate.cumtrapz(prob, time, initial=0) * k
         product_yield_sum = np.max(product_yield)
         return product_yield, product_yield_sum

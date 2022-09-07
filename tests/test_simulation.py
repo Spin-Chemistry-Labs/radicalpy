@@ -182,7 +182,6 @@ class SimulationTests(unittest.TestCase):
         Kexp = self.sim.kinetics_exponential(k, self.time)
         for init_state in self.states:
             for obs_state in self.states:
-                rhos = self.sim.hilbert_time_evolution(init_state, self.time, H)
                 evol_true = radpy.TimeEvolution(
                     self.spins,
                     init_state,
@@ -194,20 +193,21 @@ class SimulationTests(unittest.TestCase):
                     H,
                     "Hilbert",
                 )
+                rhos = self.sim.hilbert_time_evolution(init_state, self.time, H)
                 obs = self.sim.projop(obs_state)
-                prob = self.sim.product_probability(obs, rhos)
+                pprob = self.sim.product_probability(obs, rhos)
+                pprob_kinetics = pprob[1:] * Kexp[:-1]
+                pyield, pyield_sum = self.sim.product_yield(
+                    pprob_kinetics, self.time[:-1], k
+                )
                 assert np.all(
                     np.isclose(rhos[1:], evol_true[-1][:-1])
                 ), "Time evolution (rho) failed."
-                prob_kinetics = prob[1:] * Kexp[:-1]
                 assert np.all(
-                    np.isclose(prob_kinetics, evol_true[1][:-1])
+                    np.isclose(pprob_kinetics, evol_true[1][:-1])
                 ), "Time evolution (probability or kinetics) failed."
-                prod_yield, prod_yield_sum = self.sim.product_yield(
-                    prob_kinetics, self.time[:-1], k
-                )
                 assert np.all(
-                    np.isclose(prod_yield, evol_true[2][:-1])
+                    np.isclose(pyield, evol_true[2][:-1])
                 ), "Time evolution (product yield) failed."
 
     def test_liouville_initial(self):
@@ -295,7 +295,7 @@ class SimulationTests(unittest.TestCase):
                     H,
                 )
 
-                print(f"{MFE=}")
+                # print(f"{MFE=}")
                 # print(f"{rslt['MFE']=}")
                 # assert np.all(
                 #     np.isclose(prob, evol_true[1][:-1])
