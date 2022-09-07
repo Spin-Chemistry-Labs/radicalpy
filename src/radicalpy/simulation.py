@@ -386,15 +386,13 @@ class Quantum:
         dt = time[1] - time[0]
         Up, Um = self.hilbert_unitary_propagator(H, dt)
 
-        rho0 = self.hilbert_initial(init_state, H)
-        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        rhos[0] = rho0 / np.trace(rho0)
+        rhos = np.zeros([len(time), *H.shape], dtype=complex)
+        rhos[0] = self.hilbert_initial(init_state, H)
         for t in range(1, len(time)):
-            rho = Um @ rhos[t - 1] @ Up
-            rhos[t] = rho / np.trace(rho)
+            rhos[t] = Um @ rhos[t - 1] @ Up
         return rhos
 
-    def probability_from_density(self, obs: np.array, rhos: np.array) -> np.array:
+    def product_probability(self, obs: np.array, rhos: np.array) -> np.array:
         """Calculate the probability of the observable from the densities."""
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
@@ -542,7 +540,7 @@ class Quantum:
         obs_prob = np.zeros(len(time))
         obs = self.liouville_projop(obs_state)
         for t in range(len(time)):
-            obs_prob[t] = self.probability_from_density(obs.T, rho0)
+            obs_prob[t] = self.product_probability(obs.T, rho0)
             rho0 = UL @ rho0
 
         return obs_prob
@@ -558,7 +556,7 @@ class Quantum:
             H = H_base + B0 * H_zee
             rhos[i] = self.hilbert_time_evolution(init_state, time, H)
             # print(f"{rhos.shape=}")
-            prob = self.probability_from_density(obs, rhos[i])
+            prob = self.product_probability(obs, rhos[i])
             Kexp = self.kinetics_exponential(k, time)
             MFE[i] = prob * Kexp
         MARY = np.sum(MFE, axis=1) * dt * k
