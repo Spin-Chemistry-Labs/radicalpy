@@ -160,6 +160,7 @@ class Quantum:
         eye = np.eye(len(SASB))
 
         # Projection operators
+        # todo change p/m to +/-
         match state:
             case "S":
                 return (1 / 4) * eye - SASB
