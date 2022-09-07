@@ -407,63 +407,6 @@ class Quantum:
         """Return exponential kinetics."""
         return np.exp(-k * time)
 
-    def kinetics_general(self, model, k=0, time=0):
-        """Construct kinetics.
-
-        Kinetic models include:
-        "Exponential"
-        "Diffusion"
-        Haberkorn superoperators (singlet and triplet recombination, free radical (RP2) production)
-        Jones-Hore superoperator
-
-        Arguments:
-            spins: an integer = sum of the number of electrons and nuclei
-            k: a floating point number = kinetic rate constant in s^-1
-            time: evenly spaced sequence in a specified interval i.e., np.linspace = used for "Exponential" and "Diffusion" model only
-            model: string = select the kinetic model
-
-        Returns:
-            An array for "Exponential" and "Diffusion" models
-            A superoperator matrix (Liouville space)
-
-        Example:
-            K = Kinetics(3, 1e6, 0, "Haberkorn-singlet")
-        """
-        QS = self.projop("S")
-        QT = self.projop("T")
-        match model:
-            case "Diffusion":
-                rsig = 5e-10  # Recombination distance
-                r0 = 9e-10  # Created separation distance
-                Dif = 1e-5 / 10000  # m^2/s Relative diffusion coefficient
-                a_dif = (rsig * (r0 - rsig)) / (r0 * np.sqrt(4 * np.pi * Dif))
-                b_dif = ((r0 - rsig) ** 2) / (4 * Dif)
-                return a_dif * time ** (-3 / 2) * np.exp(-b_dif / time)
-            case "Haberkorn-singlet":
-                return (
-                    0.5
-                    * k
-                    * (np.kron(QS, np.eye(len(QS))) + (np.kron(np.eye(len(QS)), QS)))
-                )
-            case "Haberkorn-triplet":
-                return (
-                    0.5
-                    * k
-                    * (np.kron(QT, np.eye(len(QT))) + (np.kron(np.eye(len(QT)), QT)))
-                )
-            case "Haberkorn-free":
-                return k * np.kron(np.eye(len(QS)), np.eye(len(QS)))
-            case "Jones-Hore":
-                return (
-                    0.5
-                    * k
-                    * (np.kron(QS, np.eye(len(QS))) + (np.kron(np.eye(len(QS)), QS)))
-                    + 0.5
-                    * kt
-                    * (np.kron(QT, np.eye(len(QT))) + (np.kron(np.eye(len(QT)), QT)))
-                    + (0.5 * (ks + kt)) * (np.kron(QS, QT) + np.kron(QT, QS))
-                )
-
     def liouville_projop(self, state: str) -> np.array:
         return np.reshape(self.projop(state), (-1, 1))
 
