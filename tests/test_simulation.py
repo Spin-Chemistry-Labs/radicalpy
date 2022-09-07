@@ -276,3 +276,27 @@ class SimulationTests(unittest.TestCase):
                 assert np.all(
                     np.isclose(prob, evol_true[1][:-1])
                 ), "Time evolution (probability) failed)"
+
+    # @unittest.skip("Not ready yet")
+    def test_mary(self):
+        k = np.random.uniform()
+        H = self.sim.total_hamiltonian(0, self.J, self.D)
+        for init_state in self.states:
+            for obs_state in self.states:
+                rslt = self.sim.mary(init_state, obs_state, self.time, k, self.B, H)
+                time, MFE, HFE, LFE, MARY, _, _, rho = radpy.MARY(
+                    self.spins,
+                    init_state,
+                    obs_state,
+                    self.t_max,
+                    self.dt,
+                    k,
+                    self.B,
+                    H,
+                )
+
+                print(f"{MFE=}")
+                # print(f"{rslt['MFE']=}")
+                # assert np.all(
+                #     np.isclose(prob, evol_true[1][:-1])
+                # ), ""
