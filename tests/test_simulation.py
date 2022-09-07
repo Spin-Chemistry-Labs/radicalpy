@@ -253,30 +253,6 @@ class SimulationTests(unittest.TestCase):
                     np.isclose(prob, evol_true[1][:-1])
                 ), "Time evolution (probability) failed)"
 
-    @unittest.skip("It's not (much) faster")
-    def test_liouville_time_evolution_fast(self):
-        H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
-        HL = self.sim.hilbert_to_liouville(H)
-        for init_state in self.states:
-            for obs_state in self.states:
-                prob = self.sim.liouville_time_evolution_fast(
-                    init_state, obs_state, self.time, H
-                )[1:]
-                evol_true = radpy.TimeEvolution(
-                    self.spins,
-                    init_state,
-                    obs_state,
-                    self.t_max,
-                    self.dt,
-                    k=0,
-                    B=0,
-                    H=HL,
-                    space="Liouville",
-                )
-                assert np.all(
-                    np.isclose(prob, evol_true[1][:-1])
-                ), "Time evolution (probability) failed)"
-
     @unittest.skip("Not ready yet")
     def test_mary(self):
         k = np.random.uniform()

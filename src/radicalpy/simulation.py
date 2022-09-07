@@ -468,27 +468,6 @@ class Quantum:
             rhos[t] = UL @ rhos[t - 1]
         return rhos
 
-    def liouville_time_evolution_fast(
-        self, init_state: str, obs_state: str, time: np.array, H: np.array
-    ) -> np.array:
-        """Generate the density time evolution.
-
-        I wanted to make a 'faster' version, by not storing `rhos` and
-        just recording the probabilities of the observable.
-
-        """
-        dt = time[1] - time[0]
-        HL = self.hilbert_to_liouville(H)
-        rho0 = self.liouville_initial(init_state, HL)
-        UL = self.liouville_unitary_propagator(HL, dt)
-        obs_prob = np.zeros(len(time))
-        obs = self.liouville_projop(obs_state)
-        for t in range(len(time)):
-            obs_prob[t] = self.product_probability(obs.T, rho0)
-            rho0 = UL @ rho0
-
-        return obs_prob
-
     def mary(self, init_state, obs_state, time, k, B, H_base, space="Hilbert"):
         dt = time[1] - time[0]
         MFE = np.zeros((len(B), len(time)))
