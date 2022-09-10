@@ -331,6 +331,40 @@ class Quantum:
             + self.dipolar_hamiltonian(D)
         )
 
+    def product_probability(self, obs: np.array, rhos: np.array) -> np.array:
+        """Calculate the probability of the observable from the densities."""
+        return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
+
+    @staticmethod
+    def product_yield(probuct_probability, time, k):
+        """Calculate the product yield and the product yield sum."""
+        product_yield = sp.integrate.cumtrapz(probuct_probability, time, initial=0) * k
+        product_yield_sum = np.max(product_yield)
+        return product_yield, product_yield_sum
+
+    def kinetics_exponential(self, k: float, time: np.array) -> np.array:
+        """Return exponential kinetics."""
+        return np.exp(-k * time)
+
+    @staticmethod
+    def mary_lfe_hfe(
+        init_state: str,
+        B: np.array,
+        product_probability_seq: np.array,
+        dt: float,
+        k: float,
+    ) -> dict:
+        """Calculate MARY, LFE, HFE."""
+        MARY = np.sum(product_probability_seq, axis=1) * dt * k
+        idx = int(len(MARY) / 2) if B[0] != 0 else 0
+        minmax = max if init_state == "S" else min
+        HFE = ((MARY[-1] - MARY[idx]) / MARY[idx]) * 100
+        LFE = ((minmax(MARY) - MARY[idx]) / MARY[idx]) * 100
+        MARY = ((MARY - MARY[idx]) / MARY[idx]) * 100
+        return (MARY, LFE, HFE)
+
+
+class Hilbert(Quantum):
     def hilbert_initial(self, state: str, H: np.array) -> np.array:
         """Create an initial desity matrix.
 
@@ -393,21 +427,39 @@ class Quantum:
             rhos[t] = Um @ rhos[t - 1] @ Up
         return rhos
 
-    def product_probability(self, obs: np.array, rhos: np.array) -> np.array:
-        """Calculate the probability of the observable from the densities."""
-        return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
+    def hilbert_mary_loop(
+        self,
+        init_state: str,
+        time: np.array,
+        k: float,
+        B: np.array,
+        H_base: np.array,
+    ) -> np.array:
+        """Generate density matrices (rhos) for MARY.
+
+        Args:
+            init_state (str): initial state.
+        Returns:
+            List generator.
+
+        .. todo::
+            Write proper docs.
+        """
+        H_zee = self.zeeman_hamiltonian(1)
+        rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
+        for i, B0 in enumerate(B):
+            H = H_base + B0 * H_zee
+            rhos[i] = self.hilbert_time_evolution(init_state, time, H)
+        return rhos
 
     @staticmethod
-    def product_yield(probuct_probability, time, k):
-        """Calculate the product yield and the product yield sum."""
-        product_yield = sp.integrate.cumtrapz(probuct_probability, time, initial=0) * k
-        product_yield_sum = np.max(product_yield)
-        return product_yield, product_yield_sum
+    def hilbert_to_liouville(H: np.array) -> np.array:
+        """Convert the Hamiltonian from Hilbert to Liouville space."""
+        eye = np.eye(len(H))
+        return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
-    def kinetics_exponential(self, k: float, time: np.array) -> np.array:
-        """Return exponential kinetics."""
-        return np.exp(-k * time)
 
+class Liouville(Quantum):
     def liouville_projop(self, state: str) -> np.array:
         return np.reshape(self.projop(state), (-1, 1))
 
@@ -449,12 +501,6 @@ class Quantum:
         """
         return sp.linalg.expm(H * dt)
 
-    @staticmethod
-    def hilbert_to_liouville(H: np.array) -> np.array:
-        """Convert the Hamiltonian from Hilbert to Liouville space."""
-        eye = np.eye(len(H))
-        return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
-
     def liouville_time_evolution(
         self, init_state: str, time: np.array, H: np.array
     ) -> np.array:
@@ -468,48 +514,6 @@ class Quantum:
         for t in range(1, len(time)):
             rhos[t] = UL @ rhos[t - 1]
         return rhos
-
-    def hilbert_mary_loop(
-        self,
-        init_state: str,
-        time: np.array,
-        k: float,
-        B: np.array,
-        H_base: np.array,
-    ) -> np.array:
-        """Generate density matrices (rhos) for MARY.
-
-        Args:
-            init_state (str): initial state.
-        Returns:
-            List generator.
-
-        .. todo::
-            Write proper docs.
-        """
-        H_zee = self.zeeman_hamiltonian(1)
-        rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
-        for i, B0 in enumerate(B):
-            H = H_base + B0 * H_zee
-            rhos[i] = self.hilbert_time_evolution(init_state, time, H)
-        return rhos
-
-    def mary_lfe_hfe(
-        self,
-        init_state: str,
-        B: np.array,
-        product_probability_seq: np.array,
-        dt: float,
-        k: float,
-    ) -> dict:
-        """Calculate MARY, LFE, HFE."""
-        MARY = np.sum(product_probability_seq, axis=1) * dt * k
-        idx = int(len(MARY) / 2) if B[0] != 0 else 0
-        minmax = max if init_state == "S" else min
-        HFE = ((MARY[-1] - MARY[idx]) / MARY[idx]) * 100
-        LFE = ((minmax(MARY) - MARY[idx]) / MARY[idx]) * 100
-        MARY = ((MARY - MARY[idx]) / MARY[idx]) * 100
-        return (MARY, LFE, HFE)
 
     # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
     # sim.angle(time=np.linspace(), theta=np.linspace(), phi=np.linspace())
