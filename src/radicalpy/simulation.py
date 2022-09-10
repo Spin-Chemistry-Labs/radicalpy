@@ -473,17 +473,17 @@ class Quantum:
         dt = time[1] - time[0]
         MFE = np.zeros((len(B), len(time)))
         H_zee = self.zeeman_hamiltonian(1)
-        # print(f"{H_zee.shape=}")
         obs = self.projop(obs_state)
         rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
         for i, B0 in enumerate(B):
             H = H_base + B0 * H_zee
             rhos[i] = self.hilbert_time_evolution(init_state, time, H)
-            # print(f"{rhos.shape=}")
             prob = self.product_probability(obs, rhos[i])
             Kexp = self.kinetics_exponential(k, time)
             MFE[i] = prob * Kexp
+
         MARY = np.sum(MFE, axis=1) * dt * k
+
         idx = int(len(MARY) / 2) if B[0] != 0 else 0
         minmax = max if init_state == "S" else min
         HFE = ((MARY[-1] - MARY[idx]) / MARY[idx]) * 100
