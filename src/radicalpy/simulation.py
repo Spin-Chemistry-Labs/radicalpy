@@ -398,9 +398,9 @@ class Quantum:
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
     @staticmethod
-    def product_yield(prob, time, k):
+    def product_yield(probuct_probability, time, k):
         """Calculate the product yield and the product yield sum."""
-        product_yield = sp.integrate.cumtrapz(prob, time, initial=0) * k
+        product_yield = sp.integrate.cumtrapz(probuct_probability, time, initial=0) * k
         product_yield_sum = np.max(product_yield)
         return product_yield, product_yield_sum
 
@@ -469,34 +469,47 @@ class Quantum:
             rhos[t] = UL @ rhos[t - 1]
         return rhos
 
-    def mary(self, init_state, obs_state, time, k, B, H_base, space="Hilbert"):
-        dt = time[1] - time[0]
-        MFE = np.zeros((len(B), len(time)))
+    def hilbert_mary_loop(
+        self,
+        init_state: str,
+        time: np.array,
+        k: float,
+        B: np.array,
+        H_base: np.array,
+    ) -> np.array:
+        """Generate density matrices (rhos) for MARY.
+
+        Args:
+            init_state (str): initial state.
+        Returns:
+            List generator.
+
+        .. todo::
+            Write proper docs.
+        """
         H_zee = self.zeeman_hamiltonian(1)
-        obs = self.projop(obs_state)
         rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
         for i, B0 in enumerate(B):
             H = H_base + B0 * H_zee
             rhos[i] = self.hilbert_time_evolution(init_state, time, H)
-            prob = self.product_probability(obs, rhos[i])
-            Kexp = self.kinetics_exponential(k, time)
-            MFE[i] = prob * Kexp
+        return rhos
 
-        MARY = np.sum(MFE, axis=1) * dt * k
-
+    def mary_lfe_hfe(
+        self,
+        init_state: str,
+        B: np.array,
+        product_probability_seq: np.array,
+        dt: float,
+        k: float,
+    ) -> dict:
+        """Calculate MARY, LFE, HFE."""
+        MARY = np.sum(product_probability_seq, axis=1) * dt * k
         idx = int(len(MARY) / 2) if B[0] != 0 else 0
         minmax = max if init_state == "S" else min
         HFE = ((MARY[-1] - MARY[idx]) / MARY[idx]) * 100
         LFE = ((minmax(MARY) - MARY[idx]) / MARY[idx]) * 100
         MARY = ((MARY - MARY[idx]) / MARY[idx]) * 100
-
-        return {
-            "MFE": MFE,
-            "HFE": HFE,
-            "LFE": LFE,
-            "MARY": MARY,
-            "rhos": rhos,
-        }
+        return (MARY, LFE, HFE)
 
     # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
     # sim.angle(time=np.linspace(), theta=np.linspace(), phi=np.linspace())
