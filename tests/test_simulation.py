@@ -10,7 +10,7 @@ RUN_SLOW_TESTS = False
 MEASURE_TIME = False
 
 
-class SimulationTests(unittest.TestCase):
+class QuantumTests(unittest.TestCase):
     def setUp(self):
         if MEASURE_TIME:
             self.start_time = time.time()
@@ -26,9 +26,9 @@ class SimulationTests(unittest.TestCase):
         self.B = np.random.uniform(size=20)
         self.J = np.random.uniform()
         self.D = np.random.uniform()
-        self.dt = 0.01
-        self.t_max = 1.0
-        self.time = np.arange(0, self.t_max, self.dt)
+        # self.dt = 0.01
+        # self.t_max = 1.0
+        # self.time = np.arange(0, self.t_max, self.dt)
 
     def tearDown(self):
         if MEASURE_TIME:
@@ -159,6 +159,9 @@ class SimulationTests(unittest.TestCase):
             np.isclose(self.sim.dipolar_hamiltonian(self.D), HD_true)
         ), "Dipolar Hamiltonian not calculated properly."
 
+
+@unittest.skip("")
+class HilberTests(unittest.TestCase):
     def test_hilbert_initial(self):
         H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
         for state in self.states:
@@ -210,6 +213,9 @@ class SimulationTests(unittest.TestCase):
                     np.isclose(pyield, evol_true[2][:-1])
                 ), "Time evolution (product yield) failed."
 
+
+@unittest.skip("")
+class LiouvilleTests(unittest.TestCase):
     def test_liouville_initial(self):
         H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
         for state in self.states:
