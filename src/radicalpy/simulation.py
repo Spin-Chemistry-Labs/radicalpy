@@ -110,7 +110,7 @@ class Quantum:
         self.gammas_mT = list(map(gamma_mT, self.electrons))
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
 
-    def spinop(self, idx: int, axis: str) -> np.array:
+    def spin_operator(self, idx: int, axis: str) -> np.array:
         """Construct the spin operator for a particle.
 
         Construct the spin operator for the particle with index
@@ -136,26 +136,28 @@ class Quantum:
 
         return np.kron(np.kron(eye_before, sigma), eye_after)
 
-    def prodop_axis(self, p1: int, p2: int, axis: int) -> np.array:
+    def product_operator_axis(self, p1: int, p2: int, axis: int) -> np.array:
         """Projection operator for a given axis."""
-        return self.spinop(p1, axis).dot(self.spinop(p2, axis))
+        return self.spin_operator(p1, axis).dot(self.spin_operator(p2, axis))
 
-    def prodop(self, particle1: int, particle2: int) -> np.array:
+    def product_operator(self, particle1: int, particle2: int) -> np.array:
         """Projection operator."""
-        return sum([self.prodop_axis(particle1, particle2, axis) for axis in "xyz"])
+        return sum(
+            [self.product_operator_axis(particle1, particle2, axis) for axis in "xyz"]
+        )
 
-    def projop(self, state: str):
+    def projection_operator(self, state: str):
         """Construct.
 
         .. todo::
             Write proper docs.
         """
         # Spin operators
-        SAx, SAy, SAz = [self.spinop(0, ax) for ax in "xyz"]
-        SBx, SBy, SBz = [self.spinop(1, ax) for ax in "xyz"]
+        SAx, SAy, SAz = [self.spin_operator(0, ax) for ax in "xyz"]
+        SBx, SBy, SBz = [self.spin_operator(1, ax) for ax in "xyz"]
 
         # Product operators
-        SASB = self.prodop(0, 1)
+        SASB = self.product_operator(0, 1)
 
         eye = np.eye(len(SASB))
 
@@ -197,7 +199,7 @@ class Quantum:
         """
         axis = "z"
         gammas = enumerate(self.gammas_mT)
-        return -B0 * sum(g * self.spinop(i, axis) for i, g in gammas)
+        return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
 
     def _HH_term(self, ei: int, ni: int) -> np.array:
         """Construct a term of the Hyperfine Hamiltonian.
@@ -207,7 +209,7 @@ class Quantum:
         """
         g = gamma_mT(self.electrons[ei])
         h = self.hfcs[ni]
-        return -g * h * self.prodop(ei, self.num_electrons + ni)
+        return -g * h * self.product_operator(ei, self.num_electrons + ni)
 
     def hyperfine_hamiltonian(self) -> np.array:
         """Construct the Hyperfine Hamiltonian.
@@ -276,7 +278,7 @@ class Quantum:
 
         """
         Jcoupling = gamma_mT("E") * J
-        SASB = self.prodop(0, 1)
+        SASB = self.product_operator(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
     @staticmethod
@@ -309,9 +311,9 @@ class Quantum:
             dipolar coupling constant `D`.
 
         """
-        SASB = self.prodop(0, 1)
-        SAz = self.spinop(0, "z")
-        SBz = self.spinop(1, "z")
+        SASB = self.product_operator(0, 1)
+        SAz = self.spin_operator(0, "z")
+        SBz = self.spin_operator(1, "z")
         omega = (2 / 3) * gamma_mT("E") * D
         return omega * (3 * SAz * SBz - SASB)
 
@@ -379,9 +381,9 @@ class Hilbert(Quantum):
             np.array: A matrix in Hilbert space representing...
 
         """
-        Pi = self.projop(state)
+        Pi = self.projection_operator(state)
 
-        if np.array_equal(Pi, self.projop("Eq")):
+        if np.array_equal(Pi, self.projection_operator("Eq")):
             rho0eq = sp.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
         else:
@@ -461,7 +463,7 @@ class Hilbert(Quantum):
 
 class Liouville(Quantum):
     def liouville_projop(self, state: str) -> np.array:
-        return np.reshape(self.projop(state), (-1, 1))
+        return np.reshape(self.projection_operator(state), (-1, 1))
 
     def liouville_initial(self, state: str, H: np.array) -> np.array:
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
