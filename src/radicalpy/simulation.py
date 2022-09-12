@@ -84,7 +84,7 @@ class Molecule:
         return self.data[self.nuclei[idx]][key]
 
 
-class Quantum:
+class QuantumSimulation:
     """Quantum simulation class."""
 
     def __init__(self, molecules: list[Molecule]):
@@ -355,7 +355,7 @@ class Quantum:
         product_probability_seq: np.array,
         dt: float,
         k: float,
-    ) -> dict:
+    ) -> (np.array, np.array, np.array):
         """Calculate MARY, LFE, HFE."""
         MARY = np.sum(product_probability_seq, axis=1) * dt * k
         idx = int(len(MARY) / 2) if B[0] != 0 else 0
@@ -366,7 +366,7 @@ class Quantum:
         return (MARY, LFE, HFE)
 
 
-class Hilbert(Quantum):
+class Hilbert(QuantumSimulation):
     def hilbert_initial(self, state: str, H: np.array) -> np.array:
         """Create an initial desity matrix.
 
@@ -433,7 +433,6 @@ class Hilbert(Quantum):
         self,
         init_state: str,
         time: np.array,
-        k: float,
         B: np.array,
         H_base: np.array,
     ) -> np.array:
@@ -461,7 +460,7 @@ class Hilbert(Quantum):
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
 
-class Liouville(Quantum):
+class Liouville(QuantumSimulation):
     def liouville_projop(self, state: str) -> np.array:
         return np.reshape(self.projection_operator(state), (-1, 1))
 
@@ -535,3 +534,9 @@ class Liouville(Quantum):
     #     MARY = np.sum(raw, axis=1) * dt * k
     #     MARY = ((MARY - MARY[0]) / MARY[0]) * 100
     #     return [time, MFE, MARY, productyield, ProductYieldSum, rhot]
+
+
+# experiments:
+# MARY, RYDMR, SEMF, MIE (1H -> 2H - different isotop, different Omega)
+class ClassicalSimulation:
+    pass

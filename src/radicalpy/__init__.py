@@ -2,4 +2,4 @@
 
 # List all classes we want to expose here.
 
-from .simulation import Molecule, Quantum
+from .simulation import Molecule, QuantumSimulation
