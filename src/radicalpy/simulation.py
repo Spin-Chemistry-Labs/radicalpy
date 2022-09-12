@@ -136,14 +136,26 @@ class QuantumSimulation:
 
         return np.kron(np.kron(eye_before, sigma), eye_after)
 
-    def product_operator_axis(self, p1: int, p2: int, axis: int) -> np.array:
+    def product_operator_axis(
+        self, p1: int, p2: int, ax1: int, ax2: int = -1
+    ) -> np.array:
+        if ax2 == -1:
+            ax2 = ax1
         """Projection operator for a given axis."""
-        return self.spin_operator(p1, axis).dot(self.spin_operator(p2, axis))
+        return self.spin_operator(p1, ax1).dot(self.spin_operator(p2, ax2))
 
-    def product_operator(self, particle1: int, particle2: int) -> np.array:
+    def product_operator(self, idx1: int, idx2: int) -> np.array:
+        """Projection operator."""
+        return sum([self.product_operator_axis(idx1, idx2, axis) for axis in "xyz"])
+
+    def product_operator_3d(self, idx1: int, idx2: int, hfc: np.array) -> np.array:
         """Projection operator."""
         return sum(
-            [self.product_operator_axis(particle1, particle2, axis) for axis in "xyz"]
+            [
+                hfc[i, j] * self.product_operator_axis(idx1, idx2, ax1, ax2)
+                for i, ax1 in enumerate("xyz")
+                for j, ax2 in enumerate("xyz")
+            ]
         )
 
     def projection_operator(self, state: str):
@@ -208,8 +220,12 @@ class QuantumSimulation:
             Write proper docs.
         """
         g = gamma_mT(self.electrons[ei])
-        h = self.hfcs[ni]
-        return -g * h * self.product_operator(ei, self.num_electrons + ni)
+        h = -g * self.hfcs[ni]
+        effective_ni = self.num_electrons + ni
+        if isinstance(h, np.ndarray):
+            return self.product_operator_3d(ei, effective_ni, h)
+        else:
+            return h * self.product_operator(ei, effective_ni)
 
     def hyperfine_hamiltonian(self) -> np.array:
         """Construct the Hyperfine Hamiltonian.
@@ -458,6 +474,26 @@ class Hilbert(QuantumSimulation):
         """Convert the Hamiltonian from Hilbert to Liouville space."""
         eye = np.eye(len(H))
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
+
+    def singlet_yields(nucDims, indE, As, Omega0s, k0, kS, rho0=None):
+        dims = np.concatenate(((2, 2), nucDims))
+        one = mkSpinOp(dims, [])
+        Ps = 1 / 4 * one - mkH12(dims, 0, 1, np.identity(3))
+        # Pt = one - Ps
+        Hhfc = sum(mkH12(dims, indE[i], i + 2, As[i]) for i in range(len(As)))
+        if not rho0:
+            rho0 = one / one.shape[0]
+        print(np.trace(rho0))
+        K = k0 / 2 * one + kS / 2 * Ps
+        yields = []
+        Q = -np.array(rho0)
+        for Omega0 in Omega0s:
+            Hzee = mkH1(dims, 0, Omega0) + mkH1(dims, 1, Omega0)
+            H0 = Hzee + Hhfc
+            A = -1j * H0 - K
+            x = linalg.solve_continuous_lyapunov(A.full(), Q)
+            yields.append(kS * np.trace(x @ Ps.data).real)
+        return np.array(yields)
 
 
 class Liouville(QuantumSimulation):
