@@ -19,7 +19,7 @@ class QuantumTests(unittest.TestCase):
             rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
             rp.Molecule("adenine", ["C8-H"]),
         ]
-        self.sim = rp.simulation.Quantum(self.rad_pair)
+        self.sim = rp.simulation.QuantumSimulation(self.rad_pair)
         self.spins = self.sim.num_particles
         self.gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
         self.states = ["S", "Tm", "T0", "Tp", "Tpm"]
@@ -83,7 +83,7 @@ class QuantumTests(unittest.TestCase):
 
         """
         mol = rp.Molecule()
-        sim = rp.simulation.Quantum([mol, mol])
+        sim = rp.simulation.QuantumSimulation([mol, mol])
         HZ = sim.zeeman_hamiltonian(0.5)
         nz = HZ != 0
         assert HZ.shape == (4, 4)
@@ -98,7 +98,7 @@ class QuantumTests(unittest.TestCase):
             rp.Molecule(multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
             rp.Molecule(multiplicities=[2], gammas_mT=[gamma_mT]),
         ]
-        sim = rp.simulation.Quantum(rad_pair)
+        sim = rp.simulation.QuantumSimulation(rad_pair)
         HZ = sim.zeeman_hamiltonian(self.B[0])
 
         #########################
