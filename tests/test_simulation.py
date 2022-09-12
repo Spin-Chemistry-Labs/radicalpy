@@ -1,6 +1,7 @@
 import time
 import unittest
 
+import matplotlib.pyplot as plt
 import numpy as np
 import src.radicalpy as rp
 
@@ -158,6 +159,67 @@ class QuantumTests(unittest.TestCase):
         assert np.all(
             np.isclose(self.sim.dipolar_hamiltonian(self.D), HD_true)
         ), "Dipolar Hamiltonian not calculated properly."
+
+    def test_HH_3D(self):
+        mT2angfreq = (
+            9.274009994e-24 / 1.0545718e-34 * 2.00231930436256 / 1e9
+        )  # Mrad/s/mT; ~28 MHz/mT
+        MHz2mT = 1 / (mT2angfreq) * 2 * np.pi * 1e6
+        N5 = (
+            np.array(
+                [
+                    [-2.41368, -0.0662465, -0.971492],
+                    [-0.0662465, -2.44657, 0.0485258],
+                    [-0.971492, 0.0485258, 43.5125],
+                ]
+            )
+        ) * MHz2mT
+        N10 = (
+            np.array(
+                [
+                    [0.442319, 0.06085, 1.8016],
+                    [0.06085, -0.0133137, -0.338064],
+                    [1.8016, -0.338064, 23.1529],
+                ]
+            )
+        ) * MHz2mT
+        H5 = (
+            np.array(
+                [
+                    [-2.38856, 1.8683, 0.514044],
+                    [1.8683, -40.6401, 0.0339364],
+                    [0.514044, 0.0339364, -27.8618],
+                ]
+            )
+        ) * MHz2mT
+
+        flavin = rp.Molecule(
+            hfcs=[N5, N10, H5],
+            multiplicities=[3, 3, 2],
+            gammas_mT=[
+                rp.data.gamma_mT("14N"),
+                rp.data.gamma_mT("14N"),
+                rp.data.gamma_mT("1H"),
+            ],
+        )
+
+        H4 = 0.176 * np.eye(3)
+        ascorbic_acid = rp.Molecule(
+            hfcs=[H4],
+            multiplicities=[2],
+            gammas_mT=[rp.data.gamma_mT("1H")],
+        )
+
+        sim = rp.simulation.QuantumSimulation([flavin, ascorbic_acid])
+        H = sim.hyperfine_hamiltonian()
+        # print(H.shape)
+        # print(H)
+        Htrue = np.load("/tmp/save.npy") * MHz2mT * 1e6
+        print(Htrue[:5, :5])
+        print(H[:5, :5])
+        print(f"\nError: {np.linalg.norm(Htrue - H)}")
+        # plt.imshow(np.real(H))
+        # plt.show()
 
 
 @unittest.skip("")
