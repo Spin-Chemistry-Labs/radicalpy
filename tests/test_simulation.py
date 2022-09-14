@@ -27,9 +27,6 @@ class QuantumTests(unittest.TestCase):
         self.B = np.random.uniform(size=20)
         self.J = np.random.uniform()
         self.D = np.random.uniform()
-        # self.dt = 0.01
-        # self.t_max = 1.0
-        # self.time = np.arange(0, self.t_max, self.dt)
 
     def tearDown(self):
         if MEASURE_TIME:
@@ -223,8 +220,14 @@ class QuantumTests(unittest.TestCase):
         # plt.show()
 
 
-@unittest.skip("")
-class HilberTests(unittest.TestCase):
+class HilbertTests(QuantumTests):
+    def setUp(self):
+        super().setUp()
+        self.sim = rp.simulation.Hilbert(self.rad_pair)
+        self.dt = 0.01
+        self.t_max = 1.0
+        self.time = np.arange(0, self.t_max, self.dt)
+
     def test_hilbert_initial(self):
         H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
         for state in self.states:
@@ -260,7 +263,7 @@ class HilberTests(unittest.TestCase):
                     "Hilbert",
                 )
                 rhos = self.sim.hilbert_time_evolution(init_state, self.time, H)
-                obs = self.sim.projop(obs_state)
+                obs = self.sim.projection_operator(obs_state)
                 pprob = self.sim.product_probability(obs, rhos)
                 pprob_kinetics = pprob[1:] * Kexp[:-1]
                 pyield, pyield_sum = self.sim.product_yield(
@@ -277,8 +280,14 @@ class HilberTests(unittest.TestCase):
                 ), "Time evolution (product yield) failed."
 
 
-@unittest.skip("")
-class LiouvilleTests(unittest.TestCase):
+class LiouvilleTests(QuantumTests):
+    def setUp(self):
+        super().setUp()
+        self.sim = rp.simulation.Liouville(self.rad_pair)
+        # self.dt = 0.01
+        # self.t_max = 1.0
+        # self.time = np.arange(0, self.t_max, self.dt)
+
     def test_liouville_initial(self):
         H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
         for state in self.states:
