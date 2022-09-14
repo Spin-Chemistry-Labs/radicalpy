@@ -475,26 +475,6 @@ class HilbertSimulation(QuantumSimulation):
         eye = np.eye(len(H))
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
-    def singlet_yields(nucDims, indE, As, Omega0s, k0, kS, rho0=None):
-        dims = np.concatenate(((2, 2), nucDims))
-        one = mkSpinOp(dims, [])
-        Ps = 1 / 4 * one - mkH12(dims, 0, 1, np.identity(3))
-        # Pt = one - Ps
-        Hhfc = sum(mkH12(dims, indE[i], i + 2, As[i]) for i in range(len(As)))
-        if not rho0:
-            rho0 = one / one.shape[0]
-        print(np.trace(rho0))
-        K = k0 / 2 * one + kS / 2 * Ps
-        yields = []
-        Q = -np.array(rho0)
-        for Omega0 in Omega0s:
-            Hzee = mkH1(dims, 0, Omega0) + mkH1(dims, 1, Omega0)
-            H0 = Hzee + Hhfc
-            A = -1j * H0 - K
-            x = linalg.solve_continuous_lyapunov(A.full(), Q)
-            yields.append(kS * np.trace(x @ Ps.data).real)
-        return np.array(yields)
-
 
 class LiouvilleSimulation(QuantumSimulation):
     def liouville_projop(self, state: str) -> np.array:
