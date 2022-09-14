@@ -382,7 +382,7 @@ class QuantumSimulation:
         return (MARY, LFE, HFE)
 
 
-class Hilbert(QuantumSimulation):
+class HilbertSimulation(QuantumSimulation):
     def hilbert_initial(self, state: str, H: np.array) -> np.array:
         """Create an initial desity matrix.
 
@@ -496,7 +496,7 @@ class Hilbert(QuantumSimulation):
         return np.array(yields)
 
 
-class Liouville(QuantumSimulation):
+class LiouvilleSimulation(QuantumSimulation):
     def liouville_projop(self, state: str) -> np.array:
         return np.reshape(self.projection_operator(state), (-1, 1))
 
