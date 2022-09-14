@@ -470,6 +470,35 @@ class HilbertSimulation(QuantumSimulation):
             rhos[i] = self.hilbert_time_evolution(init_state, time, H)
         return rhos
 
+    def MARY(
+        self,
+        init_state: str,
+        obs_state: str,
+        time: np.array,
+        k: float,
+        B: np.array,
+        D: float,
+        J: float,
+    ):
+        dt = time[1] - time[0]
+        H = self.total_hamiltonian(B=0, D=D, J=J)
+        rhos = self.hilbert_mary_loop(init_state, time, B, H)
+        pprob_seq = self.product_probability(obs_state, rhos)
+        pprob_seq *= self.kinetics_exponential(k, time)
+        pyield, pyield_sum = self.product_yield(pprob_seq, time, k)
+        MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, pprob_seq, dt, k)
+        return dict(
+            time=time,
+            B=B,
+            rhos=rhos,
+            product_probability_seq=pprob_seq,
+            product_yield=pyield,
+            product_yield_sum=pyield_sum,
+            MARY=MARY,
+            LFE=LFE,
+            HFE=HFE,
+        )
+
 
 class LiouvilleSimulation(QuantumSimulation):
     @staticmethod
