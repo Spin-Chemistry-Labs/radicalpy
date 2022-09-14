@@ -223,7 +223,7 @@ class QuantumTests(unittest.TestCase):
 class HilbertTests(QuantumTests):
     def setUp(self):
         super().setUp()
-        self.sim = rp.simulation.Hilbert(self.rad_pair)
+        self.sim = rp.simulation.HilbertSimulation(self.rad_pair)
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
@@ -283,7 +283,7 @@ class HilbertTests(QuantumTests):
 class LiouvilleTests(QuantumTests):
     def setUp(self):
         super().setUp()
-        self.sim = rp.simulation.Liouville(self.rad_pair)
+        self.sim = rp.simulation.LiouvilleSimulation(self.rad_pair)
         # self.dt = 0.01
         # self.t_max = 1.0
         # self.time = np.arange(0, self.t_max, self.dt)
