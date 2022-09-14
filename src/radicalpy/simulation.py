@@ -110,7 +110,7 @@ class QuantumSimulation:
         self.gammas_mT = list(map(gamma_mT, self.electrons))
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
 
-    def spin_operator(self, idx: int, axis: str) -> np.array:
+    def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator for a particle.
 
         Construct the spin operator for the particle with index
@@ -138,17 +138,17 @@ class QuantumSimulation:
 
     def product_operator_axis(
         self, p1: int, p2: int, ax1: int, ax2: int = -1
-    ) -> np.array:
+    ) -> np.ndarray:
         if ax2 == -1:
             ax2 = ax1
         """Projection operator for a given axis."""
         return self.spin_operator(p1, ax1).dot(self.spin_operator(p2, ax2))
 
-    def product_operator(self, idx1: int, idx2: int) -> np.array:
+    def product_operator(self, idx1: int, idx2: int) -> np.ndarray:
         """Projection operator."""
         return sum([self.product_operator_axis(idx1, idx2, axis) for axis in "xyz"])
 
-    def product_operator_3d(self, idx1: int, idx2: int, hfc: np.array) -> np.array:
+    def product_operator_3d(self, idx1: int, idx2: int, hfc: np.ndarray) -> np.ndarray:
         """Projection operator."""
         return sum(
             [
@@ -193,7 +193,7 @@ class QuantumSimulation:
             case "Eq":
                 return 1.05459e-34 / (1.38e-23 * 298)
 
-    def zeeman_hamiltonian(self, B0: float) -> np.array:
+    def zeeman_hamiltonian(self, B0: float) -> np.ndarray:
         """Construct the Zeeman Hamiltonian.
 
         Construct the Zeeman Hamiltonian based on the external
@@ -213,7 +213,7 @@ class QuantumSimulation:
         gammas = enumerate(self.gammas_mT)
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
 
-    def _HH_term(self, ei: int, ni: int) -> np.array:
+    def _HH_term(self, ei: int, ni: int) -> np.ndarray:
         """Construct a term of the Hyperfine Hamiltonian.
 
         .. todo::
@@ -227,7 +227,7 @@ class QuantumSimulation:
         else:
             return h * self.product_operator(ei, effective_ni)
 
-    def hyperfine_hamiltonian(self) -> np.array:
+    def hyperfine_hamiltonian(self) -> np.ndarray:
         """Construct the Hyperfine Hamiltonian.
 
         Construct the Hyperfine Hamiltonian based on the magnetic
@@ -277,7 +277,7 @@ class QuantumSimulation:
         }
         return methods[model](r)
 
-    def exchange_hamiltonian(self, J: float) -> np.array:
+    def exchange_hamiltonian(self, J: float) -> np.ndarray:
         """Construct the Exchange Hamiltonian.
 
         Construct the Exchange (J-coupling) Hamiltonian based on the
@@ -298,7 +298,7 @@ class QuantumSimulation:
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
     @staticmethod
-    def dipolar_interaction(r: float) -> np.array:
+    def dipolar_interaction(r: float) -> np.ndarray:
         """Construct the Dipolar interaction constant.
 
         Construct the Dipolar interaction based on the radius `r`.
@@ -312,7 +312,7 @@ class QuantumSimulation:
         """
         return -2.785 / r**3
 
-    def dipolar_hamiltonian(self, D: float) -> np.array:
+    def dipolar_hamiltonian(self, D: float) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
@@ -333,7 +333,7 @@ class QuantumSimulation:
         omega = (2 / 3) * gamma_mT("E") * D
         return omega * (3 * SAz * SBz - SASB)
 
-    def total_hamiltonian(self, B: float, J: float, D: float) -> np.array:
+    def total_hamiltonian(self, B: float, J: float, D: float) -> np.ndarray:
         """Construct the final (total) Hamiltonian.
 
         Construct the final (total)
@@ -349,7 +349,7 @@ class QuantumSimulation:
             + self.dipolar_hamiltonian(D)
         )
 
-    def product_probability(self, obs: str, rhos: np.array) -> np.array:
+    def product_probability(self, obs: str, rhos: np.ndarray) -> np.ndarray:
         """Calculate the probability of the observable from the densities."""
         obs = self.projection_operator(obs)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
@@ -361,15 +361,15 @@ class QuantumSimulation:
         product_yield_sum = np.max(product_yield)
         return product_yield, product_yield_sum
 
-    def kinetics_exponential(self, k: float, time: np.array) -> np.array:
+    def kinetics_exponential(self, k: float, time: np.ndarray) -> np.ndarray:
         """Return exponential kinetics."""
         return np.exp(-k * time)
 
     @staticmethod
     def mary_lfe_hfe(
         init_state: str,
-        B: np.array,
-        product_probability_seq: np.array,
+        B: np.ndarray,
+        product_probability_seq: np.ndarray,
         dt: float,
         k: float,
     ) -> (np.array, np.array, np.array):
@@ -384,7 +384,7 @@ class QuantumSimulation:
 
 
 class HilbertSimulation(QuantumSimulation):
-    def hilbert_initial(self, state: str, H: np.array) -> np.array:
+    def hilbert_initial(self, state: str, H: np.ndarray) -> np.ndarray:
         """Create an initial desity matrix.
 
         Create an initial density matrix for time evolution of the
@@ -408,7 +408,7 @@ class HilbertSimulation(QuantumSimulation):
         return rho0
 
     @staticmethod
-    def hilbert_unitary_propagator(H: np.array, dt: float) -> np.array:
+    def hilbert_unitary_propagator(H: np.ndarray, dt: float) -> np.ndarray:
         """Create unitary propagator (Hilbert space).
 
         Create unitary propagator matrices for time evolution of the
@@ -434,8 +434,8 @@ class HilbertSimulation(QuantumSimulation):
         return Up, Um
 
     def hilbert_time_evolution(
-        self, init_state: str, time: np.array, H: np.array
-    ) -> np.array:
+        self, init_state: str, time: np.ndarray, H: np.ndarray
+    ) -> np.ndarray:
         """Evolve the system through time."""
         dt = time[1] - time[0]
         Up, Um = self.hilbert_unitary_propagator(H, dt)
@@ -449,10 +449,10 @@ class HilbertSimulation(QuantumSimulation):
     def hilbert_mary_loop(
         self,
         init_state: str,
-        time: np.array,
-        B: np.array,
-        H_base: np.array,
-    ) -> np.array:
+        time: np.ndarray,
+        B: np.ndarray,
+        H_base: np.ndarray,
+    ) -> np.ndarray:
         """Generate density matrices (rhos) for MARY.
 
         Args:
@@ -474,9 +474,9 @@ class HilbertSimulation(QuantumSimulation):
         self,
         init_state: str,
         obs_state: str,
-        time: np.array,
+        time: np.ndarray,
         k: float,
-        B: np.array,
+        B: np.ndarray,
         D: float,
         J: float,
     ):
@@ -502,15 +502,15 @@ class HilbertSimulation(QuantumSimulation):
 
 class LiouvilleSimulation(QuantumSimulation):
     @staticmethod
-    def hilbert_to_liouville(H: np.array) -> np.array:
+    def hilbert_to_liouville(H: np.ndarray) -> np.ndarray:
         """Convert the Hamiltonian from Hilbert to Liouville space."""
         eye = np.eye(len(H))
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
-    def projection_operator(self, state: str) -> np.array:
+    def projection_operator(self, state: str) -> np.ndarray:
         return np.reshape(super().projection_operator(state), (-1, 1)).T
 
-    def liouville_initial(self, state: str, H: np.array) -> np.array:
+    def liouville_initial(self, state: str, H: np.ndarray) -> np.ndarray:
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
 
         Arguments:
@@ -549,8 +549,8 @@ class LiouvilleSimulation(QuantumSimulation):
         return sp.linalg.expm(H * dt)
 
     def liouville_time_evolution(
-        self, init_state: str, time: np.array, H: np.array
-    ) -> np.array:
+        self, init_state: str, time: np.ndarray, H: np.ndarray
+    ) -> np.ndarray:
         """Generate the density time evolution."""
         dt = time[1] - time[0]
         HL = self.hilbert_to_liouville(H)
