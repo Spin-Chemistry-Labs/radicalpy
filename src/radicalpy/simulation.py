@@ -349,8 +349,9 @@ class QuantumSimulation:
             + self.dipolar_hamiltonian(D)
         )
 
-    def product_probability(self, obs: np.array, rhos: np.array) -> np.array:
+    def product_probability(self, obs: str, rhos: np.array) -> np.array:
         """Calculate the probability of the observable from the densities."""
+        obs = self.projection_operator(obs)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
     @staticmethod
@@ -469,16 +470,16 @@ class HilbertSimulation(QuantumSimulation):
             rhos[i] = self.hilbert_time_evolution(init_state, time, H)
         return rhos
 
+
+class LiouvilleSimulation(QuantumSimulation):
     @staticmethod
     def hilbert_to_liouville(H: np.array) -> np.array:
         """Convert the Hamiltonian from Hilbert to Liouville space."""
         eye = np.eye(len(H))
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
-
-class LiouvilleSimulation(QuantumSimulation):
-    def liouville_projop(self, state: str) -> np.array:
-        return np.reshape(self.projection_operator(state), (-1, 1))
+    def projection_operator(self, state: str) -> np.array:
+        return np.reshape(super().projection_operator(state), (-1, 1)).T
 
     def liouville_initial(self, state: str, H: np.array) -> np.array:
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
@@ -494,7 +495,7 @@ class LiouvilleSimulation(QuantumSimulation):
         Example:
             rho0 = Liouville_initial("S", 3, H)
         """
-        Pi = self.liouville_projop(state)
+        Pi = self.projection_operator(state).T
         if state == "Eq":
             rho0eq = sp.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
