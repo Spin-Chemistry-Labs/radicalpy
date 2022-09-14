@@ -11,22 +11,26 @@ RUN_SLOW_TESTS = False
 MEASURE_TIME = False
 
 
+STATES = ["S", "Tm", "T0", "Tp", "Tpm"]
+PARAMS = dict(
+    B=np.random.uniform(size=20),
+    J=np.random.uniform(),
+    D=np.random.uniform(),
+)
+
+RADICAL_PAIR = [
+    rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
+    rp.Molecule("adenine", ["C8-H"]),
+]
+
+
 class QuantumTests(unittest.TestCase):
     def setUp(self):
         if MEASURE_TIME:
             self.start_time = time.time()
         self.data = rp.data.MOLECULE_DATA["adenine"]["data"]
-        self.rad_pair = [
-            rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
-            rp.Molecule("adenine", ["C8-H"]),
-        ]
-        self.sim = rp.simulation.QuantumSimulation(self.rad_pair)
-        self.spins = self.sim.num_particles
+        self.sim = rp.simulation.QuantumSimulation(RADICAL_PAIR)
         self.gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
-        self.states = ["S", "Tm", "T0", "Tp", "Tpm"]
-        self.B = np.random.uniform(size=20)
-        self.J = np.random.uniform()
-        self.D = np.random.uniform()
 
     def tearDown(self):
         if MEASURE_TIME:
@@ -97,15 +101,20 @@ class QuantumTests(unittest.TestCase):
             rp.Molecule(multiplicities=[2], gammas_mT=[gamma_mT]),
         ]
         sim = rp.simulation.QuantumSimulation(rad_pair)
-        HZ = sim.zeeman_hamiltonian(self.B[0])
+        HZ = sim.zeeman_hamiltonian(PARAMS["B"][0])
 
         #########################
         # Assume this is correct!
-        omega_e = self.B[0] * self.gamma_mT
-        electrons = sum([radpy.np_spinop(radpy.np_Sz, i, self.spins) for i in range(2)])
-        omega_n = self.B[0] * gamma_mT
+        omega_e = PARAMS["B"][0] * self.gamma_mT
+        electrons = sum(
+            [radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles) for i in range(2)]
+        )
+        omega_n = PARAMS["B"][0] * gamma_mT
         nuclei = sum(
-            [radpy.np_spinop(radpy.np_Sz, i, self.spins) for i in range(2, self.spins)]
+            [
+                radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles)
+                for i in range(2, self.sim.num_particles)
+            ]
         )
         HZ_true = -omega_e * electrons - omega_n * nuclei
 
@@ -114,15 +123,20 @@ class QuantumTests(unittest.TestCase):
         ), "Zeeman Hamiltonian not calculated properly."
 
     def test_HZ(self):
-        HZ = self.sim.zeeman_hamiltonian(self.B[0])
+        HZ = self.sim.zeeman_hamiltonian(PARAMS["B"][0])
 
         #########################
         # Assume this is correct!
-        omega_e = self.B[0] * self.gamma_mT
-        electrons = sum([radpy.np_spinop(radpy.np_Sz, i, self.spins) for i in range(2)])
-        omega_n = self.B[0] * rp.data.SPIN_DATA["1H"]["gamma"] * 0.001
+        omega_e = PARAMS["B"][0] * self.gamma_mT
+        electrons = sum(
+            [radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles) for i in range(2)]
+        )
+        omega_n = PARAMS["B"][0] * rp.data.SPIN_DATA["1H"]["gamma"] * 0.001
         nuclei = sum(
-            [radpy.np_spinop(radpy.np_Sz, i, self.spins) for i in range(2, self.spins)]
+            [
+                radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles)
+                for i in range(2, self.sim.num_particles)
+            ]
         )
         HZ_true = -omega_e * electrons - omega_n * nuclei
 
@@ -136,7 +150,7 @@ class QuantumTests(unittest.TestCase):
         HH_true = sum(
             [
                 radpy.HamiltonianHyperfine(
-                    self.spins, ei, 2 + ni, hfcs[ni], self.gamma_mT
+                    self.sim.num_particles, ei, 2 + ni, hfcs[ni], self.gamma_mT
                 )
                 for ni, ei in enumerate(couplings)
             ]
@@ -146,15 +160,19 @@ class QuantumTests(unittest.TestCase):
         ), "Hyperfine Hamiltonian not calculated properly."
 
     def test_HE(self):
-        HE_true = radpy.HamiltonianExchange(self.spins, self.J, gamma=self.gamma_mT)
+        HE_true = radpy.HamiltonianExchange(
+            self.sim.num_particles, PARAMS["J"], gamma=self.gamma_mT
+        )
         assert np.all(
-            np.isclose(self.sim.exchange_hamiltonian(self.J), HE_true)
+            np.isclose(self.sim.exchange_hamiltonian(PARAMS["J"]), HE_true)
         ), "Exchange (J-coupling) Hamiltonian not calculated properly."
 
     def test_HD(self):
-        HD_true = radpy.HamiltonianDipolar(self.spins, self.D, self.gamma_mT)
+        HD_true = radpy.HamiltonianDipolar(
+            self.sim.num_particles, PARAMS["D"], self.gamma_mT
+        )
         assert np.all(
-            np.isclose(self.sim.dipolar_hamiltonian(self.D), HD_true)
+            np.isclose(self.sim.dipolar_hamiltonian(PARAMS["D"]), HD_true)
         ), "Dipolar Hamiltonian not calculated properly."
 
     @unittest.skip("This needs to be figured out")
@@ -220,26 +238,25 @@ class QuantumTests(unittest.TestCase):
         # plt.show()
 
 
-class HilbertTests(QuantumTests):
+class HilbertTests(unittest.TestCase):
     def setUp(self):
-        super().setUp()
-        self.sim = rp.simulation.HilbertSimulation(self.rad_pair)
+        self.sim = rp.simulation.HilbertSimulation(RADICAL_PAIR)
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
 
     def test_hilbert_initial(self):
-        H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
-        for state in self.states:
+        H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
+        for state in STATES:
             rho0 = self.sim.hilbert_initial(state, H)
-            rho0_true = radpy.Hilbert_initial(state, self.spins, H)
+            rho0_true = radpy.Hilbert_initial(state, self.sim.num_particles, H)
             assert np.all(
                 np.isclose(rho0, rho0_true)
             ), "Initial density not calculated properly."
 
     def test_hilbert_unitary_propagator(self):
         dt = np.random.uniform(1e-6)
-        H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
+        H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         U_true = radpy.UnitaryPropagator(H, dt, "Hilbert")
         Utensor = self.sim.hilbert_unitary_propagator(H, dt)
         for pair in zip(U_true, Utensor):
@@ -247,12 +264,12 @@ class HilbertTests(QuantumTests):
 
     def test_hilbert_time_evolution(self):
         k = np.random.uniform()
-        H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
+        H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         Kexp = self.sim.kinetics_exponential(k, self.time)
-        for init_state in self.states:
-            for obs_state in self.states:
+        for init_state in STATES:
+            for obs_state in STATES:
                 evol_true = radpy.TimeEvolution(
-                    self.spins,
+                    self.sim.num_particles,
                     init_state,
                     obs_state,
                     self.t_max,
@@ -279,39 +296,38 @@ class HilbertTests(QuantumTests):
                 ), "Time evolution (product yield) failed."
 
 
-class LiouvilleTests(QuantumTests):
+class LiouvilleTests(unittest.TestCase):
     def setUp(self):
-        super().setUp()
-        self.sim = rp.simulation.LiouvilleSimulation(self.rad_pair)
+        self.sim = rp.simulation.LiouvilleSimulation(RADICAL_PAIR)
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
 
     def test_liouville_initial(self):
-        H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
-        for state in self.states:
+        H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
+        for state in STATES:
             rho0 = self.sim.liouville_initial(state, H)
-            rho0_true = radpy.Liouville_initial(state, self.spins, H)
+            rho0_true = radpy.Liouville_initial(state, self.sim.num_particles, H)
             assert np.all(
                 np.isclose(rho0, rho0_true)
             ), "Initial density not calculated properly."
 
     def test_liouville_unitary_propagator(self):
         dt = np.random.uniform(0, 1e-6)
-        H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
+        H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         U_true = radpy.UnitaryPropagator(H, dt, "Liouville")
         U_prop = self.sim.liouville_unitary_propagator(H, dt)
         assert np.all(np.isclose(U_true, U_prop))
 
     # @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_liouville_time_evolution(self):
-        H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
+        H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         HL = self.sim.hilbert_to_liouville(H)
-        for init_state in self.states:
-            for obs_state in self.states:
+        for init_state in STATES:
+            for obs_state in STATES:
                 rhos = self.sim.liouville_time_evolution(init_state, self.time, H)[1:]
                 evol_true = radpy.TimeEvolution(
-                    self.spins,
+                    self.sim.num_particles,
                     init_state,
                     obs_state,
                     self.t_max,
@@ -332,18 +348,20 @@ class LiouvilleTests(QuantumTests):
     @unittest.skip("Not ready yet")
     def test_mary(self):
         k = np.random.uniform()
-        H = self.sim.total_hamiltonian(0, self.J, self.D)
-        for init_state in self.states:
-            for obs_state in self.states:
-                rslt = self.sim.mary(init_state, obs_state, self.time, k, self.B, H)
+        H = self.sim.total_hamiltonian(0, PARAMS["J"], PARAMS["D"])
+        for init_state in STATES:
+            for obs_state in STATES:
+                rslt = self.sim.mary(
+                    init_state, obs_state, self.time, k, PARAMS["B"], H
+                )
                 time, MFE, HFE, LFE, MARY, _, _, rho = radpy.MARY(
-                    self.spins,
+                    self.sim.num_particles,
                     init_state,
                     obs_state,
                     self.t_max,
                     self.dt,
                     k,
-                    self.B,
+                    PARAMS["B"],
                     H,
                 )
 
