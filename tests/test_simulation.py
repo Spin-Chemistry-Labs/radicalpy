@@ -263,8 +263,7 @@ class HilbertTests(QuantumTests):
                     "Hilbert",
                 )
                 rhos = self.sim.hilbert_time_evolution(init_state, self.time, H)
-                obs = self.sim.projection_operator(obs_state)
-                pprob = self.sim.product_probability(obs, rhos)
+                pprob = self.sim.product_probability(obs_state, rhos)
                 pprob_kinetics = pprob[1:] * Kexp[:-1]
                 pyield, pyield_sum = self.sim.product_yield(
                     pprob_kinetics, self.time[:-1], k
@@ -284,9 +283,9 @@ class LiouvilleTests(QuantumTests):
     def setUp(self):
         super().setUp()
         self.sim = rp.simulation.LiouvilleSimulation(self.rad_pair)
-        # self.dt = 0.01
-        # self.t_max = 1.0
-        # self.time = np.arange(0, self.t_max, self.dt)
+        self.dt = 0.01
+        self.t_max = 1.0
+        self.time = np.arange(0, self.t_max, self.dt)
 
     def test_liouville_initial(self):
         H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
@@ -304,7 +303,7 @@ class LiouvilleTests(QuantumTests):
         U_prop = self.sim.liouville_unitary_propagator(H, dt)
         assert np.all(np.isclose(U_true, U_prop))
 
-    @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
+    # @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_liouville_time_evolution(self):
         H = self.sim.total_hamiltonian(self.B[0], self.J, self.D)
         HL = self.sim.hilbert_to_liouville(H)
@@ -322,8 +321,7 @@ class LiouvilleTests(QuantumTests):
                     H=HL,
                     space="Liouville",
                 )
-                obs = self.sim.liouville_projop(obs_state)
-                prob = self.sim.product_probability(obs.T, rhos)
+                prob = self.sim.product_probability(obs_state, rhos)
                 # assert np.all(
                 #     np.isclose(rhos, evol_true[-1][:-1])
                 # ), "Time evolution (rho) failed)"
