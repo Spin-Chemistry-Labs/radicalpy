@@ -445,7 +445,7 @@ class QuantumSimulation:
     def product_yield(probuct_probability, time, k):
         """Calculate the product yield and the product yield sum."""
         product_yield = sp.integrate.cumtrapz(probuct_probability, time, initial=0) * k
-        product_yield_sum = np.max(product_yield)
+        product_yield_sum = np.max(product_yield, axis=-1)
         return product_yield, product_yield_sum
 
     def kinetics_exponential(self, k: float, time: np.ndarray) -> np.ndarray:
