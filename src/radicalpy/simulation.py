@@ -4,14 +4,31 @@ from math import prod
 from typing import Iterable, Optional
 
 import numpy as np
+import numpy.typing as npt
 import scipy as sp
 
-from .data import MOLECULE_DATA, gamma_mT, multiplicity
+from .data import MOLECULE_DATA, _get_molecules, gamma_mT, multiplicity
 from .pauli_matrices import pauli
 
 
 class Molecule:
-    """Class representing a molecule in a simulation."""
+    """Class representing a molecule in a simulation.
+
+    >>> Molecule("foobar", ["H1"])
+    Traceback (most recent call last):
+    ...
+    ValueError: Available molecules below:
+    adenine
+
+    >>> Molecule("adenine", ["H1"])
+    Traceback (most recent call last):
+    ...
+    ValueError: Available nuclei below.
+    N6-H1
+    N6-H2
+    C8-H
+
+    """
 
     def __init__(
         self,
@@ -49,11 +66,16 @@ class Molecule:
             # Idea: nuclie = ["1H", "14N"] list of elements.
             assert nuclei is None
         else:
-            assert radical in MOLECULE_DATA
+            # assert radical in MOLECULE_DATA
+            if radical not in MOLECULE_DATA:
+                available = "\n".join(_get_molecules().keys())
+                raise ValueError(f"Available molecules below:\n{available}")
             # todo cleanup
             self.data = MOLECULE_DATA[radical]["data"]
             for nucleus in nuclei:
-                assert nucleus in self.data
+                if nucleus not in self.data:
+                    available = "\n".join(self.data.keys())
+                    raise ValueError(f"Available nuclei below.\n{available}")
         self.radical = radical
         self.nuclei = nuclei
 
@@ -425,8 +447,8 @@ class HilbertSimulation(QuantumSimulation):
             https://docs.python.org/3/library/doctest.html
 
         Example:
-            >>> Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
-            >>> UL = UnitaryPropagator(HL, 3e-9, "Liouville")
+            >> Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
+            >> UL = UnitaryPropagator(HL, 3e-9, "Liouville")
 
         """
         Up = sp.linalg.expm(1j * H * dt)
@@ -586,3 +608,9 @@ class LiouvilleSimulation(QuantumSimulation):
 # MARY, RYDMR, SEMF, MIE (1H -> 2H - different isotop, different Omega)
 class ClassicalSimulation:
     pass
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()
