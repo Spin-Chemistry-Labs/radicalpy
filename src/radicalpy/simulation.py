@@ -79,10 +79,10 @@ class Molecule:
                 available = "\n".join(_get_molecules().keys())
                 raise ValueError(f"Available molecules below:\n{available}")
             # todo cleanup
-            self.data = MOLECULE_DATA[radical]["data"]
+            molecule_data = MOLECULE_DATA[radical]["data"]
             for nucleus in nuclei:
-                if nucleus not in self.data:
-                    available = "\n".join(self.data.keys())
+                if nucleus not in molecule_data:
+                    available = "\n".join(molecule_data.keys())
                     raise ValueError(f"Available nuclei below.\n{available}")
         self.radical = radical
         self.nuclei = nuclei
@@ -104,7 +104,7 @@ class Molecule:
             return []
 
         if self.radical is not None:
-            return [self.data[n][data] for n in self.nuclei]
+            return [MOLECULE_DATA[self.radical]["data"][n][data] for n in self.nuclei]
         else:
             return []
 
@@ -117,7 +117,7 @@ class Molecule:
             Make tests better and probably remove this functions.
 
         """
-        return self.data[self.nuclei[idx]][key]
+        return MOLECULE_DATA[self.radical]["data"][self.nuclei[idx]][key]
 
     def __repr__(self):
         return (
