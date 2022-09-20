@@ -2,7 +2,9 @@ import time
 import unittest
 
 import numpy as np
-import src.radicalpy.simulation as rp
+import src.radicalpy as rp
+import src.radicalpy.data
+import src.radicalpy.simulation
 
 import tests.radpy as radpy
 
@@ -18,8 +20,8 @@ PARAMS = dict(
 )
 
 RADICAL_PAIR = [
-    rp.Molecule("adenine", ["N6-H1", "N6-H2"]),
-    rp.Molecule("adenine", ["C8-H"]),
+    rp.simulation.Molecule("adenine", ["N6-H1", "N6-H2"]),
+    rp.simulation.Molecule("adenine", ["C8-H"]),
 ]
 
 
@@ -28,7 +30,7 @@ class QuantumTests(unittest.TestCase):
         if MEASURE_TIME:
             self.start_time = time.time()
         self.data = rp.data.MOLECULE_DATA["adenine"]["data"]
-        self.sim = rp.QuantumSimulation(RADICAL_PAIR)
+        self.sim = rp.simulation.QuantumSimulation(RADICAL_PAIR)
         self.gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
 
     def tearDown(self):
@@ -36,13 +38,13 @@ class QuantumTests(unittest.TestCase):
             print(f"Time: {time.time() - self.start_time}")
 
     def test_molecule_properties(self):
-        molecule = rp.Molecule("adenine", ["N6-H1", "C8-H"])
+        molecule = rp.simulation.Molecule("adenine", ["N6-H1", "C8-H"])
         for prop in ["hfc", "element"]:
             for i, h in enumerate(molecule._get_properties(prop)):
                 assert h == molecule._get_property(i, prop)
 
     def test_molecule_name(self):
-        molecule = rp.Molecule("adenine", ["N6-H1", "C8-H"])
+        molecule = rp.simulation.Molecule("adenine", ["N6-H1", "C8-H"])
         for i, h in enumerate(molecule.hfcs):
             assert h == self.data[molecule.nuclei[i]]["hfc"]
         for i, g in enumerate(molecule.gammas_mT):
@@ -57,7 +59,7 @@ class QuantumTests(unittest.TestCase):
         multiplicities = [2, 3]
         gammas_mT = [3.14, 2.71]
 
-        molecule = rp.Molecule(
+        molecule = rp.simulation.Molecule(
             hfcs=hfcs, multiplicities=multiplicities, gammas_mT=gammas_mT
         )
         for i in range(2):
@@ -69,7 +71,9 @@ class QuantumTests(unittest.TestCase):
         multiplicities = [2, 3]
         gammas_mT = [3.14, 2.71]
 
-        molecule = rp.Molecule(multiplicities=multiplicities, gammas_mT=gammas_mT)
+        molecule = rp.simulation.Molecule(
+            multiplicities=multiplicities, gammas_mT=gammas_mT
+        )
         for i in range(2):
             assert multiplicities[i] == molecule.multiplicities[i]
             assert gammas_mT[i] == molecule.gammas_mT[i]
@@ -83,8 +87,8 @@ class QuantumTests(unittest.TestCase):
         - those entries have opposite signs.
 
         """
-        mol = rp.Molecule()
-        sim = rp.QuantumSimulation([mol, mol])
+        mol = rp.simulation.Molecule()
+        sim = rp.simulation.QuantumSimulation([mol, mol])
         HZ = sim.zeeman_hamiltonian(0.5)
         nz = HZ != 0
         assert HZ.shape == (4, 4)
@@ -96,10 +100,12 @@ class QuantumTests(unittest.TestCase):
         # RadicalPy code
         gamma_mT = 3.14
         rad_pair = [
-            rp.Molecule(multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
-            rp.Molecule(multiplicities=[2], gammas_mT=[gamma_mT]),
+            rp.simulation.Molecule(
+                multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT]
+            ),
+            rp.simulation.Molecule(multiplicities=[2], gammas_mT=[gamma_mT]),
         ]
-        sim = rp.QuantumSimulation(rad_pair)
+        sim = rp.simulation.QuantumSimulation(rad_pair)
         HZ = sim.zeeman_hamiltonian(PARAMS["B"][0])
 
         #########################
@@ -208,7 +214,7 @@ class QuantumTests(unittest.TestCase):
             )
         ) * MHz2mT
 
-        flavin = rp.Molecule(
+        flavin = rp.simulation.Molecule(
             hfcs=[N5, N10, H5],
             multiplicities=[3, 3, 2],
             gammas_mT=[
@@ -219,13 +225,13 @@ class QuantumTests(unittest.TestCase):
         )
 
         H4 = 0.176 * np.eye(3)
-        ascorbic_acid = rp.Molecule(
+        ascorbic_acid = rp.simulation.Molecule(
             hfcs=[H4],
             multiplicities=[2],
             gammas_mT=[rp.data.gamma_mT("1H")],
         )
 
-        sim = rp.QuantumSimulation([flavin, ascorbic_acid])
+        sim = rp.simulation.QuantumSimulation([flavin, ascorbic_acid])
         H = sim.hyperfine_hamiltonian()
         # print(H.shape)
         # print(H)
@@ -239,7 +245,7 @@ class QuantumTests(unittest.TestCase):
 
 class HilbertTests(unittest.TestCase):
     def setUp(self):
-        self.sim = rp.HilbertSimulation(RADICAL_PAIR)
+        self.sim = rp.simulation.HilbertSimulation(RADICAL_PAIR)
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
@@ -297,7 +303,7 @@ class HilbertTests(unittest.TestCase):
 
 class LiouvilleTests(unittest.TestCase):
     def setUp(self):
-        self.sim = rp.LiouvilleSimulation(RADICAL_PAIR)
+        self.sim = rp.simulation.LiouvilleSimulation(RADICAL_PAIR)
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
