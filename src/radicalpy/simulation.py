@@ -21,7 +21,7 @@ class Molecule:
     ValueError: Available molecules below:
     adenine
 
-    >>> Molecule("adenine", ["H1"])
+    >>> Molecule("adenine", ["1H"])
     Traceback (most recent call last):
     ...
     ValueError: Available nuclei below.
@@ -38,7 +38,12 @@ class Molecule:
       number of particles: 1
       elements: ['1H']
 
-    >>> Molecule(nuclei=["N6-H1"])
+    >>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
+    >>> Molecule("kryptonite",
+                 multiplicities=[1, 2],
+                 gammas_mT=[42, 666],
+                 hfcs=[1, 2, 3])
+    >>> Molecule("kryptonite", nuclei=["1H", "14N"])
     """
 
     def __init__(
@@ -50,7 +55,8 @@ class Molecule:
         hfcs: list[float] = None,
     ):
         """Construct a Molecule object."""
-        self._set_radical_and_nuclei(radical, nuclei)
+        self.radical = self._get_radical(radical)
+        self.nuclei = self._get_nuclei(nuclei)
         self.multiplicities = self._cond_value(multiplicities, multiplicity)
         self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
         if nuclei is not None:
@@ -59,33 +65,67 @@ class Molecule:
         else:
             self.num_particles = len(self.multiplicities)
             self.elements = self.num_particles * ["dummy"]
-        self._set_hfcs(nuclei, hfcs)
+        self.hfcs = self._get_hfcs(nuclei, hfcs)
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) in {0, self.num_particles}
 
-    def _set_hfcs(self, nuclei, hfcs):
-        self.hfcs = []
+    def __other_init__(
+        self,
+        radical: str = None,
+        nuclei: list[str] = None,
+        multiplicities: list[int] = None,
+        gammas_mT: list[float] = None,
+        hfcs: list[float] = None,
+    ):
+        if nuclei is None:
+            self._set_all_manual(multiplicities, gammas_mT, hfcs)
+        else:
+            if radical is None:
+                self._set_from_spin_data(nuclei)
+            else:  # radical is not None and nuclei is not None
+                self.radical = radical
+                if radical in moldb:
+                    self._set_from_nuclei(radical, nuclei)
+                else:
+                    self._set_from_spin_data(nuclei)
+
+    def _set_all_manual(self, multiplicities, gammas_mT, hfcs):
+        self.multiplicities = [] if multiplicities is None else multiplicities
+        self.gammas_mT = [] if gammas_mT is None else gammas_mT
+        self.hfcs = [] if hfcs is None else hfcs
+
+    def _set_from_molecule(nuclei):
+        pass
+
+    def _set_from_nuclei(radical, nuclei):
+        pass
+
+    def _get_hfcs(self, nuclei, hfcs):
         if hfcs is None:
             if nuclei is not None:
-                self.hfcs = self._get_properties("hfc")
+                return self._get_properties("hfc")
+            else:
+                return []
         else:
-            self.hfcs = hfcs
+            return hfcs
 
-    def _set_radical_and_nuclei(self, radical, nuclei):
+    def _get_radical(self, radical):
         if radical is not None:
             # assert radical in MOLECULE_DATA
             if radical not in MOLECULE_DATA:
                 available = "\n".join(_get_molecules().keys())
                 raise ValueError(f"Available molecules below:\n{available}")
-            # todo cleanup
-            molecule_data = MOLECULE_DATA[radical]["data"]
+        return radical
+
+    def _get_nuclei(self, nuclei):
+        if self.radical is not None:
+            molecule_data = MOLECULE_DATA[self.radical]["data"]
             for nucleus in nuclei:
                 if nucleus not in molecule_data:
                     available = "\n".join(molecule_data.keys())
                     raise ValueError(f"Available nuclei below.\n{available}")
-        self.radical = radical
-        self.nuclei = nuclei
+        return nuclei
 
     def _cond_value(self, value, func):
         if value is None:

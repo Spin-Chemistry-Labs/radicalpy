@@ -3,6 +3,8 @@ import unittest
 
 import numpy as np
 import src.radicalpy as rp
+import src.radicalpy.data
+import src.radicalpy.simulation
 
 import tests.radpy as radpy
 
@@ -322,7 +324,7 @@ class LiouvilleTests(unittest.TestCase):
         U_prop = self.sim.liouville_unitary_propagator(H, dt)
         assert np.all(np.isclose(U_true, U_prop))
 
-    # @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
+    @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_liouville_time_evolution(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         HL = self.sim.hilbert_to_liouville(H)
