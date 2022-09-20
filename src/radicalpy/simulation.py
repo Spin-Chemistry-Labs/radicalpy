@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-import json
 from math import prod
 from typing import Iterable
 
 import numpy as np
-import numpy.typing as npt
 import scipy as sp
 
-from .data import MOLECULE_DATA, _get_molecules, gamma_mT, multiplicity
+from .data import MOLECULE_DATA, gamma_mT, get_molecules, multiplicity
 from .pauli_matrices import pauli
 
 
@@ -38,12 +36,9 @@ class Molecule:
       number of particles: 1
       elements: ['1H']
 
-    >>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
-    >>> Molecule("kryptonite",
-                 multiplicities=[1, 2],
-                 gammas_mT=[42, 666],
-                 hfcs=[1, 2, 3])
-    >>> Molecule("kryptonite", nuclei=["1H", "14N"])
+    #>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
+    #>> Molecule("kryptonite", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[1, 2, 3])
+    #>> Molecule("kryptonite", nuclei=["1H", "14N"])
     """
 
     def __init__(
@@ -114,7 +109,7 @@ class Molecule:
         if radical is not None:
             # assert radical in MOLECULE_DATA
             if radical not in MOLECULE_DATA:
-                available = "\n".join(_get_molecules().keys())
+                available = "\n".join(get_molecules().keys())
                 raise ValueError(f"Available molecules below:\n{available}")
         return radical
 
