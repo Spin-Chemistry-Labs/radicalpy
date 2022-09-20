@@ -570,17 +570,19 @@ class HilbertSimulation(QuantumSimulation):
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J)
         rhos = self.hilbert_mary_loop(init_state, time, B, H)
-        pprob_seq = self.product_probability(obs_state, rhos)
-        pprob_seq *= self.kinetics_exponential(k, time)
-        pyields, pyield_sums = self.product_yield(pprob_seq, time, k)
-        MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, pprob_seq, dt, k)
+        poduct_probabilities = self.product_probability(obs_state, rhos)
+        poduct_probabilities *= self.kinetics_exponential(k, time)
+        product_yields, product_yield_sums = self.product_yield(
+            poduct_probabilities, time, k
+        )
+        MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, poduct_probabilities, dt, k)
         return dict(
             time=time,
             B=B,
             rhos=rhos,
-            time_evolution=pprob_seq,
-            product_yields=pyields,
-            product_yield_sums=pyield_sums,
+            time_evolutions=poduct_probabilities,
+            product_yields=product_yields,
+            product_yield_sums=product_yield_sums,
             MARY=MARY,
             LFE=LFE,
             HFE=HFE,
