@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
+import json
 from math import prod
-from typing import Iterable, Optional
+from typing import Iterable
 
 import numpy as np
 import numpy.typing as npt
@@ -28,6 +29,16 @@ class Molecule:
     N6-H2
     C8-H
 
+    >>> Molecule("adenine", ["N6-H1"])
+    Molecule: adenine
+      Nuclei: ['N6-H1']
+      HFCs: [-0.63]
+      multiplicities: [2]
+      gammas(mT): [267522.18744]
+      number of particles: 1
+      elements: ['1H']
+
+    >>> Molecule(nuclei=["N6-H1"])
     """
 
     def __init__(
@@ -62,10 +73,7 @@ class Molecule:
             self.hfcs = hfcs
 
     def _set_radical_and_nuclei(self, radical, nuclei):
-        if radical is None:
-            # Idea: nuclie = ["1H", "14N"] list of elements.
-            assert nuclei is None
-        else:
+        if radical is not None:
             # assert radical in MOLECULE_DATA
             if radical not in MOLECULE_DATA:
                 available = "\n".join(_get_molecules().keys())
@@ -92,7 +100,13 @@ class Molecule:
         Returns:
             List generator.
         """
-        return [] if self.nuclei is None else [self.data[n][data] for n in self.nuclei]
+        if self.nuclei is None:
+            return []
+
+        if self.radical is not None:
+            return [self.data[n][data] for n in self.nuclei]
+        else:
+            return []
 
     def _get_property(self, idx: int, key: str):
         """Get data of a nucleus.
@@ -104,6 +118,17 @@ class Molecule:
 
         """
         return self.data[self.nuclei[idx]][key]
+
+    def __repr__(self):
+        return (
+            f"Molecule: {self.radical}"
+            f"\n  Nuclei: {self.nuclei}"
+            f"\n  HFCs: {self.hfcs}"
+            f"\n  multiplicities: {self.multiplicities}"
+            f"\n  gammas(mT): {self.gammas_mT}"
+            f"\n  number of particles: {self.num_particles}"
+            f"\n  elements: {self.elements}"
+        )
 
 
 class QuantumSimulation:
