@@ -8,7 +8,7 @@ import src.radicalpy.simulation
 
 import tests.radpy as radpy
 
-RUN_SLOW_TESTS = False
+RUN_SLOW_TESTS = True
 MEASURE_TIME = False
 
 
