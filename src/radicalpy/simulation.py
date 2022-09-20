@@ -578,7 +578,7 @@ class HilbertSimulation(QuantumSimulation):
             time=time,
             B=B,
             rhos=rhos,
-            product_probability_seq=pprob_seq,
+            time_evolution=pprob_seq,
             product_yield=pyield,
             product_yield_sum=pyield_sum,
             MARY=MARY,
