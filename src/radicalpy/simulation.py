@@ -479,7 +479,7 @@ class HilbertSimulation(QuantumSimulation):
         B: np.ndarray,
         D: float,
         J: float,
-    ):
+    ) -> dict:
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J)
         rhos = self.hilbert_mary_loop(init_state, time, B, H)
