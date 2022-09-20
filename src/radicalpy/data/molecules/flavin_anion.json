@@ -1,0 +1,72 @@
+{
+  "data": {
+    "N5": {
+      "hfc": 0.5233,
+      "element": "14N"
+    },
+    "N6": {
+      "hfc": 0.1887,
+      "element": "14N"
+    },
+    "N14": {
+      "hfc": -0.0035,
+      "element": "14N"
+    },
+    "N16": {
+      "hfc": -0.0383,
+      "element": "14N"
+    },
+    "H20": {
+      "hfc": 0.0565,
+      "element": "1H"
+    },
+    "H21": {
+      "hfc": -0.1416,
+      "element": "1H"
+    },
+    "H22": {
+      "hfc": -0.1416,
+      "element": "1H"
+    },
+    "H23": {
+      "hfc": -0.1416,
+      "element": "1H"
+    },
+    "H24": {
+      "hfc": -0.3872,
+      "element": "1H"
+    },
+    "H25": {
+      "hfc": 0.4399,
+      "element": "1H"
+    },
+    "H26": {
+      "hfc": 0.4399,
+      "element": "1H"
+    },
+    "H27": {
+      "hfc": 0.4399,
+      "element": "1H"
+    },
+    "H28": {
+      "hfc": 0.0099,
+      "element": "1H"
+    },
+    "H29": {
+      "hfc": 0.407,
+      "element": "1H"
+    },
+    "H30": {
+      "hfc": 0.407,
+      "element": "1H"
+    },
+    "H31": {
+      "hfc": -0.0189,
+      "element": "1H"
+    }
+  },
+  "info": {
+    "units": "mT",
+    "name": "Flavin radical anion"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "data": {
+    "N6": {
+      "hfc": 0.1465,
+      "element": "14N"
+    },
+    "N9": {
+      "hfc": 0.3215,
+      "element": "14N"
+    },
+    "H16": {
+      "hfc": -0.0396,
+      "element": "1H"
+    },
+    "H17": {
+      "hfc": -0.0931,
+      "element": "1H"
+    },
+    "H18": {
+      "hfc": 1.6046,
+      "element": "1H"
+    },
+    "H19": {
+      "hfc": 0.0457,
+      "element": "1H"
+    },
+    "H20": {
+      "hfc": -0.0104,
+      "element": "1H"
+    },
+    "H21": {
+      "hfc": 0.0233,
+      "element": "1H"
+    },
+    "H22": {
+      "hfc": -0.278,
+      "element": "1H"
+    },
+    "H23": {
+      "hfc": -0.5983,
+      "element": "1H"
+    },
+    "H24": {
+      "hfc": -0.488,
+      "element": "1H"
+    },
+    "H25": {
+      "hfc": -0.3637,
+      "element": "1H"
+    },
+    "H26": {
+      "hfc": -0.2083,
+      "element": "1H"
+    },
+    "H27": {
+      "hfc": -0.04,
+      "element": "1H"
+    }
+  },
+  "info": {
+    "units": "mT",
+    "name": "Tryptophan radical cation"
+  }
+}
