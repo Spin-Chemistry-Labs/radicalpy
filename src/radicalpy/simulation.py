@@ -670,9 +670,3 @@ class LiouvilleSimulation(QuantumSimulation):
 # MARY, RYDMR, SEMF, MIE (1H -> 2H - different isotop, different Omega)
 class ClassicalSimulation:
     pass
-
-
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()
