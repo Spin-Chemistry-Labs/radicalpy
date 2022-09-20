@@ -1,9 +1,8 @@
 import time
 import unittest
 
-import matplotlib.pyplot as plt
 import numpy as np
-import src.radicalpy as rp
+import src.radicalpy.simulation as rp
 
 import tests.radpy as radpy
 
@@ -29,7 +28,7 @@ class QuantumTests(unittest.TestCase):
         if MEASURE_TIME:
             self.start_time = time.time()
         self.data = rp.data.MOLECULE_DATA["adenine"]["data"]
-        self.sim = rp.simulation.QuantumSimulation(RADICAL_PAIR)
+        self.sim = rp.QuantumSimulation(RADICAL_PAIR)
         self.gamma_mT = rp.data.SPIN_DATA["E"]["gamma"] * 0.001
 
     def tearDown(self):
@@ -85,7 +84,7 @@ class QuantumTests(unittest.TestCase):
 
         """
         mol = rp.Molecule()
-        sim = rp.simulation.QuantumSimulation([mol, mol])
+        sim = rp.QuantumSimulation([mol, mol])
         HZ = sim.zeeman_hamiltonian(0.5)
         nz = HZ != 0
         assert HZ.shape == (4, 4)
@@ -100,7 +99,7 @@ class QuantumTests(unittest.TestCase):
             rp.Molecule(multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
             rp.Molecule(multiplicities=[2], gammas_mT=[gamma_mT]),
         ]
-        sim = rp.simulation.QuantumSimulation(rad_pair)
+        sim = rp.QuantumSimulation(rad_pair)
         HZ = sim.zeeman_hamiltonian(PARAMS["B"][0])
 
         #########################
@@ -226,7 +225,7 @@ class QuantumTests(unittest.TestCase):
             gammas_mT=[rp.data.gamma_mT("1H")],
         )
 
-        sim = rp.simulation.QuantumSimulation([flavin, ascorbic_acid])
+        sim = rp.QuantumSimulation([flavin, ascorbic_acid])
         H = sim.hyperfine_hamiltonian()
         # print(H.shape)
         # print(H)
@@ -240,7 +239,7 @@ class QuantumTests(unittest.TestCase):
 
 class HilbertTests(unittest.TestCase):
     def setUp(self):
-        self.sim = rp.simulation.HilbertSimulation(RADICAL_PAIR)
+        self.sim = rp.HilbertSimulation(RADICAL_PAIR)
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
@@ -298,7 +297,7 @@ class HilbertTests(unittest.TestCase):
 
 class LiouvilleTests(unittest.TestCase):
     def setUp(self):
-        self.sim = rp.simulation.LiouvilleSimulation(RADICAL_PAIR)
+        self.sim = rp.LiouvilleSimulation(RADICAL_PAIR)
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
