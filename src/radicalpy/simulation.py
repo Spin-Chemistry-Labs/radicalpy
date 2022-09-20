@@ -18,6 +18,11 @@ class Molecule:
     ...
     ValueError: Available molecules below:
     adenine
+    flavin_neutral
+    flavin_anion
+    tyrosine_neutral
+    adenine_cation
+    trp_cation
 
     >>> Molecule("adenine", ["1H"])
     Traceback (most recent call last):
