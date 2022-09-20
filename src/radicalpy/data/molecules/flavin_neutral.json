@@ -1,0 +1,92 @@
+{
+  "data": {
+    "N1": {
+      "hfc": 0.1238,
+      "element": "14N"
+    },
+    "N4": {
+      "hfc": -0.0591,
+      "element": "14N"
+    },
+    "N8(N5)": {
+      "hfc": 0.3927,
+      "element": "14N"
+    },
+    "N17(N10)": {
+      "hfc": 0.2115,
+      "element": "14N"
+    },
+    "H24": {
+      "hfc": 0.0008,
+      "element": "1H"
+    },
+    "H25": {
+      "hfc": 0.024,
+      "element": "1H"
+    },
+    "H26": {
+      "hfc": -0.0127,
+      "element": "1H"
+    },
+    "H27": {
+      "hfc": 0.0636,
+      "element": "1H"
+    },
+    "H28(H1'r)": {
+      "hfc": 0.3899,
+      "element": "1H"
+    },
+    "H29": {
+      "hfc": 0.0319,
+      "element": "1H"
+    },
+    "H30": {
+      "hfc": 0.192,
+      "element": "1H"
+    },
+    "H31": {
+      "hfc": 0.4817,
+      "element": "1H"
+    },
+    "H32": {
+      "hfc": 0.0749,
+      "element": "1H"
+    },
+    "H33": {
+      "hfc": -0.0091,
+      "element": "1H"
+    },
+    "H34": {
+      "hfc": -0.0495,
+      "element": "1H"
+    },
+    "H35": {
+      "hfc": -0.0209,
+      "element": "1H"
+    },
+    "H36": {
+      "hfc": 0.0487,
+      "element": "1H"
+    },
+    "H37(H6)": {
+      "hfc": -0.158,
+      "element": "1H"
+    },
+    "H38(H5)": {
+      "hfc": -0.7693,
+      "element": "1H"
+    },
+    "H39": {
+      "hfc": -0.0247,
+      "element": "1H"
+    },
+    "H40": {
+      "hfc": -0.0036,
+      "element": "1H"
+    }
+  },
+  "info": {
+    "units": "mT",
+    "name": "Flavin neutral radical"
+  }
+}

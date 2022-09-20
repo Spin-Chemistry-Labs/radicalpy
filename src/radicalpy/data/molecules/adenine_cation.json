@@ -1,0 +1,16 @@
+{
+  "data": {
+    "N6-H": {
+      "hfc": -0.66,
+      "element": "1H"
+    },
+    "C8-H": {
+      "hfc": -0.55,
+      "element": "1H"
+    }
+  },
+  "info": {
+    "units": "mT",
+    "name": "Adenine radical cation"
+  }
+}

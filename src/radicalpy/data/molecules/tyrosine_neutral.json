@@ -1,0 +1,36 @@
+{
+  "data": {
+    "H7": {
+      "hfc": -0.6206,
+      "element": "1H"
+    },
+    "H8": {
+      "hfc": 0.2056,
+      "element": "1H"
+    },
+    "H9": {
+      "hfc": 0.2062,
+      "element": "1H"
+    },
+    "H10": {
+      "hfc": -0.625,
+      "element": "1H"
+    },
+    "H13": {
+      "hfc": 2.5808,
+      "element": "1H"
+    },
+    "H14": {
+      "hfc": 0.6768,
+      "element": "1H"
+    },
+    "H15": {
+      "hfc": 0.5813,
+      "element": "1H"
+    }
+  },
+  "info": {
+    "units": "mT",
+    "name": "Tyrosine neutral radical"
+  }
+}
