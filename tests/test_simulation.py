@@ -3,8 +3,6 @@ import unittest
 
 import numpy as np
 import src.radicalpy as rp
-import src.radicalpy.data
-import src.radicalpy.simulation
 
 import tests.radpy as radpy
 
