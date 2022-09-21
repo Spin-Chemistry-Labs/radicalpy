@@ -15,6 +15,10 @@
   },
   "info": {
     "units": "mT",
-    "name": "Adenine radical cation"
+    "source": "Table 3 in Wetmore et al., JPC B, 1998, 102, 10602",
+    "name": "Adenine radical cation",
+    "structure": {
+      "SMILES": "PUBCHEM"
+    }
   }
 }
