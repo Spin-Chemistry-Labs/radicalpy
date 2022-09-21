@@ -18,10 +18,10 @@ class Molecule:
     ...
     ValueError: Available molecules below:
     adenine_cation
-    tyrosine_neutral
+    flavin_anion
     flavin_neutral
     trp_cation
-    flavin_anion
+    tyrosine_neutral
 
     >>> Molecule("adenine_cation", ["1H"])
     Traceback (most recent call last):

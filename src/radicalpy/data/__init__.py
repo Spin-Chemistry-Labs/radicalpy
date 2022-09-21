@@ -14,7 +14,7 @@ with open(SPIN_DATA_JSON) as f:
 
 def get_molecules(molecules_dir=MOLECULES_DIR):
     molecules = {}
-    for json_path in molecules_dir.glob("*.json"):
+    for json_path in sorted(molecules_dir.glob("*.json")):
         molecule_name = json_path.with_suffix("").name
         with open(json_path) as f:
             molecules[molecule_name] = json.load(f)
