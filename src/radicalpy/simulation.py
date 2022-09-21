@@ -27,9 +27,9 @@ class Molecule:
     Traceback (most recent call last):
     ...
     ValueError: Available nuclei below.
-    N6-H2 (hfc=-0.66)
-    N6-H1 (hfc=-0.63)
-    C8-H (hfc=-0.55)
+    N6-H2 (hfc = -0.66)
+    N6-H1 (hfc = -0.63)
+    C8-H (hfc = -0.55)
 
     >>> Molecule("adenine_cation", ["N6-H1"])
     Molecule: adenine_cation
@@ -124,8 +124,10 @@ class Molecule:
                 if nucleus not in molecule_data:
                     keys = molecule_data.keys()
                     hfcs = [molecule_data[k]["hfc"] for k in keys]
-                    pairs = sorted(zip(keys, hfcs), key=lambda t: t[1])
-                    available = "\n".join([f"{k} (hfc={h})" for k, h in pairs])
+                    pairs = sorted(
+                        zip(keys, hfcs), key=lambda t: np.abs(t[1]), reverse=True
+                    )
+                    available = "\n".join([f"{k} (hfc = {h})" for k, h in pairs])
                     raise ValueError(f"Available nuclei below.\n{available}")
         return nuclei
 
