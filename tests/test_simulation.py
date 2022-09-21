@@ -22,8 +22,8 @@ PARAMS = dict(
 )
 
 RADICAL_PAIR = [
-    rpsim.Molecule("adenine", ["N6-H1", "N6-H2"]),
-    rpsim.Molecule("adenine", ["C8-H"]),
+    rpsim.Molecule("adenine_cation", ["N6-H1", "N6-H2"]),
+    rpsim.Molecule("adenine_cation", ["C8-H"]),
 ]
 
 
@@ -36,7 +36,7 @@ class QuantumTests(unittest.TestCase):
     def setUp(self):
         if MEASURE_TIME:
             self.start_time = time.time()
-        self.data = rpsim.MOLECULE_DATA["adenine"]["data"]
+        self.data = rpsim.MOLECULE_DATA["adenine_cation"]["data"]
         self.sim = rpsim.QuantumSimulation(RADICAL_PAIR)
         self.gamma_mT = rpdata.SPIN_DATA["E"]["gamma"] * 0.001
 
@@ -45,13 +45,13 @@ class QuantumTests(unittest.TestCase):
             print(f"Time: {time.time() - self.start_time}")
 
     def test_molecule_properties(self):
-        molecule = rpsim.Molecule("adenine", ["N6-H1", "C8-H"])
+        molecule = rpsim.Molecule("adenine_cation", ["N6-H1", "C8-H"])
         for prop in ["hfc", "element"]:
             for i, h in enumerate(molecule._get_properties(prop)):
                 assert h == molecule._get_property(i, prop)
 
     def test_molecule_name(self):
-        molecule = rpsim.Molecule("adenine", ["N6-H1", "C8-H"])
+        molecule = rpsim.Molecule("adenine_cation", ["N6-H1", "C8-H"])
         for i, h in enumerate(molecule.hfcs):
             assert h == self.data[molecule.nuclei[i]]["hfc"]
         for i, g in enumerate(molecule.gammas_mT):

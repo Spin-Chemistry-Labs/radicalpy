@@ -17,14 +17,13 @@ class Molecule:
     Traceback (most recent call last):
     ...
     ValueError: Available molecules below:
-    adenine
-    flavin_neutral
-    flavin_anion
-    tyrosine_neutral
     adenine_cation
+    tyrosine_neutral
+    flavin_neutral
     trp_cation
+    flavin_anion
 
-    >>> Molecule("adenine", ["1H"])
+    >>> Molecule("adenine_cation", ["1H"])
     Traceback (most recent call last):
     ...
     ValueError: Available nuclei below.
@@ -32,8 +31,8 @@ class Molecule:
     N6-H2
     C8-H
 
-    >>> Molecule("adenine", ["N6-H1"])
-    Molecule: adenine
+    >>> Molecule("adenine_cation", ["N6-H1"])
+    Molecule: adenine_cation
       Nuclei: ['N6-H1']
       HFCs: [-0.63]
       multiplicities: [2]
