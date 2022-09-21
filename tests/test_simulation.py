@@ -1,6 +1,5 @@
 import doctest
 import os
-import sys
 import time
 import unittest
 
@@ -9,6 +8,9 @@ from src.radicalpy import data as rpdata
 from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
+
+for k in os.environ.keys():
+    print(k)
 
 RUN_SLOW_TESTS = True
 MEASURE_TIME = False
