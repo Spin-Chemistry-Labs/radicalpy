@@ -486,7 +486,7 @@ class QuantumSimulation:
 
 
 class HilbertSimulation(QuantumSimulation):
-    def hilbert_initial(self, state: State, H: np.ndarray) -> np.ndarray:
+    def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
         """Create an initial desity matrix.
 
         Create an initial density matrix for time evolution of the
@@ -510,7 +510,7 @@ class HilbertSimulation(QuantumSimulation):
         return rho0
 
     @staticmethod
-    def hilbert_unitary_propagator(H: np.ndarray, dt: float) -> np.ndarray:
+    def unitary_propagator(H: np.ndarray, dt: float) -> np.ndarray:
         """Create unitary propagator (Hilbert space).
 
         Create unitary propagator matrices for time evolution of the
@@ -535,20 +535,20 @@ class HilbertSimulation(QuantumSimulation):
         Um = sp.linalg.expm(-1j * H * dt)
         return Up, Um
 
-    def hilbert_time_evolution(
+    def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
         """Evolve the system through time."""
         dt = time[1] - time[0]
-        Up, Um = self.hilbert_unitary_propagator(H, dt)
+        Up, Um = self.unitary_propagator(H, dt)
 
         rhos = np.zeros([len(time), *H.shape], dtype=complex)
-        rhos[0] = self.hilbert_initial(init_state, H)
+        rhos[0] = self.initial_density_matrix(init_state, H)
         for t in range(1, len(time)):
             rhos[t] = Um @ rhos[t - 1] @ Up
         return rhos
 
-    def hilbert_mary_loop(
+    def mary_loop(
         self,
         init_state: State,
         time: np.ndarray,
@@ -569,7 +569,7 @@ class HilbertSimulation(QuantumSimulation):
         rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
         for i, B0 in enumerate(B):
             H = H_base + B0 * H_zee
-            rhos[i] = self.hilbert_time_evolution(init_state, time, H)
+            rhos[i] = self.time_evolution(init_state, time, H)
         return rhos
 
     def MARY(
@@ -584,7 +584,7 @@ class HilbertSimulation(QuantumSimulation):
     ) -> dict:
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J)
-        rhos = self.hilbert_mary_loop(init_state, time, B, H)
+        rhos = self.mary_loop(init_state, time, B, H)
         poduct_probabilities = self.product_probability(obs_state, rhos)
         poduct_probabilities *= self.kinetics_exponential(k, time)
         product_yields, product_yield_sums = self.product_yield(
@@ -614,7 +614,7 @@ class LiouvilleSimulation(QuantumSimulation):
     def projection_operator(self, state: State) -> np.ndarray:
         return np.reshape(super().projection_operator(state), (-1, 1)).T
 
-    def liouville_initial(self, state: State, H: np.ndarray) -> np.ndarray:
+    def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
 
         Arguments:
@@ -636,7 +636,7 @@ class LiouvilleSimulation(QuantumSimulation):
         return rho0
 
     @staticmethod
-    def liouville_unitary_propagator(H, dt):
+    def unitary_propagator(H, dt):
         """Create unitary propagator.
 
         Create unitary propagator matrices for time evolution of the
@@ -650,15 +650,15 @@ class LiouvilleSimulation(QuantumSimulation):
         """
         return sp.linalg.expm(H * dt)
 
-    def liouville_time_evolution(
+    def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
         """Generate the density time evolution."""
         dt = time[1] - time[0]
         HL = self.hilbert_to_liouville(H)
-        rho0 = self.liouville_initial(init_state, HL)
+        rho0 = self.initial_density_matrix(init_state, HL)
         rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        UL = self.liouville_unitary_propagator(HL, dt)
+        UL = self.unitary_propagator(HL, dt)
         rhos[0] = rho0
         for t in range(1, len(time)):
             rhos[t] = UL @ rhos[t - 1]
