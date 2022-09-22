@@ -9,11 +9,19 @@ from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
 
-RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ
+RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ or True
 MEASURE_TIME = False
 
 
-STATES = ["S", "Tm", "T0", "Tp", "Tpm"]
+def state2radpy(state: rpsim.State) -> str:
+    result = str(state.value).replace("+", "p").replace("-", "m").replace("/", "")
+    # if result not in ["S", "T", "Tp", "Tm", "T0", "Tpm", "Eq"]:
+    # print(state, result)
+    return result
+
+
+STATES = set(rpsim.State) - {rpsim.State.EQUILIBRIUM}
+
 PARAMS = dict(
     B=np.random.uniform(size=20),
     J=np.random.uniform(),
@@ -256,7 +264,8 @@ class HilbertTests(unittest.TestCase):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         for state in STATES:
             rho0 = self.sim.hilbert_initial(state, H)
-            rho0_true = radpy.Hilbert_initial(state, self.sim.num_particles, H)
+            rpstate = state2radpy(state)
+            rho0_true = radpy.Hilbert_initial(rpstate, self.sim.num_particles, H)
             assert np.all(
                 np.isclose(rho0, rho0_true)
             ), "Initial density not calculated properly."
@@ -277,8 +286,8 @@ class HilbertTests(unittest.TestCase):
             for obs_state in STATES:
                 evol_true = radpy.TimeEvolution(
                     self.sim.num_particles,
-                    init_state,
-                    obs_state,
+                    state2radpy(init_state),
+                    state2radpy(obs_state),
                     self.t_max,
                     self.dt,
                     k,
@@ -340,7 +349,8 @@ class LiouvilleTests(unittest.TestCase):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         for state in STATES:
             rho0 = self.sim.liouville_initial(state, H)
-            rho0_true = radpy.Liouville_initial(state, self.sim.num_particles, H)
+            rpstate = state2radpy(state)
+            rho0_true = radpy.Liouville_initial(rpstate, self.sim.num_particles, H)
             assert np.all(
                 np.isclose(rho0, rho0_true)
             ), "Initial density not calculated properly."
@@ -361,8 +371,8 @@ class LiouvilleTests(unittest.TestCase):
                 rhos = self.sim.liouville_time_evolution(init_state, self.time, H)[1:]
                 evol_true = radpy.TimeEvolution(
                     self.sim.num_particles,
-                    init_state,
-                    obs_state,
+                    state2radpy(init_state),
+                    state2radpy(obs_state),
                     self.t_max,
                     self.dt,
                     k=0,

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import enum
 from math import prod
 from typing import Iterable
 
@@ -8,6 +9,16 @@ import scipy as sp
 
 from .data import MOLECULE_DATA, gamma_mT, get_molecules, multiplicity
 from .pauli_matrices import pauli
+
+
+class State(enum.Enum):
+    EQUILIBRIUM = "Eq"
+    SINGLET = "S"
+    TRIPLET = "T"
+    TRIPLET_ZERO = "T0"
+    TRIPLET_PLUS = "T+"
+    TRIPLET_PLUS_MINUS = "T+/-"
+    TRIPLET_MINUS = "T-"
 
 
 class Molecule:
@@ -249,7 +260,7 @@ class QuantumSimulation:
             ]
         )
 
-    def projection_operator(self, state: str):
+    def projection_operator(self, state: State):
         """Construct.
 
         .. todo::
@@ -267,21 +278,21 @@ class QuantumSimulation:
         # Projection operators
         # todo change p/m to +/-
         match state:
-            case "S":
+            case State.SINGLET:
                 return (1 / 4) * eye - SASB
-            case "T":
+            case State.TRIPLET:
                 return (3 / 4) * eye + SASB
-            case "Tp":
+            case State.TRIPLET_PLUS:
                 return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
-            case "Tm":
+            case State.TRIPLET_MINUS:
                 return (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz)
-            case "T0":
+            case State.TRIPLET_ZERO:
                 return (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz
-            case "Tpm":
+            case State.TRIPLET_PLUS_MINUS:
                 return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz) + (
                     2 * SAz**2 - SAz
                 ) * (2 * SBz**2 - SBz)
-            case "Eq":
+            case State.EQUILIBRIUM:
                 return 1.05459e-34 / (1.38e-23 * 298)
 
     def zeeman_hamiltonian(self, B0: float) -> np.ndarray:
@@ -440,7 +451,7 @@ class QuantumSimulation:
             + self.dipolar_hamiltonian(D)
         )
 
-    def product_probability(self, obs: str, rhos: np.ndarray) -> np.ndarray:
+    def product_probability(self, obs: State, rhos: np.ndarray) -> np.ndarray:
         """Calculate the probability of the observable from the densities."""
         obs = self.projection_operator(obs)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
@@ -458,7 +469,7 @@ class QuantumSimulation:
 
     @staticmethod
     def mary_lfe_hfe(
-        init_state: str,
+        init_state: State,
         B: np.ndarray,
         product_probability_seq: np.ndarray,
         dt: float,
@@ -467,7 +478,7 @@ class QuantumSimulation:
         """Calculate MARY, LFE, HFE."""
         MARY = np.sum(product_probability_seq, axis=1) * dt * k
         idx = int(len(MARY) / 2) if B[0] != 0 else 0
-        minmax = max if init_state == "S" else min
+        minmax = max if init_state == State.SINGLET else min
         HFE = ((MARY[-1] - MARY[idx]) / MARY[idx]) * 100
         LFE = ((minmax(MARY) - MARY[idx]) / MARY[idx]) * 100
         MARY = ((MARY - MARY[idx]) / MARY[idx]) * 100
@@ -475,14 +486,14 @@ class QuantumSimulation:
 
 
 class HilbertSimulation(QuantumSimulation):
-    def hilbert_initial(self, state: str, H: np.ndarray) -> np.ndarray:
+    def hilbert_initial(self, state: State, H: np.ndarray) -> np.ndarray:
         """Create an initial desity matrix.
 
         Create an initial density matrix for time evolution of the
         spin Hamiltonian density matrix.
 
         Args:
-            state (str): Spin state projection operator.
+            state (State): Spin state projection operator.
             H (np.array): Spin Hamiltonian in Hilbert space.
 
         Returns:
@@ -491,7 +502,7 @@ class HilbertSimulation(QuantumSimulation):
         """
         Pi = self.projection_operator(state)
 
-        if np.array_equal(Pi, self.projection_operator("Eq")):
+        if np.array_equal(Pi, self.projection_operator(State.EQUILIBRIUM)):
             rho0eq = sp.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
         else:
@@ -525,7 +536,7 @@ class HilbertSimulation(QuantumSimulation):
         return Up, Um
 
     def hilbert_time_evolution(
-        self, init_state: str, time: np.ndarray, H: np.ndarray
+        self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
         """Evolve the system through time."""
         dt = time[1] - time[0]
@@ -539,7 +550,7 @@ class HilbertSimulation(QuantumSimulation):
 
     def hilbert_mary_loop(
         self,
-        init_state: str,
+        init_state: State,
         time: np.ndarray,
         B: np.ndarray,
         H_base: np.ndarray,
@@ -547,7 +558,7 @@ class HilbertSimulation(QuantumSimulation):
         """Generate density matrices (rhos) for MARY.
 
         Args:
-            init_state (str): initial state.
+            init_state (State): initial state.
         Returns:
             List generator.
 
@@ -563,8 +574,8 @@ class HilbertSimulation(QuantumSimulation):
 
     def MARY(
         self,
-        init_state: str,
-        obs_state: str,
+        init_state: State,
+        obs_state: State,
         time: np.ndarray,
         k: float,
         B: np.ndarray,
@@ -600,25 +611,23 @@ class LiouvilleSimulation(QuantumSimulation):
         eye = np.eye(len(H))
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
-    def projection_operator(self, state: str) -> np.ndarray:
+    def projection_operator(self, state: State) -> np.ndarray:
         return np.reshape(super().projection_operator(state), (-1, 1)).T
 
-    def liouville_initial(self, state: str, H: np.ndarray) -> np.ndarray:
+    def liouville_initial(self, state: State, H: np.ndarray) -> np.ndarray:
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
 
         Arguments:
-            state: a string = spin state projection operator
+            state (State): a string = spin state projection operator
             spins: an integer = sum of the number of electrons and nuclei
             H: a matrix = spin Hamiltonian in Hilbert space
 
         Returns:
             A matrix in Liouville space
 
-        Example:
-            rho0 = Liouville_initial("S", 3, H)
         """
         Pi = self.projection_operator(state).T
-        if state == "Eq":
+        if state == State.EQUILIBRIUM:
             rho0eq = sp.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
             rho0 = np.reshape(rho0, (len(H) ** 2, 1))
@@ -642,7 +651,7 @@ class LiouvilleSimulation(QuantumSimulation):
         return sp.linalg.expm(H * dt)
 
     def liouville_time_evolution(
-        self, init_state: str, time: np.ndarray, H: np.ndarray
+        self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
         """Generate the density time evolution."""
         dt = time[1] - time[0]
