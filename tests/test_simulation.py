@@ -9,7 +9,7 @@ from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
 
-RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ or True
+RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ  # or True
 MEASURE_TIME = False
 
 
@@ -260,25 +260,25 @@ class HilbertTests(unittest.TestCase):
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
 
-    def test_hilbert_initial(self):
+    def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         for state in STATES:
-            rho0 = self.sim.hilbert_initial(state, H)
+            rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Hilbert_initial(rpstate, self.sim.num_particles, H)
             assert np.all(
                 np.isclose(rho0, rho0_true)
             ), "Initial density not calculated properly."
 
-    def test_hilbert_unitary_propagator(self):
+    def test_unitary_propagator(self):
         dt = np.random.uniform(1e-6)
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         U_true = radpy.UnitaryPropagator(H, dt, "Hilbert")
-        Utensor = self.sim.hilbert_unitary_propagator(H, dt)
+        Utensor = self.sim.unitary_propagator(H, dt)
         for pair in zip(U_true, Utensor):
             assert np.all(np.isclose(*pair))
 
-    def test_hilbert_time_evolution(self):
+    def test_time_evolution(self):
         k = np.random.uniform()
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         Kexp = self.sim.kinetics_exponential(k, self.time)
@@ -295,7 +295,7 @@ class HilbertTests(unittest.TestCase):
                     H,
                     "Hilbert",
                 )
-                rhos = self.sim.hilbert_time_evolution(init_state, self.time, H)
+                rhos = self.sim.time_evolution(init_state, self.time, H)
                 pprob = self.sim.product_probability(obs_state, rhos)
                 pprob_kinetics = pprob[1:] * Kexp[:-1]
                 pyield, pyield_sum = self.sim.product_yield(
@@ -345,30 +345,30 @@ class LiouvilleTests(unittest.TestCase):
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
 
-    def test_liouville_initial(self):
+    def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         for state in STATES:
-            rho0 = self.sim.liouville_initial(state, H)
+            rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Liouville_initial(rpstate, self.sim.num_particles, H)
             assert np.all(
                 np.isclose(rho0, rho0_true)
             ), "Initial density not calculated properly."
 
-    def test_liouville_unitary_propagator(self):
+    def test_unitary_propagator(self):
         dt = np.random.uniform(0, 1e-6)
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         U_true = radpy.UnitaryPropagator(H, dt, "Liouville")
-        U_prop = self.sim.liouville_unitary_propagator(H, dt)
+        U_prop = self.sim.unitary_propagator(H, dt)
         assert np.all(np.isclose(U_true, U_prop))
 
     @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
-    def test_liouville_time_evolution(self):
+    def test_time_evolution(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         HL = self.sim.hilbert_to_liouville(H)
         for init_state in STATES:
             for obs_state in STATES:
-                rhos = self.sim.liouville_time_evolution(init_state, self.time, H)[1:]
+                rhos = self.sim.time_evolution(init_state, self.time, H)[1:]
                 evol_true = radpy.TimeEvolution(
                     self.sim.num_particles,
                     state2radpy(init_state),
