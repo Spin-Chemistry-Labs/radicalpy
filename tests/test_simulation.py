@@ -21,7 +21,7 @@ PARAMS = dict(
 )
 
 RADICAL_PAIR = [
-    rpsim.Molecule("adenine_cation", ["N6-H1", "N6-H2"]),
+    rpsim.Molecule("adenine_cation", ["C8-H", "C8-H"]),
     rpsim.Molecule("adenine_cation", ["C8-H"]),
 ]
 

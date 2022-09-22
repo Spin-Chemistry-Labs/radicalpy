@@ -35,10 +35,10 @@ class Molecule:
     Molecule: adenine_cation
       Nuclei: ['N6-H1']
       HFCs: [-0.63]
-      multiplicities: [2]
-      gammas(mT): [267522.18744]
+      multiplicities: [3]
+      gammas(mT): [19337.792]
       number of particles: 1
-      elements: ['1H']
+      elements: ['14N']
 
     #>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
     #>> Molecule("kryptonite", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[1, 2, 3])
