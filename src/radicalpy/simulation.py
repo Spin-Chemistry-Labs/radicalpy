@@ -535,17 +535,22 @@ class HilbertSimulation(QuantumSimulation):
         Um = sp.linalg.expm(-1j * H * dt)
         return Up, Um
 
+    def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
+        Up, Um = propagator
+        return Um @ rho @ Up
+
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
         """Evolve the system through time."""
         dt = time[1] - time[0]
-        Up, Um = self.unitary_propagator(H, dt)
+        propagator = self.unitary_propagator(H, dt)
 
-        rhos = np.zeros([len(time), *H.shape], dtype=complex)
-        rhos[0] = self.initial_density_matrix(init_state, H)
+        rho0 = self.initial_density_matrix(init_state, H)
+        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        rhos[0] = rho0
         for t in range(1, len(time)):
-            rhos[t] = Um @ rhos[t - 1] @ Up
+            rhos[t] = self.propagate(propagator, rhos[t - 1])
         return rhos
 
     def mary_loop(
@@ -650,18 +655,21 @@ class LiouvilleSimulation(QuantumSimulation):
         """
         return sp.linalg.expm(H * dt)
 
+    def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
+        return propagator @ rho
+
     def time_evolution(
-        self, init_state: State, time: np.ndarray, H: np.ndarray
+        self, init_state: State, time: np.ndarray, HL: np.ndarray
     ) -> np.ndarray:
         """Generate the density time evolution."""
         dt = time[1] - time[0]
-        HL = self.hilbert_to_liouville(H)
+        propagator = self.unitary_propagator(HL, dt)
+
         rho0 = self.initial_density_matrix(init_state, HL)
         rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        UL = self.unitary_propagator(HL, dt)
         rhos[0] = rho0
         for t in range(1, len(time)):
-            rhos[t] = UL @ rhos[t - 1]
+            rhos[t] = self.propagate(propagator, rhos[t - 1])
         return rhos
 
     # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
