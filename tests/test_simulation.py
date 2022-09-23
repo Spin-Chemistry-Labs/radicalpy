@@ -297,15 +297,14 @@ class HilbertTests(unittest.TestCase):
                 )
                 rhos = self.sim.time_evolution(init_state, self.time, H)
                 pprob = self.sim.product_probability(obs_state, rhos)
-                pprob_kinetics = pprob[1:] * Kexp(self.time)[:-1]
-                pyield, pyield_sum = self.sim.product_yield(
-                    pprob_kinetics, self.time[:-1], k
-                )
+                pprob = pprob[1:]
+                Kexp.adjust_product_probabilities(pprob, self.time[:-1])
+                pyield, pyield_sum = self.sim.product_yield(pprob, self.time[:-1], k)
                 assert np.all(  # close (not equal)
                     np.isclose(rhos[1:], evol_true[-1][:-1])
                 ), "Time evolution (rho) failed."
                 assert np.all(  # close (not equal)
-                    np.isclose(pprob_kinetics, evol_true[1][:-1])
+                    np.isclose(pprob, evol_true[1][:-1])
                 ), "Time evolution (probability or kinetics) failed."
                 assert np.all(  # close (not equal)
                     np.isclose(pyield, evol_true[2][:-1])
@@ -320,10 +319,10 @@ class HilbertTests(unittest.TestCase):
                     init_state,
                     obs_state,
                     self.time,
-                    rpsim.KineticsExponential(k),
-                    PARAMS["B"],
+                    B=PARAMS["B"],
                     D=PARAMS["D"],
                     J=PARAMS["J"],
+                    kinetics=[rpsim.KineticsExponential(k)],
                 )
                 # time, MFE, HFE, LFE, MARY, _, _, rho = radpy.MARY(
                 #     self.sim.num_particles,
@@ -380,6 +379,6 @@ class LiouvilleTests(unittest.TestCase):
                 space="Liouville",
             )
             prob = self.sim.product_probability(obs_state, rhos)
-            assert np.array_equal(
-                prob, evol_true[1][:-1]
+            assert np.all(
+                np.isclose(prob, evol_true[1][:-1])
             ), "Time evolution (probability) failed)"
