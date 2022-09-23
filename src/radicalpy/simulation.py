@@ -21,8 +21,27 @@ class State(enum.Enum):
     TRIPLET_MINUS = "T-"
 
 
+# DOCS ALMOST DONE
 class Molecule:
     """Class representing a molecule in a simulation.
+
+    A molecule is represented by hyperfine coupling constants, spin
+    multiplicities and gyromagnetic ratios of its nuclei.  When using
+    the database, one needs to specify the name of the molecule and
+    the list of its nuclei.
+
+    >>> Molecule("adenine_cation", ["N6-H1"])
+    Molecule: adenine_cation
+      Nuclei: ['N6-H1']
+      HFCs: [-0.63]
+      multiplicities: [3]
+      gammas(mT): [19337.792]
+      number of particles: 1
+      elements: ['14N']
+
+
+    If the wrong molecule name is given, the error helps you find the
+    valid options.
 
     >>> Molecule("foobar", ["H1"])
     Traceback (most recent call last):
@@ -34,7 +53,10 @@ class Molecule:
     trp_cation
     tyrosine_neutral
 
-    >>> Molecule("adenine_cation", ["1H"])
+    Similarly, giving a list of incorrect atom names will also result
+    in a helpful error message listing the available atoms.
+
+    >>> Molecule("adenine_cation", ["buz"])
     Traceback (most recent call last):
     ...
     ValueError: Available nuclei below.
@@ -42,18 +64,10 @@ class Molecule:
     N6-H1 (hfc = -0.63)
     C8-H (hfc = -0.55)
 
-    >>> Molecule("adenine_cation", ["N6-H1"])
-    Molecule: adenine_cation
-      Nuclei: ['N6-H1']
-      HFCs: [-0.63]
-      multiplicities: [3]
-      gammas(mT): [19337.792]
-      number of particles: 1
-      elements: ['14N']
-
     #>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
     #>> Molecule("kryptonite", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[1, 2, 3])
     #>> Molecule("kryptonite", nuclei=["1H", "14N"])
+
     """
 
     def __init__(
@@ -64,7 +78,30 @@ class Molecule:
         gammas_mT: list[float] = None,
         hfcs: list[float] = None,
     ):
-        """Construct a Molecule object."""
+        """Construct a Molecule object.
+
+        Args:
+
+            radical (str): the name of the molecule, defaults to None
+
+            nuclei (list[str]): list of atoms from the molecule (or
+                from the database), defaults to None
+
+            multiplicities (list[int]): list of multiplicities of the
+                atoms and their isotopes (when not using the
+                database), defaults to None
+
+            gammas_mT (list[float]): list of gyromagnetic ratios of
+                the atoms and their isotopes (when not using the
+                database), defaults to None
+
+            hfcs (list[float]): list of hyperfine coupling constants
+                of the atoms and their isotopes (when not using the
+                database), defaults to None
+
+        Returns: List generator.
+
+        """
         self.radical = self._get_radical(radical)
         self.nuclei = self._get_nuclei(nuclei)
         self.multiplicities = self._cond_value(multiplicities, multiplicity)
