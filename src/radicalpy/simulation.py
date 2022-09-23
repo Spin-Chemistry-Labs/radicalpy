@@ -187,8 +187,8 @@ class Molecule:
 
 
 class KineticsRelaxationBase:
-    def __init__(self, k: float):
-        self.k = k
+    def __init__(self, rate_constant: float):
+        self.rate = rate_constant
 
     def adjust_hamiltonian(self, H: np.ndarray):
         return
@@ -211,14 +211,13 @@ class KineticsExponential(KineticsRelaxationBase):
         product_probabilities: np.ndarray,
         time: np.ndarray,
     ):
-        product_probabilities *= np.exp(-self.k * time)
+        product_probabilities *= np.exp(-self.rate * time)
 
     @property
     def rate_constant(self) -> float:
-        return self.k
+        return self.rate
 
 
-# TODO
 class KineticsDiffusion(KineticsRelaxationBase):
     def __init__(self, r_sigma=5e-10, r0=9e-10, diffusion_coefficient=1e-9):
         self.r_sigma = r_sigma
