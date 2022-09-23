@@ -572,15 +572,13 @@ class QuantumSimulation:
         D: float,
         J: float,
         kinetics: list[KineticsRelaxationBase] = [],
-        # relaxations: list[KineticsBase]=[],
+        relaxations: list[KineticsRelaxationBase] = [],
     ) -> dict:
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J)
         H = self.convert(H)
-        for K in kinetics:
+        for K in kinetics + relaxations:
             K.adjust_hamiltonian(H)
-        # for R in relaxations:
-        #     H += R.hamiltonian_term()
         rhos = self.mary_loop(init_state, time, B, H)
         product_probabilities = self.product_probability(obs_state, rhos)
         for K in kinetics:  # skip in liouville
