@@ -5,6 +5,7 @@ import unittest
 
 import numpy as np
 from src.radicalpy import data as rpdata
+from src.radicalpy import kinetics
 from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
@@ -278,7 +279,7 @@ class HilbertTests(unittest.TestCase):
     def test_time_evolution(self):
         k = np.random.uniform()
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        Kexp = rpsim.KineticsExponential(k)
+        Kexp = kinetics.KineticsExponential(k)
         for init_state in STATES:
             for obs_state in STATES:
                 evol_true = radpy.TimeEvolution(
@@ -319,7 +320,7 @@ class HilbertTests(unittest.TestCase):
                     B=PARAMS["B"],
                     D=PARAMS["D"],
                     J=PARAMS["J"],
-                    kinetics=[rpsim.KineticsExponential(k)],
+                    kinetics=[kinetics.KineticsExponential(k)],
                 )
                 # time, MFE, HFE, LFE, MARY, _, _, rho = radpy.MARY(
                 #     self.sim.num_particles,
