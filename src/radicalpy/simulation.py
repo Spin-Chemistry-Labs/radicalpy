@@ -186,18 +186,28 @@ class Molecule:
         )
 
 
-class KineticsBase:
+class KineticsRelaxationBase:
     def rate_constant(self) -> float:
         return 1.0
 
+    def adjust_product_probabilities(
+        self, product_probabilities: np.ndarray, time: np.ndarray
+    ):
+        return
 
-class KineticsExponential(KineticsBase):
+    def adjust_hamiltonian(self, H: np.ndarray):
+        return
+
+
+class KineticsExponential(KineticsRelaxationBase):
     def __init__(self, k: float):
         self.k = k
 
-    def __call__(self, time: np.ndarray) -> np.ndarray:
+    def adjust_product_probabilities(
+        self, product_probabilities: np.ndarray, time: np.ndarray
+    ):
         """Return exponential kinetics."""
-        return np.exp(-self.k * time)
+        product_probabilities *= np.exp(-self.k * time)
 
     @property
     def rate_constant(self) -> float:
@@ -205,18 +215,20 @@ class KineticsExponential(KineticsBase):
 
 
 # TODO
-class KineticsDiffusion(KineticsBase):
+class KineticsDiffusion(KineticsRelaxationBase):
     def __init__(self, r_sigma=5e-10, r0=9e-10, diffusion_coefficient=1e-9):
         self.r_sigma = r_sigma
         self.r0 = r0
         self.diffusion_coefficient = diffusion_coefficient
 
-    def __call__(self, time: np.ndarray) -> np.ndarray:
+    def adjust_product_probabilities(
+        self, pprod: np.ndarray, time: np.ndarray
+    ) -> np.ndarray:
         numerator = self.r_sigma * (self.r0 - self.r_sigma)
         denominator = self.r0 * np.sqrt(4 * np.pi * self.diffusion_coefficient)
         A = numerator / denominator
         B = ((self.r0 - self.r_sigma) ** 2) / (4 * self.diffusion_coefficient)
-        return A * time ** (-3 / 2) * np.exp(-B / time)
+        pprod *= A * time ** (-3 / 2) * np.exp(-B / time)
 
 
 class QuantumSimulation:
@@ -556,23 +568,28 @@ class QuantumSimulation:
         init_state: State,
         obs_state: State,
         time: np.ndarray,
-        kinetics: KineticsBase,
         B: np.ndarray,
         D: float,
         J: float,
+        kinetics: list[KineticsRelaxationBase] = [],
+        # relaxations: list[KineticsBase]=[],
     ) -> dict:
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J)
         H = self.convert(H)
+        for K in kinetics:
+            K.adjust_hamiltonian(H)
+        # for R in relaxations:
+        #     H += R.hamiltonian_term()
         rhos = self.mary_loop(init_state, time, B, H)
         product_probabilities = self.product_probability(obs_state, rhos)
-        product_probabilities *= kinetics(time)
+        for K in kinetics:  # skip in liouville
+            K.adjust_product_probabilities(product_probabilities, time)
+        k = kinetics[0].rate_constant if kinetics else 1.0
         product_yields, product_yield_sums = self.product_yield(
-            product_probabilities, time, kinetics.rate_constant
+            product_probabilities, time, k
         )
-        MARY, LFE, HFE = self.mary_lfe_hfe(
-            init_state, B, product_probabilities, dt, kinetics.rate_constant
-        )
+        MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
         return dict(
             time=time,
             B=B,
