@@ -13,13 +13,6 @@ RUN_SLOW_TESTS = "INSIDE_EMACS" not in os.environ  # or True
 MEASURE_TIME = False
 
 
-def state2radpy(state: rpsim.State) -> str:
-    result = str(state.value).replace("+", "p").replace("-", "m").replace("/", "")
-    # if result not in ["S", "T", "Tp", "Tm", "T0", "Tpm", "Eq"]:
-    # print(state, result)
-    return result
-
-
 STATES = set(rpsim.State) - {rpsim.State.EQUILIBRIUM}
 
 PARAMS = dict(
@@ -37,6 +30,10 @@ RADICAL_PAIR = [
 def load_tests(loader, tests, ignore):
     tests.addTests(doctest.DocTestSuite(rpsim))
     return tests
+
+
+def state2radpy(state: rpsim.State) -> str:
+    return str(state.value).replace("+", "p").replace("-", "m").replace("/", "")
 
 
 class QuantumTests(unittest.TestCase):
