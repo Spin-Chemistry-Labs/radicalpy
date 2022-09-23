@@ -9,7 +9,7 @@ from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
 
-RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ or True
+RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ  # or True
 MEASURE_TIME = False
 
 
@@ -171,22 +171,22 @@ class QuantumTests(unittest.TestCase):
             ]
         )
         assert np.all(
-            np.isclose(self.sim.hyperfine_hamiltonian(), HH_true)
+            self.sim.hyperfine_hamiltonian() == HH_true
         ), "Hyperfine Hamiltonian not calculated properly."
 
     def test_HE(self):
         HE_true = radpy.HamiltonianExchange(
             self.sim.num_particles, PARAMS["J"], gamma=self.gamma_mT
         )
-        assert np.all(
-            np.isclose(self.sim.exchange_hamiltonian(PARAMS["J"]), HE_true)
+        assert np.array_equal(
+            self.sim.exchange_hamiltonian(PARAMS["J"]), HE_true
         ), "Exchange (J-coupling) Hamiltonian not calculated properly."
 
     def test_HD(self):
         HD_true = radpy.HamiltonianDipolar(
             self.sim.num_particles, PARAMS["D"], self.gamma_mT
         )
-        assert np.all(
+        assert np.all(  # close not equal
             np.isclose(self.sim.dipolar_hamiltonian(PARAMS["D"]), HD_true)
         ), "Dipolar Hamiltonian not calculated properly."
 
@@ -266,8 +266,8 @@ class HilbertTests(unittest.TestCase):
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Hilbert_initial(rpstate, self.sim.num_particles, H)
-            assert np.all(
-                np.isclose(rho0, rho0_true)
+            assert np.array_equal(
+                rho0, rho0_true
             ), "Initial density not calculated properly."
 
     def test_unitary_propagator(self):
@@ -276,7 +276,7 @@ class HilbertTests(unittest.TestCase):
         U_true = radpy.UnitaryPropagator(H, dt, "Hilbert")
         Utensor = self.sim.unitary_propagator(H, dt)
         for pair in zip(U_true, Utensor):
-            assert np.all(np.isclose(*pair))
+            assert np.array_equal(*pair)
 
     def test_time_evolution(self):
         k = np.random.uniform()
@@ -301,20 +301,19 @@ class HilbertTests(unittest.TestCase):
                 pyield, pyield_sum = self.sim.product_yield(
                     pprob_kinetics, self.time[:-1], k
                 )
-                assert np.all(
+                assert np.all(  # close (not equal)
                     np.isclose(rhos[1:], evol_true[-1][:-1])
                 ), "Time evolution (rho) failed."
-                assert np.all(
+                assert np.all(  # close (not equal)
                     np.isclose(pprob_kinetics, evol_true[1][:-1])
                 ), "Time evolution (probability or kinetics) failed."
-                assert np.all(
+                assert np.all(  # close (not equal)
                     np.isclose(pyield, evol_true[2][:-1])
                 ), "Time evolution (product yield) failed."
 
     # @unittest.skip("Not ready yet")
     def test_mary(self):
         k = np.random.uniform()
-        H = self.sim.total_hamiltonian(0, PARAMS["J"], PARAMS["D"])
         for init_state in STATES:
             for obs_state in STATES:
                 rslt = self.sim.MARY(
@@ -351,8 +350,8 @@ class LiouvilleTests(unittest.TestCase):
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Liouville_initial(rpstate, self.sim.num_particles, H)
-            assert np.all(
-                np.isclose(rho0, rho0_true)
+            assert np.array_equal(
+                rho0, rho0_true
             ), "Initial density not calculated properly."
 
     def test_unitary_propagator(self):
@@ -360,15 +359,14 @@ class LiouvilleTests(unittest.TestCase):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         U_true = radpy.UnitaryPropagator(H, dt, "Liouville")
         U_prop = self.sim.unitary_propagator(H, dt)
-        assert np.all(np.isclose(U_true, U_prop))
+        assert np.array_equal(U_true, U_prop)
 
     @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_time_evolution(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         HL = self.sim.hilbert_to_liouville(H)
-        obs_state = list(STATES)[0]
+        obs_state = rpsim.State.SINGLET
         for init_state in STATES:
-            # for obs_state in STATES:
             rhos = self.sim.time_evolution(init_state, self.time, HL)[1:]
             evol_true = radpy.TimeEvolution(
                 self.sim.num_particles,
@@ -382,15 +380,6 @@ class LiouvilleTests(unittest.TestCase):
                 space="Liouville",
             )
             prob = self.sim.product_probability(obs_state, rhos)
-            # assert np.all(
-            #     np.isclose(rhos, evol_true[-1][:-1])
-            # ), "Time evolution (rho) failed)"
-            assert np.all(
-                np.isclose(prob, evol_true[1][:-1])
+            assert np.array_equal(
+                prob, evol_true[1][:-1]
             ), "Time evolution (probability) failed)"
-
-            # print(f"{MFE=}")
-            # print(f"{rslt['MFE']=}")
-            # assert np.all(
-            #     np.isclose(prob, evol_true[1][:-1])
-            # ), ""
