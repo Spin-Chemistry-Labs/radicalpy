@@ -186,6 +186,39 @@ class Molecule:
         )
 
 
+class KineticsBase:
+    def rate_constant(self) -> float:
+        return 1.0
+
+
+class KineticsExponential(KineticsBase):
+    def __init__(self, k: float):
+        self.k = k
+
+    def __call__(self, time: np.ndarray) -> np.ndarray:
+        """Return exponential kinetics."""
+        return np.exp(-self.k * time)
+
+    @property
+    def rate_constant(self) -> float:
+        return self.k
+
+
+# TODO
+class KineticsDiffusion(KineticsBase):
+    def __init__(self, r_sigma=5e-10, r0=9e-10, diffusion_coefficient=1e-9):
+        self.r_sigma = r_sigma
+        self.r0 = r0
+        self.diffusion_coefficient = diffusion_coefficient
+
+    def __call__(self, time: np.ndarray) -> np.ndarray:
+        numerator = self.r_sigma * (self.r0 - self.r_sigma)
+        denominator = self.r0 * np.sqrt(4 * np.pi * self.diffusion_coefficient)
+        A = numerator / denominator
+        B = ((self.r0 - self.r_sigma) ** 2) / (4 * self.diffusion_coefficient)
+        return A * time ** (-3 / 2) * np.exp(-B / time)
+
+
 class QuantumSimulation:
     """Quantum simulation class."""
 
@@ -456,6 +489,7 @@ class QuantumSimulation:
     ) -> np.ndarray:
         """Evolve the system through time."""
         dt = time[1] - time[0]
+        H = self.convert(H)
         propagator = self.unitary_propagator(H, dt)
 
         rho0 = self.initial_density_matrix(init_state, H)
@@ -476,10 +510,6 @@ class QuantumSimulation:
         product_yield = sp.integrate.cumtrapz(probuct_probability, time, initial=0) * k
         product_yield_sum = np.max(product_yield, axis=-1)
         return product_yield, product_yield_sum
-
-    def kinetics_exponential(self, k: float, time: np.ndarray) -> np.ndarray:
-        """Return exponential kinetics."""
-        return np.exp(-k * time)
 
     @staticmethod
     def mary_lfe_hfe(
@@ -522,8 +552,45 @@ class QuantumSimulation:
             rhos[i] = self.time_evolution(init_state, time, H)
         return rhos
 
+    def MARY(
+        self,
+        init_state: State,
+        obs_state: State,
+        time: np.ndarray,
+        kinetics: KineticsBase,
+        B: np.ndarray,
+        D: float,
+        J: float,
+    ) -> dict:
+        dt = time[1] - time[0]
+        H = self.total_hamiltonian(B=0, D=D, J=J)
+        rhos = self.mary_loop(init_state, time, B, H)
+        product_probabilities = self.product_probability(obs_state, rhos)
+        product_probabilities *= kinetics(time)
+        product_yields, product_yield_sums = self.product_yield(
+            product_probabilities, time, kinetics.rate_constant
+        )
+        MARY, LFE, HFE = self.mary_lfe_hfe(
+            init_state, B, product_probabilities, dt, kinetics.rate_constant
+        )
+        return dict(
+            time=time,
+            B=B,
+            rhos=rhos,
+            time_evolutions=product_probabilities,
+            product_yields=product_yields,
+            product_yield_sums=product_yield_sums,
+            MARY=MARY,
+            LFE=LFE,
+            HFE=HFE,
+        )
+
 
 class HilbertSimulation(QuantumSimulation):
+    @staticmethod
+    def convert(H: np.ndarray) -> np.ndarray:
+        return H
+
     def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
         """Create an initial desity matrix.
 
@@ -577,41 +644,10 @@ class HilbertSimulation(QuantumSimulation):
         Up, Um = propagator
         return Um @ rho @ Up
 
-    def MARY(
-        self,
-        init_state: State,
-        obs_state: State,
-        time: np.ndarray,
-        k: float,
-        B: np.ndarray,
-        D: float,
-        J: float,
-    ) -> dict:
-        dt = time[1] - time[0]
-        H = self.total_hamiltonian(B=0, D=D, J=J)
-        rhos = self.mary_loop(init_state, time, B, H)
-        poduct_probabilities = self.product_probability(obs_state, rhos)
-        poduct_probabilities *= self.kinetics_exponential(k, time)
-        product_yields, product_yield_sums = self.product_yield(
-            poduct_probabilities, time, k
-        )
-        MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, poduct_probabilities, dt, k)
-        return dict(
-            time=time,
-            B=B,
-            rhos=rhos,
-            time_evolutions=poduct_probabilities,
-            product_yields=product_yields,
-            product_yield_sums=product_yield_sums,
-            MARY=MARY,
-            LFE=LFE,
-            HFE=HFE,
-        )
-
 
 class LiouvilleSimulation(QuantumSimulation):
     @staticmethod
-    def hilbert_to_liouville(H: np.ndarray) -> np.ndarray:
+    def convert(H: np.ndarray) -> np.ndarray:
         """Convert the Hamiltonian from Hilbert to Liouville space."""
         eye = np.eye(len(H))
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
