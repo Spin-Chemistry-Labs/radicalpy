@@ -298,7 +298,7 @@ def Kinetics(spins, k=0, time=0, model="Haberkorn-singlet"):
         case "Jones-Hore":
             return (
                 0.5
-                * k
+                * ks
                 * (np.kron(QS, np.eye(len(QS))) + (np.kron(np.eye(len(QS)), QS)))
                 + 0.5
                 * kt
