@@ -187,26 +187,30 @@ class Molecule:
 
 
 class KineticsRelaxationBase:
-    def rate_constant(self) -> float:
-        return 1.0
-
-    def adjust_product_probabilities(
-        self, product_probabilities: np.ndarray, time: np.ndarray
-    ):
-        return
+    def __init__(self, k: float):
+        self.k = k
 
     def adjust_hamiltonian(self, H: np.ndarray):
         return
 
+    def adjust_product_probabilities(
+        self,
+        product_probabilities: np.ndarray,
+        time: np.ndarray,
+    ):
+        return
+
+    @property
+    def rate_constant(self) -> float:
+        return 1.0
+
 
 class KineticsExponential(KineticsRelaxationBase):
-    def __init__(self, k: float):
-        self.k = k
-
     def adjust_product_probabilities(
-        self, product_probabilities: np.ndarray, time: np.ndarray
+        self,
+        product_probabilities: np.ndarray,
+        time: np.ndarray,
     ):
-        """Return exponential kinetics."""
         product_probabilities *= np.exp(-self.k * time)
 
     @property
@@ -222,13 +226,13 @@ class KineticsDiffusion(KineticsRelaxationBase):
         self.diffusion_coefficient = diffusion_coefficient
 
     def adjust_product_probabilities(
-        self, pprod: np.ndarray, time: np.ndarray
+        self, product_probabilities: np.ndarray, time: np.ndarray
     ) -> np.ndarray:
         numerator = self.r_sigma * (self.r0 - self.r_sigma)
         denominator = self.r0 * np.sqrt(4 * np.pi * self.diffusion_coefficient)
         A = numerator / denominator
         B = ((self.r0 - self.r_sigma) ** 2) / (4 * self.diffusion_coefficient)
-        pprod *= A * time ** (-3 / 2) * np.exp(-B / time)
+        product_probabilities *= A * time ** (-3 / 2) * np.exp(-B / time)
 
 
 class QuantumSimulation:

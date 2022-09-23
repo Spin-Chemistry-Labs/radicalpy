@@ -9,7 +9,7 @@ from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
 
-RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ  # or True
+RUN_SLOW_TESTS = "INSIDE_EMACS" not in os.environ  # or True
 MEASURE_TIME = False
 
 
