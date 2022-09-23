@@ -281,7 +281,7 @@ class HilbertTests(unittest.TestCase):
     def test_time_evolution(self):
         k = np.random.uniform()
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        Kexp = self.sim.kinetics_exponential(k, self.time)
+        Kexp = rpsim.KineticsExponential(k)
         for init_state in STATES:
             for obs_state in STATES:
                 evol_true = radpy.TimeEvolution(
@@ -297,7 +297,7 @@ class HilbertTests(unittest.TestCase):
                 )
                 rhos = self.sim.time_evolution(init_state, self.time, H)
                 pprob = self.sim.product_probability(obs_state, rhos)
-                pprob_kinetics = pprob[1:] * Kexp[:-1]
+                pprob_kinetics = pprob[1:] * Kexp(self.time)[:-1]
                 pyield, pyield_sum = self.sim.product_yield(
                     pprob_kinetics, self.time[:-1], k
                 )
@@ -320,7 +320,7 @@ class HilbertTests(unittest.TestCase):
                     init_state,
                     obs_state,
                     self.time,
-                    k,
+                    rpsim.KineticsExponential(k),
                     PARAMS["B"],
                     D=PARAMS["D"],
                     J=PARAMS["J"],
