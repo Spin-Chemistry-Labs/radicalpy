@@ -451,6 +451,20 @@ class QuantumSimulation:
             + self.dipolar_hamiltonian(D)
         )
 
+    def time_evolution(
+        self, init_state: State, time: np.ndarray, H: np.ndarray
+    ) -> np.ndarray:
+        """Evolve the system through time."""
+        dt = time[1] - time[0]
+        propagator = self.unitary_propagator(H, dt)
+
+        rho0 = self.initial_density_matrix(init_state, H)
+        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        rhos[0] = rho0
+        for t in range(1, len(time)):
+            rhos[t] = self.propagate(propagator, rhos[t - 1])
+        return rhos
+
     def product_probability(self, obs: State, rhos: np.ndarray) -> np.ndarray:
         """Calculate the probability of the observable from the densities."""
         obs = self.projection_operator(obs)
@@ -538,20 +552,6 @@ class HilbertSimulation(QuantumSimulation):
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         Up, Um = propagator
         return Um @ rho @ Up
-
-    def time_evolution(
-        self, init_state: State, time: np.ndarray, H: np.ndarray
-    ) -> np.ndarray:
-        """Evolve the system through time."""
-        dt = time[1] - time[0]
-        propagator = self.unitary_propagator(H, dt)
-
-        rho0 = self.initial_density_matrix(init_state, H)
-        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        rhos[0] = rho0
-        for t in range(1, len(time)):
-            rhos[t] = self.propagate(propagator, rhos[t - 1])
-        return rhos
 
     def mary_loop(
         self,
@@ -657,20 +657,6 @@ class LiouvilleSimulation(QuantumSimulation):
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         return propagator @ rho
-
-    def time_evolution(
-        self, init_state: State, time: np.ndarray, HL: np.ndarray
-    ) -> np.ndarray:
-        """Generate the density time evolution."""
-        dt = time[1] - time[0]
-        propagator = self.unitary_propagator(HL, dt)
-
-        rho0 = self.initial_density_matrix(init_state, HL)
-        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        rhos[0] = rho0
-        for t in range(1, len(time)):
-            rhos[t] = self.propagate(propagator, rhos[t - 1])
-        return rhos
 
     # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
     # sim.angle(time=np.linspace(), theta=np.linspace(), phi=np.linspace())

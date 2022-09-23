@@ -9,7 +9,7 @@ from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
 
-RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ  # or True
+RUN_SLOW_TESTS = not "INSIDE_EMACS" in os.environ or True
 MEASURE_TIME = False
 
 
@@ -366,30 +366,31 @@ class LiouvilleTests(unittest.TestCase):
     def test_time_evolution(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         HL = self.sim.hilbert_to_liouville(H)
+        obs_state = list(STATES)[0]
         for init_state in STATES:
-            for obs_state in STATES:
-                rhos = self.sim.time_evolution(init_state, self.time, H)[1:]
-                evol_true = radpy.TimeEvolution(
-                    self.sim.num_particles,
-                    state2radpy(init_state),
-                    state2radpy(obs_state),
-                    self.t_max,
-                    self.dt,
-                    k=0,
-                    B=0,
-                    H=HL,
-                    space="Liouville",
-                )
-                prob = self.sim.product_probability(obs_state, rhos)
-                # assert np.all(
-                #     np.isclose(rhos, evol_true[-1][:-1])
-                # ), "Time evolution (rho) failed)"
-                assert np.all(
-                    np.isclose(prob, evol_true[1][:-1])
-                ), "Time evolution (probability) failed)"
+            # for obs_state in STATES:
+            rhos = self.sim.time_evolution(init_state, self.time, HL)[1:]
+            evol_true = radpy.TimeEvolution(
+                self.sim.num_particles,
+                state2radpy(init_state),
+                state2radpy(obs_state),
+                self.t_max,
+                self.dt,
+                k=0,
+                B=0,
+                H=HL,
+                space="Liouville",
+            )
+            prob = self.sim.product_probability(obs_state, rhos)
+            # assert np.all(
+            #     np.isclose(rhos, evol_true[-1][:-1])
+            # ), "Time evolution (rho) failed)"
+            assert np.all(
+                np.isclose(prob, evol_true[1][:-1])
+            ), "Time evolution (probability) failed)"
 
-                # print(f"{MFE=}")
-                # print(f"{rslt['MFE']=}")
-                # assert np.all(
-                #     np.isclose(prob, evol_true[1][:-1])
-                # ), ""
+            # print(f"{MFE=}")
+            # print(f"{rslt['MFE']=}")
+            # assert np.all(
+            #     np.isclose(prob, evol_true[1][:-1])
+            # ), ""
