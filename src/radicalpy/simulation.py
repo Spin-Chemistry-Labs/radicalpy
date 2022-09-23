@@ -498,6 +498,30 @@ class QuantumSimulation:
         MARY = ((MARY - MARY[idx]) / MARY[idx]) * 100
         return (MARY, LFE, HFE)
 
+    def mary_loop(
+        self,
+        init_state: State,
+        time: np.ndarray,
+        B: np.ndarray,
+        H_base: np.ndarray,
+    ) -> np.ndarray:
+        """Generate density matrices (rhos) for MARY.
+
+        Args:
+            init_state (State): initial state.
+        Returns:
+            List generator.
+
+        .. todo::
+            Write proper docs.
+        """
+        H_zee = self.zeeman_hamiltonian(1)
+        rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
+        for i, B0 in enumerate(B):
+            H = H_base + B0 * H_zee
+            rhos[i] = self.time_evolution(init_state, time, H)
+        return rhos
+
 
 class HilbertSimulation(QuantumSimulation):
     def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
@@ -552,30 +576,6 @@ class HilbertSimulation(QuantumSimulation):
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         Up, Um = propagator
         return Um @ rho @ Up
-
-    def mary_loop(
-        self,
-        init_state: State,
-        time: np.ndarray,
-        B: np.ndarray,
-        H_base: np.ndarray,
-    ) -> np.ndarray:
-        """Generate density matrices (rhos) for MARY.
-
-        Args:
-            init_state (State): initial state.
-        Returns:
-            List generator.
-
-        .. todo::
-            Write proper docs.
-        """
-        H_zee = self.zeeman_hamiltonian(1)
-        rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
-        for i, B0 in enumerate(B):
-            H = H_base + B0 * H_zee
-            rhos[i] = self.time_evolution(init_state, time, H)
-        return rhos
 
     def MARY(
         self,
