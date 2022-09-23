@@ -364,7 +364,7 @@ class LiouvilleTests(unittest.TestCase):
     @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_time_evolution(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        HL = self.sim.hilbert_to_liouville(H)
+        HL = self.sim.convert(H)
         obs_state = rpsim.State.SINGLET
         for init_state in STATES:
             rhos = self.sim.time_evolution(init_state, self.time, HL)[1:]

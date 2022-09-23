@@ -489,7 +489,6 @@ class QuantumSimulation:
     ) -> np.ndarray:
         """Evolve the system through time."""
         dt = time[1] - time[0]
-        H = self.convert(H)
         propagator = self.unitary_propagator(H, dt)
 
         rho0 = self.initial_density_matrix(init_state, H)
@@ -564,6 +563,7 @@ class QuantumSimulation:
     ) -> dict:
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J)
+        H = self.convert(H)
         rhos = self.mary_loop(init_state, time, B, H)
         product_probabilities = self.product_probability(obs_state, rhos)
         product_probabilities *= kinetics(time)
