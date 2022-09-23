@@ -657,28 +657,3 @@ class LiouvilleSimulation(QuantumSimulation):
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         return propagator @ rho
-
-    # sim.mary(time=np.linspace(), magnetic_field=np.linspace())
-    # sim.angle(time=np.linspace(), theta=np.linspace(), phi=np.linspace())
-
-    # def MARY(spins, initial, observable, t_max, t_stepsize, k, B, Hplot, space="Hilbert"):
-
-    #     timing = np.arange(0, t_max, t_stepsize)
-    #     MFE = np.zeros((len(B), len(timing)))
-
-    #     for i, B0 in enumerate(B):
-    #         time, MFE[i, :], productyield, ProductYieldSum, rhot = TimeEvolution(
-    #             spins, initial, observable, t_max, t_stepsize, k, B0, Hplot, space=space
-    #         )
-
-    #     raw = MFE
-    #     dt = t_stepsize
-    #     MARY = np.sum(raw, axis=1) * dt * k
-    #     MARY = ((MARY - MARY[0]) / MARY[0]) * 100
-    #     return [time, MFE, MARY, productyield, ProductYieldSum, rhot]
-
-
-# experiments:
-# MARY, RYDMR, SEMF, MIE (1H -> 2H - different isotop, different Omega)
-class ClassicalSimulation:
-    pass
