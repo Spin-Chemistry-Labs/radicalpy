@@ -81,15 +81,6 @@ class QuantumTests(unittest.TestCase):
             assert multiplicities[i] == molecule.multiplicities[i]
             assert gammas_mT[i] == molecule.gammas_mT[i]
 
-    def test_molecule_raw_nohfcs(self):
-        multiplicities = [2, 3]
-        gammas_mT = [3.14, 2.71]
-
-        molecule = rpsim.Molecule(multiplicities=multiplicities, gammas_mT=gammas_mT)
-        for i in range(2):
-            assert multiplicities[i] == molecule.multiplicities[i]
-            assert gammas_mT[i] == molecule.gammas_mT[i]
-
     def test_molecule_empty(self):
         """Test empty molecule.
 
@@ -112,8 +103,10 @@ class QuantumTests(unittest.TestCase):
         # RadicalPy code
         gamma_mT = 3.14
         rad_pair = [
-            rpsim.Molecule(multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT]),
-            rpsim.Molecule(multiplicities=[2], gammas_mT=[gamma_mT]),
+            rpsim.Molecule(
+                multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT], hfcs=[0, 0]
+            ),
+            rpsim.Molecule(multiplicities=[2], gammas_mT=[gamma_mT], hfcs=[0]),
         ]
         sim = rpsim.QuantumSimulation(rad_pair)
         HZ = sim.zeeman_hamiltonian(PARAMS["B"][0])
