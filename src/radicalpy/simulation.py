@@ -63,34 +63,48 @@ class Molecule:
     N6-H1 (hfc = -0.63)
     C8-H (hfc = -0.55)
 
-    >>> Molecule("adenine_cation", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[10, 20])
-    Molecule: adenine_cation
-      HFCs: [10, 20]
-      multiplicities: [1, 2]
-      gammas(mT): [42, 666]
-      number of particles: 2
+    Use element/atom names (and HFCs):
 
-    >>> Molecule("my_adenine", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[10, 20])
-    Molecule: my_adenine
-      HFCs: [10, 20]
-      multiplicities: [1, 2]
-      gammas(mT): [42, 666]
-      number of particles: 2
-
-    >>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
+    >>> Molecule(nuclei=["1H", "14N"], hfcs=[0.41, 1.82])
     Molecule: N/A
-      HFCs: [1, 2]
+      HFCs: [0.41, 1.82]
       multiplicities: [2, 3]
       gammas(mT): [267522.18744, 19337.792]
       number of particles: 2
 
-    >>> Molecule("kryptonite", nuclei=["1H", "14N"])
+    Same as above, but with molecule name:
+
+    >>> Molecule("isotopes", nuclei=["15N", "15N"], hfcs=[0.3, 1.7])
+    Molecule: isotopes
+      HFCs: [0.3, 1.7]
+      multiplicities: [2, 2]
+      gammas(mT): [-27126.180399999997, -27126.180399999997]
+      number of particles: 2
+
+    A molecule with no HFCs:
+
+    >>> Molecule("kryptonite")
     Molecule: kryptonite
       HFCs: []
-      multiplicities: [2, 3]
-      gammas(mT): [267522.18744, 19337.792]
-      number of particles: 2
+      multiplicities: []
+      gammas(mT): []
+      number of particles: 0
 
+    Manual input for all relevant values (multiplicities, gammas, HFCs):
+
+    >>> Molecule(multiplicities=[2, 2, 3], gammas_mT=[267522.18744, 267522.18744, 19337.792], hfcs=[0.42, 1.01, 1.33])
+    Molecule: N/A
+      HFCs: [0.42, 1.01, 1.33]
+      multiplicities: [2, 2, 3]
+      gammas(mT): [267522.18744, 267522.18744, 19337.792]
+      number of particles: 3
+
+    >>> Molecule("my_flavin", multiplicities=[2], gammas_mT=[267522.18744], hfcs=[0.5])
+    Molecule: my_flavin
+      HFCs: [0.5]
+      multiplicities: [2]
+      gammas(mT): [267522.18744]
+      number of particles: 1
 
     """
 
@@ -124,22 +138,21 @@ class Molecule:
 
         Returns: List generator.
         """
-        self.radical = radical
+        self.radical = radical if radical else "N/A"
         if nuclei:
-            if self._check(radical, nuclei):
-                self._init_from_database(radical, nuclei)
+            if self._check_molecule_or_spin_db(radical, nuclei):
+                self._init_from_molecule_db(radical, nuclei)
             else:
-                self._init_from_spin_data(nuclei, hfcs)
-                self.radical = radical if radical else "N/A"
+                self._init_from_spin_db(radical, nuclei, hfcs)
         else:
             self.multiplicities = multiplicities
             self.gammas_mT = gammas_mT
             self.hfcs = hfcs
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
-        assert len(self.hfcs) in {0, self.num_particles}
+        assert len(self.hfcs) == self.num_particles
 
-    def _check(self, radical, nuclei):
+    def _check_molecule_or_spin_db(self, radical, nuclei):
         if radical in MOLECULE_DATA:
             self._check_nuclei(nuclei)
             return True
@@ -162,21 +175,17 @@ class Molecule:
                 available = "\n".join([f"{k} (hfc = {h})" for k, h in pairs])
                 raise ValueError(f"Available nuclei below.\n{available}")
 
-    def _init_from_database(self, radical, nuclei):
-        if radical not in MOLECULE_DATA:
-            available = "\n".join(get_molecules().keys())
-            raise ValueError(f"Available molecules below:\n{available}")
-        self.radical = radical
-        self._check_nuclei(nuclei)
+    def _init_from_molecule_db(self, radical, nuclei):
         data = MOLECULE_DATA[radical]["data"]
         elem = [data[n]["element"] for n in nuclei]
+        self.radical = radical
         self.gammas_mT = [gamma_mT(e) for e in elem]
         self.multiplicities = [multiplicity(e) for e in elem]
         self.hfcs = [data[n]["hfc"] for n in nuclei]
 
-    def _init_from_spin_data(self, nuclei, hfcs):
-        self.multiplicities = [multiplicity(n) for n in nuclei]
-        self.gammas_mT = [gamma_mT(n) for n in nuclei]
+    def _init_from_spin_db(self, radical, nuclei, hfcs):
+        self.multiplicities = [multiplicity(e) for e in nuclei]
+        self.gammas_mT = [gamma_mT(e) for e in nuclei]
         self.hfcs = hfcs
 
     @property
