@@ -63,6 +63,13 @@ class Molecule:
     N6-H1 (hfc = -0.63)
     C8-H (hfc = -0.55)
 
+    >>> Molecule("adenine_cation", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[10, 20])
+    Molecule: adenine_cation
+      HFCs: [10, 20]
+      multiplicities: [1, 2]
+      gammas(mT): [42, 666]
+      number of particles: 2
+
     >>> Molecule("my_adenine", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[10, 20])
     Molecule: my_adenine
       HFCs: [10, 20]
@@ -98,22 +105,22 @@ class Molecule:
         """Construct a Molecule object.
 
         Args:
-            radical (str): the name of the molecule, defaults to None
+            radical (str): the name of the molecule, defaults to ""
 
             nuclei (list[str]): list of atoms from the molecule (or
-                from the database), defaults to None
+                from the database), defaults to []
 
             multiplicities (list[int]): list of multiplicities of the
                 atoms and their isotopes (when not using the
-                database), defaults to None
+                database), defaults to []
 
             gammas_mT (list[float]): list of gyromagnetic ratios of
                 the atoms and their isotopes (when not using the
-                database), defaults to None
+                database), defaults to []
 
             hfcs (list[float]): list of hyperfine coupling constants
                 of the atoms and their isotopes (when not using the
-                database), defaults to None
+                database), defaults to []
 
         Returns: List generator.
         """
