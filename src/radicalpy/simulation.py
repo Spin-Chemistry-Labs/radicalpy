@@ -21,8 +21,8 @@ class State(enum.Enum):
     TRIPLET_MINUS = "T-"
 
 
-# DOCS ALMOST DONE
 class Molecule:
+    # DOCS ALMOST DONE
     """Class representing a molecule in a simulation.
 
     A molecule is represented by hyperfine coupling constants, spin
@@ -32,12 +32,10 @@ class Molecule:
 
     >>> Molecule("adenine_cation", ["N6-H1"])
     Molecule: adenine_cation
-      Nuclei: ['N6-H1']
       HFCs: [-0.63]
       multiplicities: [3]
       gammas(mT): [19337.792]
       number of particles: 1
-      elements: ['14N']
 
 
     If the wrong molecule name is given, the error helps you find the
@@ -64,19 +62,22 @@ class Molecule:
     N6-H1 (hfc = -0.63)
     C8-H (hfc = -0.55)
 
+    #>> Molecule("my_adenine", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[1, 2, 3])
+
     #>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
-    #>> Molecule("kryptonite", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[1, 2, 3])
+
     #>> Molecule("kryptonite", nuclei=["1H", "14N"])
+
 
     """
 
     def __init__(
         self,
-        radical: str = None,
-        nuclei: list[str] = None,
-        multiplicities: list[int] = None,
-        gammas_mT: list[float] = None,
-        hfcs: list[float] = None,
+        radical: str = "",
+        nuclei: list[str] = [],
+        multiplicities: list[int] = [],
+        gammas_mT: list[float] = [],
+        hfcs: list[float] = [],
     ):
         """Construct a Molecule object.
 
@@ -102,124 +103,61 @@ class Molecule:
         Returns: List generator.
 
         """
-        self.radical = self._get_radical(radical)
-        self.nuclei = self._get_nuclei(nuclei)
-        self.multiplicities = self._cond_value(multiplicities, multiplicity)
-        self.gammas_mT = self._cond_value(gammas_mT, gamma_mT)
-        if nuclei is not None:
-            self.num_particles = len(nuclei)
-            self.elements = self._get_properties("element")
+        if nuclei:
+            if radical:
+                self._init_from_database(radical, nuclei)
+            else:
+                self._init_from_spin_data(nuclei, hfcs)
         else:
-            self.num_particles = len(self.multiplicities)
-            self.elements = self.num_particles * ["dummy"]
-        self.hfcs = self._get_hfcs(nuclei, hfcs)
+            self.multiplicities = multiplicities
+            self.gammas_mT = gammas_mT
+            self.hfcs = hfcs
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) in {0, self.num_particles}
 
-    def __other_init__(
-        self,
-        radical: str = None,
-        nuclei: list[str] = None,
-        multiplicities: list[int] = None,
-        gammas_mT: list[float] = None,
-        hfcs: list[float] = None,
-    ):
-        if nuclei is None:
-            self._set_all_manual(multiplicities, gammas_mT, hfcs)
-        else:
-            if radical is None:
-                self._set_from_spin_data(nuclei)
-            else:  # radical is not None and nuclei is not None
-                self.radical = radical
-                if radical in moldb:
-                    self._set_from_nuclei(radical, nuclei)
-                else:
-                    self._set_from_spin_data(nuclei)
+    def _check_nuclei(self, nuclei):
+        molecule_data = MOLECULE_DATA[self.radical]["data"]
+        for nucleus in nuclei:
+            if nucleus not in molecule_data:
+                keys = molecule_data.keys()
+                hfcs = [molecule_data[k]["hfc"] for k in keys]
+                pairs = sorted(
+                    zip(keys, hfcs), key=lambda t: np.abs(t[1]), reverse=True
+                )
+                available = "\n".join([f"{k} (hfc = {h})" for k, h in pairs])
+                raise ValueError(f"Available nuclei below.\n{available}")
 
-    def _set_all_manual(self, multiplicities, gammas_mT, hfcs):
-        self.multiplicities = [] if multiplicities is None else multiplicities
-        self.gammas_mT = [] if gammas_mT is None else gammas_mT
-        self.hfcs = [] if hfcs is None else hfcs
+    def _init_from_database(self, radical, nuclei):
+        if radical not in MOLECULE_DATA:
+            available = "\n".join(get_molecules().keys())
+            raise ValueError(f"Available molecules below:\n{available}")
+        self.radical = radical
+        self._check_nuclei(nuclei)
+        data = MOLECULE_DATA[radical]["data"]
+        elem = [data[n]["element"] for n in nuclei]
+        self.gammas_mT = [gamma_mT(e) for e in elem]
+        self.multiplicities = [multiplicity(e) for e in elem]
+        self.hfcs = [data[n]["hfc"] for n in nuclei]
 
-    def _set_from_molecule(nuclei):
-        pass
+    def _init_from_spin_data(self, nuclei, hfcs):
+        self.multiplicities = [multiplicity(n) for n in nuclei]
+        self.gammas_mT = [gamma_mT(n) for n in nuclei]
+        self.hfcs = hfcs
 
-    def _set_from_nuclei(radical, nuclei):
-        pass
-
-    def _get_hfcs(self, nuclei, hfcs):
-        if hfcs is None:
-            if nuclei is not None:
-                return self._get_properties("hfc")
-            else:
-                return []
-        else:
-            return hfcs
-
-    def _get_radical(self, radical):
-        if radical is not None:
-            # assert radical in MOLECULE_DATA
-            if radical not in MOLECULE_DATA:
-                available = "\n".join(get_molecules().keys())
-                raise ValueError(f"Available molecules below:\n{available}")
-        return radical
-
-    def _get_nuclei(self, nuclei):
-        if self.radical is not None:
-            molecule_data = MOLECULE_DATA[self.radical]["data"]
-            for nucleus in nuclei:
-                if nucleus not in molecule_data:
-                    keys = molecule_data.keys()
-                    hfcs = [molecule_data[k]["hfc"] for k in keys]
-                    pairs = sorted(
-                        zip(keys, hfcs), key=lambda t: np.abs(t[1]), reverse=True
-                    )
-                    available = "\n".join([f"{k} (hfc = {h})" for k, h in pairs])
-                    raise ValueError(f"Available nuclei below.\n{available}")
-        return nuclei
-
-    def _cond_value(self, value, func):
-        if value is None:
-            return list(map(func, self._get_properties("element")))
-        return value
-
-    def _get_properties(self, data: str) -> Iterable:
-        """Construct a list for a given property.
-
-        Args:
-            data (str): the property.
-        Returns:
-            List generator.
-        """
-        if self.nuclei is None:
-            return []
-
-        if self.radical is not None:
-            return [MOLECULE_DATA[self.radical]["data"][n][data] for n in self.nuclei]
-        else:
-            return []
-
-    def _get_property(self, idx: int, key: str):
-        """Get data of a nucleus.
-
-        Utility for used only for testing currently.
-
-        .. todo::
-            Make tests better and probably remove this functions.
-
-        """
-        return MOLECULE_DATA[self.radical]["data"][self.nuclei[idx]][key]
+    @property
+    def num_particles(self):
+        return len(self.multiplicities)
 
     def __repr__(self):
         return (
             f"Molecule: {self.radical}"
-            f"\n  Nuclei: {self.nuclei}"
+            # f"\n  Nuclei: {self.nuclei}"
             f"\n  HFCs: {self.hfcs}"
             f"\n  multiplicities: {self.multiplicities}"
             f"\n  gammas(mT): {self.gammas_mT}"
             f"\n  number of particles: {self.num_particles}"
-            f"\n  elements: {self.elements}"
+            # f"\n  elements: {self.elements}"
         )
 
 
