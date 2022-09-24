@@ -7,7 +7,8 @@ from typing import Iterable
 import numpy as np
 import scipy as sp
 
-from .data import MOLECULE_DATA, gamma_mT, get_molecules, multiplicity
+from .data import (MOLECULE_DATA, SPIN_DATA, gamma_mT, get_molecules,
+                   multiplicity)
 from .pauli_matrices import pauli
 
 
@@ -62,11 +63,26 @@ class Molecule:
     N6-H1 (hfc = -0.63)
     C8-H (hfc = -0.55)
 
-    #>> Molecule("my_adenine", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[1, 2, 3])
+    >>> Molecule("my_adenine", multiplicities=[1, 2], gammas_mT=[42, 666], hfcs=[10, 20])
+    Molecule: my_adenine
+      HFCs: [10, 20]
+      multiplicities: [1, 2]
+      gammas(mT): [42, 666]
+      number of particles: 2
 
-    #>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
+    >>> Molecule(nuclei=["1H", "14N"], hfcs=[1,2])
+    Molecule: N/A
+      HFCs: [1, 2]
+      multiplicities: [2, 3]
+      gammas(mT): [267522.18744, 19337.792]
+      number of particles: 2
 
-    #>> Molecule("kryptonite", nuclei=["1H", "14N"])
+    >>> Molecule("kryptonite", nuclei=["1H", "14N"])
+    Molecule: kryptonite
+      HFCs: []
+      multiplicities: [2, 3]
+      gammas(mT): [267522.18744, 19337.792]
+      number of particles: 2
 
 
     """
@@ -82,7 +98,6 @@ class Molecule:
         """Construct a Molecule object.
 
         Args:
-
             radical (str): the name of the molecule, defaults to None
 
             nuclei (list[str]): list of atoms from the molecule (or
@@ -101,13 +116,14 @@ class Molecule:
                 database), defaults to None
 
         Returns: List generator.
-
         """
+        self.radical = radical
         if nuclei:
-            if radical:
+            if self._check(radical, nuclei):
                 self._init_from_database(radical, nuclei)
             else:
                 self._init_from_spin_data(nuclei, hfcs)
+                self.radical = radical if radical else "N/A"
         else:
             self.multiplicities = multiplicities
             self.gammas_mT = gammas_mT
@@ -115,6 +131,17 @@ class Molecule:
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) in {0, self.num_particles}
+
+    def _check(self, radical, nuclei):
+        if radical in MOLECULE_DATA:
+            self._check_nuclei(nuclei)
+            return True
+        else:
+            if all(n in SPIN_DATA for n in nuclei):
+                return False
+            else:
+                available = "\n".join(get_molecules().keys())
+                raise ValueError(f"Available molecules below:\n{available}")
 
     def _check_nuclei(self, nuclei):
         molecule_data = MOLECULE_DATA[self.radical]["data"]
