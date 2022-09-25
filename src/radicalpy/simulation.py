@@ -273,7 +273,7 @@ class QuantumSimulation:
             axis (str): Axis, i.e. ``"x"``, ``"y"`` or ``"z"``.
 
         Returns:
-            np.array: Spin operator for a particle in the
+            np.ndarray: Spin operator for a particle in the
             :class:`Quantum` system simulated.
 
         """
@@ -350,11 +350,12 @@ class QuantumSimulation:
         magnetic field `B`.
 
         Args:
+
             B0 (float): External magnetic field intensity (milli
             Tesla).
 
         Returns:
-            np.array: The Zeeman Hamiltonian corresponding to the
+            np.ndarray: The Zeeman Hamiltonian corresponding to the
             system described by the `Quantum` simulation object and
             the external magnetic field intensity `B`.
 
@@ -384,7 +385,7 @@ class QuantumSimulation:
         field.
 
         Returns:
-            np.array: The Hyperfine Hamiltonian corresponding to the
+            np.ndarray: The Hyperfine Hamiltonian corresponding to the
             system described by the `Quantum` simulation object.
 
         """
@@ -438,7 +439,7 @@ class QuantumSimulation:
             Write proper docs.
 
         Returns:
-            np.array: The Exchange (J-coupling) Hamiltonian
+            np.ndarray: The Exchange (J-coupling) Hamiltonian
             corresponding to the system described by the `Quantum`
             simulation object and the coupling constant `J`.
 
@@ -472,7 +473,7 @@ class QuantumSimulation:
             Write proper docs.
 
         Returns:
-            np.array: The Dipolar Hamiltonian corresponding to the
+            np.ndarray: The Dipolar Hamiltonian corresponding to the
             system described by the `Quantum` simulation object and
             dipolar coupling constant `D`.
 
@@ -532,7 +533,7 @@ class QuantumSimulation:
         product_probability_seq: np.ndarray,
         dt: float,
         k: float,
-    ) -> (np.array, np.array, np.array):
+    ) -> (np.ndarray, np.ndarray, np.ndarray):
         """Calculate MARY, LFE, HFE."""
         MARY = np.sum(product_probability_seq, axis=1) * dt * k
         idx = int(len(MARY) / 2) if B[0] != 0 else 0
@@ -617,15 +618,16 @@ class HilbertSimulation(QuantumSimulation):
 
         Args:
             state (State): Spin state projection operator.
-            H (np.array): Spin Hamiltonian in Hilbert space.
+
+            H (np.ndarray): Spin Hamiltonian in Hilbert space.
 
         Returns:
-            np.array: A matrix in Hilbert space representing...
+            np.ndarray: A matrix in Hilbert space representing...
 
         """
         Pi = self.projection_operator(state)
 
-        if np.array_equal(Pi, self.projection_operator(State.EQUILIBRIUM)):
+        if state == State.EQUILIBRIUM:
             rho0eq = sp.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
         else:
@@ -640,11 +642,13 @@ class HilbertSimulation(QuantumSimulation):
         spin Hamiltonian density matrix in Hilbert space.
 
         Arguments:
-            H (np.array): Spin Hamiltonian in Hilbert space.
+
+            H (np.ndarray): Spin Hamiltonian in Hilbert space.
+
             dt (float): Time evolution timestep.
 
         Returns:
-            np.array : Two matrices (a tensor) in either Hilbert.
+            np.ndarray: Two matrices (a tensor) in either Hilbert.
 
         .. todo::
             https://docs.python.org/3/library/doctest.html
@@ -703,7 +707,7 @@ class LiouvilleSimulation(QuantumSimulation):
         space.
 
         Arguments:
-            H (np.array): Spin Hamiltonian in Hilbert or Liouville space
+            H (np.ndarray): Spin Hamiltonian in Hilbert or Liouville space
             dt (float): Time evolution timestep.
             space (str): Select the spin space.
         """
