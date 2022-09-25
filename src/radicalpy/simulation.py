@@ -226,7 +226,7 @@ class KineticsRelaxationBase:
 class QuantumSimulation:
     """Quantum simulation class."""
 
-    def __init__(self, molecules: list[Molecule]):
+    def __init__(self, molecules: list[Molecule], custom_gfactors=False):
         """Construct the object.
 
         Args:
@@ -246,8 +246,19 @@ class QuantumSimulation:
         self.num_particles += sum([m.num_particles for m in molecules])
         self.multiplicities = list(map(multiplicity, self.electrons))
         self.multiplicities += sum([m.multiplicities for m in molecules], [])
-        self.gammas_mT = list(map(gamma_mT, self.electrons))
+        self.gammas_mT = self._get_electron_gammas_mT(custom_gfactors)
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
+
+    def _get_electron_gammas_mT(self, custom_gfactors):
+        g = 2.0023  # free electron g-factor
+        gfactor = [g, g]
+        if custom_gfactors:
+            # overwrite gfactor list TODO
+            pass
+        # muB = 9.274e-24
+        # hbar = 1.05459e-34
+        # return [gfactor[i] * muB / hbar / 1000 for i in range(self.num_electrons)]
+        return [gamma_mT(e) * gfactor[i] / g for i, e in enumerate(self.electrons)]
 
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator for a particle.
@@ -388,7 +399,7 @@ class QuantumSimulation:
         """
         J0rad = 1.7e17
         rj = 0.049e-9
-        gamma = 1.76e8
+        gamma = 1.76e8  # TODO
         J0 = J0rad / gamma / 10  # convert to mT?????????
         return J0 * np.exp(-r / rj)
 
