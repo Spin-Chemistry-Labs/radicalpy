@@ -432,7 +432,7 @@ class QuantumSimulation:
 
         Construct the Exchange (J-coupling) Hamiltonian based on the
         coupling constant J between two electrons, which can be obtain
-        from the radical pair separation `r` using :py:`TODO` method.
+        from the radical pair separation `r` using `TODO` method.
 
         .. todo::
             Write proper docs.
