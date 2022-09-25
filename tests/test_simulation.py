@@ -185,6 +185,13 @@ class QuantumTests(unittest.TestCase):
 
     @unittest.skip("This needs to be figured out")
     def test_HH_3D(self):
+        # from SingletYield.ipynb do
+        ### anisotropic
+        # hfcs = [N5, N10, H5, H4]
+        # yields = singletYieldsAvgAniso(nucDims, indE, hfcs, b0*mT2angfreq, k0, kS)
+        #
+        # paper: "Radical triads, not pairs,
+        # may explain effects of hypomagnetic fields on neurogenesis"
         mT2angfreq = (
             9.274009994e-24 / 1.0545718e-34 * 2.00231930436256 / 1e9
         )  # Mrad/s/mT; ~28 MHz/mT
