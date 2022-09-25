@@ -11,6 +11,8 @@ Welcome to RadicalPy's documentation!
    :caption: Contents:
 
 
+.. include:: modules.rst
+
 
 Indices and tables
 ==================
@@ -24,3 +26,4 @@ TODO list
 =========
 
 .. todolist::
+
