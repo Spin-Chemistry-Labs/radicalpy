@@ -1,0 +1,32 @@
+{
+  "data": {
+    "H12": {
+      "hfc": -0.0136,
+      "element": "1H"
+    },
+    "H14": {
+      "hfc": -0.0096,
+      "element": "1H"
+    },
+    "H15": {
+      "hfc": -0.0136,
+      "element": "1H"
+    },
+    "H16": {
+      "hfc": -0.1051,
+      "element": "1H"
+    },
+    "H17": {
+      "hfc": -0.0096,
+      "element": "1H"
+    },
+    "H20": {
+      "hfc": -0.1051,
+      "element": "1H"
+    },
+  },
+  "info": {
+    "units": "mT",
+    "name": "AQDS radical (3-)"
+  }
+}
