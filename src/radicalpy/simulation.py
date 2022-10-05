@@ -517,6 +517,8 @@ class QuantumSimulation:
 
     def product_probability(self, obs: State, rhos: np.ndarray) -> np.ndarray:
         """Calculate the probability of the observable from the densities."""
+        if obs == State.EQUILIBRIUM:
+            raise ValueError("Observable state should not be EQUILIBRIUM")
         obs = self.projection_operator(obs)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
