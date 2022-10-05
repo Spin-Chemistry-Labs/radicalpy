@@ -47,6 +47,7 @@ class Molecule:
     ...
     ValueError: Available molecules below:
     adenine_cation
+    aqds_anion
     flavin_anion
     flavin_neutral
     trp_cation
