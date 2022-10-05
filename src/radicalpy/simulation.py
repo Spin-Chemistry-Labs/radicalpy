@@ -93,7 +93,9 @@ class Molecule:
 
     Manual input for all relevant values (multiplicities, gammas, HFCs):
 
-    >>> Molecule(multiplicities=[2, 2, 3], gammas_mT=[267522.18744, 267522.18744, 19337.792], hfcs=[0.42, 1.01, 1.33])
+    >>> Molecule(multiplicities=[2, 2, 3],
+    ...          gammas_mT=[267522.18744, 267522.18744, 19337.792],
+    ...          hfcs=[0.42, 1.01, 1.33])
     Molecule: N/A
       HFCs: [0.42, 1.01, 1.33]
       multiplicities: [2, 2, 3]
@@ -120,22 +122,22 @@ class Molecule:
         """Construct a Molecule object.
 
         Args:
-            radical (str): the name of the molecule, defaults to ""
+            radical (str): the name of the `Molecule`, defaults to `""`
 
             nuclei (list[str]): list of atoms from the molecule (or
-                from the database), defaults to []
+                from the database), defaults to `[]`
 
             multiplicities (list[int]): list of multiplicities of the
                 atoms and their isotopes (when not using the
-                database), defaults to []
+                database), defaults to `[]`
 
             gammas_mT (list[float]): list of gyromagnetic ratios of
                 the atoms and their isotopes (when not using the
-                database), defaults to []
+                database), defaults to `[]`
 
             hfcs (list[float]): list of hyperfine coupling constants
                 of the atoms and their isotopes (when not using the
-                database), defaults to []
+                database), defaults to `[]`
 
         Returns: List generator.
         """
