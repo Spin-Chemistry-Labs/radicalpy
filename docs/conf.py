@@ -32,7 +32,7 @@ extensions = [
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-autoclass_content = "both"
+# autoclass_content = "both"
 todo_include_todos = True
 default_role = "py:obj"
 
