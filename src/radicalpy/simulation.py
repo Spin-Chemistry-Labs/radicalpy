@@ -23,8 +23,7 @@ class State(enum.Enum):
 
 
 class Molecule:
-    # DOCS ALMOST DONE
-    """Class representing a molecule in a simulation.
+    """Representation of a molecule for the simulation.
 
     Args:
         radical (str): the name of the `Molecule`, defaults to `""`
@@ -146,6 +145,7 @@ class Molecule:
         hfcs: list[float] = [],
     ):
         self.radical = radical if radical else "N/A"
+        self.nuclei = nuclei
         if nuclei:
             if self._check_molecule_or_spin_db(radical, nuclei):
                 self._init_from_molecule_db(radical, nuclei)
@@ -197,9 +197,11 @@ class Molecule:
 
     @property
     def num_particles(self):
+        """Return the number of isotopes in the molecule."""
         return len(self.multiplicities)
 
     def __repr__(self):
+        """Pretty print the molecule."""
         return (
             f"Molecule: {self.radical}"
             # f"\n  Nuclei: {self.nuclei}"
@@ -231,18 +233,27 @@ class KineticsRelaxationBase:
 
 
 class QuantumSimulation:
-    """Quantum simulation class."""
+    """Quantum simulation base class.
+
+    Args:
+        molecules (list[Molecule]): List of `Molecule` objects.
+
+        custom_gfactor (bool): Flag to use g-factors instead of the
+            default gyromagnetic ratio gamma.
+
+    >>> QuantumSimulation([Molecule("flavin_anion", ["N5"]),
+    ...                    Molecule("trp_cation", ["H18", "H23"])])
+    Number of electrons: 2
+    Number of nuclei: 3
+    Number of particles: 5
+    Multiplicities: [2, 2, 3, 2, 2]
+    Gyromagnetic ratios (mT): [-176085963.023, -176085963.023, 19337.792, 267522.18744, 267522.18744]
+    Isotopes: ['N5', 'H18', 'H23']
+    Couplings: [0, 1, 1]
+    HFCs (mT): [0.5233, 1.6046, -0.5983]
+    """
 
     def __init__(self, molecules: list[Molecule], custom_gfactors=False):
-        """Construct the object.
-
-        Args:
-            molecules (list[Molecule]): List of two `Molecule`
-            objects.
-
-        """
-        assert len(molecules) == 2
-
         self.molecules = molecules
         self.coupling = [i for i, m in enumerate(molecules) for _ in m.gammas_mT]
 
@@ -255,6 +266,20 @@ class QuantumSimulation:
         self.multiplicities += sum([m.multiplicities for m in molecules], [])
         self.gammas_mT = self._get_electron_gammas_mT(custom_gfactors)
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
+
+    def __repr__(self):
+        return "\n".join(
+            [
+                f"Number of electrons: {self.num_electrons}",
+                f"Number of nuclei: {len(self.hfcs)}",
+                f"Number of particles: {self.num_particles}",
+                f"Multiplicities: {self.multiplicities}",
+                f"Gyromagnetic ratios (mT): {self.gammas_mT}",
+                f"Isotopes: {self.molecules[0].nuclei+self.molecules[1].nuclei}",
+                f"Couplings: {self.coupling}",
+                f"HFCs (mT): {self.hfcs}",
+            ]
+        )
 
     def _get_electron_gammas_mT(self, custom_gfactors):
         g = 2.0023  # free electron g-factor
@@ -271,7 +296,7 @@ class QuantumSimulation:
         """Construct the spin operator for a particle.
 
         Construct the spin operator for the particle with index
-        ``idx`` in the :class:`Quantum` system.
+        `idx` in the `QuantumSimulation`.
 
         Args:
 
