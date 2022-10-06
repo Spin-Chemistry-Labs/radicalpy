@@ -27,16 +27,17 @@ class Molecule:
     """Class representing a molecule in a simulation.
 
     A molecule is represented by hyperfine coupling constants, spin
-    multiplicities and gyromagnetic ratios of its nuclei.  When using
-    the database, one needs to specify the name of the molecule and
-    the list of its nuclei.
+    multiplicities and gyromagnetic ratios (gammas, specified in mT)
+    of its nuclei.  When using the database, one needs to specify the
+    name of the molecule and the list of its nuclei.
 
-    >>> Molecule("adenine_cation", ["N6-H1"])
+    >>> Molecule(radical="adenine_cation",
+    ...          nuclei=["N6-H1", "N6-H2"])
     Molecule: adenine_cation
-      HFCs: [-0.63]
-      multiplicities: [3]
-      gammas(mT): [19337.792]
-      number of particles: 1
+      HFCs: [-0.63, -0.66]
+      multiplicities: [3, 3]
+      gammas(mT): [19337.792, 19337.792]
+      number of particles: 2
 
 
     If the wrong molecule name is given, the error helps you find the
@@ -64,7 +65,8 @@ class Molecule:
     N6-H1 (hfc = -0.63)
     C8-H (hfc = -0.55)
 
-    Use element/atom names (and HFCs):
+    One can also specify a list of custom hyperfine coupling constants
+    along with a list of their respective isotope names.
 
     >>> Molecule(nuclei=["1H", "14N"], hfcs=[0.41, 1.82])
     Molecule: N/A
@@ -73,7 +75,8 @@ class Molecule:
       gammas(mT): [267522.18744, 19337.792]
       number of particles: 2
 
-    Same as above, but with molecule name:
+    Same as above, but with an informative molecule name (doesn't
+    affect behaviour):
 
     >>> Molecule("isotopes", nuclei=["15N", "15N"], hfcs=[0.3, 1.7])
     Molecule: isotopes
@@ -82,7 +85,9 @@ class Molecule:
       gammas(mT): [-27126.180399999997, -27126.180399999997]
       number of particles: 2
 
-    A molecule with no HFCs:
+    A molecule with no HFCs, for one proton radical pair simulations
+    (for simple simulations -- often with *fantastic* low-field
+    effects):
 
     >>> Molecule("kryptonite")
     Molecule: kryptonite
@@ -91,7 +96,8 @@ class Molecule:
       gammas(mT): []
       number of particles: 0
 
-    Manual input for all relevant values (multiplicities, gammas, HFCs):
+    Manual input for all relevant values (multiplicities, gammas,
+    HFCs):
 
     >>> Molecule(multiplicities=[2, 2, 3],
     ...          gammas_mT=[267522.18744, 267522.18744, 19337.792],
@@ -101,6 +107,8 @@ class Molecule:
       multiplicities: [2, 2, 3]
       gammas(mT): [267522.18744, 267522.18744, 19337.792]
       number of particles: 3
+
+    Same as above with an informative molecule name:
 
     >>> Molecule("my_flavin", multiplicities=[2], gammas_mT=[267522.18744], hfcs=[0.5])
     Molecule: my_flavin
@@ -373,7 +381,7 @@ class QuantumSimulation:
         .. todo::
             Write proper docs.
         """
-        g = gamma_mT(self.electrons[ei])
+        g = self.gammas_mT[0]
         h = -g * self.hfcs[ni]
         effective_ni = self.num_electrons + ni
         if isinstance(h, np.ndarray):
@@ -447,7 +455,7 @@ class QuantumSimulation:
             simulation object and the coupling constant `J`.
 
         """
-        Jcoupling = gamma_mT("E") * J
+        Jcoupling = self.gammas_mT[0] * J
         SASB = self.product_operator(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
@@ -484,7 +492,7 @@ class QuantumSimulation:
         SASB = self.product_operator(0, 1)
         SAz = self.spin_operator(0, "z")
         SBz = self.spin_operator(1, "z")
-        omega = (2 / 3) * gamma_mT("E") * D
+        omega = (2 / 3) * self.gammas_mT[0] * D
         return omega * (3 * SAz * SBz - SASB)
 
     def total_hamiltonian(self, B: float, J: float, D: float) -> np.ndarray:
