@@ -26,6 +26,24 @@ class Molecule:
     # DOCS ALMOST DONE
     """Class representing a molecule in a simulation.
 
+    Args:
+        radical (str): the name of the `Molecule`, defaults to `""`
+
+        nuclei (list[str]): list of atoms from the molecule (or
+            from the database), defaults to `[]`
+
+        multiplicities (list[int]): list of multiplicities of the
+            atoms and their isotopes (when not using the
+            database), defaults to `[]`
+
+        gammas_mT (list[float]): list of gyromagnetic ratios of
+            the atoms and their isotopes (when not using the
+            database), defaults to `[]`
+
+        hfcs (list[float]): list of hyperfine coupling constants
+            of the atoms and their isotopes (when not using the
+            database), defaults to `[]`
+
     A molecule is represented by hyperfine coupling constants, spin
     multiplicities and gyromagnetic ratios (gammas, specified in mT)
     of its nuclei.  When using the database, one needs to specify the
@@ -127,28 +145,6 @@ class Molecule:
         gammas_mT: list[float] = [],
         hfcs: list[float] = [],
     ):
-        """Construct a Molecule object.
-
-        Args:
-            radical (str): the name of the `Molecule`, defaults to `""`
-
-            nuclei (list[str]): list of atoms from the molecule (or
-                from the database), defaults to `[]`
-
-            multiplicities (list[int]): list of multiplicities of the
-                atoms and their isotopes (when not using the
-                database), defaults to `[]`
-
-            gammas_mT (list[float]): list of gyromagnetic ratios of
-                the atoms and their isotopes (when not using the
-                database), defaults to `[]`
-
-            hfcs (list[float]): list of hyperfine coupling constants
-                of the atoms and their isotopes (when not using the
-                database), defaults to `[]`
-
-        Returns: List generator.
-        """
         self.radical = radical if radical else "N/A"
         if nuclei:
             if self._check_molecule_or_spin_db(radical, nuclei):
