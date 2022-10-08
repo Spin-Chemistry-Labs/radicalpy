@@ -3,6 +3,7 @@ import os
 import time
 import unittest
 
+import matplotlib.pyplot as plt
 import numpy as np
 from src.radicalpy import data as rpdata
 from src.radicalpy import kinetics
@@ -23,13 +24,15 @@ PARAMS = dict(
 )
 
 RADICAL_PAIR = [
-    rpsim.Molecule("adenine_cation", ["C8-H", "C8-H"]),
-    rpsim.Molecule("adenine_cation", ["C8-H"]),
+    rpsim.Molecule("flavin_anion", ["H29"]),
+    rpsim.Molecule("adenine_cation"),
+    # rpsim.Molecule("adenine_cation", ["C8-H"]),
 ]
 
 
 def load_tests(loader, tests, ignore):
     tests.addTests(doctest.DocTestSuite(rpsim))
+    tests.addTests(doctest.DocTestSuite(kinetics))
     return tests
 
 
@@ -115,13 +118,13 @@ class QuantumTests(unittest.TestCase):
         # Assume this is correct!
         omega_e = PARAMS["B"][0] * self.gamma_mT
         electrons = sum(
-            [radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles) for i in range(2)]
+            [radpy.np_spinop(radpy.np_Sz, i, sim.num_particles) for i in range(2)]
         )
         omega_n = PARAMS["B"][0] * gamma_mT
         nuclei = sum(
             [
-                radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles)
-                for i in range(2, self.sim.num_particles)
+                radpy.np_spinop(radpy.np_Sz, i, sim.num_particles)
+                for i in range(2, sim.num_particles)
             ]
         )
         HZ_true = -omega_e * electrons - omega_n * nuclei
@@ -362,13 +365,30 @@ class LiouvilleTests(unittest.TestCase):
 
     @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_kinetics(self):
-        self.sim.MARY(
+        kwargs = dict(
             init_state=rpsim.State.SINGLET,
-            obs_state=rpsim.State.SINGLET,
-            time=np.arange(10, 12, 1),
-            B=np.arange(10, 12, 1),
+            obs_state=rpsim.State.TRIPLET,
+            time=np.arange(0, 15e-6, 5e-9),
+            B=np.arange(0, 20, 1),
             D=0,
             J=0,
-            kinetics=[kinetics.Haberkorn(0.5, rpsim.State.SINGLET)],
         )
-        print("DONE")
+        k = 1e6
+        results_haberkorn = self.sim.MARY(
+            kinetics=[
+                kinetics.Haberkorn(k, rpsim.State.TRIPLET),
+                kinetics.Haberkorn(k, rpsim.State.SINGLET),
+            ],
+            **kwargs,
+        )
+        results_jones_hore = self.sim.MARY(
+            kinetics=[kinetics.JonesHore(k, k)],
+            **kwargs,
+        )
+
+        # idx = 0
+        # plt.plot(results_haberkorn["time"], results_haberkorn["time_evolutions"][idx])
+        # plt.plot(results_jones_hore["time"], results_jones_hore["time_evolutions"][idx])
+        # plt.title(f"B={results_haberkorn['B'][idx]}")
+        # plt.show()
+        # print("DONE")

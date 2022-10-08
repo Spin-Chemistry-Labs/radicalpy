@@ -32,30 +32,56 @@ class Diffusion(KineticsRelaxationBase):
         product_probabilities *= A * time ** (-3 / 2) * np.exp(-B / time)
 
 
-class Haberkorn(KineticsRelaxationBase):
-    def __init__(self, rate_constant: float, type: State or list[State]):
-        super().__init__(rate_constant)
-        self.type = type if isinstance(type, list) else [type]
-
+class KineticsBase(KineticsRelaxationBase):
     @staticmethod
-    def _convert(Q):
-        return np.kron(Q, np.eye(len(Q))) + (np.kron(np.eye(len(Q)), Q))
-
-    def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
-        Q = sum(sim.hilbert_projop(t) for t in self.type)
-        H -= 0.5 * self.k * self._convert(Q)
+    def _convert(Q: np.ndarray) -> np.ndarray:
+        return np.kron(Q, np.eye(len(Q))) + np.kron(np.eye(len(Q)), Q.T)
 
 
-class JonesHore(KineticsRelaxationBase):
-    def __init__(self, rate_constant: float, ks: float, kt: float):
+class Haberkorn(KineticsBase):
+    """
+    >>> Haberkorn(rate_constant=1e6, target=State.SINGLET) # doctest: +ELLIPSIS
+    <src.radicalpy.kinetics.Haberkorn object at ...>
+
+
+    >>> Haberkorn(rate_constant=1e6, target=State.TRIPLET) # doctest: +ELLIPSIS
+    <src.radicalpy.kinetics.Haberkorn object at ...>
+    """
+
+    def __init__(self, rate_constant: float, target: State or list[State]):
         super().__init__(rate_constant)
-        self.type = type if isinstance(type, list) else [type]
+        self.target = target
+        if target not in {State.SINGLET, State.TRIPLET}:
+            raise ValueError(
+                "Haberkorn kinetics supports only SINGLET and TRIPLET targets"
+            )
 
     def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
-        QS = sim.hilbert_projop(State.SINGLET)
-        QT = sim.hilbert_projop(State.TRIPLET)
+        Q = sim.projection_operator(self.target)
+        H -= 0.5 * self.rate * self._convert(Q)
+
+
+class HaberkornFree(KineticsBase):
+    """
+    # >>> HaberkornFree(rate_constant=1e6)
+    """
+
+    def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
+        QL = np.eye(len(H))
+        H -= 0.5 * self.rate * QL
+
+
+class JonesHore(KineticsBase):
+    def __init__(self, singlet_rate: float, triplet_rate: float):
+        self.singlet_rate = singlet_rate
+        self.triplet_rate = triplet_rate
+
+    def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
+        QS = sim.projection_operator(State.SINGLET)
+        QT = sim.projection_operator(State.TRIPLET)
         H -= (
-            0.5 * self.ks * self.convert(QS)
-            + 0.5 * self.kt * self.convert(QT)
-            + (0.5 * (self.ks + self.kt)) * (np.kron(QS, QT) + np.kron(QT, QS))
+            0.5 * self.singlet_rate * self._convert(QS)
+            + 0.5 * self.triplet_rate * self._convert(QT)
+            + (0.5 * (self.singlet_rate + self.triplet_rate))
+            * (np.kron(QS, QT) + np.kron(QT, QS))
         )
