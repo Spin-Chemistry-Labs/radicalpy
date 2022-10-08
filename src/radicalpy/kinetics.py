@@ -40,21 +40,31 @@ class KineticsBase(KineticsRelaxationBase):
 
 class Haberkorn(KineticsBase):
     """
-    >>> Haberkorn(rate_constant=1e6, target=State.SINGLET) # doctest: +ELLIPSIS
-    <src.radicalpy.kinetics.Haberkorn object at ...>
+    >>> Haberkorn(rate_constant=1e6, target=State.SINGLET)
+    Kinetics: Haberkorn
+    Rate constant: 1000000.0
+    Target: S
 
-
-    >>> Haberkorn(rate_constant=1e6, target=State.TRIPLET) # doctest: +ELLIPSIS
-    <src.radicalpy.kinetics.Haberkorn object at ...>
+    >>> Haberkorn(rate_constant=1e6, target=State.TRIPLET)
+    Kinetics: Haberkorn
+    Rate constant: 1000000.0
+    Target: T
     """
 
-    def __init__(self, rate_constant: float, target: State or list[State]):
+    def __init__(self, rate_constant: float, target: State):
         super().__init__(rate_constant)
         self.target = target
         if target not in {State.SINGLET, State.TRIPLET}:
             raise ValueError(
                 "Haberkorn kinetics supports only SINGLET and TRIPLET targets"
             )
+
+    def __repr__(self):
+        lines = [
+            super().__repr__(),
+            f"Target: {self.target.value}",
+        ]
+        return "\n".join(lines)
 
     def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
         Q = sim.projection_operator(self.target)
@@ -63,7 +73,9 @@ class Haberkorn(KineticsBase):
 
 class HaberkornFree(KineticsBase):
     """
-    # >>> HaberkornFree(rate_constant=1e6)
+    >>> HaberkornFree(rate_constant=1e6)
+    Kinetics: HaberkornFree
+    Rate constant: 1000000.0
     """
 
     def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
@@ -72,9 +84,24 @@ class HaberkornFree(KineticsBase):
 
 
 class JonesHore(KineticsBase):
+    """
+    >>> JonesHore(1e6, 1e7)
+    Kinetics: JonesHore
+    Singlet rate: 1000000.0
+    Triplet rate: 10000000.0
+    """
+
     def __init__(self, singlet_rate: float, triplet_rate: float):
         self.singlet_rate = singlet_rate
         self.triplet_rate = triplet_rate
+
+    def __repr__(self):
+        lines = [
+            self._name(),
+            f"Singlet rate: {self.singlet_rate}",
+            f"Triplet rate: {self.triplet_rate}",
+        ]
+        return "\n".join(lines)
 
     def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
         QS = sim.projection_operator(State.SINGLET)

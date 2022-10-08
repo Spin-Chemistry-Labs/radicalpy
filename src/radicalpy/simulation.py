@@ -227,6 +227,17 @@ class KineticsRelaxationBase:
     def rate_constant(self) -> float:
         return 1.0
 
+    def _name(self):
+        return f"Kinetics: {type(self).__name__}"
+
+    def __repr__(self):
+
+        lines = [
+            self._name(),
+            f"Rate constant: {self.rate}",
+        ]
+        return "\n".join(lines)
+
 
 class QuantumSimulation:
     """Quantum simulation base class.
