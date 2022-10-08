@@ -546,7 +546,7 @@ class QuantumSimulation:
         """Calculate the probability of the observable from the densities."""
         if obs == State.EQUILIBRIUM:
             raise ValueError("Observable state should not be EQUILIBRIUM")
-        obs = self.projection_operator(obs)
+        obs = self.observable_projection_operator(obs)
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
     @staticmethod
@@ -612,7 +612,7 @@ class QuantumSimulation:
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J)
         H = self.convert(H)
-        for K in kinetics + relaxations:
+        for K in kinetics + relaxations:  # skip in hilbert
             K.adjust_hamiltonian(H, self)
         rhos = self.mary_loop(init_state, time, B, H)
         product_probabilities = self.product_probability(obs_state, rhos)
@@ -697,6 +697,9 @@ class HilbertSimulation(QuantumSimulation):
         Up, Um = propagator
         return Um @ rho @ Up
 
+    def observable_projection_operator(self, state: State) -> np.ndarray:
+        return self.projection_operator(state)
+
 
 class LiouvilleSimulation(QuantumSimulation):
     @staticmethod
@@ -705,8 +708,12 @@ class LiouvilleSimulation(QuantumSimulation):
         eye = np.eye(len(H))
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
 
-    def projection_operator(self, state: State) -> np.ndarray:
-        return np.reshape(super().projection_operator(state), (-1, 1)).T
+    def liouville_projection_operator(self, state: State) -> np.ndarray:
+        return np.reshape(self.projection_operator(state), (-1, 1))
+
+    def observable_projection_operator(self, state: State) -> np.ndarray:
+        Q = self.liouville_projection_operator(state)
+        return Q.T
 
     def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
         """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
@@ -720,7 +727,7 @@ class LiouvilleSimulation(QuantumSimulation):
             A matrix in Liouville space
 
         """
-        Pi = self.projection_operator(state).T
+        Pi = self.liouville_projection_operator(state)
         if state == State.EQUILIBRIUM:
             rho0eq = sp.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
