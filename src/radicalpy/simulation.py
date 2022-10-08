@@ -217,14 +217,10 @@ class KineticsRelaxationBase:
     def __init__(self, rate_constant: float):
         self.rate = rate_constant
 
-    def adjust_hamiltonian(self, H: np.ndarray):
+    def adjust_hamiltonian(self, *args, **kwargs):
         return
 
-    def adjust_product_probabilities(
-        self,
-        product_probabilities: np.ndarray,
-        time: np.ndarray,
-    ):
+    def adjust_product_probabilities(self, *args, **kwargs):
         return
 
     @property
@@ -595,6 +591,7 @@ class QuantumSimulation:
             Write proper docs.
         """
         H_zee = self.zeeman_hamiltonian(1)
+        H_zee = self.convert(H_zee)
         rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
         for i, B0 in enumerate(B):
             H = H_base + B0 * H_zee
@@ -616,7 +613,7 @@ class QuantumSimulation:
         H = self.total_hamiltonian(B=0, D=D, J=J)
         H = self.convert(H)
         for K in kinetics + relaxations:
-            K.adjust_hamiltonian(H)
+            K.adjust_hamiltonian(H, self)
         rhos = self.mary_loop(init_state, time, B, H)
         product_probabilities = self.product_probability(obs_state, rhos)
         for K in kinetics:  # skip in liouville

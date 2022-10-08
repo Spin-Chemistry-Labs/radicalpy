@@ -281,7 +281,7 @@ class HilbertTests(unittest.TestCase):
     def test_time_evolution(self):
         k = np.random.uniform()
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        Kexp = kinetics.KineticsExponential(k)
+        Kexp = kinetics.Exponential(k)
         for init_state in STATES:
             for obs_state in STATES:
                 evol_true = radpy.TimeEvolution(
@@ -322,7 +322,7 @@ class HilbertTests(unittest.TestCase):
                     B=PARAMS["B"],
                     D=PARAMS["D"],
                     J=PARAMS["J"],
-                    kinetics=[kinetics.KineticsExponential(k)],
+                    kinetics=[kinetics.Exponential(k)],
                 )
                 # time, MFE, HFE, LFE, MARY, _, _, rho = radpy.MARY(
                 #     self.sim.num_particles,
@@ -361,24 +361,14 @@ class LiouvilleTests(unittest.TestCase):
         assert np.array_equal(U_true, U_prop)
 
     @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
-    def test_time_evolution(self):
-        H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        HL = self.sim.convert(H)
-        obs_state = rpsim.State.SINGLET
-        for init_state in STATES:
-            rhos = self.sim.time_evolution(init_state, self.time, HL)[1:]
-            evol_true = radpy.TimeEvolution(
-                self.sim.num_particles,
-                state2radpy(init_state),
-                state2radpy(obs_state),
-                self.t_max,
-                self.dt,
-                k=0,
-                B=0,
-                H=HL,
-                space="Liouville",
-            )
-            prob = self.sim.product_probability(obs_state, rhos)
-            assert np.all(
-                np.isclose(prob, evol_true[1][:-1])
-            ), "Time evolution (probability) failed)"
+    def test_kinetics(self):
+        self.sim.MARY(
+            init_state=rpsim.State.SINGLET,
+            obs_state=rpsim.State.SINGLET,
+            time=np.arange(10, 12, 1),
+            B=np.arange(10, 12, 1),
+            D=0,
+            J=0,
+            kinetics=[kinetics.Haberkorn(0.5, rpsim.State.SINGLET)],
+        )
+        print("DONE")
