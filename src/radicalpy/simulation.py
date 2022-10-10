@@ -2,7 +2,7 @@
 
 import enum
 from math import prod
-from typing import Iterable
+from typing import Optional
 
 import numpy as np
 import scipy as sp
@@ -384,7 +384,9 @@ class QuantumSimulation:
             case State.EQUILIBRIUM:
                 return 1.05459e-34 / (1.38e-23 * 298)
 
-    def zeeman_hamiltonian(self, B0: float) -> np.ndarray:
+    def zeeman_hamiltonian(
+        self, B0: float, theta: Optional[float] = None, phi: Optional[float] = None
+    ) -> np.ndarray:
         """Construct the Zeeman Hamiltonian.
 
         Construct the Zeeman Hamiltonian based on the external
@@ -401,6 +403,12 @@ class QuantumSimulation:
             the external magnetic field intensity `B`.
 
         """
+        if theta is None and phi is None:
+            return self.zeeman_hamiltonian_1d(B0)
+        else:
+            return self.zeeman_hamiltonian_3d(B0, theta, phi)
+
+    def zeeman_hamiltonian_1d(self, B0: float) -> np.ndarray:
         axis = "z"
         gammas = enumerate(self.gammas_mT)
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
@@ -523,7 +531,7 @@ class QuantumSimulation:
         """
         return -2.785 / r**3
 
-    def dipolar_hamiltonian(self, D: float) -> np.ndarray:
+    def dipolar_hamiltonian(self, D: float or np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
@@ -538,13 +546,19 @@ class QuantumSimulation:
             dipolar coupling constant `D`.
 
         """
+        if isinstance(D, float):
+            return self.dipolar_hamiltonian_1d(D)
+        else:
+            return self.dipolar_hamiltonian_3d(D)
+
+    def dipolar_hamiltonian_1d(self, D: float) -> np.ndarray:
         SASB = self.product_operator(0, 1)
         SAz = self.spin_operator(0, "z")
         SBz = self.spin_operator(1, "z")
         omega = (2 / 3) * self.gammas_mT[0] * D
         return omega * (3 * SAz * SBz - SASB)
 
-    def dipolar_hamiltonian_3d(self, dipolar_tensor):
+    def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
         ne = self.num_electrons
         return -sum(
             [
@@ -554,7 +568,14 @@ class QuantumSimulation:
             ]
         )
 
-    def total_hamiltonian(self, B: float, J: float, D: float) -> np.ndarray:
+    def total_hamiltonian(
+        self,
+        B: float,
+        J: float,
+        D: float,
+        theta: Optional[float] = None,
+        phi: Optional[float] = None,
+    ) -> np.ndarray:
         """Construct the final (total) Hamiltonian.
 
         Construct the final (total)
@@ -564,7 +585,7 @@ class QuantumSimulation:
 
         """
         return (
-            self.zeeman_hamiltonian(B)
+            self.zeeman_hamiltonian(B, theta, phi)
             + self.hyperfine_hamiltonian()
             + self.exchange_hamiltonian(J)
             + self.dipolar_hamiltonian(D)
@@ -621,6 +642,8 @@ class QuantumSimulation:
         time: np.ndarray,
         B: np.ndarray,
         H_base: np.ndarray,
+        theta: Optional[float] = None,
+        phi: Optional[float] = None,
     ) -> np.ndarray:
         """Generate density matrices (rhos) for MARY.
 
@@ -632,7 +655,7 @@ class QuantumSimulation:
         .. todo::
             Write proper docs.
         """
-        H_zee = self.zeeman_hamiltonian(1)
+        H_zee = self.zeeman_hamiltonian(1, theta, phi)
         H_zee = self.convert(H_zee)
         rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
         for i, B0 in enumerate(B):
@@ -650,13 +673,15 @@ class QuantumSimulation:
         J: float,
         kinetics: list[KineticsRelaxationBase] = [],
         relaxations: list[KineticsRelaxationBase] = [],
+        theta: Optional[float] = None,
+        phi: Optional[float] = None,
     ) -> dict:
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J)
         H = self.convert(H)
         for K in kinetics + relaxations:  # skip in hilbert
             K.adjust_hamiltonian(H, self)
-        rhos = self.mary_loop(init_state, time, B, H)
+        rhos = self.mary_loop(init_state, time, B, H, theta=theta, phi=phi)
         product_probabilities = self.product_probability(obs_state, rhos)
         for K in kinetics:  # skip in liouville
             K.adjust_product_probabilities(product_probabilities, time)
@@ -668,6 +693,8 @@ class QuantumSimulation:
         return dict(
             time=time,
             B=B,
+            theta=theta,
+            phi=phi,
             rhos=rhos,
             time_evolutions=product_probabilities,
             product_yields=product_yields,
