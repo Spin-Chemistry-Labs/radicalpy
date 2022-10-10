@@ -403,7 +403,7 @@ class QuantumSimulation:
         gammas = enumerate(self.gammas_mT)
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
 
-    def zeeman_hamiltonian_3D(
+    def zeeman_hamiltonian_3d(
         self, B0: float, theta: float = 0, phi: float = 0
     ) -> np.ndarray:
         omega = B0 * self.gammas_mT[0]
@@ -420,7 +420,8 @@ class QuantumSimulation:
                 np.cos(theta),
             ]
         )
-        return omega * (particles @ rotation)
+        result = np.einsum("j,ijkl->kl", rotation, particles)
+        return omega * result
 
     def _HH_term(self, ei: int, ni: int) -> np.ndarray:
         """Construct a term of the Hyperfine Hamiltonian.

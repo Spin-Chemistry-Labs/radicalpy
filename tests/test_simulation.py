@@ -255,6 +255,9 @@ class QuantumTests(unittest.TestCase):
         # plt.imshow(np.real(H))
         # plt.show()
 
+    def test_3d(self):
+        H = self.sim.zeeman_hamiltonian_3d(1, 10, 20)
+
 
 class HilbertTests(unittest.TestCase):
     def setUp(self):
