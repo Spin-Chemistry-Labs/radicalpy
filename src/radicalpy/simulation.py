@@ -337,11 +337,13 @@ class QuantumSimulation:
         """Projection operator."""
         return sum([self.product_operator_axis(idx1, idx2, axis) for axis in "xyz"])
 
-    def product_operator_3d(self, idx1: int, idx2: int, hfc: np.ndarray) -> np.ndarray:
+    def product_operator_3d(
+        self, idx1: int, idx2: int, tensor: np.ndarray
+    ) -> np.ndarray:
         """Projection operator."""
         return sum(
             [
-                hfc[i, j] * self.product_operator_axis(idx1, idx2, ax1, ax2)
+                tensor[i, j] * self.product_operator_axis(idx1, idx2, ax1, ax2)
                 for i, ax1 in enumerate("xyz")
                 for j, ax2 in enumerate("xyz")
             ]
@@ -432,7 +434,7 @@ class QuantumSimulation:
         h = -g * self.hfcs[ni]
         effective_ni = self.num_electrons + ni
         if isinstance(h, np.ndarray):
-            return self.product_operator_3d(ei, effective_ni, h)
+            return -g * self.product_operator_3d(ei, effective_ni, h)
         else:
             return h * self.product_operator(ei, effective_ni)
 
@@ -541,6 +543,16 @@ class QuantumSimulation:
         SBz = self.spin_operator(1, "z")
         omega = (2 / 3) * self.gammas_mT[0] * D
         return omega * (3 * SAz * SBz - SASB)
+
+    def dipolar_hamiltonian_3d(self, dipolar_tensor):
+        ne = self.num_electrons
+        return -sum(
+            [
+                -self.gammas_mT[0]
+                * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
+                for ni, ei in enumerate(self.coupling)
+            ]
+        )
 
     def total_hamiltonian(self, B: float, J: float, D: float) -> np.ndarray:
         """Construct the final (total) Hamiltonian.

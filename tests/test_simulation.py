@@ -341,6 +341,47 @@ class HilbertTests(unittest.TestCase):
                 #     H,
                 # )
 
+    def test_hyperfine_3d(self):
+        N5 = np.array(
+            [
+                [-2.41368, -0.0662465, -0.971492],
+                [-0.0662465, -2.44657, 0.0485258],
+                [-0.971492, 0.0485258, 43.5125],
+            ]
+        )
+        N5 /= 28.025
+        dipolar_tensor = np.array(
+            [
+                [5680970.81962565, -65574461.04030437, 34606093.12997659],
+                [-65574461.04030436, -34583196.80020875, 47131454.19638795],
+                [34606093.12997659, 47131454.19638795, 28902225.98058307],
+            ]
+        )
+
+        molecules = [
+            rpsim.Molecule("flavin3d", nuclei=["14N"], hfcs=[N5]),
+            rpsim.Molecule(),
+        ]
+        sim = rpsim.HilbertSimulation(molecules)
+        HZ = sim.zeeman_hamiltonian_3d(B0=0.05, theta=0, phi=0)
+        HZt = sim.zeeman_hamiltonian_3d(B0=0.05, theta=np.pi / 2, phi=0)
+        HZtp = sim.zeeman_hamiltonian_3d(B0=0.05, theta=np.pi / 2, phi=np.pi)
+        HZp = sim.zeeman_hamiltonian_3d(B0=0.05, theta=np.pi, phi=0)
+        HH = sim.hyperfine_hamiltonian()
+        HD = sim.dipolar_hamiltonian_3d(dipolar_tensor)
+        H = HZt + HH + HD
+        time = np.arange(0, 5e-6, 5e-9)
+        rhos = sim.time_evolution(rpsim.State.SINGLET, time, H)
+        pp = sim.product_probability(rpsim.State.TRIPLET, rhos)
+        # print(sim)
+        # print(f"{HZ.shape=}")
+        # print(f"{HH.shape=}")
+        # print(f"{HD.shape=}")
+        # print(f"{rhos.shape=}")
+        # plt.plot(time, pp)
+        # plt.show()
+        # print(HZ)
+
 
 class LiouvilleTests(unittest.TestCase):
     def setUp(self):
