@@ -362,17 +362,19 @@ class HilbertTests(unittest.TestCase):
             rpsim.Molecule("flavin3d", nuclei=["14N"], hfcs=[N5]),
             rpsim.Molecule(),
         ]
+        B0 = 0.05
+        B = np.arange(-10e-3, 10e-3, 1e-3)
         sim = rpsim.HilbertSimulation(molecules)
-        HZ = sim.zeeman_hamiltonian_3d(B0=0.05, theta=0, phi=0)
-        HZt = sim.zeeman_hamiltonian_3d(B0=0.05, theta=np.pi / 2, phi=0)
-        HZtp = sim.zeeman_hamiltonian_3d(B0=0.05, theta=np.pi / 2, phi=np.pi)
-        HZp = sim.zeeman_hamiltonian_3d(B0=0.05, theta=np.pi, phi=0)
+        HZ = sim.zeeman_hamiltonian_3d(B0=B0, theta=0, phi=0)
+        HZt = sim.zeeman_hamiltonian_3d(B0=B0, theta=np.pi / 2, phi=0)
+        HZtp = sim.zeeman_hamiltonian_3d(B0=B0, theta=np.pi / 2, phi=np.pi)
+        HZp = sim.zeeman_hamiltonian_3d(B0=B0, theta=np.pi, phi=0)
         HH = sim.hyperfine_hamiltonian()
         HD = sim.dipolar_hamiltonian_3d(dipolar_tensor)
         H = HZt + HH + HD
-        time = np.arange(0, 5e-6, 5e-9)
-        rhos = sim.time_evolution(rpsim.State.SINGLET, time, H)
-        pp = sim.product_probability(rpsim.State.TRIPLET, rhos)
+        time = np.arange(0, 15e-6, 5e-9)
+        # rhos = sim.time_evolution(rpsim.State.SINGLET, time, H)
+        # pp = sim.product_probability(rpsim.State.TRIPLET, rhos)
         # print(sim)
         # print(f"{HZ.shape=}")
         # print(f"{HH.shape=}")
@@ -381,6 +383,22 @@ class HilbertTests(unittest.TestCase):
         # plt.plot(time, pp)
         # plt.show()
         # print(HZ)
+        # results = sim.MARY(
+        #     rpsim.State.SINGLET,
+        #     rpsim.State.TRIPLET,
+        #     time,
+        #     B,
+        #     dipolar_tensor,
+        #     0,
+        #     kinetics=[kinetics.Exponential(3e6)],
+        #     theta=np.pi / 2,
+        #     phi=0,
+        # )
+        # idx = 0
+        # plt.plot(results["B"], results["MARY"])
+        # plt.title(f"B={results['B'][idx]}")
+        # plt.show()
+        # print("DONE")
 
 
 class LiouvilleTests(unittest.TestCase):
