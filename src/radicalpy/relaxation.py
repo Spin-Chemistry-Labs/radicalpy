@@ -55,9 +55,9 @@ class TripletTripletRelaxation(RelaxationBaseAll):
         H -= self.rate * (2 / 3 * term0 + 1 / 3 * (term1 - term2))
 
 
-class RandomFieldsRelaxation(RelaxationBaseAll):
+class RandomFields(RelaxationBaseAll):
     def __init__(self, sim: LiouvilleSimulation, rate_constant: float):
-        super().__init__(rate_constant)
+        super().__init__(sim, rate_constant)
         self.QS = sim.projection_operator(State.SINGLET)
         self.SABxyz = [
             sim.spin_operator(e, a) for e in range(sim.num_electrons) for a in "xyz"
