@@ -33,6 +33,10 @@ class Diffusion(KineticsRelaxationBase):
 
 
 class KineticsBase(KineticsRelaxationBase):
+    def __init__(self, sim: LiouvilleSimulation, rate_constant: float):
+        super().__init__(rate_constant)
+        self.sim = sim
+
     @staticmethod
     def _convert(Q: np.ndarray) -> np.ndarray:
         return np.kron(Q, np.eye(len(Q))) + np.kron(np.eye(len(Q)), Q.T)
@@ -40,19 +44,19 @@ class KineticsBase(KineticsRelaxationBase):
 
 class Haberkorn(KineticsBase):
     """
-    >>> Haberkorn(rate_constant=1e6, target=State.SINGLET)
+    >>> Haberkorn(None, rate_constant=1e6, target=State.SINGLET)
     Kinetics: Haberkorn
     Rate constant: 1000000.0
     Target: S
 
-    >>> Haberkorn(rate_constant=1e6, target=State.TRIPLET)
+    >>> Haberkorn(None, rate_constant=1e6, target=State.TRIPLET)
     Kinetics: Haberkorn
     Rate constant: 1000000.0
     Target: T
     """
 
-    def __init__(self, rate_constant: float, target: State):
-        super().__init__(rate_constant)
+    def __init__(self, sim: LiouvilleSimulation, rate_constant: float, target: State):
+        super().__init__(sim, rate_constant)
         self.target = target
         if target not in {State.SINGLET, State.TRIPLET}:
             raise ValueError(
@@ -66,32 +70,35 @@ class Haberkorn(KineticsBase):
         ]
         return "\n".join(lines)
 
-    def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
-        Q = sim.projection_operator(self.target)
+    def adjust_hamiltonian(self, H: np.ndarray):
+        Q = self.sim.projection_operator(self.target)
         H -= 0.5 * self.rate * self._convert(Q)
 
 
 class HaberkornFree(KineticsBase):
     """
-    >>> HaberkornFree(rate_constant=1e6)
+    >>> HaberkornFree(None, rate_constant=1e6)
     Kinetics: HaberkornFree
     Rate constant: 1000000.0
     """
 
-    def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
+    def adjust_hamiltonian(self, H: np.ndarray):
         QL = np.eye(len(H))
         H -= 0.5 * self.rate * QL
 
 
 class JonesHore(KineticsBase):
     """
-    >>> JonesHore(1e6, 1e7)
+    >>> JonesHore(None, 1e6, 1e7)
     Kinetics: JonesHore
     Singlet rate: 1000000.0
     Triplet rate: 10000000.0
     """
 
-    def __init__(self, singlet_rate: float, triplet_rate: float):
+    def __init__(
+        self, sim: LiouvilleSimulation, singlet_rate: float, triplet_rate: float
+    ):
+        self.sim = sim
         self.singlet_rate = singlet_rate
         self.triplet_rate = triplet_rate
 
@@ -103,9 +110,9 @@ class JonesHore(KineticsBase):
         ]
         return "\n".join(lines)
 
-    def adjust_hamiltonian(self, H: np.ndarray, sim: LiouvilleSimulation):
-        QS = sim.projection_operator(State.SINGLET)
-        QT = sim.projection_operator(State.TRIPLET)
+    def adjust_hamiltonian(self, H: np.ndarray):
+        QS = self.sim.projection_operator(State.SINGLET)
+        QT = self.sim.projection_operator(State.TRIPLET)
         H -= (
             0.5 * self.singlet_rate * self._convert(QS)
             + 0.5 * self.triplet_rate * self._convert(QT)
