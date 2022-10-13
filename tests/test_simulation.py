@@ -6,7 +6,7 @@ import unittest
 import matplotlib.pyplot as plt
 import numpy as np
 from src.radicalpy import data as rpdata
-from src.radicalpy import kinetics
+from src.radicalpy import kinetics, relaxation
 from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
@@ -438,13 +438,13 @@ class LiouvilleTests(unittest.TestCase):
         k = 1e6
         results_haberkorn = self.sim.MARY(
             kinetics=[
-                kinetics.Haberkorn(k, rpsim.State.TRIPLET),
-                kinetics.Haberkorn(k, rpsim.State.SINGLET),
+                kinetics.Haberkorn(self.sim, k, rpsim.State.TRIPLET),
+                kinetics.Haberkorn(self.sim, k, rpsim.State.SINGLET),
             ],
             **kwargs,
         )
         results_jones_hore = self.sim.MARY(
-            kinetics=[kinetics.JonesHore(k, k)],
+            kinetics=[kinetics.JonesHore(self.sim, k, k)],
             **kwargs,
         )
 
@@ -454,3 +454,30 @@ class LiouvilleTests(unittest.TestCase):
         # plt.title(f"B={results_haberkorn['B'][idx]}")
         # plt.show()
         # print("DONE")
+
+    def test_relaxation(self):
+        kwargs = dict(
+            init_state=rpsim.State.SINGLET,
+            obs_state=rpsim.State.TRIPLET,
+            time=np.arange(0, 5e-6, 5e-9),
+            B=np.arange(0, 1, 1),
+            D=0,
+            J=0,
+        )
+        k = 1e6
+        results = self.sim.MARY(
+            kinetics=[],
+            relaxations=[relaxation.SingletTripletDephasing(self.sim, k)],
+            **kwargs,
+        )
+        results_jones_hore = self.sim.MARY(
+            kinetics=[kinetics.JonesHore(self.sim, k, k)],
+            **kwargs,
+        )
+
+        idx = 0
+        plt.plot(results["time"], results["time_evolutions"][idx])
+        # plt.plot(results_jones_hore["time"], results_jones_hore["time_evolutions"][idx])
+        plt.title(f"B={results['B'][idx]}")
+        plt.show()
+        print("DONE")

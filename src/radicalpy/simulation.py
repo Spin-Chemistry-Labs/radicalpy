@@ -680,7 +680,7 @@ class QuantumSimulation:
         H = self.total_hamiltonian(B=0, D=D, J=J)
         H = self.convert(H)
         for K in kinetics + relaxations:  # skip in hilbert
-            K.adjust_hamiltonian(H, self)
+            K.adjust_hamiltonian(H)
         rhos = self.mary_loop(init_state, time, B, H, theta=theta, phi=phi)
         product_probabilities = self.product_probability(obs_state, rhos)
         for K in kinetics:  # skip in liouville

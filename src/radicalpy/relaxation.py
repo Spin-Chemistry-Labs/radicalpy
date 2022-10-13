@@ -4,15 +4,15 @@ from .simulation import KineticsRelaxationBase, LiouvilleSimulation, State
 
 
 class RelaxationBaseST(KineticsRelaxationBase):
-    def __init__(self, rate_constant: float, sim: LiouvilleSimulation):
+    def __init__(self, sim: LiouvilleSimulation, rate_constant: float):
         super().__init__(rate_constant)
         self.QS = sim.projection_operator(State.SINGLET)
         self.QT = sim.projection_operator(State.TRIPLET)
 
 
 class RelaxationBaseAll(RelaxationBaseST):
-    def __init__(self, rate_constant: float, sim: LiouvilleSimulation):
-        super().__init__(rate_constant, sim)
+    def __init__(self, sim: LiouvilleSimulation, rate_constant: float):
+        super().__init__(sim, rate_constant)
         self.QTp = sim.projection_operator(State.TRIPLET_PLUS)
         self.QTm = sim.projection_operator(State.TRIPLET_MINUS)
         self.QT0 = sim.projection_operator(State.TRIPLET_ZERO)
@@ -20,12 +20,12 @@ class RelaxationBaseAll(RelaxationBaseST):
 
 class SingletTripletDephasing(RelaxationBaseAll):
     def adjust_hamiltonian(self, H: np.ndarray):
-        H -= self.k * (np.kron(self.QS, self.QT) + np.kron(self.QT, self.QS))
+        H -= self.rate * (np.kron(self.QS, self.QT) + np.kron(self.QT, self.QS))
 
 
 class TripleTripletDephasing(RelaxationBaseAll):
     def adjust_hamiltonian(self, H: np.ndarray):
-        H -= self.k * (
+        H -= self.rate * (
             np.kron(self.QTp, self.QTm)
             + np.kron(self.QTm, self.QTp)
             + np.kron(self.QT0, self.QTm)
@@ -52,11 +52,11 @@ class TripletTripletRelaxation(RelaxationBaseAll):
             - np.kron(self.QTp, self.QTm)
             - np.kron(self.QTm, self.QTp)
         )
-        H -= self.k * (2 / 3 * term0 + 1 / 3 * (term1 - term2))
+        H -= self.rate * (2 / 3 * term0 + 1 / 3 * (term1 - term2))
 
 
 class RandomFieldsRelaxation(RelaxationBaseAll):
-    def __init__(self, rate_constant: float, sim: LiouvilleSimulation):
+    def __init__(self, sim: LiouvilleSimulation, rate_constant: float):
         super().__init__(rate_constant)
         self.QS = sim.projection_operator(State.SINGLET)
         self.SABxyz = [
@@ -66,12 +66,12 @@ class RandomFieldsRelaxation(RelaxationBaseAll):
     def adjust_hamiltonian(self, H: np.ndarray):
         term0 = np.kron(np.eye(len(self.QS)), np.eye(len(self.QS)))
         term1 = sum([np.kron(S, S.T) for S in self.SABxyz])
-        H -= self.k * (1.5 * term0 - term1)
+        H -= self.rate * (1.5 * term0 - term1)
 
 
 class DipolarModulation(RelaxationBaseAll):
     def adjust_hamiltonian(self, H: np.ndarray):
-        H -= self.k * (
+        H -= self.rate * (
             1 / 9 * np.kron(self.QS, self.QTp)
             + 1 / 9 * np.kron(self.QTp, self.QS)
             + 1 / 9 * np.kron(self.QS, self.QTm)
