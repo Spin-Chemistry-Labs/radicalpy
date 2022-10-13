@@ -425,7 +425,7 @@ class LiouvilleTests(unittest.TestCase):
         U_prop = self.sim.unitary_propagator(H, dt)
         assert np.array_equal(U_true, U_prop)
 
-    # @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
+    @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_kinetics(self):
         kwargs = dict(
             init_state=rpsim.State.SINGLET,
@@ -459,7 +459,7 @@ class LiouvilleTests(unittest.TestCase):
         kwargs = dict(
             init_state=rpsim.State.SINGLET,
             obs_state=rpsim.State.TRIPLET,
-            time=np.arange(0, 5e-6, 5e-9),
+            time=np.arange(0, 15e-6, 5e-9),
             B=np.arange(0, 1, 1),
             D=0,
             J=0,
@@ -467,7 +467,13 @@ class LiouvilleTests(unittest.TestCase):
         k = 1e6
         results = self.sim.MARY(
             kinetics=[],
-            relaxations=[relaxation.SingletTripletDephasing(self.sim, k)],
+            relaxations=[
+                relaxation.SingletTripletDephasing(self.sim, k),
+                relaxation.TripleTripletDephasing(self.sim, k),
+                relaxation.RandomFields(self.sim, k)
+                relaxation.DipolarModulation(self.sim, k)
+                relaxation.TripletTripletRelaxation(self.sim, k)
+            ],
             **kwargs,
         )
         results_jones_hore = self.sim.MARY(
@@ -475,9 +481,9 @@ class LiouvilleTests(unittest.TestCase):
             **kwargs,
         )
 
-        idx = 0
-        plt.plot(results["time"], results["time_evolutions"][idx])
-        # plt.plot(results_jones_hore["time"], results_jones_hore["time_evolutions"][idx])
-        plt.title(f"B={results['B'][idx]}")
-        plt.show()
-        print("DONE")
+        # idx = 0
+        # plt.plot(results["time"], results["time_evolutions"][idx])
+        # # plt.plot(results_jones_hore["time"], results_jones_hore["time_evolutions"][idx])
+        # plt.title(f"B={results['B'][idx]}")
+        # plt.show()
+        # print("DONE")
