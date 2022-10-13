@@ -546,10 +546,10 @@ class QuantumSimulation:
             dipolar coupling constant `D`.
 
         """
-        if isinstance(D, float):
-            return self.dipolar_hamiltonian_1d(D)
-        else:
+        if isinstance(D, np.ndarray):
             return self.dipolar_hamiltonian_3d(D)
+        else:
+            return self.dipolar_hamiltonian_1d(D)
 
     def dipolar_hamiltonian_1d(self, D: float) -> np.ndarray:
         SASB = self.product_operator(0, 1)
