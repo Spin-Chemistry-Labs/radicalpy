@@ -425,7 +425,7 @@ class LiouvilleTests(unittest.TestCase):
         U_prop = self.sim.unitary_propagator(H, dt)
         assert np.array_equal(U_true, U_prop)
 
-    @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
+    # @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_kinetics(self):
         kwargs = dict(
             init_state=rpsim.State.SINGLET,
