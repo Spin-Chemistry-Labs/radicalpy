@@ -470,9 +470,9 @@ class LiouvilleTests(unittest.TestCase):
             relaxations=[
                 relaxation.SingletTripletDephasing(self.sim, k),
                 relaxation.TripleTripletDephasing(self.sim, k),
-                relaxation.RandomFields(self.sim, k)
-                relaxation.DipolarModulation(self.sim, k)
-                relaxation.TripletTripletRelaxation(self.sim, k)
+                relaxation.RandomFields(self.sim, k),
+                relaxation.DipolarModulation(self.sim, k),
+                relaxation.TripletTripletRelaxation(self.sim, k),
             ],
             **kwargs,
         )
