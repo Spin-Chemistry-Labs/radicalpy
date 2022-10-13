@@ -38,19 +38,12 @@ class TripleTripletDephasing(RelaxationBaseAll):
 class TripletTripletRelaxation(RelaxationBaseAll):
     def adjust_hamiltonian(self, H: np.ndarray):
         term0 = np.kron(self.QT0, self.QT0)
-        term1 = (
-            np.kron(self.QTp, self.QTp)
-            + np.kron(self.QTm, self.QTm)
-            + np.kron(self.QTp, self.QTm)
-            + np.kron(self.QTm, self.QTp)
-        )
+        term1 = np.kron(self.QTp, self.QTp) + np.kron(self.QTm, self.QTm)
         term2 = (
             np.kron(self.QTp, self.QT0)
-            - np.kron(self.QT0, self.QTp)
-            - np.kron(self.QTm, self.QT0)
-            - np.kron(self.QT0, self.QTm)
-            - np.kron(self.QTp, self.QTm)
-            - np.kron(self.QTm, self.QTp)
+            + np.kron(self.QT0, self.QTp)
+            + np.kron(self.QTm, self.QT0)
+            + np.kron(self.QT0, self.QTm)
         )
         H -= self.rate * (2 / 3 * term0 + 1 / 3 * (term1 - term2))
 
