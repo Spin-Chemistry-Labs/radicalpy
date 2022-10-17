@@ -473,15 +473,15 @@ class QuantumSimulation:
         return J0 * np.exp(-r / rj)
 
     @staticmethod
-    def exchange_interaction_protein(r: float) -> float:
+    def exchange_interaction_protein(
+        r: float, beta: float = 1.4e10, J0: float = 9.7e12
+    ) -> float:
         """Construct the exchange interaction constant in a protein.
 
         .. todo::
             Write proper docs.
         """
-        beta = 1.4e10
-        J0 = 8e13
-        return J0 * np.exp(-beta * r)
+        return J0 * np.exp(-beta * r) / 1000
 
     @staticmethod
     def exchange_interaction(r: float, model: str = "solution"):
