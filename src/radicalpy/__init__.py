@@ -1,2 +1,1 @@
-import .data
-import .simulation
+from . import data, simulation
