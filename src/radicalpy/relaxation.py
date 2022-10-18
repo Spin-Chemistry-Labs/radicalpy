@@ -40,6 +40,9 @@ class TripleTripletDephasing(RelaxationBaseAll):
 
 
 class TripletTripletRelaxation(RelaxationBaseAll):
+    # restrict to
+    # init_state=rpsim.State.TRIPLET_ZERO,
+    # obs_state=rpsim.State.TRIPLET_ZERO,
     def __init__(self, sim: LiouvilleSimulation, rate_constant: float):
         super().__init__(sim, rate_constant)
         term0 = np.kron(self.QT0, self.QT0)
