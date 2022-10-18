@@ -11,6 +11,8 @@ from src.radicalpy import simulation as rpsim
 
 import tests.radpy as radpy
 
+# np.seterr(divide="raise", invalid="raise")
+
 RUN_SLOW_TESTS = "INSIDE_EMACS" not in os.environ  # or True
 MEASURE_TIME = False
 
