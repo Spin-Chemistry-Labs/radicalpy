@@ -442,11 +442,15 @@ class LiouvilleTests(unittest.TestCase):
             kinetics=[
                 kinetics.Haberkorn(self.sim, k, rpsim.State.TRIPLET),
                 kinetics.Haberkorn(self.sim, k, rpsim.State.SINGLET),
+                kinetics.Exponential(k),
             ],
             **kwargs,
         )
         results_jones_hore = self.sim.MARY(
-            kinetics=[kinetics.JonesHore(self.sim, k, k)],
+            kinetics=[
+                kinetics.JonesHore(self.sim, k, k),
+                kinetics.Exponential(k),
+            ],
             **kwargs,
         )
 
