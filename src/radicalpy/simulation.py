@@ -821,3 +821,8 @@ class LiouvilleSimulation(QuantumSimulation):
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         return propagator @ rho
+
+
+class LiouvilleKineticsRelaxationBase(KineticsRelaxationBase):
+    def adjust_hamiltonian(self, H: np.ndarray):
+        H -= self.subH
