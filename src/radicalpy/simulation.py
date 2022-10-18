@@ -630,10 +630,10 @@ class QuantumSimulation:
         MARY = np.sum(product_probability_seq, axis=1) * dt * k
         idx = int(len(MARY) / 2) if B[0] != 0 else 0
         minmax = max if init_state == State.SINGLET else min
-        HFE = ((MARY[-1] - MARY[idx]) / MARY[idx]) * 100
-        LFE = ((minmax(MARY) - MARY[idx]) / MARY[idx]) * 100
-        MARY = ((MARY - MARY[idx]) / MARY[idx]) * 100
-        return (MARY, LFE, HFE)
+        HFE = (MARY[-1] - MARY[idx]) / MARY[idx] * 100
+        LFE = (minmax(MARY) - MARY[idx]) / MARY[idx] * 100
+        MARY = (MARY - MARY[idx]) / MARY[idx] * 100
+        return MARY, LFE, HFE
 
     def mary_loop(
         self,
