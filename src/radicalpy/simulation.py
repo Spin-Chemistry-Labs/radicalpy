@@ -6,6 +6,8 @@ from typing import Optional
 
 import numpy as np
 import scipy as sp
+from scipy.optimize import curve_fit
+from sklearn.metrics import r2_score
 
 from .data import (MOLECULE_DATA, SPIN_DATA, gamma_mT, get_molecules,
                    multiplicity)
@@ -701,6 +703,38 @@ class QuantumSimulation:
             MARY=MARY,
             LFE=LFE,
             HFE=HFE,
+        )
+
+    @staticmethod
+    def Lorentzian_fit(x, A, Bhalf):
+        return (A / Bhalf**2) - (A / (x**2 + Bhalf**2))
+
+    @staticmethod
+    def Bhalf_fit(B, MARY):
+        popt_MARY, pcov_MARY = curve_fit(
+            QuantumSimulation.Lorentzian_fit, B, MARY, p0=[MARY[-1], int(len(B) / 2)]
+        )
+        MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
+
+        A_opt_MARY, Bhalf_opt_MARY = popt_MARY
+        x_model_MARY = np.linspace(min(B), max(B), len(B))
+        y_model_MARY = QuantumSimulation.Lorentzian_fit(x_model_MARY, *popt_MARY)
+        Bhalf = np.abs(Bhalf_opt_MARY)
+
+        y_pred_MARY = QuantumSimulation.Lorentzian_fit(B, *popt_MARY)
+        R2 = r2_score(MARY, y_pred_MARY)
+
+        return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
+
+    @staticmethod
+    def effective_hyperfine(radical_hfc, radical_spin):
+        # why copy both args?
+        radical_HFC = np.array(radical_hfc)
+        spin_quantum_number = np.array(radical_spin)
+
+        return np.sqrt(
+            (4 / 3)
+            * sum((radical_HFC**2 * spin_quantum_number) * (spin_quantum_number + 1))
         )
 
 
