@@ -712,16 +712,16 @@ class QuantumSimulation:
     @staticmethod
     def Bhalf_fit(B, MARY):
         popt_MARY, pcov_MARY = curve_fit(
-            QuantumSimulation.Lorentzian_fit, B, MARY, p0=[MARY[-1], int(len(B) / 2)]
+            __class__.Lorentzian_fit, B, MARY, p0=[MARY[-1], int(len(B) / 2)]
         )
         MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
 
         A_opt_MARY, Bhalf_opt_MARY = popt_MARY
         x_model_MARY = np.linspace(min(B), max(B), len(B))
-        y_model_MARY = QuantumSimulation.Lorentzian_fit(x_model_MARY, *popt_MARY)
+        y_model_MARY = __class__.Lorentzian_fit(x_model_MARY, *popt_MARY)
         Bhalf = np.abs(Bhalf_opt_MARY)
 
-        y_pred_MARY = QuantumSimulation.Lorentzian_fit(B, *popt_MARY)
+        y_pred_MARY = __class__.Lorentzian_fit(B, *popt_MARY)
         R2 = r2_score(MARY, y_pred_MARY)
 
         return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
