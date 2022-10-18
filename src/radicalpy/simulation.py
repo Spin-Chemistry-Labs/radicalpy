@@ -231,7 +231,6 @@ class KineticsRelaxationBase:
         return f"Kinetics: {type(self).__name__}"
 
     def __repr__(self):
-
         lines = [
             self._name(),
             f"Rate constant: {self.rate}",
