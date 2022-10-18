@@ -478,14 +478,9 @@ class LiouvilleTests(unittest.TestCase):
             ],
             **kwargs,
         )
-        results_jones_hore = self.sim.MARY(
-            kinetics=[kinetics.JonesHore(self.sim, k, k)],
-            **kwargs,
-        )
 
         # idx = 0
         # plt.plot(results["time"], results["time_evolutions"][idx])
-        # # plt.plot(results_jones_hore["time"], results_jones_hore["time_evolutions"][idx])
         # plt.title(f"B={results['B'][idx]}")
         # plt.show()
         # print("DONE")
