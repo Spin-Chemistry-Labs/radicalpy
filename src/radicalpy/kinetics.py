@@ -93,7 +93,7 @@ class HaberkornFree(KineticsBase):
 
     def __init__(self, sim: LiouvilleSimulation, rate_constant: float):
         super().__init__(rate_constant)
-        size = prod(m for m in sim.multiplicities)
+        size = prod(m for m in sim.multiplicities) ** 2
         self.subH = 0.5 * self.rate * np.eye(size)
 
 
