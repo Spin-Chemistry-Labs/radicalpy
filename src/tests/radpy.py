@@ -1425,6 +1425,7 @@ def MC_exchange_dipolar(n_steps, r_min, del_T, radA_x, dist, angle):
 
 
 def MC_kSTD_kD(J, D, tau_c):
+    # !this was changed (two tau_c's)
     mT2MHz = 28.025  # Conversion factor for mT to MHz
 
     # J-modulation rate
