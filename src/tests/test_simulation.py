@@ -48,7 +48,7 @@ class QuantumTests(unittest.TestCase):
             self.start_time = time.time()
         self.data = rpsim.MOLECULE_DATA["adenine_cation"]["data"]
         self.sim = rpsim.QuantumSimulation(RADICAL_PAIR)
-        self.gamma_mT = rpdata.SPIN_DATA["E"]["gamma"] * 0.001
+        self.gamma_mT = rpdata.gamma_mT("E")
 
     def tearDown(self):
         if MEASURE_TIME:
@@ -68,10 +68,10 @@ class QuantumTests(unittest.TestCase):
             assert h == self.data[molecule.nuclei[i]]["hfc"]
         for i, g in enumerate(molecule.gammas_mT):
             elem = self.data[molecule.nuclei[i]]["element"]
-            assert g == rpdata.SPIN_DATA[elem]["gamma"] * 0.001
+            assert g == rpdata.gamma_mT(elem)
         for i, m in enumerate(molecule.multiplicities):
             elem = self.data[molecule.nuclei[i]]["element"]
-            assert m == rpdata.SPIN_DATA[elem]["multiplicity"]
+            assert m == rpdata.multiplicity(elem)
 
     def test_molecule_raw(self):
         hfcs = [0.1, 0.2]
@@ -144,7 +144,7 @@ class QuantumTests(unittest.TestCase):
         electrons = sum(
             [radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles) for i in range(2)]
         )
-        omega_n = PARAMS["B"][0] * rpdata.SPIN_DATA["1H"]["gamma"] * 0.001
+        omega_n = PARAMS["B"][0] * rpdata.gamma_mT("1H")
         nuclei = sum(
             [
                 radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles)
