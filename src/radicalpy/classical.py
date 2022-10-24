@@ -4,11 +4,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def get_rot(phi, theta):
+    return np.array(
+        [
+            np.cos(theta) * np.sin(phi),
+            np.sin(theta) * np.sin(phi),
+            np.cos(phi),
+        ]
+    )
+
+
 def get_delta_r(mutual_diffusion, delta_T):
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
 
-def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r):
+def randomwalk_3d(n_steps, max_r, x_0, y_0, z_0, delta_r):
     pos = np.zeros([n_steps, 3])
     dist = np.zeros(n_steps)
     angle = np.zeros(n_steps + 1)
@@ -16,20 +26,15 @@ def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r):
 
     for i in range(1, n_steps):
         theta = np.pi * np.random.rand()
-        angle[i] = theta
         phi = 2 * np.pi * np.random.rand()
-
-        dist[i] = np.linalg.norm(pos[i] - pos[i - 1])
-        rot = np.array(
-            [
-                np.cos(theta) * np.sin(phi),
-                np.sin(theta) * np.sin(phi),
-                np.cos(phi),
-            ]
-        )
-        pos[i] = delta_r * rot
-
-        pos[i] += pos[i - 1]
+        angle[i] = theta
+        # why subtract? pos[i] == 0
+        new_pos = pos[i - 1] + delta_r * get_rot(phi, theta)
+        dist = np.linalg.norm(new_pos)
+        # while while dist >= max_r:
+        #     new_pos = pos[i-1] + delta_r * get_rot(phi, theta)
+        #     dist = np.linalg.norm(new_pos)
+        pos[i] = new_pos
     return pos, dist, angle
 
 
@@ -64,5 +69,7 @@ if __name__ == "__main__":
     del_T = 40e-12
 
     np.random.seed(42)
-    pos, dist, ang = randomwalk_3d(n_steps, x0, y0, z0, get_delta_r(mut_D, del_T))
+    pos, dist, ang = randomwalk_3d(
+        n_steps, r_max, x0, y0, z0, get_delta_r(mut_D, del_T)
+    )
     plot2(pos)
