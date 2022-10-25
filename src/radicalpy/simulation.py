@@ -9,6 +9,7 @@ import scipy as sp
 from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
 
+from . import utils
 from .data import (MOLECULE_DATA, SPIN_DATA, gamma_mT, get_molecules,
                    multiplicity)
 from .pauli_matrices import pauli
@@ -423,13 +424,7 @@ class QuantumSimulation:
                 for idx in range(self.num_particles)
             ]
         )
-        rotation = np.array(
-            [
-                np.sin(theta) * np.cos(phi),
-                np.sin(theta) * np.sin(phi),
-                np.cos(theta),
-            ]
-        )
+        rotation = utils.spherical_to_cartesian(theta, phi)
         omega = B0 * self.gammas_mT[0]
         return omega * np.einsum("j,ijkl->kl", rotation, particles)
 
