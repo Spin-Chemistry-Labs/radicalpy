@@ -3,6 +3,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+# from . import utils
+import utils
+
 
 def MC_randomwalk3D_cage(n_steps, r_max, x_0, y_0, z_0, mut_D, del_T):
     Dab = mut_D
@@ -77,16 +80,6 @@ def MC_randomwalk3D_cage(n_steps, r_max, x_0, y_0, z_0, mut_D, del_T):
     return x, y, z, dist, angle
 
 
-def get_rot(phi, theta):
-    return np.array(
-        [
-            np.cos(theta) * np.sin(phi),
-            np.sin(theta) * np.sin(phi),
-            np.cos(phi),
-        ]
-    )
-
-
 def get_delta_r(mutual_diffusion, delta_T):
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
@@ -102,7 +95,7 @@ def randomwalk_3d(n_steps, max_r, x_0, y_0, z_0, delta_r):
         phi = 2 * np.pi * np.random.rand()
         angle[i] = theta
         # why subtract? pos[i] == 0
-        new_pos = pos[i - 1] + delta_r * get_rot(phi, theta)
+        new_pos = pos[i - 1] + delta_r * utils.spherical_to_cartesian(theta, phi)
         dist = np.linalg.norm(new_pos)
         # while while dist >= max_r:
         #     new_pos = pos[i-1] + delta_r * get_rot(phi, theta)
