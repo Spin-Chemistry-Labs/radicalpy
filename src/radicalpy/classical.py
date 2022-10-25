@@ -14,16 +14,9 @@ def get_delta_r(mutual_diffusion, delta_T):
 def _random_theta_phi():
     theta = np.pi * np.random.rand()
     # phi = 2 * np.pi * np.random.rand()
-    phi = 2 * np.arcsin(np.sqrt(np.random.uniform(0, 1)))
-    print(theta, phi)
+    arg = np.random.uniform(-1, 1)
+    phi = 2 * np.sign(arg) * np.arcsin(np.sqrt(np.abs(arg)))
     return theta, phi
-
-
-def _random_vector(length: float) -> np.array:
-    vec = np.random.uniform(-1, 1, size=(3))
-    while np.linalg.norm(vec) < 0.0001:
-        vec = np.random.uniform(-1, 1, size=(3))
-    return length * vec / np.linalg.norm(vec)
 
 
 def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r, r_max=0):
@@ -35,14 +28,14 @@ def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r, r_max=0):
     dist[0] = np.linalg.norm(pos[0])
 
     for i in range(1, n_steps):
-        theta, phi = 0, 0  # _random_theta_phi()
-        new_pos = pos[i - 1] + _random_vector(delta_r)
-        # delta_r * utils.spherical_to_cartesian(theta, phi)
+        theta, phi = _random_theta_phi()
+        new_pos = pos[i - 1] + delta_r * utils.spherical_to_cartesian(theta, phi)
+        # _random_vector(delta_r)
         d = np.linalg.norm(new_pos)
         while r_max > 0 and d >= r_max:
-            # theta, phi = _random_theta_phi()
-            new_pos = pos[i - 1] + _random_vector(delta_r)
-            # delta_r * utils.spherical_to_cartesian(theta, phi)
+            theta, phi = _random_theta_phi()
+            new_pos = pos[i - 1] + delta_r * utils.spherical_to_cartesian(theta, phi)
+            # _random_vector(delta_r)
             d = np.linalg.norm(new_pos)
         angle[i - 1] = theta
         pos[i] = new_pos
@@ -110,9 +103,9 @@ def plot_sphere(pos):
 
 
 if __name__ == "__main__":
-    n_steps = 1000
+    n_steps = 300
     r_max = 1.5e-9
-    r_max = 0
+    # r_max = 0
     x0, y0, z0 = r_max / 2, 0, 0
     mut_D = 1e-5 / 10000  # dab
     del_T = 40e-12
