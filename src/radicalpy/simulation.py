@@ -149,9 +149,11 @@ class Molecule:
     ):
         self.radical = radical if radical else "N/A"
         self.nuclei = nuclei
+        self.custom_molecule = True
         if nuclei:
             if self._check_molecule_or_spin_db(radical, nuclei):
                 self._init_from_molecule_db(radical, nuclei)
+                self.custom_molecule = False
             else:
                 self._init_from_spin_db(radical, nuclei, hfcs)
         else:
@@ -219,14 +221,20 @@ class Molecule:
 
     @property
     def effective_hyperfine(self):
-        # TODO: this can fail with wrong molecule name
-        data = MOLECULE_DATA[self.radical]["data"]
-        nuclei = list(data.keys())
-        # TODO: refactor (copied from `_init_from_molecule_db()`
-        elem = [data[n]["element"] for n in nuclei]
-        multiplicities = [multiplicity(e) for e in elem]
-        # TODO: refactor (copied from `_init_from_molecule_db()`)
-        hfcs = [data[n]["hfc"] for n in nuclei]
+        if self.custom_molecule:
+            print(">>>>>>>>")
+            print(self.custom_molecule)
+            print(self.__repr__())
+            raise NotImplementedError()
+        else:
+            # TODO: this can fail with wrong molecule name
+            data = MOLECULE_DATA[self.radical]["data"]
+            nuclei = list(data.keys())
+            # TODO: refactor (copied from `_init_from_molecule_db()`
+            elem = [data[n]["element"] for n in nuclei]
+            multiplicities = [multiplicity(e) for e in elem]
+            # TODO: refactor (copied from `_init_from_molecule_db()`)
+            hfcs = [data[n]["hfc"] for n in nuclei]
 
         # spin quantum number
         s = np.array(list(map(utils.spin_quantum_number, multiplicities)))
