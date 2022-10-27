@@ -11,3 +11,7 @@ def spherical_to_cartesian(theta, phi):
             np.cos(phi),
         ]
     )
+
+
+def spin_quantum_number(multiplicity: int) -> float:
+    return float(multiplicity - 1) / 2.0
