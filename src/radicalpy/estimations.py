@@ -30,3 +30,10 @@ def k_D(D, tau_c):
     # D-modulation rate
     D_var_MHz = utils.mT_to_MHz(utils.mT_to_MHz(np.var(D)))
     return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12  # (s^-1) D-modulation rate
+
+
+def k_ST_mixing(Bhalf: float) -> float:
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B") * 1e-3
+    h = constants.value("h")
+    return -g_e * mu_B * Bhalf / h
