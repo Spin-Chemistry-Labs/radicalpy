@@ -153,13 +153,15 @@ class Molecule:
         if nuclei:
             if self._check_molecule_or_spin_db(radical, nuclei):
                 self._init_from_molecule_db(radical, nuclei)
-                self.custom_molecule = False
             else:
                 self._init_from_spin_db(radical, nuclei, hfcs)
         else:
-            self.multiplicities = multiplicities
-            self.gammas_mT = gammas_mT
-            self.hfcs = hfcs
+            if self._check_molecule_or_spin_db(radical, nuclei):
+                self._init_from_molecule_db(radical, nuclei)
+            else:
+                self.multiplicities = multiplicities
+                self.gammas_mT = gammas_mT
+                self.hfcs = hfcs
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) == self.num_particles
@@ -208,6 +210,7 @@ class Molecule:
         self.gammas_mT = [gamma_mT(e) for e in elem]
         self.multiplicities = [multiplicity(e) for e in elem]
         self.hfcs = [data[n]["hfc"] for n in nuclei]
+        self.custom_molecule = False
 
     def _init_from_spin_db(self, radical, nuclei, hfcs):
         self.multiplicities = [multiplicity(e) for e in nuclei]
@@ -222,10 +225,8 @@ class Molecule:
     @property
     def effective_hyperfine(self):
         if self.custom_molecule:
-            print(">>>>>>>>")
-            print(self.custom_molecule)
-            print(self.__repr__())
-            raise NotImplementedError()
+            multiplicities = self.multiplicities
+            hfcs = self.hfcs
         else:
             # TODO: this can fail with wrong molecule name
             data = MOLECULE_DATA[self.radical]["data"]
