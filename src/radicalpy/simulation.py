@@ -241,7 +241,7 @@ class KineticsRelaxationBase:
         return "\n".join(lines)
 
 
-class QuantumSimulation:
+class HilbertSimulation:
     """Quantum simulation base class.
 
     Args:
@@ -250,7 +250,7 @@ class QuantumSimulation:
         custom_gfactor (bool): Flag to use g-factors instead of the
             default gyromagnetic ratio gamma.
 
-    >>> QuantumSimulation([Molecule("flavin_anion", ["N5"]),
+    >>> HilbertSimulation([Molecule("flavin_anion", ["N5"]),
     ...                    Molecule("trp_cation", ["H18", "H23"])])
     Number of electrons: 2
     Number of nuclei: 3
@@ -727,9 +727,11 @@ class QuantumSimulation:
 
         return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
 
-    @staticmethod
-    def effective_hyperfine(radical_hfc, radical_spin):
+    # @staticmethod
+    def effective_hyperfine(self, radical_hfc, radical_spin):
         # why copy both args?
+        self.hfcs
+        self.multiplicities
         radical_HFC = np.array(radical_hfc)
         spin_quantum_number = np.array(radical_spin)
 
@@ -738,8 +740,6 @@ class QuantumSimulation:
             * sum((radical_HFC**2 * spin_quantum_number) * (spin_quantum_number + 1))
         )
 
-
-class HilbertSimulation(QuantumSimulation):
     @staticmethod
     def convert(H: np.ndarray) -> np.ndarray:
         return H
@@ -804,7 +804,7 @@ class HilbertSimulation(QuantumSimulation):
         return self.projection_operator(state)
 
 
-class LiouvilleSimulation(QuantumSimulation):
+class LiouvilleSimulation(HilbertSimulation):
     @staticmethod
     def convert(H: np.ndarray) -> np.ndarray:
         """Convert the Hamiltonian from Hilbert to Liouville space."""
