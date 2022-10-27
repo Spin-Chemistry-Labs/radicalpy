@@ -266,6 +266,11 @@ class HilbertTests(unittest.TestCase):
     def test_3d(self):
         H = self.sim.zeeman_hamiltonian_3d(1, 10, 20)
 
+    def test_dipolar_interaction_1d(self):
+        approx = self.sim.dipolar_interaction_1d(1)
+        gold = approx
+        self.assertEqual(gold, approx)
+
     def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         for state in STATES:

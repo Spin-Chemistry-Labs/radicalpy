@@ -10,8 +10,8 @@ from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
 
 from . import utils
-from .data import (MOLECULE_DATA, SPIN_DATA, gamma_mT, get_molecules,
-                   multiplicity)
+from .data import (MOLECULE_DATA, SPIN_DATA, constants, gamma_mT,
+                   get_molecules, multiplicity)
 from .pauli_matrices import pauli
 
 
@@ -512,8 +512,9 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
-    @staticmethod
-    def dipolar_interaction_1d(r: float, coefficient: float = -2.785) -> np.ndarray:
+    def dipolar_interaction_1d(
+        self, r: float, coefficient: float = -2.785
+    ) -> np.ndarray:
         """Construct the Dipolar interaction constant.
 
         Construct the Dipolar interaction based on the radius `r`.
@@ -525,6 +526,16 @@ class HilbertSimulation:
             float: The dipolar coupling constant in milli Tesla (mT).
 
         """
+        mu_0 = constants.value("mu_0")
+        hbar = constants.value("hbar")
+        gamma = utils.mT_to_MHz(self.gammas_mT[0])
+        gamma = self.gammas_mT[0]
+        # print()
+        # # (4 pi e-7 N A^{-2})",
+        # print(4 * np.pi * 1e-7)
+        # print(mu_0)
+        gold = -(3 / 2) * mu_0 * (hbar**2) * (gamma**2) / (4 * np.pi)
+        # print("\n>>>>>", gold, coefficient)
         return coefficient / r**3
 
     def dipolar_interaction_3d(self, r, gamma, coefficient: float):
