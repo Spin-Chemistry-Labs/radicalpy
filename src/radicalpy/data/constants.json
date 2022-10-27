@@ -102,5 +102,16 @@
     "value": 1.3806505e-23,
     "unit": "J K^{-1}",
     "alt_def": "R / N_A"
+  },
+  "V": {
+    "name": "specific volume of protein",
+    "value": 0.00073,
+    "unit": "m^3 / kg"
+  },
+  "rw": {
+    "name": "hydration layer",
+    "value": 2.4e-10,
+    "unit": "m",
+    "alt_def": "average of 1.6 to 3.2 A (1/2 to 1 hydration shell)"
   }
 }
