@@ -46,7 +46,31 @@ def state2radpy(state: rpsim.State) -> str:
 
 class MoleculeTests(unittest.TestCase):
     def test_effective_hyperfine(self):
-        flavin = rpsim.Molecule("flavin_anion")
+        flavin = rpsim.Molecule("flavin_anion", ["N5"])
+        self.assertAlmostEqual(flavin.effective_hyperfine, 1.3981069)
+
+    @unittest.skip("Not done yet")
+    def test_manual_effective_hyperfine(self):
+        nuclei = ["14N"] * 4 + ["1H"] * 12
+        hfcs = [
+            0.5233,
+            0.1887,
+            -0.0035,
+            -0.0383,
+            0.0565,
+            -0.1416,
+            -0.1416,
+            -0.1416,
+            -0.3872,
+            0.4399,
+            0.4399,
+            0.4399,
+            0.0099,
+            0.407,
+            0.407,
+            -0.0189,
+        ]
+        flavin = rpsim.Molecule(nuclei=nuclei, hfcs=hfcs)
         self.assertAlmostEqual(flavin.effective_hyperfine, 1.3981069)
 
 
@@ -411,6 +435,7 @@ class HilbertTests(unittest.TestCase):
         # plt.show()
         # print("DONE")
 
+    @unittest.skip("Don't interfere")
     def test_Bhalf_theoretical(self):
         flavin = rpsim.Molecule("flavin_anion")
         trp = rpsim.Molecule("trp_cation")
