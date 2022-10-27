@@ -518,7 +518,7 @@ class QuantumSimulation:
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
     @staticmethod
-    def dipolar_interaction(r: float) -> np.ndarray:
+    def dipolar_interaction_1d(r: float, coefficient: float = -2.785) -> np.ndarray:
         """Construct the Dipolar interaction constant.
 
         Construct the Dipolar interaction based on the radius `r`.
@@ -530,7 +530,13 @@ class QuantumSimulation:
             float: The dipolar coupling constant in milli Tesla (mT).
 
         """
-        return -2.785 / r**3
+        return coefficient / r**3
+
+    def dipolar_interaction_3d(self, r, gamma, coefficient: float):
+        kwargs = {"coefficient": coefficient} if coefficient is not None else {}
+        dipolar1d = self.dipolar_interaction(r, **kwargs)
+        dipolar = self.gammas_mT[0] * (2 / 3) * dipolar1d
+        return dipolar * np.diag([-1, -1, 2])
 
     def dipolar_hamiltonian(self, D: float or np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
