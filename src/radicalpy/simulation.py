@@ -162,6 +162,18 @@ class Molecule:
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) == self.num_particles
 
+    def __repr__(self):
+        """Pretty print the molecule."""
+        return (
+            f"Molecule: {self.radical}"
+            # f"\n  Nuclei: {self.nuclei}"
+            f"\n  HFCs: {self.hfcs}"
+            f"\n  multiplicities: {self.multiplicities}"
+            f"\n  gammas(mT): {self.gammas_mT}"
+            f"\n  number of particles: {self.num_particles}"
+            # f"\n  elements: {self.elements}"
+        )
+
     def _check_molecule_or_spin_db(self, radical, nuclei):
         if radical in MOLECULE_DATA:
             self._check_nuclei(nuclei)
@@ -203,17 +215,21 @@ class Molecule:
         """Return the number of isotopes in the molecule."""
         return len(self.multiplicities)
 
-    def __repr__(self):
-        """Pretty print the molecule."""
-        return (
-            f"Molecule: {self.radical}"
-            # f"\n  Nuclei: {self.nuclei}"
-            f"\n  HFCs: {self.hfcs}"
-            f"\n  multiplicities: {self.multiplicities}"
-            f"\n  gammas(mT): {self.gammas_mT}"
-            f"\n  number of particles: {self.num_particles}"
-            # f"\n  elements: {self.elements}"
-        )
+    @property
+    def effective_hyperfine(self):
+        data = MOLECULE_DATA[self.radical]["data"]
+        nuclei = list(data.keys())
+        # TODO: refactor (copied from `_init_from_molecule_db()`
+        elem = [data[n]["element"] for n in nuclei]
+        multiplicities = [multiplicity(e) for e in elem]
+        # TODO: refactor (copied from `_init_from_molecule_db()`)
+        hfcs = [data[n]["hfc"] for n in nuclei]
+
+        # spin quantum number
+        s = np.array(list(map(utils.spin_quantum_number, multiplicities)))
+        hfcs = np.array(hfcs)
+
+        return np.sqrt((4 / 3) * sum((hfcs**2 * s) * (s + 1)))
 
 
 class KineticsRelaxationBase:
@@ -277,8 +293,10 @@ class HilbertSimulation:
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
 
     def __repr__(self):
+        # molecules = "\n".join([str(m) for m in self.molecules])
         return "\n".join(
             [
+                # "Simulation summary:",
                 f"Number of electrons: {self.num_electrons}",
                 f"Number of nuclei: {len(self.hfcs)}",
                 f"Number of particles: {self.num_particles}",
@@ -287,6 +305,8 @@ class HilbertSimulation:
                 f"Isotopes: {self.molecules[0].nuclei+self.molecules[1].nuclei}",
                 f"Couplings: {self.coupling}",
                 f"HFCs (mT): {self.hfcs}",
+                # "",
+                # f"Simulated molecules:\n{molecules}",
             ]
         )
 
@@ -737,19 +757,6 @@ class HilbertSimulation:
         R2 = r2_score(MARY, y_pred_MARY)
 
         return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
-
-    # @staticmethod
-    def effective_hyperfine(self, radical_hfc, radical_spin):
-        # why copy both args?
-        self.hfcs
-        self.multiplicities
-        radical_HFC = np.array(radical_hfc)
-        spin_quantum_number = np.array(radical_spin)
-
-        return np.sqrt(
-            (4 / 3)
-            * sum((radical_HFC**2 * spin_quantum_number) * (spin_quantum_number + 1))
-        )
 
     @staticmethod
     def convert(H: np.ndarray) -> np.ndarray:
