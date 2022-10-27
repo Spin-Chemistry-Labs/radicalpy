@@ -1,105 +1,105 @@
 {
   "c": {
     "name": "speed of light in vacuum",
-    "val": 299792458.0,
+    "value": 299792458.0,
     "unit": "m s^{-1}"
   },
   "h": {
     "name": "Planck constant",
-    "val": 6.6260693e-34,
+    "value": 6.6260693e-34,
     "unit": "J s"
   },
   "epsilon_0": {
     "name": "electric constant",
-    "val": 8.854187817e-12,
+    "value": 8.854187817e-12,
     "unit": "F m^{-1}",
     "alt_def": "1 / mu_0 c^2"
   },
   "hbar": {
     "name": "reduced Planck constant",
-    "val": 1.05457168e-34,
+    "value": 1.05457168e-34,
     "unit": "J s",
     "alt_def": "h / 2pi"
   },
   "e": {
     "name": "elementary charge",
-    "val": 1.60217653e-19,
+    "value": 1.60217653e-19,
     "unit": "C"
   },
   "alpha": {
     "name": "fine-structure constant",
-    "val": 0.007297352568,
+    "value": 0.007297352568,
     "unit": "",
     "alt_def": "e^2 / 4pi epsilon_0 hbar c"
   },
   "mu_0": {
     "name": "magnetic constant / vacuum magnetic permeability",
-    "val": 1.25663706212e-06,
+    "value": 1.25663706212e-06,
     "unit": "N A^{-2} (4pie-7 N A^{-2})",
     "alt_def": "2 alpha h e^{-2} c^{-1}"
   },
   "m_e": {
     "name": "electron mass",
-    "val": 9.1093826e-31,
+    "value": 9.1093826e-31,
     "unit": "kg"
   },
   "m_p": {
     "name": "proton mass",
-    "val": 1.67262171e-27,
+    "value": 1.67262171e-27,
     "unit": "kg"
   },
   "mu_B": {
     "name": "Bohr magneton",
-    "val": 9.27400949e-24,
+    "value": 9.27400949e-24,
     "unit": "J T^{-1}",
     "alt_def": "e hbar / 2m_e"
   },
   "mu_N": {
     "name": "nuclear magneton",
-    "val": 5.05078343e-27,
+    "value": 5.05078343e-27,
     "unit": "J T^{-1}",
     "alt_def": "e hbar / 2m_p"
   },
   "mu_e": {
     "name": "electron magnetic moment",
-    "val": -9.28476412e-24,
+    "value": -9.28476412e-24,
     "unit": "J T^{-1}"
   },
   "a_e": {
     "name": "electron magnetic moment anomaly",
-    "val": 0.0011596521859,
+    "value": 0.0011596521859,
     "unit": "",
     "alt_def": "|mu_e| / mu_B - 1"
   },
   "g_e": {
     "name": "electron g-factor",
-    "val": -2.0023193043718,
+    "value": -2.0023193043718,
     "unit": "",
     "alt_def": "-2(1 + a_e)"
   },
   "mu_p": {
     "name": "proton magnetic moment",
-    "val": 1.41060671e-26,
+    "value": 1.41060671e-26,
     "unit": "J T^{-1}"
   },
   "g_p": {
     "name": "proton g-factor",
-    "val": 5.5856946893,
+    "value": 5.5856946893,
     "unit": ""
   },
   "N_A": {
     "name": "Avogadro constant",
-    "val": 6.0221415e+23,
+    "value": 6.0221415e+23,
     "unit": "mol^{-1}"
   },
   "R": {
     "name": "molar gas constant",
-    "val": 8.314472,
+    "value": 8.314472,
     "unit": "J mol^{-1} K-1"
   },
   "k_B": {
     "name": "Boltzmann constant",
-    "val": 1.3806505e-23,
+    "value": 1.3806505e-23,
     "unit": "J K^{-1}",
     "alt_def": "R / N_A"
   }

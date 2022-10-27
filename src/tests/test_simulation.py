@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import doctest
 import os
 import time
@@ -42,13 +44,16 @@ def state2radpy(state: rpsim.State) -> str:
     return str(state.value).replace("+", "p").replace("-", "m").replace("/", "")
 
 
-class QuantumTests(unittest.TestCase):
+class HilbertTests(unittest.TestCase):
     def setUp(self):
         if MEASURE_TIME:
             self.start_time = time.time()
         self.data = rpsim.MOLECULE_DATA["adenine_cation"]["data"]
-        self.sim = rpsim.QuantumSimulation(RADICAL_PAIR)
+        self.sim = rpsim.HilbertSimulation(RADICAL_PAIR)
         self.gamma_mT = rpdata.gamma_mT("E")
+        self.dt = 0.01
+        self.t_max = 1.0
+        self.time = np.arange(0, self.t_max, self.dt)
 
     def tearDown(self):
         if MEASURE_TIME:
@@ -96,7 +101,7 @@ class QuantumTests(unittest.TestCase):
 
         """
         mol = rpsim.Molecule()
-        sim = rpsim.QuantumSimulation([mol, mol])
+        sim = rpsim.HilbertSimulation([mol, mol])
         HZ = sim.zeeman_hamiltonian(0.5)
         nz = HZ != 0
         assert HZ.shape == (4, 4)
@@ -113,7 +118,7 @@ class QuantumTests(unittest.TestCase):
             ),
             rpsim.Molecule(multiplicities=[2], gammas_mT=[gamma_mT], hfcs=[0]),
         ]
-        sim = rpsim.QuantumSimulation(rad_pair)
+        sim = rpsim.HilbertSimulation(rad_pair)
         HZ = sim.zeeman_hamiltonian(PARAMS["B"][0])
 
         #########################
@@ -246,7 +251,7 @@ class QuantumTests(unittest.TestCase):
             gammas_mT=[rpsim.gamma_mT("1H")],
         )
 
-        sim = rpsim.QuantumSimulation([flavin, ascorbic_acid])
+        sim = rpsim.HilbertSimulation([flavin, ascorbic_acid])
         H = sim.hyperfine_hamiltonian()
         # print(H.shape)
         # print(H)
@@ -257,16 +262,9 @@ class QuantumTests(unittest.TestCase):
         # plt.imshow(np.real(H))
         # plt.show()
 
+    @unittest.skip("Doesn't check anything")
     def test_3d(self):
         H = self.sim.zeeman_hamiltonian_3d(1, 10, 20)
-
-
-class HilbertTests(unittest.TestCase):
-    def setUp(self):
-        self.sim = rpsim.HilbertSimulation(RADICAL_PAIR)
-        self.dt = 0.01
-        self.t_max = 1.0
-        self.time = np.arange(0, self.t_max, self.dt)
 
     def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
@@ -463,10 +461,10 @@ class LiouvilleTests(unittest.TestCase):
 
     def test_relaxation(self):
         kwargs = dict(
-            init_state=rpsim.State.SINGLET,
+            init_state=rpsim.State.TRIPLET,
             obs_state=rpsim.State.TRIPLET,
-            time=np.arange(0, 15e-6, 5e-9),
-            B=np.arange(0, 1, 1),
+            time=np.arange(0, 5e-6, 1e-9),
+            B=np.arange(0, 4, 1),
             D=0,
             J=0,
         )
@@ -474,11 +472,11 @@ class LiouvilleTests(unittest.TestCase):
         results = self.sim.MARY(
             kinetics=[],
             relaxations=[
-                relaxation.SingletTripletDephasing(self.sim, k),
-                relaxation.TripleTripletDephasing(self.sim, k),
+                # relaxation.SingletTripletDephasing(self.sim, k),
+                # relaxation.TripleTripletDephasing(self.sim, k),
                 relaxation.RandomFields(self.sim, k),
-                relaxation.DipolarModulation(self.sim, k),
-                relaxation.TripletTripletRelaxation(self.sim, k),
+                # relaxation.DipolarModulation(self.sim, k),
+                # relaxation.TripletTripletRelaxation(self.sim, k),
             ],
             **kwargs,
         )
