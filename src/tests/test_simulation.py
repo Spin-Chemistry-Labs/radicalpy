@@ -44,6 +44,12 @@ def state2radpy(state: rpsim.State) -> str:
     return str(state.value).replace("+", "p").replace("-", "m").replace("/", "")
 
 
+class MoleculeTests(unittest.TestCase):
+    def test_effective_hyperfine(self):
+        flavin = rpsim.Molecule("flavin_anion")
+        self.assertAlmostEqual(flavin.effective_hyperfine, 1.3981069)
+
+
 class HilbertTests(unittest.TestCase):
     def setUp(self):
         if MEASURE_TIME:
