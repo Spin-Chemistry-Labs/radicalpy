@@ -85,19 +85,33 @@ def mT_to_MHz(mT: float) -> float:
 
 
 def rotation_matrix_x(phi: float) -> np.ndarray:
-    return [[1, 0, 0], [0, np.cos(phi), -np.sin(phi)], [0, np.sin(phi), np.cos(phi)]]
+    return np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(phi), -np.sin(phi)],
+            [0, np.sin(phi), np.cos(phi)],
+        ]
+    )
 
 
 def rotation_matrix_y(theta: float) -> np.ndarray:
-    return [
-        [np.cos(theta), 0, np.sin(theta)],
-        [0, 1, 0],
-        [-np.sin(theta), 0, np.cos(theta)],
-    ]
+    return np.array(
+        [
+            [np.cos(theta), 0, np.sin(theta)],
+            [0, 1, 0],
+            [-np.sin(theta), 0, np.cos(theta)],
+        ]
+    )
 
 
 def rotation_matrix_z(psi: float) -> np.ndarray:
-    return [[np.cos(psi), -np.sin(psi), 0], [np.sin(psi), np.cos(psi), 0], [0, 0, 1]]
+    return np.array(
+        [
+            [np.cos(psi), -np.sin(psi), 0],
+            [np.sin(psi), np.cos(psi), 0],
+            [0, 0, 1],
+        ]
+    )
 
 
 def spherical_to_cartesian(theta, phi):
