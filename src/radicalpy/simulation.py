@@ -31,19 +31,19 @@ class Molecule:
     Args:
         radical (str): the name of the `Molecule`, defaults to `""`
 
-        nuclei (list[str]): list of atoms from the molecule (or
-            from the database), defaults to `[]`
+        nuclei (list[str]): list of atoms from the molecule (or from
+            the database), defaults to `[]`
 
         multiplicities (list[int]): list of multiplicities of the
-            atoms and their isotopes (when not using the
-            database), defaults to `[]`
+            atoms and their isotopes (when not using the database),
+            defaults to `[]`
 
-        gammas_mT (list[float]): list of gyromagnetic ratios of
+        gammas_mT (list[float]): list of gyromagnetic ratios of the
+            atoms and their isotopes (when not using the database),
+            defaults to `[]`
+
+        hfcs (list[float]): list of hyperfine coupling constants of
             the atoms and their isotopes (when not using the
-            database), defaults to `[]`
-
-        hfcs (list[float]): list of hyperfine coupling constants
-            of the atoms and their isotopes (when not using the
             database), defaults to `[]`
 
     A molecule is represented by hyperfine coupling constants, spin
@@ -166,7 +166,7 @@ class Molecule:
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) == self.num_particles
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Pretty print the molecule."""
         return (
             f"Molecule: {self.radical}"
@@ -191,7 +191,7 @@ class Molecule:
                 available = "\n".join(get_molecules().keys())
                 raise ValueError(f"Available molecules below:\n{available}")
 
-    def _check_nuclei(self, nuclei):
+    def _check_nuclei(self, nuclei: list[str]) -> None:
         molecule_data = MOLECULE_DATA[self.radical]["data"]
         for nucleus in nuclei:
             if nucleus not in molecule_data:
@@ -203,7 +203,7 @@ class Molecule:
                 available = "\n".join([f"{k} (hfc = {h})" for k, h in pairs])
                 raise ValueError(f"Available nuclei below.\n{available}")
 
-    def _init_from_molecule_db(self, radical, nuclei):
+    def _init_from_molecule_db(self, radical: str, nuclei: list[str]) -> None:
         data = MOLECULE_DATA[radical]["data"]
         elem = [data[n]["element"] for n in nuclei]
         self.radical = radical
@@ -212,13 +212,15 @@ class Molecule:
         self.hfcs = [data[n]["hfc"] for n in nuclei]
         self.custom_molecule = False
 
-    def _init_from_spin_db(self, radical, nuclei, hfcs):
+    def _init_from_spin_db(
+        self, radical: str, nuclei: list[str], hfcs: list[float]
+    ) -> None:
         self.multiplicities = [multiplicity(e) for e in nuclei]
         self.gammas_mT = [gamma_mT(e) for e in nuclei]
         self.hfcs = hfcs
 
     @property
-    def num_particles(self):
+    def num_particles(self) -> int:
         """Return the number of isotopes in the molecule."""
         return len(self.multiplicities)
 
