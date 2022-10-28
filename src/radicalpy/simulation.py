@@ -167,7 +167,11 @@ class Molecule:
         assert len(self.hfcs) == self.num_particles
 
     def __repr__(self) -> str:
-        """Pretty print the molecule."""
+        """Pretty print the molecule.
+
+        Returns:
+            str: Representation of a molecule.
+        """
         return (
             f"Molecule: {self.radical}"
             # f"\n  Nuclei: {self.nuclei}"
