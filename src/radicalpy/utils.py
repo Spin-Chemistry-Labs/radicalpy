@@ -84,11 +84,11 @@ def mT_to_MHz(mT: float) -> float:
     return mT * 1e-9 * g_e * mu_B / h
 
 
-def rotation_matrix_x(phi: float) -> array:
+def rotation_matrix_x(phi: float) -> np.ndarray:
     return [[1, 0, 0], [0, np.cos(phi), -np.sin(phi)], [0, np.sin(phi), np.cos(phi)]]
 
 
-def rotation_matrix_y(theta: float) -> array:
+def rotation_matrix_y(theta: float) -> np.ndarray:
     return [
         [np.cos(theta), 0, np.sin(theta)],
         [0, 1, 0],
@@ -96,7 +96,7 @@ def rotation_matrix_y(theta: float) -> array:
     ]
 
 
-def rotation_matrix_z(psi: float) -> array:
+def rotation_matrix_z(psi: float) -> np.ndarray:
     return [[np.cos(psi), -np.sin(psi), 0], [np.sin(psi), np.cos(psi), 0], [0, 0, 1]]
 
 
