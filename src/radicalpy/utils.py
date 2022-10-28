@@ -27,7 +27,7 @@ def cartesian_to_spherical(x, y, z):
 	r = np.sqrt(x**2 + y**2 + z**2)
 	theta = np.arccos(z / r)
 	phi = np.arctan2(y, x)
-    return r, theta, phi	
+    return r, theta, phi
 		
 	
 def Gauss_to_angular_frequency(Gauss: float) -> float:
