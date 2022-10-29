@@ -24,7 +24,7 @@ def rotational_correlation_time_protein(Mr, temp, eta=0.89e-3):
     Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
 
     # Calculate isotropic rotational correlation time (tau_c) in s
-	tau_c = rotational_correlation_time(Rh, temp, eta)
+    tau_c = rotational_correlation_time(Rh, temp, eta)
     #tau_c = (4 * np.pi * eta * Rh**3) / (3 * k_B * temp)
     return tau_c
 
