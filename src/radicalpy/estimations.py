@@ -52,3 +52,14 @@ def k_ST_mixing(Bhalf: float) -> float:
     mu_B = constants.value("mu_B") * 1e-3
     h = constants.value("h")
     return -g_e * mu_B * Bhalf / h
+
+
+def k_triplet_relaxation(B0, tau_c, D, E):
+    g = constants.value("g_e")
+    muB = constants.value("mu_B") * 1e-3
+    h = constants.value("h")
+    B0 = utils.mT_to_MHz(B0)
+    
+    nu_0 = (g * muB * B0) / h
+    jnu0tc = (2 / 15) * ((4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2) + (tau_c) / (1 + nu_0**2 * tau_c**2))
+    return (D**2 + 3 * E**2) * jnu0tc
