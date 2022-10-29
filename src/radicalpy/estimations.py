@@ -33,6 +33,12 @@ def k_STD(J, tau_c):
     # J-modulation rate
     J_var_MHz = utils.mT_to_MHz(utils.mT_to_MHz(np.var(J)))
     return 4 * tau_c * J_var_MHz * 4 * np.pi**2 * 1e12
+	
+
+def k_STD_micelle(D, V, d=5e-10, J0=1e11, alpha=2e10):
+    l = d + 1 / alpha * (np.log(2 * np.abs(J0) / (D * alpha**2)) + 1.15) 
+    l -= 1j * (np.pi / 2 * alpha) * J0
+    return 4 * np.pi * D * np.real(l) / V
 
 
 def k_D(D, tau_c):
