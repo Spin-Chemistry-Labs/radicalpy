@@ -512,11 +512,11 @@ class LiouvilleTests(unittest.TestCase):
         results = self.sim.MARY(
             kinetics=[],
             relaxations=[
-                # relaxation.SingletTripletDephasing(self.sim, k),
-                # relaxation.TripleTripletDephasing(self.sim, k),
-                relaxation.RandomFields(self.sim, k),
-                # relaxation.DipolarModulation(self.sim, k),
-                # relaxation.TripletTripletRelaxation(self.sim, k),
+                # relaxation.SingletTripletDephasing( k),
+                # relaxation.TripleTripletDephasing( k),
+                relaxation.RandomFields(k),
+                # relaxation.DipolarModulation( k),
+                # relaxation.TripletTripletRelaxation( k),
             ],
             **kwargs,
         )
