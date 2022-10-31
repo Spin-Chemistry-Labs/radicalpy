@@ -63,7 +63,7 @@ def MHz_to_mT(MHz: float) -> float:
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     h = constants.value("h")
-    return MHz / 1e-9 * g_e * mu_B / h
+    return MHz / (1e-9 * g_e * mu_B / h)
 
 
 def mT_to_angular_frequency(mT: float) -> float:
