@@ -88,3 +88,60 @@ class DipolarModulation(RelaxationBaseAll):
             + np.kron(self.QTm, self.QT0)
             + np.kron(self.QT0, self.QTm)
         )
+
+
+def g_tensor_anisotropy_term(sim: LiouvilleSimulation, idx, g, omega, tau_c):
+    giso = np.mean(g)
+    SAx, SAy, SAz = [sim.spin_operator(idx, ax) for ax in "xyz"]
+    H = 0.5 * np.eye(len(SAx) * len(SAx), dtype=complex)
+    H -= np.kron(SAx, SAx.T)
+    H -= np.kron(SAy, SAy.T)
+    H *= 3 * spectral_density(omega, tau_c)
+    H += (
+        2
+        * spectral_density(0, tau_c)
+        * (0.5 * np.eye(len(SAx) * len(SAx)) - 2 * np.kron(SAz, SAz.T))
+    )
+    H *= 1 / 15 * sum([((gj - giso) / giso) ** 2 for gj in g]) * omega**2
+    return H
+    
+    
+# !!!!!!!!!! omega depends on B, which changes in every step (MARY loop)
+# See note below
+# Instead of omega1 & omega2 use B and calculate omegas inside
+class GTensorAnisotropy(LiouvilleKineticsRelaxationBase):
+    def __init__(self, g1, g2, omega1, omega2, tau_c1, tau_c2):
+        self.g1 = g1
+        self.g2 = g2
+        self.omega1 = omega1
+        self.omega2 = omega2
+        self.tau_c1 = tau_c1
+        self.tau_c2 = tau_c2
+
+    def init(self, sim: LiouvilleSimulation):
+        self.subH = g_tensor_anisotropy_term(sim, 0, self.g1, self.omega1, self.tau_c1)
+        self.subH += g_tensor_anisotropy_term(sim, 1, self.g2, self.omega2, self.tau_c2)
+        
+        
+class T1Relaxation(LiouvilleKineticsRelaxationBase):
+    def init(self, sim: LiouvilleSimulation):
+        SAz = sim.spin_operator(0, "z")
+        SBz = sim.spin_operator(1, "z")
+
+        self.subH = self.rate * (
+            np.eye(len(SAz) * len(SAz)) - np.kron(SAz, SAz.T) - np.kron(SBz, SBz.T)
+        )
+        
+        
+class T2Relaxation(LiouvilleKineticsRelaxationBase):
+    def init(self, sim: LiouvilleSimulation):
+        SAx, SAy = sim.spin_operator(0, "x"), sim.spin_operator(0, "y")
+        SBx, SBy = sim.spin_operator(1, "x"), sim.spin_operator(1, "y")
+
+        self.subH = self.rate * (
+            np.eye(len(SAx) * len(SAx))
+            - np.kron(SAx, SAx.T)
+            - np.kron(SBx, SBx.T)
+            - np.kron(SAy, SAy.T)
+            - np.kron(SBy, SBy.T)
+        )
