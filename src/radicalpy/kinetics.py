@@ -55,24 +55,26 @@ class KineticsBase(LiouvilleKineticsRelaxationBase):
 
 class Haberkorn(KineticsBase):
     """
-    >>> Haberkorn(LiouvilleSimulation([]), rate_constant=1e6, target=State.SINGLET)
+    >>> Haberkorn(rate_constant=1e6, target=State.SINGLET)
     Kinetics: Haberkorn
     Rate constant: 1000000.0
     Target: S
 
-    >>> Haberkorn(LiouvilleSimulation([]), rate_constant=1e6, target=State.TRIPLET)
+    >>> Haberkorn(rate_constant=1e6, target=State.TRIPLET)
     Kinetics: Haberkorn
     Rate constant: 1000000.0
     Target: T
     """
 
-    def __init__(self, sim: LiouvilleSimulation, rate_constant: float, target: State):
+    def __init__(self, rate_constant: float, target: State):
         super().__init__(rate_constant)
         self.target = target
         if target not in {State.SINGLET, State.TRIPLET}:
             raise ValueError(
                 "Haberkorn kinetics supports only SINGLET and TRIPLET targets"
             )
+
+    def init(self, sim: LiouvilleSimulation):
         Q = sim.projection_operator(self.target)
         self.subH = 0.5 * self.rate * self._convert(Q)
 
@@ -86,30 +88,32 @@ class Haberkorn(KineticsBase):
 
 class HaberkornFree(KineticsBase):
     """
-    >>> HaberkornFree(LiouvilleSimulation([]), rate_constant=1e6)
+    >>> HaberkornFree(rate_constant=1e6)
     Kinetics: HaberkornFree
     Rate constant: 1000000.0
     """
 
-    def __init__(self, sim: LiouvilleSimulation, rate_constant: float):
+    def __init__(self, rate_constant: float):
         super().__init__(rate_constant)
+
+    def init(self, sim: LiouvilleSimulation):
         size = prod(m for m in sim.multiplicities) ** 2
         self.subH = 0.5 * self.rate * np.eye(size)
 
 
 class JonesHore(KineticsBase):
     """
-    >>> JonesHore(LiouvilleSimulation([]), 1e6, 1e7)
+    >>> JonesHore(1e6, 1e7)
     Kinetics: JonesHore
     Singlet rate: 1000000.0
     Triplet rate: 10000000.0
     """
 
-    def __init__(
-        self, sim: LiouvilleSimulation, singlet_rate: float, triplet_rate: float
-    ):
+    def __init__(self, singlet_rate: float, triplet_rate: float):
         self.singlet_rate = singlet_rate
         self.triplet_rate = triplet_rate
+
+    def init(self, sim: LiouvilleSimulation):
         QS = sim.projection_operator(State.SINGLET)
         QT = sim.projection_operator(State.TRIPLET)
         self.subH = (

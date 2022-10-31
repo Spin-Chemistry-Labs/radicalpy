@@ -254,6 +254,9 @@ class KineticsRelaxationBase:
     def __init__(self, rate_constant: float):
         self.rate = rate_constant
 
+    def init(self, sim):
+        pass
+
     def adjust_hamiltonian(self, *args, **kwargs):
         return
 
@@ -731,6 +734,7 @@ class HilbertSimulation:
         H = self.total_hamiltonian(B=0, D=D, J=J)
         H = self.convert(H)
         for K in kinetics + relaxations:  # skip in hilbert
+            K.init(self)
             K.adjust_hamiltonian(H)
         rhos = self.mary_loop(init_state, time, B, H, theta=theta, phi=phi)
         product_probabilities = self.product_probability(obs_state, rhos)
