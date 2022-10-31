@@ -20,33 +20,6 @@ class Exponential(KineticsRelaxationBase):
         return self.rate
 
 
-class Diffusion(KineticsRelaxationBase):
-    def __init__(self, r_sigma=5e-10, r0=9e-10, diffusion_coefficient=1e-9):
-        self.r_sigma = r_sigma
-        self.r0 = r0
-        self.diffusion_coefficient = diffusion_coefficient
-        numerator = self.r_sigma * (self.r0 - self.r_sigma)
-        denominator = self.r0 * np.sqrt(4 * np.pi * self.diffusion_coefficient)
-        self.term0 = numerator / denominator
-        self.term1 = ((self.r0 - self.r_sigma) ** 2) / (4 * self.diffusion_coefficient)
-
-    def adjust_product_probabilities(
-        self, product_probabilities: np.ndarray, time: np.ndarray
-    ) -> np.ndarray:
-        product_probabilities *= (
-            self.term0 * time ** (-3 / 2) * np.exp(-self.term1 / time)
-        )
-
-    def __repr__(self):
-        lines = [
-            self._name(),
-            f"r_sigma: {self.r_sigma}",
-            f"r0: {self.r0}",
-            f"diffusion_coefficient: {self.diffusion_coefficient}",
-        ]
-        return "\n".join(lines)
-
-
 class KineticsBase(LiouvilleKineticsRelaxationBase):
     @staticmethod
     def _convert(Q: np.ndarray) -> np.ndarray:
