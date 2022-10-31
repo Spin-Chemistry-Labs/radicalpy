@@ -1,4 +1,5 @@
 import numpy as np
+from .utils import spectral_density
 
 from .simulation import (KineticsRelaxationBase,
                          LiouvilleKineticsRelaxationBase, LiouvilleSimulation,

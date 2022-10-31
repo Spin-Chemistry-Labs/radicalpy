@@ -114,6 +114,10 @@ def rotation_matrix_z(psi: float) -> np.ndarray:
     )
 
 
+def spectral_density(omega, tau_c):
+    return tau_c / (1 + omega**2 * tau_c**2)
+
+
 def spherical_to_cartesian(theta, phi):
     return np.array(
         [
