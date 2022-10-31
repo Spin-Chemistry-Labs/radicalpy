@@ -9,18 +9,18 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
-    return ang_freq / mu_B / hbar * g_e / 1e10
+    return ang_freq / (mu_B / hbar * -g_e / 1e10)
 
 
 def angular_frequency_to_MHz(ang_freq: float) -> float:
-    return ang_freq / 2 * np.pi
+    return ang_freq / (2 * np.pi)
 
 
 def angular_frequency_to_mT(ang_freq: float) -> float:
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
-    return ang_freq / mu_B / hbar * g_e / 1e9
+    return ang_freq / (mu_B / hbar * -g_e / 1e9)
 
 
 def cartesian_to_spherical(x, y, z):
@@ -34,14 +34,14 @@ def Gauss_to_angular_frequency(Gauss: float) -> float:
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
-    return Gauss * mu_B / hbar * g_e / 1e10
+    return Gauss * (mu_B / hbar * -g_e / 1e10)
 
 
 def Gauss_to_MHz(Gauss: float) -> float:
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     h = constants.value("h")
-    return Gauss / 1e-10 * g_e * mu_B / h
+    return Gauss / (1e-10 * -g_e * mu_B / h)
 
 
 def Gauss_to_mT(Gauss: float) -> float:
@@ -49,14 +49,14 @@ def Gauss_to_mT(Gauss: float) -> float:
 
 
 def MHz_to_angular_frequency(MHz: float) -> float:
-    return MHz * 2 * np.pi
+    return MHz * (2 * np.pi)
 
 
 def MHz_to_Gauss(MHz: float) -> float:
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     h = constants.value("h")
-    return MHz / 1e-10 * g_e * mu_B / h
+    return MHz / (1e-10 * -g_e * mu_B / h)
 
 
 def MHz_to_mT(MHz: float) -> float:
@@ -70,7 +70,7 @@ def mT_to_angular_frequency(mT: float) -> float:
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
-    return mT * mu_B / hbar * g_e / 1e9
+    return mT * (mu_B / hbar * -g_e / 1e9)
 
 
 def mT_to_Gauss(mT: float) -> float:
@@ -81,7 +81,7 @@ def mT_to_MHz(mT: float) -> float:
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     h = constants.value("h")
-    return mT * 1e-9 * g_e * mu_B / h
+    return mT * (1e-9 * -g_e * mu_B / h)
 
 
 def rotation_matrix_x(phi: float) -> np.ndarray:
