@@ -63,3 +63,10 @@ def k_triplet_relaxation(B0, tau_c, D, E):
     nu_0 = (g * muB * B0) / h
     jnu0tc = (2 / 15) * ((4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2) + (tau_c) / (1 + nu_0**2 * tau_c**2))
     return (D**2 + 3 * E**2) * jnu0tc
+
+
+def g_tensor_relaxation_rate_constant(tau_c, g1, g2):
+    ge = constants.value("g_e")
+    g1sum = sum([(gi - ge) ** 2 for gi in g1])
+    g2sum = sum([(gi - ge) ** 2 for gi in g2])
+    return (g1sum + g2sum) / (9 * tau_c)
