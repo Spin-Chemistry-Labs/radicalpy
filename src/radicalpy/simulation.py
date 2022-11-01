@@ -561,15 +561,15 @@ class HilbertSimulation:
         Construct the Dipolar interaction based on the radius `r`.
 
         .. todo::
-            Cite source.
+            equation 4 of https://pubs.acs.org/doi/10.1021/bi048445d.
 
         Returns:
             float: The dipolar coupling constant in milli Tesla (mT).
 
         """
         mu_0 = constants.value("mu_0")
-        mu_B = rp.data.constants.value("mu_B")
-        g_e = rp.data.constants.value("g_e")
+        mu_B = constants.value("mu_B")
+        g_e = constants.value("g_e")
 
         gold = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
         # print("\n>>>>>", gold, coefficient)
