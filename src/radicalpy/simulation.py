@@ -568,16 +568,12 @@ class HilbertSimulation:
 
         """
         mu_0 = constants.value("mu_0")
-        hbar = constants.value("hbar")
-        gamma = utils.mT_to_MHz(self.gammas_mT[0])
-        gamma = self.gammas_mT[0]
-        # print()
-        # # (4 pi e-7 N A^{-2})",
-        # print(4 * np.pi * 1e-7)
-        # print(mu_0)
-        gold = -(3 / 2) * mu_0 * (hbar**2) * (gamma**2) / (4 * np.pi)
+        mu_B = rp.data.constants.value("mu_B")
+        g_e = rp.data.constants.value("g_e")
+
+        gold = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
         # print("\n>>>>>", gold, coefficient)
-        return coefficient / r**3
+        return (-gold / r**3) * 1000
 
     def dipolar_interaction_3d(self, r, gamma, coefficient: float):
         kwargs = {"coefficient": coefficient} if coefficient is not None else {}
