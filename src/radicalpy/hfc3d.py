@@ -8,8 +8,10 @@ import utils
 from . import data, utils
 from .flavin_3x3 import flavin as molecule
 
-# from .TYRrad import TYRrad as molecule
 # from .trp import TRP as molecule
+
+
+# from .TYRrad import TYRrad as molecule
 
 
 def isotropic(anisotropic: np.ndarray):
@@ -49,15 +51,9 @@ def get_sor():
     return sor
 
 
-if __name__ == "__main__":
-    N = len(molecule)
-
-    srp = get_srp()
-    sor = get_sor()
-    dsor = OrderedDict(sor)
+def flavin_proc(sor):
     new = OrderedDict()
-    print(len(srp), len(sor))
-
+    dsor = OrderedDict(sor)
     H_21_22_23 = (dsor["18H"] + dsor["19H"] + dsor["20H"]) / 3
     new["H21"] = H_21_22_23
     new["H22"] = H_21_22_23
@@ -76,22 +72,44 @@ if __name__ == "__main__":
     new["H29"] = dsor["29H"]
     new["H30"] = dsor["30H"]
     new["N5"] = dsor["11N"]
-    nlst = list(new.items())
-    nlst = sorted(nlst, key=lambda t: isotropic(t[1]), reverse=True)
-    # nlst = list(sor)
+    return new
 
-    print(f"{MOLECULE}")
-    print("idx  json (old)    json(new)          orca")
-    for i in range(N):
-        print(
-            f"{i=:2} {srp[i][1]:7} {srp[i][0]:5} {nlst[i][0]:6} {isotropic(nlst[i][1]):10.5} {isotropic(sor[i][1]):10.5} {sor[i][0]:8} {i=:2}"
-        )
 
+def flavin_make(new):
     new_molecule = dict(data.MOLECULE_DATA[MOLECULE])
     for k, v in new.items():
         new_molecule["data"][k]["hfc"] = list(map(lambda t: list(t), v))
 
     new_molecule["data"]["N10"] = new_molecule["data"].pop("N6")
+    return new_molecule
 
+
+if __name__ == "__main__":
+    N = len(molecule)
+
+    srp = get_srp()
+    sor = get_sor()
+    print(len(srp), len(sor))
+
+    if MOLECULE == "flavin_anion":
+        new = flavin_proc(sor)
+        nlst = list(new.items())
+        nlst = sorted(nlst, key=lambda t: isotropic(t[1]), reverse=True)
+    else:
+        nlst = list(sor)
+
+    print(f"{MOLECULE}")
+    print("idx  json (old)    json (new)         orca")
+    for i in range(N):
+        print(
+            f"{i=:2} {srp[i][1]:7} {srp[i][0]:5} {nlst[i][0]:6} {isotropic(nlst[i][1]):10.5} {isotropic(sor[i][1]):10.5} {sor[i][0]:8} {i=:2}"
+        )
+
+    if MOLECULE == "flavin_anion":
+        new_molecule = flavin_make(new)
+    else:
+        pass
+
+    print(new_molecule)
     with open(f"{MOLECULE}.json", "w") as f:
         json.dump(new_molecule, f, indent=2)
