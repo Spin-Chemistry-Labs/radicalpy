@@ -553,12 +553,10 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
-    def dipolar_interaction_1d(
-        self, r: float, coefficient: float = -2.785
-    ) -> np.ndarray:
+    def dipolar_interaction_1d(self, r: float) -> float:
         """Construct the Dipolar interaction constant.
 
-        Construct the Dipolar interaction based on the radius `r`.
+        Construct the Dipolar interaction based on the inter-radical separation `r`.
 
         .. todo::
             equation 4 of https://pubs.acs.org/doi/10.1021/bi048445d.
@@ -571,13 +569,12 @@ class HilbertSimulation:
         mu_B = constants.value("mu_B")
         g_e = constants.value("g_e")
 
-        gold = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
-        # print("\n>>>>>", gold, coefficient)
-        return (-gold / r**3) * 1000
+        conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
+        return (-conversion / r**3) * 1000
 
-    def dipolar_interaction_3d(self, r, gamma, coefficient: float):
-        kwargs = {"coefficient": coefficient} if coefficient is not None else {}
-        dipolar1d = self.dipolar_interaction(r, **kwargs)
+    def dipolar_interaction_3d(self, r, gamma):#, coefficient: float):
+#         kwargs = {"coefficient": coefficient} if coefficient is not None else {}
+        dipolar1d = self.dipolar_interaction_1d(r)#, **kwargs)
         dipolar = self.gammas_mT[0] * (2 / 3) * dipolar1d
         return dipolar * np.diag([-1, -1, 2])
 
