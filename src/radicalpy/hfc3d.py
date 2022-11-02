@@ -6,20 +6,19 @@ import numpy as np
 import utils
 
 from . import data, utils
-from .flavin_3x3 import flavin as molecule
-
-# from .trp import TRP as molecule
-
+from .trp import TRP as molecule
 
 # from .TYRrad import TYRrad as molecule
+
+# from .flavin_3x3 import flavin as molecule
 
 
 def isotropic(anisotropic: np.ndarray):
     return anisotropic.trace() / 3
 
 
-MOLECULE = "flavin_anion"
-# MOLECULE = "tryptophan_cation"
+# MOLECULE = "flavin_anion"
+MOLECULE = "tryptophan_cation"
 # MOLECULE = "tyrosine_neutral"
 
 
@@ -42,7 +41,8 @@ def get_sor():
     for k, v in molecule.items():
         m = np.array(v)
         # m = isotropic(m)
-        m = utils.MHz_to_mT(m)
+        if MOLECULE in ["flavin_anion"]:
+            m = utils.MHz_to_mT(m)
         orca.append(m)
         orca_keys.append(k)
 
@@ -84,6 +84,31 @@ def flavin_make(new):
     return new_molecule
 
 
+def trp_make(sor):
+    new_molecule = dict(data.MOLECULE_DATA[MOLECULE])
+    print(new_molecule["data"].keys())
+    new_molecule["data"]["Hbeta1"] = new_molecule["data"].pop("H18")
+    new_molecule["data"]["N1"] = new_molecule["data"].pop("N9")
+    new_molecule["data"]["N*"] = new_molecule["data"].pop("N6")
+    new_molecule["data"]["Hbeta2"] = new_molecule["data"].pop("H19")
+    new_molecule["data"]["H6"] = new_molecule["data"].pop("H16")
+    new_molecule["data"]["H5"] = new_molecule["data"].pop("H27")
+    new_molecule["data"]["Halpha"] = new_molecule["data"].pop("H17")
+    new_molecule["data"]["H2"] = new_molecule["data"].pop("H22")
+    new_molecule["data"]["H7"] = new_molecule["data"].pop("H25")
+    new_molecule["data"]["H4"] = new_molecule["data"].pop("H24")
+    new_molecule["data"]["H1"] = new_molecule["data"].pop("H23")
+    new_molecule["data"].pop("H20")
+    new_molecule["data"].pop("H21")
+    new_molecule["data"].pop("H26")
+
+    new = OrderedDict(sor)
+    for k, v in new.items():
+        new_molecule["data"][k]["hfc"] = list(map(lambda t: list(t), v))
+
+    return new_molecule
+
+
 if __name__ == "__main__":
     N = len(molecule)
 
@@ -95,6 +120,8 @@ if __name__ == "__main__":
         new = flavin_proc(sor)
         nlst = list(new.items())
         nlst = sorted(nlst, key=lambda t: isotropic(t[1]), reverse=True)
+    elif MOLECULE == "tryptophan_cation":
+        nlst = list(sor)
     else:
         nlst = list(sor)
 
@@ -107,6 +134,8 @@ if __name__ == "__main__":
 
     if MOLECULE == "flavin_anion":
         new_molecule = flavin_make(new)
+    elif MOLECULE == "tryptophan_cation":
+        new_molecule = trp_make(sor)
     else:
         pass
 
