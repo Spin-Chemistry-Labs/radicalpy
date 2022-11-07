@@ -345,9 +345,6 @@ class HilbertSimulation:
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator for a particle.
 
-        Construct the spin operator for the particle with index
-        `idx` in the `QuantumSimulation`.
-
         Args:
 
             idx (int): Index of the particle.
@@ -356,8 +353,10 @@ class HilbertSimulation:
 
         Returns:
             np.ndarray: Spin operator for a particle in the
-            :class:`Quantum` system simulated.
-
+            `HilbertSimulation` system simulated.
+			
+        Construct the spin operator for the particle with index
+        `idx` in the `HilbertSimulation`.
         """
         assert 0 <= idx and idx < len(self.multiplicities)
         assert axis in "xyz"
