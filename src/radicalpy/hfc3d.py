@@ -6,9 +6,10 @@ import numpy as np
 import utils
 
 from . import data, utils
-from .trp import TRP as molecule
+from .TYRrad import TYRrad as molecule
 
-# from .TYRrad import TYRrad as molecule
+# from .trp import TRP as molecule
+
 
 # from .flavin_3x3 import flavin as molecule
 
@@ -18,8 +19,8 @@ def isotropic(anisotropic: np.ndarray):
 
 
 # MOLECULE = "flavin_anion"
-MOLECULE = "tryptophan_cation"
-# MOLECULE = "tyrosine_neutral"
+# MOLECULE = "tryptophan_cation"
+MOLECULE = "tyrosine_neutral"
 
 
 def get_srp():
@@ -109,7 +110,21 @@ def trp_make(sor):
     return new_molecule
 
 
+def tyr_make(sor):
+    new_data = {}
+    for old_k, v in sor:
+        k = old_k[-1:] + old_k[:-1]
+        new_data[k] = {}
+        new_data[k]["hfc"] = list(map(lambda t: list(t), v))
+        element = "1H" if "H" in k else "14N"
+        new_data[k]["element"] = element
+    new_molecule = dict(data.MOLECULE_DATA[MOLECULE])
+    new_molecule["data"] = new_data
+    return new_molecule
+
+
 if __name__ == "__main__":
+    print(data.MOLECULE_DATA[MOLECULE]["data"])
     N = len(molecule)
 
     srp = get_srp()
@@ -127,15 +142,17 @@ if __name__ == "__main__":
 
     print(f"{MOLECULE}")
     print("idx  json (old)    json (new)         orca")
-    for i in range(N):
-        print(
-            f"{i=:2} {srp[i][1]:7} {srp[i][0]:5} {nlst[i][0]:6} {isotropic(nlst[i][1]):10.5} {isotropic(sor[i][1]):10.5} {sor[i][0]:8} {i=:2}"
-        )
+    # for i in range(N):
+    #     print(
+    #         f"{i=:2} {srp[i][1]:7} {srp[i][0]:5} {nlst[i][0]:6} {isotropic(nlst[i][1]):10.5} {isotropic(sor[i][1]):10.5} {sor[i][0]:8} {i=:2}"
+    #     )
 
     if MOLECULE == "flavin_anion":
         new_molecule = flavin_make(new)
     elif MOLECULE == "tryptophan_cation":
         new_molecule = trp_make(sor)
+    elif MOLECULE == "tyrosine_neutral":
+        new_molecule = tyr_make(sor)
     else:
         pass
 
