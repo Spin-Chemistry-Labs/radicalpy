@@ -162,6 +162,8 @@ class Molecule:
                 self.multiplicities = multiplicities
                 self.gammas_mT = gammas_mT
                 self.hfcs = hfcs
+        if self.hfcs and isinstance(self.hfcs[0], list):
+            self.hfcs = [np.array(h) for h in self.hfcs]
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) == self.num_particles
@@ -305,6 +307,10 @@ class HilbertSimulation:
 
         self.num_electrons = 2
         self.electrons = ["E"] * self.num_electrons
+        print("")
+        print(f"{molecules[0].hfcs=}")
+        print(f"{molecules[1].hfcs=}")
+        # print([m.hfcs for m in molecules])
         self.hfcs = sum([m.hfcs for m in molecules], [])
         self.num_particles = self.num_electrons
         self.num_particles += sum([m.num_particles for m in molecules])
@@ -354,7 +360,7 @@ class HilbertSimulation:
         Returns:
             np.ndarray: Spin operator for a particle in the
             `HilbertSimulation` system simulated.
-			
+
         Construct the spin operator for the particle with index
         `idx` in the `HilbertSimulation`.
         """
@@ -367,25 +373,21 @@ class HilbertSimulation:
 
         return np.kron(np.kron(eye_before, sigma), eye_after)
 
-    def product_operator_axis(
-        self, p1: int, p2: int, ax1: int, ax2: int = -1
-    ) -> np.ndarray:
-        if ax2 == -1:
-            ax2 = ax1
-        """Projection operator for a given axis."""
-        return self.spin_operator(p1, ax1).dot(self.spin_operator(p2, ax2))
-
-    def product_operator(self, idx1: int, idx2: int) -> np.ndarray:
+    def product_operator(self, idx1: int, idx2: int, h: float = 1) -> np.ndarray:
         """Projection operator."""
-        return sum([self.product_operator_axis(idx1, idx2, axis) for axis in "xyz"])
+        return h * sum(
+            [
+                self.spin_operator(idx1, axis).dot(self.spin_operator(idx2, axis))
+                for axis in "xyz"
+            ]
+        )
 
-    def product_operator_3d(
-        self, idx1: int, idx2: int, tensor: np.ndarray
-    ) -> np.ndarray:
+    def product_operator_3d(self, idx1: int, idx2: int, h: np.ndarray) -> np.ndarray:
         """Projection operator."""
         return sum(
             [
-                tensor[i, j] * self.product_operator_axis(idx1, idx2, ax1, ax2)
+                h[i, j]
+                * self.spin_operator(idx1, ax1).dot(self.spin_operator(idx2, ax2))
                 for i, ax1 in enumerate("xyz")
                 for j, ax2 in enumerate("xyz")
             ]
@@ -468,21 +470,7 @@ class HilbertSimulation:
         omega = B0 * self.gammas_mT[0]
         return omega * np.einsum("j,ijkl->kl", rotation, particles)
 
-    def _HH_term(self, ei: int, ni: int) -> np.ndarray:
-        """Construct a term of the Hyperfine Hamiltonian.
-
-        .. todo::
-            Write proper docs.
-        """
-        g = self.gammas_mT[0]
-        h = -g * self.hfcs[ni]
-        effective_ni = self.num_electrons + ni
-        if isinstance(h, np.ndarray):
-            return -g * self.product_operator_3d(ei, effective_ni, h)
-        else:
-            return h * self.product_operator(ei, effective_ni)
-
-    def hyperfine_hamiltonian(self) -> np.ndarray:
+    def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> np.ndarray:
         """Construct the Hyperfine Hamiltonian.
 
         Construct the Hyperfine Hamiltonian based on the magnetic
@@ -493,7 +481,30 @@ class HilbertSimulation:
             system described by the `Quantum` simulation object.
 
         """
-        return -sum([self._HH_term(ei, ni) for ni, ei in enumerate(self.coupling)])
+        if hfc_anisotropy:
+            for h in self.hfcs:
+                if not isinstance(h, np.array) and h.shape == (3, 3):
+                    raise ValueError(
+                        "Not all molecules have 3x3 HFC tensors! Please use `hfc_anisotropy=False`"
+                    )
+
+        print(hfc_anisotropy, self.hfcs)
+        if hfc_anisotropy:
+            prodop = self.product_operator_3d
+            hfcs = self.hfcs
+        else:
+            prodop = self.product_operator
+            hfcs = [
+                utils.isotropic(h) if isinstance(h, np.ndarray) else h
+                for h in self.hfcs
+            ]
+        print(hfc_anisotropy, hfcs)
+        return sum(
+            [
+                self.gammas_mT[ei] * prodop(ei, self.num_electrons + ni, hfcs[ni])
+                for ni, ei in enumerate(self.coupling)
+            ]
+        )
 
     @staticmethod
     def exchange_interaction_solution(r: float) -> float:
@@ -571,9 +582,9 @@ class HilbertSimulation:
         conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
         return (-conversion / r**3) * 1000
 
-    def dipolar_interaction_3d(self, r, gamma):#, coefficient: float):
-#         kwargs = {"coefficient": coefficient} if coefficient is not None else {}
-        dipolar1d = self.dipolar_interaction_1d(r)#, **kwargs)
+    def dipolar_interaction_3d(self, r, gamma):  # , coefficient: float):
+        #         kwargs = {"coefficient": coefficient} if coefficient is not None else {}
+        dipolar1d = self.dipolar_interaction_1d(r)  # , **kwargs)
         dipolar = self.gammas_mT[0] * (2 / 3) * dipolar1d
         return dipolar * np.diag([-1, -1, 2])
 
@@ -621,6 +632,7 @@ class HilbertSimulation:
         D: float,
         theta: Optional[float] = None,
         phi: Optional[float] = None,
+        hfc_anisotropy: bool = False,
     ) -> np.ndarray:
         """Construct the final (total) Hamiltonian.
 
@@ -690,6 +702,7 @@ class HilbertSimulation:
         H_base: np.ndarray,
         theta: Optional[float] = None,
         phi: Optional[float] = None,
+        hfc_anisotropy: bool = False,
     ) -> np.ndarray:
         """Generate density matrices (rhos) for MARY.
 
@@ -721,9 +734,10 @@ class HilbertSimulation:
         relaxations: list[KineticsRelaxationBase] = [],
         theta: Optional[float] = None,
         phi: Optional[float] = None,
+        hfc_anisotropy: bool = False,
     ) -> dict:
         dt = time[1] - time[0]
-        H = self.total_hamiltonian(B=0, D=D, J=J)
+        H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
         H = self.convert(H)
         for K in kinetics + relaxations:  # skip in hilbert
             K.init(self)
