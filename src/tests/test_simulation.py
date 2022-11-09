@@ -10,6 +10,7 @@ import numpy as np
 from src.radicalpy import data as rpdata
 from src.radicalpy import kinetics, relaxation
 from src.radicalpy import simulation as rpsim
+from src.radicalpy import utils
 
 import tests.radpy as radpy
 
@@ -47,7 +48,7 @@ def state2radpy(state: rpsim.State) -> str:
 class MoleculeTests(unittest.TestCase):
     def test_effective_hyperfine(self):
         flavin = rpsim.Molecule("flavin_anion", ["N5"])
-        self.assertAlmostEqual(flavin.effective_hyperfine, 1.3981069)
+        self.assertAlmostEqual(flavin.effective_hyperfine, 1.4239723207027404)
 
     def test_manual_effective_hyperfine(self):
         nuclei = ["14N"] * 4 + ["1H"] * 12
@@ -197,7 +198,11 @@ class HilbertTests(unittest.TestCase):
         HH_true = sum(
             [
                 radpy.HamiltonianHyperfine(
-                    self.sim.num_particles, ei, 2 + ni, hfcs[ni], self.gamma_mT
+                    self.sim.num_particles,
+                    ei,
+                    2 + ni,
+                    utils.isotropic(hfcs[ni]),
+                    self.gamma_mT,
                 )
                 for ni, ei in enumerate(couplings)
             ]
@@ -438,7 +443,7 @@ class HilbertTests(unittest.TestCase):
         flavin = rpsim.Molecule("flavin_anion")
         trp = rpsim.Molecule("trp_cation")
         sim = rpsim.HilbertSimulation([flavin, trp])
-        self.assertAlmostEqual(sim.Bhalf_theoretical, 2.9692816566)
+        self.assertAlmostEqual(sim.Bhalf_theoretical, 2.4663924080289092)
 
 
 class LiouvilleTests(unittest.TestCase):

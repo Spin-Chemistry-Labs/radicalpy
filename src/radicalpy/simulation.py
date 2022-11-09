@@ -67,15 +67,31 @@ class Molecule:
     Traceback (most recent call last):
     ...
     ValueError: Available molecules below:
+    2_6_aqds
     adenine_cation
-    aqds_anion
     flavin_anion
     flavin_neutral
-    trp_cation
+    tryptophan_cation
     tyrosine_neutral
 
     Similarly, giving a list of incorrect atom names will also result
     in a helpful error message listing the available atoms.
+
+    >>> Molecule("tryptophan_cation", ["buz"])
+    Traceback (most recent call last):
+    ...
+    ValueError: Available nuclei below.
+    Hbeta1 (hfc = 1.6045)
+    H1 (hfc = -0.5983)
+    H4 (hfc = -0.4879)
+    H7 (hfc = -0.3634)
+    N1 (hfc = 0.32156666666666667)
+    H2 (hfc = -0.278)
+    N* (hfc = 0.1465)
+    Halpha (hfc = -0.09306666666666667)
+    Hbeta2 (hfc = 0.04566666666666666)
+    H5 (hfc = -0.04)
+    H6 (hfc = -0.032133333333333326)
 
     >>> Molecule("adenine_cation", ["buz"])
     Traceback (most recent call last):
@@ -203,6 +219,10 @@ class Molecule:
             if nucleus not in molecule_data:
                 keys = molecule_data.keys()
                 hfcs = [molecule_data[k]["hfc"] for k in keys]
+                hfcs = [
+                    utils.isotropic(np.array(h)) if isinstance(h, list) else h
+                    for h in hfcs
+                ]
                 pairs = sorted(
                     zip(keys, hfcs), key=lambda t: np.abs(t[1]), reverse=True
                 )
@@ -247,8 +267,8 @@ class Molecule:
 
         # spin quantum number
         s = np.array(list(map(utils.spin_quantum_number, multiplicities)))
+        hfcs = [utils.isotropic(h) if isinstance(h, list) else h for h in hfcs]
         hfcs = np.array(hfcs)
-
         return np.sqrt((4 / 3) * sum((hfcs**2 * s) * (s + 1)))
 
 
@@ -290,15 +310,21 @@ class HilbertSimulation:
             default gyromagnetic ratio gamma.
 
     >>> HilbertSimulation([Molecule("flavin_anion", ["N5"]),
-    ...                    Molecule("trp_cation", ["H18", "H23"])])
+    ...                    Molecule("tryptophan_cation", ["Hbeta1", "H1"])])
     Number of electrons: 2
     Number of nuclei: 3
     Number of particles: 5
     Multiplicities: [2, 2, 3, 2, 2]
     Gyromagnetic ratios (mT): [-176085963.023, -176085963.023, 19337.792, 267522.18744, 267522.18744]
-    Isotopes: ['N5', 'H18', 'H23']
+    Isotopes: ['N5', 'Hbeta1', 'H1']
     Couplings: [0, 1, 1]
-    HFCs (mT): [0.5233, 1.6046, -0.5983]
+    HFCs (mT): [array([[-0.06819637,  0.01570029,  0.08701531],
+           [ 0.01570029, -0.03652102,  0.27142597],
+           [ 0.08701531,  0.27142597,  1.64713923]]), array([[ 1.5808, -0.0453, -0.0506],
+           [-0.0453,  1.5575,  0.0988],
+           [-0.0506,  0.0988,  1.6752]]), array([[-0.992 , -0.2091, -0.2003],
+           [-0.2091, -0.2631,  0.2803],
+           [-0.2003,  0.2803, -0.5398]])]
     """
 
     def __init__(self, molecules: list[Molecule], custom_gfactors=False):
@@ -307,10 +333,6 @@ class HilbertSimulation:
 
         self.num_electrons = 2
         self.electrons = ["E"] * self.num_electrons
-        print("")
-        print(f"{molecules[0].hfcs=}")
-        print(f"{molecules[1].hfcs=}")
-        # print([m.hfcs for m in molecules])
         self.hfcs = sum([m.hfcs for m in molecules], [])
         self.num_particles = self.num_electrons
         self.num_particles += sum([m.num_particles for m in molecules])
@@ -488,7 +510,6 @@ class HilbertSimulation:
                         "Not all molecules have 3x3 HFC tensors! Please use `hfc_anisotropy=False`"
                     )
 
-        print(hfc_anisotropy, self.hfcs)
         if hfc_anisotropy:
             prodop = self.product_operator_3d
             hfcs = self.hfcs
@@ -498,7 +519,6 @@ class HilbertSimulation:
                 utils.isotropic(h) if isinstance(h, np.ndarray) else h
                 for h in self.hfcs
             ]
-        print(hfc_anisotropy, hfcs)
         return sum(
             [
                 self.gammas_mT[ei] * prodop(ei, self.num_electrons + ni, hfcs[ni])
