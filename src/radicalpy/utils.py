@@ -48,8 +48,8 @@ def Gauss_to_mT(Gauss: float) -> float:
     return Gauss / 10
 
 
-def isotropic(anisotropic: np.ndarray):
-    return anisotropic.trace() / 3
+def isotropic(anisotropic: np.ndarray or list):
+    return np.trace(anisotropic) / 3
 
 
 def MHz_to_angular_frequency(MHz: float) -> float:
