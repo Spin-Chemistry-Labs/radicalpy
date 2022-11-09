@@ -33,6 +33,14 @@ RADICAL_PAIR = [
     rpsim.Molecule("adenine_cation"),
     # rpsim.Molecule("adenine_cation", ["C8-H"]),
 ]
+RADICAL_PAIR_RAW = [
+    rpsim.Molecule(
+        multiplicities=[2, 2],
+        gammas_mT=[rpdata.gamma_mT("E"), rpdata.gamma_mT("E")],
+        hfcs=[0, 0],
+    ),
+    rpsim.Molecule(multiplicities=[2], gammas_mT=[rpdata.gamma_mT("E")], hfcs=[0]),
+]
 
 
 def load_tests(loader, tests, ignore):
@@ -141,14 +149,7 @@ class HilbertTests(unittest.TestCase):
     def test_HZ_raw(self):
         ################
         # RadicalPy code
-        gamma_mT = 3.14
-        rad_pair = [
-            rpsim.Molecule(
-                multiplicities=[2, 2], gammas_mT=[gamma_mT, gamma_mT], hfcs=[0, 0]
-            ),
-            rpsim.Molecule(multiplicities=[2], gammas_mT=[gamma_mT], hfcs=[0]),
-        ]
-        sim = rpsim.HilbertSimulation(rad_pair)
+        sim = rpsim.HilbertSimulation(RADICAL_PAIR_RAW)
         HZ = sim.zeeman_hamiltonian(PARAMS["B"][0])
 
         #########################
@@ -157,7 +158,7 @@ class HilbertTests(unittest.TestCase):
         electrons = sum(
             [radpy.np_spinop(radpy.np_Sz, i, sim.num_particles) for i in range(2)]
         )
-        omega_n = PARAMS["B"][0] * gamma_mT
+        omega_n = PARAMS["B"][0] * rpdata.gamma_mT("E")
         nuclei = sum(
             [
                 radpy.np_spinop(radpy.np_Sz, i, sim.num_particles)
@@ -165,7 +166,6 @@ class HilbertTests(unittest.TestCase):
             ]
         )
         HZ_true = -omega_e * electrons - omega_n * nuclei
-
         assert np.all(
             np.isclose(HZ, HZ_true)
         ), "Zeeman Hamiltonian not calculated properly."
@@ -381,6 +381,24 @@ class HilbertTests(unittest.TestCase):
                 # )
 
     def test_hyperfine_3d(self):
+
+        results = self.sim.MARY(
+            rpsim.State.SINGLET,
+            rpsim.State.TRIPLET,
+            self.time,
+            PARAMS["B"],
+            PARAMS["D"],
+            PARAMS["J"],
+            theta=np.pi / 2,
+            phi=0,
+            hfc_anisotropy=True,
+        )
+        self.assertEqual(results["time_evolutions"][0][0], 0)
+        # print(results.keys())
+        # print(results["product_yields"])
+        # plt.plot(results["time"], results["time_evolutions"][1])
+        # plt.show()
+
         N5 = np.array(
             [
                 [-2.41368, -0.0662465, -0.971492],
