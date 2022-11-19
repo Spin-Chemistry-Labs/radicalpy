@@ -125,7 +125,7 @@ def spectral_density(omega, tau_c):
 def spherical_to_cartesian(theta, phi):
     return np.array(
         [
-            np.cos(theta) * np.sin(phi),
+            np.sin(theta) * np.cos(phi),
             np.sin(theta) * np.sin(phi),
             np.cos(phi),
         ]
