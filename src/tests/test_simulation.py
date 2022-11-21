@@ -8,7 +8,7 @@ import unittest
 import matplotlib.pyplot as plt
 import numpy as np
 from src.radicalpy import data as rpdata
-from src.radicalpy import kinetics, relaxation
+from src.radicalpy import estimations, kinetics, relaxation
 from src.radicalpy import simulation as rpsim
 from src.radicalpy import utils
 
@@ -301,7 +301,7 @@ class HilbertTests(unittest.TestCase):
         H = self.sim.zeeman_hamiltonian_3d(1, 10, 20)
 
     def test_dipolar_interaction_1d(self):
-        approx = self.sim.dipolar_interaction_1d(1)
+        approx = estimations.dipolar_interaction_1d(1)
         gold = approx
         self.assertEqual(gold, approx)
 
