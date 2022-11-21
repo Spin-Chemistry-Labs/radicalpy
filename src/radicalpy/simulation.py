@@ -18,10 +18,10 @@ class State(enum.Enum):
     EQUILIBRIUM = "Eq"
     SINGLET = "S"
     TRIPLET = "T"
-    TRIPLET_ZERO = "T0"
-    TRIPLET_PLUS = "T+"
-    TRIPLET_PLUS_MINUS = "T+/-"
-    TRIPLET_MINUS = "T-"
+    TRIPLET_ZERO = "T_0"
+    TRIPLET_PLUS = "T_+"
+    TRIPLET_PLUS_MINUS = "T_\\pm"
+    TRIPLET_MINUS = "T_-"
 
 
 class Molecule:

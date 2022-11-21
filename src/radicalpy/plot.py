@@ -6,6 +6,46 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
 
+from .simulation import HilbertSimulation, State
+
+
+def _format_label(t):
+    return f"$\\vert {t} \\rangle$"
+
+
+def density_matrix_axis_kwargs(sim: HilbertSimulation):
+    if sim.num_electrons != 2:
+        raise ValueError(
+            "Density matrix plotting make little sense for non-radical pairs!"
+        )
+    multiplicities = sim.multiplicities[sim.num_electrons :]
+    old_labels = [
+        State.TRIPLET_PLUS.value,
+        State.TRIPLET_ZERO.value,
+        State.SINGLET.value,
+        State.TRIPLET_MINUS.value,
+    ]
+    for m in multiplicities:
+        labels = []
+        for label in old_labels:
+            for t in range(m):
+                tt = int(2 * ((m - t - 1) - (m - 1) / 2))
+                tt = f"{tt}/2" if tt % 2 else str(tt // 2)
+                if tt[0] not in {"-", "0"}:
+                    tt = f"+{tt}"
+                labels.append(f"{label}, {tt}")
+
+        old_labels = labels
+    axis_labels = list(map(_format_label, labels))
+    ticksx = np.arange(0.5, len(axis_labels), 1)
+    ticksy = np.arange(0.5, len(axis_labels), 1)
+    return {
+        "xticks": ticksx,
+        "xticklabels": axis_labels,
+        "yticks": ticksy,
+        "yticklabels": axis_labels,
+    }
+
 
 def density_matrix_animation(rhos, Bi, frames, bar3d_kwargs, axes_kwargs):
     fig = plt.figure()
