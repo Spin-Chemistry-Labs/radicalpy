@@ -3,7 +3,35 @@
 import numpy as np
 
 from . import utils
-from .data import constants
+from .data import constants, gamma_mT
+
+
+def dipolar_interaction_1d(r: float) -> float:
+    """Construct the Dipolar interaction constant.
+
+    Construct the Dipolar interaction based on the inter-radical separation `r`.
+
+    .. todo::
+        equation 4 of https://pubs.acs.org/doi/10.1021/bi048445d.
+
+    Returns:
+        float: The dipolar coupling constant in milli Tesla (mT).
+
+    """
+    mu_0 = constants.value("mu_0")
+    mu_B = constants.value("mu_B")
+    g_e = constants.value("g_e")
+
+    conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
+    return (-conversion / r**3) * 1000
+
+
+def dipolar_interaction_3d(r: float, gamma: float = gamma_mT("E")) -> float:
+    # , coefficient: float):
+    #         kwargs = {"coefficient": coefficient} if coefficient is not None else {}
+    dipolar1d = dipolar_interaction_1d(r)  # , **kwargs)
+    dipolar = gamma * (2 / 3) * dipolar1d
+    return dipolar * np.diag([-1, -1, 2])
 
 
 def exchange_interaction_protein(

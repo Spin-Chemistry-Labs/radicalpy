@@ -546,31 +546,6 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
-    def dipolar_interaction_1d(self, r: float) -> float:
-        """Construct the Dipolar interaction constant.
-
-        Construct the Dipolar interaction based on the inter-radical separation `r`.
-
-        .. todo::
-            equation 4 of https://pubs.acs.org/doi/10.1021/bi048445d.
-
-        Returns:
-            float: The dipolar coupling constant in milli Tesla (mT).
-
-        """
-        mu_0 = constants.value("mu_0")
-        mu_B = constants.value("mu_B")
-        g_e = constants.value("g_e")
-
-        conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
-        return (-conversion / r**3) * 1000
-
-    def dipolar_interaction_3d(self, r, gamma):  # , coefficient: float):
-        #         kwargs = {"coefficient": coefficient} if coefficient is not None else {}
-        dipolar1d = self.dipolar_interaction_1d(r)  # , **kwargs)
-        dipolar = self.gammas_mT[0] * (2 / 3) * dipolar1d
-        return dipolar * np.diag([-1, -1, 2])
-
     def dipolar_hamiltonian(self, D: float or np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
 
