@@ -11,8 +11,7 @@ from sklearn.metrics import r2_score
 
 from . import utils
 from .data import (MOLECULE_DATA, SPIN_DATA, constants, gamma_mT,
-                   get_molecules, multiplicity)
-from .pauli_matrices import pauli
+                   get_molecules, multiplicity, pauli)
 
 
 class State(enum.Enum):
