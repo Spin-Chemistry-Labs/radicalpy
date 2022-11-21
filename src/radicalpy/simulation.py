@@ -246,12 +246,7 @@ class Molecule:
         self.hfcs = hfcs
 
     @property
-    def num_particles(self) -> int:
-        """Return the number of isotopes in the molecule."""
-        return len(self.multiplicities)
-
-    @property
-    def effective_hyperfine(self):
+    def effective_hyperfine(self) -> float:
         if self.custom_molecule:
             multiplicities = self.multiplicities
             hfcs = self.hfcs
@@ -259,10 +254,8 @@ class Molecule:
             # TODO: this can fail with wrong molecule name
             data = MOLECULE_DATA[self.radical]["data"]
             nuclei = list(data.keys())
-            # TODO: refactor (copied from `_init_from_molecule_db()`
             elem = [data[n]["element"] for n in nuclei]
             multiplicities = [multiplicity(e) for e in elem]
-            # TODO: refactor (copied from `_init_from_molecule_db()`)
             hfcs = [data[n]["hfc"] for n in nuclei]
 
         # spin quantum number
@@ -270,6 +263,11 @@ class Molecule:
         hfcs = [utils.isotropic(h) if isinstance(h, list) else h for h in hfcs]
         hfcs = np.array(hfcs)
         return np.sqrt((4 / 3) * sum((hfcs**2 * s) * (s + 1)))
+
+    @property
+    def num_particles(self) -> int:
+        """Return the number of isotopes in the molecule."""
+        return len(self.multiplicities)
 
 
 class KineticsRelaxationBase:
@@ -743,13 +741,6 @@ class HilbertSimulation:
         R2 = r2_score(MARY, y_pred_MARY)
 
         return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
-
-    @property
-    def Bhalf_theoretical(self):
-        assert len(self.molecules) == 2
-        sum_hfc2 = sum([m.effective_hyperfine**2 for m in self.molecules])
-        sum_hfc = sum([m.effective_hyperfine for m in self.molecules])
-        return np.sqrt(3) * (sum_hfc2 / sum_hfc)
 
     @staticmethod
     def convert(H: np.ndarray) -> np.ndarray:
