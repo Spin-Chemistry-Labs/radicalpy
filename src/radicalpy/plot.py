@@ -13,7 +13,7 @@ def _format_label(t):
     return f"$\\vert {t} \\rangle$"
 
 
-def density_matrix_axis_kwargs(sim: HilbertSimulation):
+def spin_state_labels(sim: HilbertSimulation):
     if sim.num_electrons != 2:
         raise ValueError(
             "Density matrix plotting make little sense for non-radical pairs!"
@@ -36,7 +36,11 @@ def density_matrix_axis_kwargs(sim: HilbertSimulation):
                 labels.append(f"{label}, {tt}")
 
         old_labels = labels
-    axis_labels = list(map(_format_label, labels))
+    return list(map(_format_label, labels))
+
+
+def density_matrix_axes_kwargs(sim: HilbertSimulation):
+    axis_labels = spin_state_labels(sim)
     ticksx = np.arange(0.5, len(axis_labels), 1)
     ticksy = np.arange(0.5, len(axis_labels), 1)
     return {

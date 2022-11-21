@@ -41,7 +41,7 @@ def main():
     pylab.rcParams.update(params)
     bar3d_kwargs = {"alpha": 0.9}
 
-    axes_kwargs = rp.plot.density_matrix_axis_kwargs(sim)
+    axes_kwargs = rp.plot.density_matrix_axes_kwargs(sim)
     axes_kwargs["xlabel"] = "Spin state"
     axes_kwargs["ylabel"] = "Spin state"
     axes_kwargs["ylabel"] = "Spin state"
