@@ -23,6 +23,23 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     return ang_freq / (mu_B / hbar * -g_e / 1e9)
 
 
+def Bhalf_fit(B, MARY):
+    popt_MARY, pcov_MARY = curve_fit(
+        __class__.Lorentzian_fit, B, MARY, p0=[MARY[-1], int(len(B) / 2)]
+    )
+    MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
+
+    A_opt_MARY, Bhalf_opt_MARY = popt_MARY
+    x_model_MARY = np.linspace(min(B), max(B), len(B))
+    y_model_MARY = __class__.Lorentzian_fit(x_model_MARY, *popt_MARY)
+    Bhalf = np.abs(Bhalf_opt_MARY)
+
+    y_pred_MARY = __class__.Lorentzian_fit(B, *popt_MARY)
+    R2 = r2_score(MARY, y_pred_MARY)
+
+    return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
+
+
 def cartesian_to_spherical(x, y, z):
     r = np.sqrt(x**2 + y**2 + z**2)
     theta = np.arccos(z / r)
@@ -50,6 +67,10 @@ def Gauss_to_mT(Gauss: float) -> float:
 
 def isotropic(anisotropic: np.ndarray or list):
     return np.trace(anisotropic) / 3
+
+
+def Lorentzian_fit(x, A, Bhalf):
+    return (A / Bhalf**2) - (A / (x**2 + Bhalf**2))
 
 
 def MHz_to_angular_frequency(MHz: float) -> float:
