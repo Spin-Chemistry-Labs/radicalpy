@@ -50,7 +50,14 @@ def load_tests(loader, tests, ignore):
 
 
 def state2radpy(state: rpsim.State) -> str:
-    return str(state.value).replace("+", "p").replace("-", "m").replace("/", "")
+    return (
+        str(state.value)
+        .replace("+", "p")
+        .replace("-", "m")
+        .replace("/", "")
+        .replace("_", "")
+        .replace("\\", "")
+    )
 
 
 class MoleculeTests(unittest.TestCase):
