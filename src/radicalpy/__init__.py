@@ -1,1 +1,1 @@
-from . import data, estimations, kinetics, relaxation, simulation, utils
+from . import data, estimations, kinetics, plot, relaxation, simulation, utils
