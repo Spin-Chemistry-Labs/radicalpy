@@ -8,7 +8,7 @@ from radicalpy.simulation import State
 
 
 def main():
-    flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
+    flavin = rp.simulation.Molecule("flavin_anion", ["H25"])
     Z = rp.simulation.Molecule("Z")
     sim = rp.simulation.HilbertSimulation([flavin, Z])
     time = np.arange(0, 15e-6, 5e-9)
@@ -27,7 +27,7 @@ def main():
 
     params = {
         "figure.figsize": [10, 10],
-        "figure.dpi": 300,
+        # "figure.dpi": 300,
         "axes3d.grid": False,
         # "axes.facecolor": "none", # this was green
         "axes.labelsize": 12,

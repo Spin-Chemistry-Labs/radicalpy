@@ -1,2 +1,2 @@
 # https://matplotlib.org/stable/tutorials/introductory/customizing.html
-axes.facecolor: green
+axes.facecolor: none
