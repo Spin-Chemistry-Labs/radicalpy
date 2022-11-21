@@ -457,12 +457,6 @@ class HilbertTests(unittest.TestCase):
         # plt.show()
         # print("DONE")
 
-    def test_Bhalf_theoretical(self):
-        flavin = rpsim.Molecule("flavin_anion")
-        trp = rpsim.Molecule("trp_cation")
-        sim = rpsim.HilbertSimulation([flavin, trp])
-        self.assertAlmostEqual(sim.Bhalf_theoretical, 2.4663924080289092)
-
 
 class LiouvilleTests(unittest.TestCase):
     def setUp(self):

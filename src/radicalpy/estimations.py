@@ -3,7 +3,14 @@
 import numpy as np
 
 from . import utils
-from .data import constants, gamma_mT
+from .data import MOLECULE_DATA, constants, gamma_mT, multiplicity
+
+
+def Bhalf_theoretical(sim):
+    assert len(sim.molecules) == 2
+    sum_hfc2 = sum([m.effective_hyperfine**2 for m in sim.molecules])
+    sum_hfc = sum([m.effective_hyperfine for m in sim.molecules])
+    return np.sqrt(3) * (sum_hfc2 / sum_hfc)
 
 
 def dipolar_interaction_1d(r: float) -> float:
