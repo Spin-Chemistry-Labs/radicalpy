@@ -29,7 +29,7 @@ def main():
         "figure.figsize": [10, 10],
         "figure.dpi": 300,
         "axes3d.grid": False,
-        "axes.facecolor": "none",
+        # "axes.facecolor": "none", # this was green
         "axes.labelsize": 12,
         "axes.spines.bottom": True,
         "axes.spines.left": True,
