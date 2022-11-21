@@ -526,43 +526,6 @@ class HilbertSimulation:
             ]
         )
 
-    @staticmethod
-    def exchange_interaction_solution(r: float) -> float:
-        """Construct the exchange interaction constant in a solution.
-
-        .. todo::
-            Write proper docs.
-        """
-        J0rad = 1.7e17
-        rj = 0.049e-9
-        gamma = 1.76e8  # TODO
-        J0 = J0rad / gamma / 10  # convert to mT?????????
-        return J0 * np.exp(-r / rj)
-
-    @staticmethod
-    def exchange_interaction_protein(
-        r: float, beta: float = 1.4e10, J0: float = 9.7e12
-    ) -> float:
-        """Construct the exchange interaction constant in a protein.
-
-        .. todo::
-            Write proper docs.
-        """
-        return J0 * np.exp(-beta * r) / 1000
-
-    @staticmethod
-    def exchange_interaction(r: float, model: str = "solution"):
-        """Construct the exchange interaction constant in a solution.
-
-        .. todo::
-            Write proper docs.
-        """
-        methods = {
-            "solution": __class__.exchange_int_solution,
-            "protein": __class__.exchange_int_protein,
-        }
-        return methods[model](r)
-
     def exchange_hamiltonian(self, J: float) -> np.ndarray:
         """Construct the Exchange Hamiltonian.
 
