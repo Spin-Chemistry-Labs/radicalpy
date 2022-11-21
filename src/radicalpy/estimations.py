@@ -6,6 +6,43 @@ from . import utils
 from .data import constants
 
 
+def exchange_interaction_protein(
+    r: float, beta: float = 1.4e10, J0: float = 9.7e12
+) -> float:
+    """Construct the exchange interaction constant in a protein.
+
+    .. todo::
+        Write proper docs.
+    """
+    return J0 * np.exp(-beta * r) / 1000
+
+
+def exchange_interaction_solution(r: float) -> float:
+    """Construct the exchange interaction constant in a solution.
+
+    .. todo::
+        Write proper docs.
+    """
+    J0rad = 1.7e17
+    rj = 0.049e-9
+    gamma = 1.76e8  # TODO
+    J0 = J0rad / gamma / 10  # convert to mT?????????
+    return J0 * np.exp(-r / rj)
+
+
+def exchange_interaction(r: float, model: str = "solution"):
+    """Construct the exchange interaction constant in a solution.
+
+    .. todo::
+        Write proper docs.
+    """
+    methods = {
+        "solution": exchange_interaction_solution,
+        "protein": exchange_interaction_protein,
+    }
+    return methods[model](r)
+
+
 def rotational_correlation_time(radius, temp, eta=0.89e-3):
     k_B = constants.value("k_B")
 
@@ -18,14 +55,14 @@ def rotational_correlation_time_protein(Mr, temp, eta=0.89e-3):
     V = constants.value("V")
     rw = constants.value("rw")
     N_A = constants.value("N_A")
-    #k_B = constants.value("k_B")
+    # k_B = constants.value("k_B")
 
     # Calculate Rh - effective hydrodynamic radius of the protein in m
     Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
 
     # Calculate isotropic rotational correlation time (tau_c) in s
     tau_c = rotational_correlation_time(Rh, temp, eta)
-    #tau_c = (4 * np.pi * eta * Rh**3) / (3 * k_B * temp)
+    # tau_c = (4 * np.pi * eta * Rh**3) / (3 * k_B * temp)
     return tau_c
 
 
@@ -33,10 +70,10 @@ def k_STD(J, tau_c):
     # J-modulation rate
     J_var_MHz = utils.mT_to_MHz(utils.mT_to_MHz(np.var(J)))
     return 4 * tau_c * J_var_MHz * 4 * np.pi**2 * 1e12
-	
+
 
 def k_STD_micelle(D, V, d=5e-10, J0=1e11, alpha=2e10):
-    l = d + 1 / alpha * (np.log(2 * np.abs(J0) / (D * alpha**2)) + 1.15) 
+    l = d + 1 / alpha * (np.log(2 * np.abs(J0) / (D * alpha**2)) + 1.15)
     l -= 1j * (np.pi / 2 * alpha) * J0
     return 4 * np.pi * D * np.real(l) / V
 
@@ -59,9 +96,12 @@ def k_triplet_relaxation(B0, tau_c, D, E):
     muB = constants.value("mu_B") * 1e-3
     h = constants.value("h")
     B0 = utils.mT_to_MHz(B0)
-    
+
     nu_0 = (g * muB * B0) / h
-    jnu0tc = (2 / 15) * ((4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2) + (tau_c) / (1 + nu_0**2 * tau_c**2))
+    jnu0tc = (2 / 15) * (
+        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2)
+        + (tau_c) / (1 + nu_0**2 * tau_c**2)
+    )
     return (D**2 + 3 * E**2) * jnu0tc
 
 
