@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-
-import matplotlib.pylab as pylab
 import numpy as np
 import radicalpy as rp
 from radicalpy.simulation import State
@@ -26,26 +24,11 @@ def main():
         kinetics=[rp.kinetics.Haberkorn(k, State.SINGLET)],
     )
 
-    params = {
-        "figure.figsize": [10, 10],
-        # "figure.dpi": 300,
-        "axes3d.grid": False,
-        # "axes.facecolor": "none", # this was green
-        "axes.labelsize": 12,
-        "axes.spines.bottom": True,
-        "axes.spines.left": True,
-        "axes.spines.right": True,
-        "axes.spines.top": True,
-        "xtick.labelsize": 12,
-        "ytick.labelsize": 12,
-    }
-    pylab.rcParams.update(params)
     bar3d_kwargs = {"alpha": 0.9}
-
     axes_kwargs = rp.plot.density_matrix_axes_kwargs(sim)
-    axes_kwargs["xlabel"] = "Spin state"
-    axes_kwargs["ylabel"] = "Spin state"
-    axes_kwargs["ylabel"] = "Spin state"
+    # axes_kwargs["xlabel"] = "Spin state"
+    # axes_kwargs["ylabel"] = "Spin state"
+    axes_kwargs["zlabel"] = "Probability"
     rhos = MARY["rhos"]
     for Bi, B in enumerate(Bs):
         axes_kwargs["title"] = f"$B = {B} mT$"
