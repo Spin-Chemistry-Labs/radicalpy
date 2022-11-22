@@ -1,5 +1,4 @@
-REM rmdir /s dist
-REM python setup.py sdist
-REM for /R %i in (dist/*.tar.gz) DO pip install %i --user
-for /R %i in (dist\*.tar.gz) DO echo %i
+rmdir /s dist
+python setup.py sdist
+for /R %i in (dist/*.tar.gz) DO pip install %i --user
 
