@@ -709,6 +709,12 @@ class HilbertSimulation:
             product_probabilities, time, k
         )
         MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
+
+        shape = rhos.shape
+        if shape[-1] != shape[-2]:
+            dim = int(np.sqrt(shape[-2]))
+            rhos = rhos.reshape(shape[0], shape[1], dim, dim)
+
         return dict(
             time=time,
             B=B,
