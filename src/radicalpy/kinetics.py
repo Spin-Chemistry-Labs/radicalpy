@@ -15,10 +15,6 @@ class Exponential(KineticsRelaxationBase):
     ):
         product_probabilities *= np.exp(-self.rate * time)
 
-    @property
-    def rate_constant(self) -> float:
-        return self.rate
-
 
 class KineticsBase(LiouvilleKineticsRelaxationBase):
     @staticmethod
