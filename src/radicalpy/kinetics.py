@@ -103,3 +103,7 @@ class JonesHore(KineticsBase):
             f"Triplet rate: {self.triplet_rate}",
         ]
         return "\n".join(lines)
+
+    @property
+    def rate_constant(self) -> float:
+        return (self.singlet_rate + self.triplet_rate) / 2
