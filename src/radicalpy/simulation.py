@@ -670,8 +670,11 @@ class HilbertSimulation:
             Write proper docs.
         """
         H_zee = self.zeeman_hamiltonian(1, theta, phi)
+        shape = H_zee.shape
         H_zee = self.convert(H_zee)
-        rhos = np.zeros([len(B), len(time), *H_zee.shape], dtype=complex)
+        if shape != H_zee.shape:
+            shape = [shape[0] * shape[0], 1]
+        rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
         for i, B0 in enumerate(B):
             H = H_base + B0 * H_zee
             rhos[i] = self.time_evolution(init_state, time, H)
