@@ -1,2 +1,19 @@
 # https://matplotlib.org/stable/tutorials/introductory/customizing.html
+#
+# You can always overwrite specific params with (example):
+#
+# import matplotlib as mpl
+# mpl.rcParams['lines.linewidth'] = 2
+#
+
 axes.facecolor: none
+figure.figsize: 10, 10
+# figure.dpi: 300
+axes3d.grid: False
+axes.labelsize: 12
+axes.spines.bottom: True
+axes.spines.left: True
+axes.spines.right: True
+axes.spines.top: True
+xtick.labelsize: 12
+ytick.labelsize: 12
