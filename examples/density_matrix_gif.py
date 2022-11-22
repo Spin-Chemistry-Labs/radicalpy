@@ -10,7 +10,7 @@ from radicalpy.simulation import State
 def main():
     flavin = rp.simulation.Molecule("flavin_anion", ["H25"])
     Z = rp.simulation.Molecule("Z")
-    sim = rp.simulation.HilbertSimulation([flavin, Z])
+    sim = rp.simulation.LiouvilleSimulation([flavin, Z])
     time = np.arange(0, 15e-6, 5e-9)
     Bs = np.arange(0, 3, 1)
     k = 1e6
@@ -22,7 +22,8 @@ def main():
         B=Bs,
         D=0,
         J=0,
-        kinetics=[rp.kinetics.Exponential(k)],
+        # kinetics=[rp.kinetics.Exponential(k)],
+        kinetics=[rp.kinetics.Haberkorn(k, State.SINGLET)],
     )
 
     params = {
@@ -45,10 +46,11 @@ def main():
     axes_kwargs["xlabel"] = "Spin state"
     axes_kwargs["ylabel"] = "Spin state"
     axes_kwargs["ylabel"] = "Spin state"
+    rhos = MARY["rhos"]
     for Bi, B in enumerate(Bs):
         axes_kwargs["title"] = f"$B = {B} mT$"
         anim = rp.plot.density_matrix_animation(
-            MARY["rhos"],
+            rhos,
             Bi=Bi,
             frames=30,
             bar3d_kwargs=bar3d_kwargs,

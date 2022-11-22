@@ -55,6 +55,11 @@ def density_matrix_animation(rhos, Bi, frames, bar3d_kwargs, axes_kwargs):
     fig = plt.figure()
     ax = plt.axes(projection="3d", aspect="auto")
 
+    shape = rhos.shape
+    if shape[-1] != shape[-2]:
+        dim = int(np.sqrt(shape[-2]))
+        rhos = rhos.reshape(shape[0], shape[1], dim, dim)
+
     def anim_func(t):
         Z = np.abs(rhos[Bi, t])
         X, Y = np.meshgrid(range(len(Z)), range(len(Z)))
