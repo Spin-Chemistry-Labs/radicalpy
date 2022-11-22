@@ -284,7 +284,7 @@ class KineticsRelaxationBase:
 
     @property
     def rate_constant(self) -> float:
-        return 1.0
+        return self.rate
 
     def _name(self):
         return f"Kinetics: {type(self).__name__}"
@@ -704,7 +704,7 @@ class HilbertSimulation:
         product_probabilities = self.product_probability(obs_state, rhos)
         for K in kinetics:  # skip in liouville
             K.adjust_product_probabilities(product_probabilities, time)
-        k = kinetics[0].rate if kinetics else 1.0
+        k = kinetics[0].rate_constant if kinetics else 1.0
         product_yields, product_yield_sums = self.product_yield(
             product_probabilities, time, k
         )
