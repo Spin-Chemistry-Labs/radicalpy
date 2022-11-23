@@ -14,7 +14,7 @@ def main():
     k = 1e6
 
     MARY = sim.MARY(
-        init_state=State.TRIPLET,
+        init_state=State.SINGLET,
         obs_state=State.TRIPLET,
         time=time,
         B=Bs,

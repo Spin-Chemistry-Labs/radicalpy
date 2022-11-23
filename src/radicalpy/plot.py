@@ -41,8 +41,8 @@ def spin_state_labels(sim: HilbertSimulation):
 
 def density_matrix_axes_kwargs(sim: HilbertSimulation):
     axis_labels = spin_state_labels(sim)
-    ticksx = np.arange(0.5, len(axis_labels), 1)
-    ticksy = np.arange(0.5, len(axis_labels), 1)
+    ticksx = np.arange(1, len(axis_labels), 1)
+    ticksy = np.arange(1, len(axis_labels), 1)
     return {
         "xticks": ticksx,
         "xticklabels": axis_labels,

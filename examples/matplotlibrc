@@ -7,13 +7,22 @@
 #
 
 axes.facecolor: none
-figure.figsize: 10, 10
-# figure.dpi: 300
 axes3d.grid: False
 axes.labelsize: 12
+axes.labelpad: 10 
 axes.spines.bottom: True
 axes.spines.left: True
 axes.spines.right: True
-axes.spines.top: True
+axes.spines.top: False
+# figure.dpi: 300
+font.family: sans-serif
+figure.figsize: 10, 10
+font.sans-serif: Arial
+xaxis.labellocation: center
+xtick.alignment: center
 xtick.labelsize: 12
+xtick.major.pad: 10
+yaxis.labellocation: center
+ytick.alignment: center_baseline
 ytick.labelsize: 12
+ytick.major.pad: 10
