@@ -21,10 +21,10 @@ def main():
         D=0,
         J=0,
         # kinetics=[rp.kinetics.Exponential(k)],
-        kinetics=[
-            rp.kinetics.Haberkorn(k, State.SINGLET),
-            rp.kinetics.Haberkorn(k, State.TRIPLET),
-        ],
+        #kinetics=[
+        #    rp.kinetics.Haberkorn(k, State.SINGLET),
+        #    rp.kinetics.HaberkornFree(k),
+        #],
     )
 
     bar3d_kwargs = {"alpha": 0.9}
