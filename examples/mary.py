@@ -12,7 +12,7 @@ def main():
     Z = rp.simulation.Molecule("Z")
     sim = rp.simulation.LiouvilleSimulation([flavin, Z])
     time = np.arange(0, 15e-6, 5e-9)
-    Bs = np.arange(0, 20, 0.1)
+    Bs = np.arange(0, 10, 0.1)
     k = 3e6
 
     MARY = sim.MARY(
@@ -26,7 +26,7 @@ def main():
             rp.kinetics.Haberkorn(k, State.SINGLET),
             rp.kinetics.HaberkornFree(k),
         ],
-        relaxations=[relaxation.SingletTripletDephasing(k)],
+        relaxations=[relaxation.TripletTripletDephasing(k)],
     )
 
     x = MARY["B"]
@@ -35,7 +35,9 @@ def main():
     plt.xlabel("$B_0 (mT)$")
     plt.ylabel("MFE (%)")
     plt.title("")
-    plt.legend([r"$P_i(t)$", r"$\Phi_i$"]); path = __file__[:-3] + f"_{0}.png"; plt.savefig(path)
+    plt.legend([r"$P_i(t)$", r"$\Phi_i$"])
+    path = __file__[:-3] + f"_{0}.png"
+    plt.savefig(path)
     #plt.show()
 
 

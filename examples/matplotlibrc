@@ -16,8 +16,6 @@ axes.spines.right: True
 axes.spines.top: False
 figure.dpi: 300
 figure.figsize: 10, 10
-font.family: sans-serif
-font.sans-serif: Arial
 savefig.bbox: tight
 xaxis.labellocation: center
 xtick.alignment: center
