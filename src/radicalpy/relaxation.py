@@ -32,7 +32,7 @@ class SingletTripletDephasing(RelaxationBaseAll):
         self.subH = self.rate * (np.kron(self.QS, self.QT) + np.kron(self.QT, self.QS))
 
 
-class TripleTripletDephasing(RelaxationBaseAll):
+class TripletTripletDephasing(RelaxationBaseAll):
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         self.subH = self.rate * (
