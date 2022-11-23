@@ -1,9 +1,9 @@
 import numpy as np
-from .utils import spectral_density
 
 from .simulation import (KineticsRelaxationBase,
                          LiouvilleKineticsRelaxationBase, LiouvilleSimulation,
                          State)
+from .utils import spectral_density
 
 
 class RelaxationBaseST(LiouvilleKineticsRelaxationBase):
@@ -20,6 +20,7 @@ class RelaxationBaseAll(RelaxationBaseST):
         super().__init__(rate_constant)
 
     def init(self, sim: LiouvilleSimulation):
+        super().init(sim)
         self.QTp = sim.projection_operator(State.TRIPLET_PLUS)
         self.QTm = sim.projection_operator(State.TRIPLET_MINUS)
         self.QT0 = sim.projection_operator(State.TRIPLET_ZERO)
@@ -105,8 +106,8 @@ def g_tensor_anisotropy_term(sim: LiouvilleSimulation, idx, g, omega, tau_c):
     )
     H *= 1 / 15 * sum([((gj - giso) / giso) ** 2 for gj in g]) * omega**2
     return H
-    
-    
+
+
 # !!!!!!!!!! omega depends on B, which changes in every step (MARY loop)
 # See note below
 # Instead of omega1 & omega2 use B and calculate omegas inside
@@ -122,8 +123,8 @@ class GTensorAnisotropy(LiouvilleKineticsRelaxationBase):
     def init(self, sim: LiouvilleSimulation):
         self.subH = g_tensor_anisotropy_term(sim, 0, self.g1, self.omega1, self.tau_c1)
         self.subH += g_tensor_anisotropy_term(sim, 1, self.g2, self.omega2, self.tau_c2)
-        
-        
+
+
 class T1Relaxation(LiouvilleKineticsRelaxationBase):
     def init(self, sim: LiouvilleSimulation):
         SAz = sim.spin_operator(0, "z")
@@ -132,8 +133,8 @@ class T1Relaxation(LiouvilleKineticsRelaxationBase):
         self.subH = self.rate * (
             np.eye(len(SAz) * len(SAz)) - np.kron(SAz, SAz.T) - np.kron(SBz, SBz.T)
         )
-        
-        
+
+
 class T2Relaxation(LiouvilleKineticsRelaxationBase):
     def init(self, sim: LiouvilleSimulation):
         SAx, SAy = sim.spin_operator(0, "x"), sim.spin_operator(0, "y")
