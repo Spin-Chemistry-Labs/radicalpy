@@ -20,8 +20,6 @@ RUN_SLOW_TESTS = "INSIDE_EMACS" not in os.environ  # or True
 MEASURE_TIME = False
 
 
-STATES = set(rpsim.State) - {rpsim.State.EQUILIBRIUM}
-
 PARAMS = dict(
     B=np.random.uniform(size=20),
     J=np.random.uniform(),
@@ -33,6 +31,7 @@ RADICAL_PAIR = [
     rpsim.Molecule("adenine_cation"),
     # rpsim.Molecule("adenine_cation", ["C8-H"]),
 ]
+
 RADICAL_PAIR_RAW = [
     rpsim.Molecule(
         multiplicities=[2, 2],
@@ -314,7 +313,7 @@ class HilbertTests(unittest.TestCase):
 
     def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        for state in STATES:
+        for state in rpsim.State:
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Hilbert_initial(rpstate, self.sim.num_particles, H)
@@ -334,8 +333,10 @@ class HilbertTests(unittest.TestCase):
         k = np.random.uniform()
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         Kexp = kinetics.Exponential(k)
-        for init_state in STATES:
-            for obs_state in STATES:
+        for init_state in rpsim.State:
+            for obs_state in rpsim.State:
+                if obs_state == rpsim.State.EQUILIBRIUM:
+                    continue
                 evol_true = radpy.TimeEvolution(
                     self.sim.num_particles,
                     state2radpy(init_state),
@@ -365,8 +366,10 @@ class HilbertTests(unittest.TestCase):
     # @unittest.skip("Not ready yet")
     def test_mary(self):
         k = np.random.uniform()
-        for init_state in STATES:
-            for obs_state in STATES:
+        for init_state in rpsim.State:
+            for obs_state in rpsim.State:
+                if obs_state == rpsim.State.EQUILIBRIUM:
+                    continue
                 rslt = self.sim.MARY(
                     init_state,
                     obs_state,
@@ -474,7 +477,7 @@ class LiouvilleTests(unittest.TestCase):
 
     def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        for state in STATES:
+        for state in rpsim.State:
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Liouville_initial(rpstate, self.sim.num_particles, H)
