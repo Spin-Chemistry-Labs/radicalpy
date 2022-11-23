@@ -6,12 +6,10 @@ from typing import Optional
 
 import numpy as np
 import scipy as sp
-from scipy.optimize import curve_fit
-from sklearn.metrics import r2_score
 
 from . import utils
-from .data import (MOLECULE_DATA, SPIN_DATA, constants, gamma_mT,
-                   get_molecules, multiplicity, pauli)
+from .data import (MOLECULE_DATA, SPIN_DATA, gamma_mT, get_molecules,
+                   multiplicity, pauli)
 
 
 class State(enum.Enum):

@@ -3,19 +3,21 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import radicalpy as rp
-from radicalpy.simulation import State
 from radicalpy import relaxation
+from radicalpy.simulation import State
 
 
 def main():
-    flavin = rp.simulation.Molecule("flavin_anion", ["H25"])
-    Z = rp.simulation.Molecule("Z")
-    sim = rp.simulation.LiouvilleSimulation([flavin, Z])
-    time = np.arange(0, 15e-6, 5e-9)
+    flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
+    trp = rp.simulation.Molecule("tryptophan_cation", ["N1"])
+    sim = rp.simulation.LiouvilleSimulation([flavin, trp])
+    # sim = rp.simulation.HilbertSimulation([flavin, trp])
+    time = np.arange(0, 5e-6, 5e-9)
     Bs = np.arange(0, 10, 0.1)
     k = 3e6
+    kSTD = 1e7
 
-    MARY = sim.MARY(
+    results = sim.MARY(
         init_state=State.SINGLET,
         obs_state=State.TRIPLET,
         time=time,
@@ -23,22 +25,28 @@ def main():
         D=0,
         J=0,
         kinetics=[
+            # rp.kinetics.Exponential(k),
             rp.kinetics.Haberkorn(k, State.SINGLET),
             rp.kinetics.HaberkornFree(k),
         ],
-        relaxations=[relaxation.TripletTripletDephasing(k)],
+        relaxations=[relaxation.SingletTripletDephasing(kSTD)],
     )
+    MARY = results["MARY"]
 
-    x = MARY["B"]
+    print(results.keys())
+    Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2 = rp.utils.Bhalf_fit(Bs, MARY)
 
-    plt.plot(x, MARY["MARY"], color="red", linewidth=2)
+    plt.plot(Bs, MARY, color="red", linewidth=2)
+    plt.plot(x_model_MARY, y_model_MARY, "k--", linewidth=1, label="Lorentzian fit")
+
     plt.xlabel("$B_0 (mT)$")
     plt.ylabel("MFE (%)")
     plt.title("")
     plt.legend([r"$P_i(t)$", r"$\Phi_i$"])
+
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
-    #plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
