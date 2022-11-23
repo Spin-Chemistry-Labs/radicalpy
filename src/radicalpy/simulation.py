@@ -595,12 +595,13 @@ class HilbertSimulation:
             Write proper docs.
 
         """
-        return (
+        H = (
             self.zeeman_hamiltonian(B, theta, phi)
             + self.hyperfine_hamiltonian()
             + self.exchange_hamiltonian(J)
             + self.dipolar_hamiltonian(D)
         )
+        return self.convert(H)
 
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
@@ -694,7 +695,6 @@ class HilbertSimulation:
     ) -> dict:
         dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
-        H = self.convert(H)
         for K in kinetics + relaxations:  # skip in hilbert
             K.init(self)
             K.adjust_hamiltonian(H)
@@ -725,6 +725,49 @@ class HilbertSimulation:
             MARY=MARY,
             LFE=LFE,
             HFE=HFE,
+        )
+
+    def anisotropy(
+        self,
+        init_state: State,
+        obs_state: State,
+        time: np.ndarray,
+        B: float,
+        D: float,
+        J: float,
+        kinetics: list[KineticsRelaxationBase] = [],
+        relaxations: list[KineticsRelaxationBase] = [],
+        theta: np.ndarray = [],
+        phi: np.ndarray = [],
+    ) -> dict:
+        dt = time[1] - time[0]
+        H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
+        for K in kinetics + relaxations:  # skip in hilbert
+            K.init(self)
+            K.adjust_hamiltonian(H)
+        rhos = self.anisotropy_loop(init_state, time, B, H, theta=theta, phi=phi)
+        product_probabilities = self.product_probability(obs_state, rhos)
+        for K in kinetics:  # skip in liouville
+            K.adjust_product_probabilities(product_probabilities, time)
+        k = kinetics[0].rate_constant if kinetics else 1.0
+        product_yields, product_yield_sums = self.product_yield(
+            product_probabilities, time, k
+        )
+
+        shape = rhos.shape
+        if shape[-1] != shape[-2]:
+            dim = int(np.sqrt(shape[-2]))
+            rhos = rhos.reshape(shape[0], shape[1], dim, dim)
+
+        return dict(
+            time=time,
+            B=B,
+            theta=theta,
+            phi=phi,
+            rhos=rhos,
+            time_evolutions=product_probabilities,
+            product_yields=product_yields,
+            product_yield_sums=product_yield_sums,
         )
 
     @staticmethod
