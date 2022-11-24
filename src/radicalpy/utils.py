@@ -28,7 +28,7 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
 def Bhalf_fit(B, MARY):
     popt_MARY, pcov_MARY = curve_fit(
         Lorentzian_fit, B, MARY, p0=[MARY[-1], int(len(B) / 2)],
-        maxdev = 100000,
+        maxfev=1000000,
     )
     MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
 
