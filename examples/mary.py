@@ -15,7 +15,8 @@ def main():
     # sim = rp.simulation.HilbertSimulation([flavin, trp])
     time = np.arange(0, 5e-6, 5e-9)
     Bs = np.arange(0, 30, 0.1)
-    k = 10e7
+    krec = 10e7
+    kesc = 1e6
     kSTD = 3e8
 
     results = sim.MARY(
@@ -27,8 +28,8 @@ def main():
         J=0,
         kinetics=[
             # rp.kinetics.Exponential(k),
-            rp.kinetics.Haberkorn(k, State.SINGLET),
-            rp.kinetics.HaberkornFree(k),
+            rp.kinetics.Haberkorn(krec, State.SINGLET),
+            rp.kinetics.HaberkornFree(kesc),
         ],
         relaxations=[relaxation.SingletTripletDephasing(kSTD)],
     )
