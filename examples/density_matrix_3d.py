@@ -44,8 +44,7 @@ def main():
     for Bi, B in enumerate(Bs):
         axes_kwargs["title"] = f"$B = {B} mT$"
         anim = rp.plot.density_matrix_animation(
-            rhos,
-            Bi=Bi,
+            rhos[Bi],
             frames=30,
             bar3d_kwargs=bar3d_kwargs,
             axes_kwargs=axes_kwargs,

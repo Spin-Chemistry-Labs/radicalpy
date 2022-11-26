@@ -39,12 +39,12 @@ def spin_state_labels(sim: HilbertSimulation):
     return list(map(_format_label, labels))
 
 
-def density_matrix_animation(rhos, Bi, frames, bar3d_kwargs, axes_kwargs):
+def density_matrix_animation(rhos, frames, bar3d_kwargs, axes_kwargs):
     fig = plt.figure()
     ax = plt.axes(projection="3d", aspect="auto")
 
     def anim_func(t):
-        Z = np.abs(rhos[Bi, t])
+        Z = np.abs(rhos[t])
         X, Y = np.meshgrid(range(len(Z)), range(len(Z)))
         X, Y, Z = X.flatten(), Y.flatten(), Z.flatten()
 
