@@ -8,16 +8,16 @@ from radicalpy.simulation import State
 
 
 def main():
-    flavin = rp.simulation.Molecule("flavin_anion", ["H25"])
+    flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
     trp = rp.simulation.Molecule("tryptophan_cation", ["N1"])
     #trp = rp.simulation.Molecule("trp")
     sim = rp.simulation.LiouvilleSimulation([flavin, trp])
     # sim = rp.simulation.HilbertSimulation([flavin, trp])
     time = np.arange(0, 5e-6, 5e-9)
     Bs = np.arange(0, 30, 0.1)
-    krec = 10e7
+    krec = 1e6
     kesc = 1e6
-    kSTD = 3e8
+    kSTD = 1e7
 
     results = sim.MARY(
         init_state=State.TRIPLET,

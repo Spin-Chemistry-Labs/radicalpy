@@ -12,10 +12,10 @@ axes.labelsize: 12
 axes.labelpad: 10 
 axes.spines.bottom: True
 axes.spines.left: True
-axes.spines.right: True
+axes.spines.right: False
 axes.spines.top: False
 figure.dpi: 300
-figure.figsize: 10, 10
+figure.figsize: 10, 5
 savefig.bbox: tight
 xaxis.labellocation: center
 xtick.alignment: center
