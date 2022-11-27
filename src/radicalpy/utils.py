@@ -40,7 +40,10 @@ def autocorrelation(data, factor=3):
 
 def Bhalf_fit(B, MARY):
     popt_MARY, pcov_MARY = curve_fit(
-        Lorentzian_fit, B, MARY, p0=[MARY[-1], int(len(B) / 2)],
+        Lorentzian_fit,
+        B,
+        MARY,
+        p0=[MARY[-1], int(len(B) / 2)],
         maxfev=1000000,
     )
     MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
@@ -171,3 +174,11 @@ def spherical_to_cartesian(theta, phi):
 
 def spin_quantum_number(multiplicity: int) -> float:
     return float(multiplicity - 1) / 2.0
+
+
+def square_vectors(rhos):
+    shape = rhos.shape
+    if shape[-1] != shape[-2]:
+        dim = int(np.sqrt(shape[-2]))
+        rhos = rhos.reshape(shape[0], shape[1], dim, dim)
+    return rhos
