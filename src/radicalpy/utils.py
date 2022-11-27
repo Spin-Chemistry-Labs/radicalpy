@@ -24,9 +24,10 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
     return ang_freq / (mu_B / hbar * -g_e / 1e9)
-	
-	
-def autocorrelation(data, factor=3):
+
+
+def autocorrelation(data, factor=2):
+    # todo(lewis): emil, check please
     datap = ifftshift((data - np.average(data)) / np.std(data))
     (n,) = datap.shape
     datap = np.r_[datap[: n // factor], np.zeros_like(datap), datap[n // factor :]]
