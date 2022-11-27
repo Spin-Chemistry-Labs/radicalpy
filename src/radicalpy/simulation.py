@@ -714,11 +714,7 @@ class HilbertSimulation:
             product_probabilities, time, k
         )
         MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
-
-        shape = rhos.shape
-        if shape[-1] != shape[-2]:
-            dim = int(np.sqrt(shape[-2]))
-            rhos = rhos.reshape(shape[0], shape[1], dim, dim)
+        rhos = utils.square_vectors(rhos)
 
         return dict(
             time=time,
@@ -763,10 +759,8 @@ class HilbertSimulation:
         init_state: State,
         obs_state: State,
         time: np.ndarray,
-        num_theta: int,  # or float,
-        num_phi: int,  # or float,
-        # theta: np.ndarray or float,
-        # phi: np.ndarray or float,
+        theta: Iterable or float,
+        phi: Iterable or float,
         B: float,
         D: np.ndarray,
         J: float,
@@ -787,11 +781,7 @@ class HilbertSimulation:
         product_yields, product_yield_sums = self.product_yield(
             product_probabilities, time, k
         )
-
-        shape = rhos.shape
-        if shape[-1] != shape[-2]:
-            dim = int(np.sqrt(shape[-2]))
-            rhos = rhos.reshape(shape[0], shape[1], dim, dim)
+        rhos = utils.square_vectors(rhos)
 
         return dict(
             time=time,
