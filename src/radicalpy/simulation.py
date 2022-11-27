@@ -731,6 +731,23 @@ class HilbertSimulation:
             HFE=HFE,
         )
 
+    @staticmethod
+    def _anisotropy_check(
+        theta: Iterable or float, phi: Iterable or float
+    ) -> (Iterable, Iterable):
+        if isinstance(theta, float):
+            theta = [theta]
+        if isinstance(phi, float):
+            phi = [phi]
+        lt, lp = len(theta), len(phi)
+        if lt > 1 and lp > 1:
+            # theta odd, phi even
+            if lt % 2 == 0:
+                raise ValueError("Number of `len(theta)` needs to be odd!")
+            if lp % 2 == 1:
+                raise ValueError("Number of `len(phi)` needs to be even!")
+        return theta, phi
+
     def anisotropy_loop(
         self,
         init_state: State,
@@ -768,11 +785,7 @@ class HilbertSimulation:
         kinetics: list[KineticsRelaxationBase] = [],
         relaxations: list[KineticsRelaxationBase] = [],
     ) -> dict:
-        if isinstance(theta, float):
-            theta = [theta]
-        if isinstance(phi, float):
-            phi = [phi]
-
+        theta, phi = self._anisotropy_check(theta, phi)
         H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=True)
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
         rhos = self.anisotropy_loop(init_state, time, B, H, theta=theta, phi=phi)
