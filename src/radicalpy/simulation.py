@@ -52,9 +52,9 @@ class Molecule:
     ...          nuclei=["N6-H1", "N6-H2"])
     Molecule: adenine_cation
       HFCs: [-0.63, -0.66]
-      multiplicities: [3, 3]
-      gammas(mT): [19337.792, 19337.792]
-      number of particles: 2
+      Multiplicities: [3, 3]
+      Magnetogyric ratios (mT): [19337.792, 19337.792]
+      Number of particles: 2
 
 
     If the wrong molecule name is given, the error helps you find the
@@ -104,9 +104,9 @@ class Molecule:
     >>> Molecule(nuclei=["1H", "14N"], hfcs=[0.41, 1.82])
     Molecule: N/A
       HFCs: [0.41, 1.82]
-      multiplicities: [2, 3]
-      gammas(mT): [267522.18744, 19337.792]
-      number of particles: 2
+      Multiplicities: [2, 3]
+      Magnetogyric ratios (mT): [267522.18744, 19337.792]
+      Number of particles: 2
 
     Same as above, but with an informative molecule name (doesn't
     affect behaviour):
@@ -114,9 +114,9 @@ class Molecule:
     >>> Molecule("isotopes", nuclei=["15N", "15N"], hfcs=[0.3, 1.7])
     Molecule: isotopes
       HFCs: [0.3, 1.7]
-      multiplicities: [2, 2]
-      gammas(mT): [-27126.180399999997, -27126.180399999997]
-      number of particles: 2
+      Multiplicities: [2, 2]
+      Magnetogyric ratios (mT): [-27126.180399999997, -27126.180399999997]
+      Number of particles: 2
 
     A molecule with no HFCs, for one proton radical pair simulations
     (for simple simulations -- often with *fantastic* low-field
@@ -125,9 +125,9 @@ class Molecule:
     >>> Molecule("kryptonite")
     Molecule: kryptonite
       HFCs: []
-      multiplicities: []
-      gammas(mT): []
-      number of particles: 0
+      Multiplicities: []
+      Magnetogyric ratios (mT): []
+      Number of particles: 0
 
     Manual input for all relevant values (multiplicities, gammas,
     HFCs):
@@ -137,18 +137,18 @@ class Molecule:
     ...          hfcs=[0.42, 1.01, 1.33])
     Molecule: N/A
       HFCs: [0.42, 1.01, 1.33]
-      multiplicities: [2, 2, 3]
-      gammas(mT): [267522.18744, 267522.18744, 19337.792]
-      number of particles: 3
+      Multiplicities: [2, 2, 3]
+      Magnetogyric ratios (mT): [267522.18744, 267522.18744, 19337.792]
+      Number of particles: 3
 
     Same as above with an informative molecule name:
 
     >>> Molecule("my_flavin", multiplicities=[2], gammas_mT=[267522.18744], hfcs=[0.5])
     Molecule: my_flavin
       HFCs: [0.5]
-      multiplicities: [2]
-      gammas(mT): [267522.18744]
-      number of particles: 1
+      Multiplicities: [2]
+      Magnetogyric ratios (mT): [267522.18744]
+      Number of particles: 1
 
     """
 
@@ -191,9 +191,9 @@ class Molecule:
             f"Molecule: {self.radical}"
             # f"\n  Nuclei: {self.nuclei}"
             f"\n  HFCs: {self.hfcs}"
-            f"\n  multiplicities: {self.multiplicities}"
-            f"\n  gammas(mT): {self.gammas_mT}"
-            f"\n  number of particles: {self.num_particles}"
+            f"\n  Multiplicities: {self.multiplicities}"
+            f"\n  Magnetogyric ratios (mT): {self.gammas_mT}"
+            f"\n  Number of particles: {self.num_particles}"
             # f"\n  elements: {self.elements}"
         )
 
@@ -310,7 +310,7 @@ class HilbertSimulation:
     Number of nuclei: 3
     Number of particles: 5
     Multiplicities: [2, 2, 3, 2, 2]
-    Gyromagnetic ratios (mT): [-176085963.023, -176085963.023, 19337.792, 267522.18744, 267522.18744]
+    Magnetogyric ratios (mT): [-176085963.023, -176085963.023, 19337.792, 267522.18744, 267522.18744]
     Isotopes: ['N5', 'Hbeta1', 'H1']
     Couplings: [0, 1, 1]
     HFCs (mT): [array([[-0.06819637,  0.01570029,  0.08701531],
@@ -345,7 +345,7 @@ class HilbertSimulation:
                 f"Number of nuclei: {len(self.hfcs)}",
                 f"Number of particles: {self.num_particles}",
                 f"Multiplicities: {self.multiplicities}",
-                f"Gyromagnetic ratios (mT): {self.gammas_mT}",
+                f"Magnetogyric ratios (mT): {self.gammas_mT}",
                 f"Isotopes: {self.molecules[0].nuclei+self.molecules[1].nuclei}",
                 f"Couplings: {self.coupling}",
                 f"HFCs (mT): {self.hfcs}",
