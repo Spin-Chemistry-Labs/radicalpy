@@ -704,16 +704,19 @@ class HilbertSimulation:
         phi: Optional[float] = None,
         hfc_anisotropy: bool = False,
     ) -> dict:
-        dt = time[1] - time[0]
         H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
+
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
         rhos = self.mary_loop(init_state, time, B, H, theta=theta, phi=phi)
         product_probabilities = self.product_probability(obs_state, rhos)
+
         self.apply_hilbert_kinetics(time, product_probabilities, kinetics)
         k = kinetics[0].rate_constant if kinetics else 1.0
         product_yields, product_yield_sums = self.product_yield(
             product_probabilities, time, k
         )
+
+        dt = time[1] - time[0]
         MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
         rhos = utils.square_vectors(rhos)
 
@@ -769,7 +772,6 @@ class HilbertSimulation:
                 H_zee = self.zeeman_hamiltonian(B, theta, phi)
                 H = H_base + H_zee
                 rhos[i, j] = self.time_evolution(init_state, time, H)
-
         return rhos
 
     def anisotropy(
@@ -785,11 +787,13 @@ class HilbertSimulation:
         kinetics: list[KineticsRelaxationBase] = [],
         relaxations: list[KineticsRelaxationBase] = [],
     ) -> dict:
-        theta, phi = self._anisotropy_check(theta, phi)
         H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=True)
+
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
+        theta, phi = self._anisotropy_check(theta, phi)
         rhos = self.anisotropy_loop(init_state, time, B, H, theta=theta, phi=phi)
         product_probabilities = self.product_probability(obs_state, rhos)
+
         self.apply_hilbert_kinetics(time, product_probabilities, kinetics)
         k = kinetics[0].rate_constant if kinetics else 1.0
         product_yields, product_yield_sums = self.product_yield(
