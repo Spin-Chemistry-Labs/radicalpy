@@ -287,7 +287,7 @@ class KineticsRelaxationBase:
     def _name(self):
         return f"Kinetics: {type(self).__name__}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         lines = [
             self._name(),
             f"Rate constant: {self.rate}",
@@ -311,7 +311,7 @@ class HilbertSimulation:
     Number of particles: 5
     Multiplicities: [2, 2, 3, 2, 2]
     Magnetogyric ratios (mT): [-176085963.023, -176085963.023, 19337.792, 267522.18744, 267522.18744]
-    Isotopes: ['N5', 'Hbeta1', 'H1']
+    Nuclei: ['N5', 'Hbeta1', 'H1']
     Couplings: [0, 1, 1]
     HFCs (mT): [array([[-0.06819637,  0.01570029,  0.08701531],
            [ 0.01570029, -0.03652102,  0.27142597],
@@ -336,7 +336,7 @@ class HilbertSimulation:
         self.gammas_mT = self._get_electron_gammas_mT(custom_gfactors)
         self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # molecules = "\n".join([str(m) for m in self.molecules])
         return "\n".join(
             [
@@ -346,7 +346,7 @@ class HilbertSimulation:
                 f"Number of particles: {self.num_particles}",
                 f"Multiplicities: {self.multiplicities}",
                 f"Magnetogyric ratios (mT): {self.gammas_mT}",
-                f"Isotopes: {self.molecules[0].nuclei+self.molecules[1].nuclei}",
+                f"Nuclei: {self.molecules[0].nuclei+self.molecules[1].nuclei}",
                 f"Couplings: {self.coupling}",
                 f"HFCs (mT): {self.hfcs}",
                 # "",
