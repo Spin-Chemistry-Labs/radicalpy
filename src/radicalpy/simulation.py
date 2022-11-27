@@ -732,7 +732,9 @@ class HilbertSimulation:
         )
 
     @staticmethod
-    def _anisotropy_check(theta: Iterable or float, phi: Iterable or float)->Iterable, Iterable:
+    def _anisotropy_check(
+        theta: Iterable or float, phi: Iterable or float
+    ) -> (Iterable, Iterable):
         if isinstance(theta, float):
             theta = [theta]
         if isinstance(phi, float):
@@ -784,7 +786,6 @@ class HilbertSimulation:
         relaxations: list[KineticsRelaxationBase] = [],
     ) -> dict:
         theta, phi = self._anisotropy_check(theta, phi)
-
         H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=True)
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
         rhos = self.anisotropy_loop(init_state, time, B, H, theta=theta, phi=phi)
