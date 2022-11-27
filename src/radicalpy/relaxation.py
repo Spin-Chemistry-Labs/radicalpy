@@ -6,89 +6,81 @@ from .simulation import (KineticsRelaxationBase,
 from .utils import spectral_density
 
 
-class RelaxationBaseST(LiouvilleKineticsRelaxationBase):
-    def __init__(self, rate_constant: float):
-        super().__init__(rate_constant)
-
-    def init(self, sim: LiouvilleSimulation):
-        self.QS = sim.projection_operator(State.SINGLET)
-        self.QT = sim.projection_operator(State.TRIPLET)
-
-
-class RelaxationBaseAll(RelaxationBaseST):
-    def __init__(self, rate_constant: float):
-        super().__init__(rate_constant)
-
+class SingletTripletDephasing(LiouvilleKineticsRelaxationBase):
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
-        self.QTp = sim.projection_operator(State.TRIPLET_PLUS)
-        self.QTm = sim.projection_operator(State.TRIPLET_MINUS)
-        self.QT0 = sim.projection_operator(State.TRIPLET_ZERO)
+        QS = sim.projection_operator(State.SINGLET)
+        QT = sim.projection_operator(State.TRIPLET)
+        self.subH = self.rate * (np.kron(QS, QT) + np.kron(QT, QS))
 
 
-class SingletTripletDephasing(RelaxationBaseAll):
+class TripletTripletDephasing(LiouvilleKineticsRelaxationBase):
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
-        self.subH = self.rate * (np.kron(self.QS, self.QT) + np.kron(self.QT, self.QS))
-
-
-class TripletTripletDephasing(RelaxationBaseAll):
-    def init(self, sim: LiouvilleSimulation):
-        super().init(sim)
+        QTp = sim.projection_operator(State.TRIPLET_PLUS)
+        QTm = sim.projection_operator(State.TRIPLET_MINUS)
+        QT0 = sim.projection_operator(State.TRIPLET_ZERO)
         self.subH = self.rate * (
-            np.kron(self.QTp, self.QTm)
-            + np.kron(self.QTm, self.QTp)
-            + np.kron(self.QT0, self.QTm)
-            + np.kron(self.QTm, self.QT0)
-            + np.kron(self.QTp, self.QT0)
-            + np.kron(self.QT0, self.QTp)
+            np.kron(QTp, QTm)
+            + np.kron(QTm, QTp)
+            + np.kron(QT0, QTm)
+            + np.kron(QTm, QT0)
+            + np.kron(QTp, QT0)
+            + np.kron(QT0, QTp)
         )
 
 
-class TripletTripletRelaxation(RelaxationBaseAll):
+class TripletTripletRelaxation(LiouvilleKineticsRelaxationBase):
     # restrict to
     # init_state=rpsim.State.TRIPLET_ZERO,
     # obs_state=rpsim.State.TRIPLET_ZERO,
     def init(self, sim: LiouvilleSimulation):
+        QTp = sim.projection_operator(State.TRIPLET_PLUS)
+        QTm = sim.projection_operator(State.TRIPLET_MINUS)
+        QT0 = sim.projection_operator(State.TRIPLET_ZERO)
         super().init(sim)
-        term0 = np.kron(self.QT0, self.QT0)
-        term1 = np.kron(self.QTp, self.QTp) + np.kron(self.QTm, self.QTm)
+        term0 = np.kron(QT0, QT0)
+        term1 = np.kron(QTp, QTp) + np.kron(QTm, QTm)
         term2 = (
-            np.kron(self.QTp, self.QT0)
-            + np.kron(self.QT0, self.QTp)
-            + np.kron(self.QTm, self.QT0)
-            + np.kron(self.QT0, self.QTm)
+            np.kron(QTp, QT0)
+            + np.kron(QT0, QTp)
+            + np.kron(QTm, QT0)
+            + np.kron(QT0, QTm)
         )
         self.subH = self.rate * (2 / 3 * term0 + 1 / 3 * (term1 - term2))
 
 
-class RandomFields(RelaxationBaseAll):
+class RandomFields(LiouvilleKineticsRelaxationBase):
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
-        self.QS = sim.projection_operator(State.SINGLET)
+        QS = sim.projection_operator(State.SINGLET)
         self.SABxyz = [
             sim.spin_operator(e, a) for e in range(sim.num_electrons) for a in "xyz"
         ]
 
-        term0 = np.kron(np.eye(len(self.QS)), np.eye(len(self.QS)))
+        term0 = np.kron(np.eye(len(QS)), np.eye(len(QS)))
         term1 = sum([np.kron(S, S.T) for S in self.SABxyz])
         self.subH = self.rate * (1.5 * term0 - term1)
 
 
-class DipolarModulation(RelaxationBaseAll):
+class DipolarModulation(LiouvilleKineticsRelaxationBase):
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
+        QTp = sim.projection_operator(State.TRIPLET_PLUS)
+        QTm = sim.projection_operator(State.TRIPLET_MINUS)
+        QT0 = sim.projection_operator(State.TRIPLET_ZERO)
+        QS = sim.projection_operator(State.SINGLET)
         self.subH = self.rate * (
-            1 / 9 * np.kron(self.QS, self.QTp)
-            + 1 / 9 * np.kron(self.QTp, self.QS)
-            + 1 / 9 * np.kron(self.QS, self.QTm)
-            + 1 / 9 * np.kron(self.QTm, self.QS)
-            + 4 / 9 * np.kron(self.QS, self.QT0)
-            + 4 / 9 * np.kron(self.QT0, self.QS)
-            + np.kron(self.QTp, self.QT0)
-            + np.kron(self.QT0, self.QTp)
-            + np.kron(self.QTm, self.QT0)
-            + np.kron(self.QT0, self.QTm)
+            1 / 9 * np.kron(QS, QTp)
+            + 1 / 9 * np.kron(QTp, QS)
+            + 1 / 9 * np.kron(QS, QTm)
+            + 1 / 9 * np.kron(QTm, QS)
+            + 4 / 9 * np.kron(QS, QT0)
+            + 4 / 9 * np.kron(QT0, QS)
+            + np.kron(QTp, QT0)
+            + np.kron(QT0, QTp)
+            + np.kron(QTm, QT0)
+            + np.kron(QT0, QTm)
         )
 
 
