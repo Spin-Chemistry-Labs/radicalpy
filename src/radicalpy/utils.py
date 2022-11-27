@@ -23,6 +23,18 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
     return ang_freq / (mu_B / hbar * -g_e / 1e9)
+	
+	
+def autocorrelation(data, factor=3):
+    datap = ifftshift((data - np.average(data)) / np.std(data))
+    (n,) = datap.shape
+    datap = np.r_[datap[: n // factor], np.zeros_like(datap), datap[n // factor :]]
+    f = fft(datap)
+    p = np.absolute(f) ** 2
+    pi = ifft(p)
+    result = np.real(pi)[: n // factor] / np.arange(n, 0, -1)[: n // factor]
+    result = np.delete(result, 0)
+    return result
 
 
 def Bhalf_fit(B, MARY):
