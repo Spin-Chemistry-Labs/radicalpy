@@ -66,7 +66,7 @@ def plot2(pos):
     plt.show()
 
 
-def plot_sphere(pos):
+def plot_sphere(pos, r_max):
     phi = np.linspace(0, np.pi, 20)
     theta = np.linspace(0, 2 * np.pi, 40)
     x_frame = r_max * np.outer(np.sin(theta), np.cos(phi))
