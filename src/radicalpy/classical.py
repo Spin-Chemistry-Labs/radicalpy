@@ -3,8 +3,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-# from . import utils
-import utils
+from . import utils
+#import utils
 
 
 def get_delta_r(mutual_diffusion, delta_T):
