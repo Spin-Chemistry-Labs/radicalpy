@@ -34,7 +34,7 @@ def main():
     axes_kwargs = {
         "xticks": np.arange(0, len(axis_labels)),
         "xticklabels": axis_labels,
-        "yticks": np.arange(0, len(axis_labels)) + 1,
+        "yticks": np.arange(0, len(axis_labels)) + 2,
         "yticklabels": axis_labels,
         # "xlabel": "Spin state",
         # "ylabel": "Spin state",

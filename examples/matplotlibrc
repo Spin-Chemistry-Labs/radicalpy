@@ -15,7 +15,7 @@ axes.spines.left: True
 axes.spines.right: False
 axes.spines.top: False
 figure.dpi: 300
-figure.figsize: 10, 5
+figure.figsize: 10, 10
 savefig.bbox: tight
 xaxis.labellocation: center
 xtick.alignment: center

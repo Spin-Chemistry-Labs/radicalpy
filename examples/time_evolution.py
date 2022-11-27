@@ -8,9 +8,7 @@ from radicalpy.simulation import State
 
 def main():
 	flavin = rp.simulation.Molecule("flavin_anion", ["H25"])
-	print(flavin)
 	Z = rp.simulation.Molecule("Z")
-	print(Z)
 	sim = rp.simulation.HilbertSimulation([flavin, Z])
 	print(sim)
 	H = sim.total_hamiltonian(B=0, D=0, J=0)
