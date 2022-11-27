@@ -317,17 +317,14 @@ class HilbertTests(unittest.TestCase):
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Hilbert_initial(rpstate, self.sim.num_particles, H)
-            assert np.array_equal(
-                rho0, rho0_true
-            ), "Initial density not calculated properly."
+            np.testing.assert_almost_equal(rho0, rho0_true)
 
     def test_unitary_propagator(self):
         dt = np.random.uniform(1e-6)
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        U_true = radpy.UnitaryPropagator(H, dt, "Hilbert")
-        Utensor = self.sim.unitary_propagator(H, dt)
-        for pair in zip(U_true, Utensor):
-            assert np.array_equal(*pair)
+        unitary_true = radpy.UnitaryPropagator(H, dt, "Hilbert")
+        unitary = self.sim.unitary_propagator(H, dt)
+        np.testing.assert_almost_equal(unitary_true, unitary)
 
     def test_time_evolution(self):
         k = np.random.uniform()
@@ -481,16 +478,14 @@ class LiouvilleTests(unittest.TestCase):
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Liouville_initial(rpstate, self.sim.num_particles, H)
-            assert np.array_equal(
-                rho0, rho0_true
-            ), "Initial density not calculated properly."
+            np.testing.assert_almost_equal(rho0, rho0_true)
 
     def test_unitary_propagator(self):
         dt = np.random.uniform(0, 1e-6)
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        U_true = radpy.UnitaryPropagator(H, dt, "Liouville")
-        U_prop = self.sim.unitary_propagator(H, dt)
-        assert np.array_equal(U_true, U_prop)
+        unitary_true = radpy.UnitaryPropagator(H, dt, "Liouville")
+        unitary = self.sim.unitary_propagator(H, dt)
+        np.testing.assert_almost_equal(unitary, unitary_true)
 
     @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_kinetics(self):

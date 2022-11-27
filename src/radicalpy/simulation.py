@@ -669,7 +669,8 @@ class HilbertSimulation:
         rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
         for i, B0 in enumerate(B):
             H = H_base + B0 * H_zee
-            rhos[i] = self.time_evolution(init_state, time, H)
+            H_sparse = sp.sparse.csc_matrix(H)
+            rhos[i] = self.time_evolution(init_state, time, H_sparse)
         return rhos
 
     @staticmethod
@@ -816,8 +817,8 @@ class HilbertSimulation:
         Pi = self.projection_operator(state)
 
         if state == State.EQUILIBRIUM:
-            rho0eq = sp.linalg.expm(-1j * H * Pi)
-            rho0 = rho0eq / np.trace(rho0eq)
+            rho0eq = sp.sparse.linalg.expm(-1j * sp.sparse.csc_matrix(H) * Pi).toarray()
+            rho0 = rho0eq / rho0eq.trace()
         else:
             rho0 = Pi / np.trace(Pi)
         return rho0
@@ -846,8 +847,8 @@ class HilbertSimulation:
             >> UL = UnitaryPropagator(HL, 3e-9, "Liouville")
 
         """
-        Up = sp.linalg.expm(1j * H * dt)
-        Um = sp.linalg.expm(-1j * H * dt)
+        Up = sp.sparse.linalg.expm(1j * H * dt)
+        Um = sp.sparse.linalg.expm(-1j * H * dt)
         return Up, Um
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
@@ -886,7 +887,7 @@ class LiouvilleSimulation(HilbertSimulation):
         """
         Pi = self.liouville_projection_operator(state)
         if state == State.EQUILIBRIUM:
-            rho0eq = sp.linalg.expm(-1j * H * Pi)
+            rho0eq = sp.sparse.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
             rho0 = np.reshape(rho0, (len(H) ** 2, 1))
         else:
@@ -906,7 +907,7 @@ class LiouvilleSimulation(HilbertSimulation):
             dt (float): Time evolution timestep.
             space (str): Select the spin space.
         """
-        return sp.linalg.expm(H * dt)
+        return sp.sparse.linalg.expm(H * dt)
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         return propagator @ rho
