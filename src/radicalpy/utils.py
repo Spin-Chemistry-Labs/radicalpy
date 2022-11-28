@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from typing import Iterable
+
 import numpy as np
 from scipy.fftpack import fft, ifft, ifftshift
 from scipy.optimize import curve_fit
@@ -65,6 +67,19 @@ def cartesian_to_spherical(x, y, z):
     theta = np.arccos(z / r)
     phi = np.arctan2(y, x)
     return r, theta, phi
+
+
+def check_full_sphere_coordinates(theta: Iterable, phi: Iterable) -> (int, int):
+    nth, nph = len(theta), len(phi)
+    if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
+        raise ValueError(
+            "Not a full sphere: `theta` should be `linspace(0, np.pi, ntheta)`"
+        )
+    if not np.all(np.isclose(phi, np.linspace(0, 2 * np.pi, nph))):
+        raise ValueError(
+            "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
+        )
+    return nth, nph
 
 
 def Gauss_to_angular_frequency(Gauss: float) -> float:
@@ -167,6 +182,31 @@ def spectral_density(omega, tau_c):
     return tau_c / (1 + omega**2 * tau_c**2)
 
 
+def spherical_average(singlet_yield, theta, phi):
+    # Subtracting the spherical average from the singlet yield
+    # Simpson's rule integration over theta (0, pi) and phi (0, 2pi)
+    # n_theta = odd, n_phi = even
+
+    theta, phi = _anisotropy_check(theta, phi)
+    nth, nph = check_full_sphere_coordinates(theta, phi)
+
+    wt = 4 * np.ones(nth)
+    wt[2:-2:2] = 2
+    wt[0] = wt[-1] = 1
+
+    wp = 4 * np.ones(nph)
+    wp[0:-1:2] = 2
+    sintheta = np.sin(np.linspace(0, np.pi, nth))
+
+    spherical_average = sum(
+        singlet_yield[i, j] * sintheta[i] * wt[i] * wp[j]
+        for i in range(nth)
+        for j in range(nph)
+    )
+
+    return spherical_average * theta[1] * phi[1] / (4 * np.pi) / 9
+
+
 def spherical_to_cartesian(theta, phi):
     return np.array(
         [
@@ -187,3 +227,24 @@ def square_vectors(rhos):
         dim = int(np.sqrt(shape[-2]))
         rhos = rhos.reshape(shape[0], shape[1], dim, dim)
     return rhos
+
+
+def _anisotropy_check(
+    theta: Iterable or float, phi: Iterable or float
+) -> (Iterable, Iterable):
+    if isinstance(theta, float):
+        theta = [theta]
+    if isinstance(phi, float):
+        phi = [phi]
+    if min(theta) < 0 or np.pi < max(theta):
+        raise ValueError("Value of `theta` needs to be between 0 and pi!")
+    if min(phi) < 0 or 2 * np.pi < max(phi):
+        raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
+    lt, lp = len(theta), len(phi)
+    if lt > 1 and lp > 1:
+        # theta odd, phi even
+        if lt % 2 == 0:
+            raise ValueError("Number of `len(theta)` needs to be odd!")
+        if lp % 2 == 1:
+            raise ValueError("Number of `len(phi)` needs to be even!")
+    return theta, phi
