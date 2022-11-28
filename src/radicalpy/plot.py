@@ -69,3 +69,39 @@ def density_matrix_animation(rhos, frames, bar3d_kwargs, axes_kwargs):
         return frame
 
     return FuncAnimation(fig, anim_func, frames=frames)
+
+
+def anisotropy_surface(theta, phi, Y):
+    xyz = np.array(
+        [np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)]
+    )
+
+    #     Ypos = Y.copy()
+    #     Yneg = Y.copy()
+    #     Ypos[Ypos < 0] = 0
+    #     Yneg[Yneg > 0] = 0
+
+    Yx, Yy, Yz = Y.real * xyz
+
+    # Colour the plotted surface according to the sign of Y
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
+    cmap.set_clim(-0.1, 0.1)
+
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    ax.set_facecolor("none")
+    ax.plot_surface(Yx, Yy, Yz, facecolors=cmap.to_rgba(Y.real), rstride=2, cstride=2)
+
+    # Draw a set of x, y, z axes for reference
+    ax_lim = np.max(Y.real)
+    ax.plot([-ax_lim, ax_lim], [0, 0], [0, 0], c="0.5", lw=1, zorder=10)
+    ax.plot([0, 0], [-ax_lim, ax_lim], [0, 0], c="0.5", lw=1, zorder=10)
+    ax.plot([0, 0], [0, 0], [-ax_lim, ax_lim], c="0.5", lw=1, zorder=10)
+    # Set the Axes limits alpha and title, turn off the Axes frame.
+    ax_lim = np.max(Y.real)
+    ax.set_xlim(-ax_lim, ax_lim)
+    ax.set_ylim(-ax_lim, ax_lim)
+    ax.set_zlim(-ax_lim, ax_lim)
+    ax.axis("off")
+    fig.set_size_inches(20, 10)
+    # plt.savefig('Y.png')
