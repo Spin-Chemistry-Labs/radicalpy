@@ -63,7 +63,7 @@ def plot2(pos):
     # plt.xlim([-1, 1]); plt.ylim([-1, 1])
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 10)
-    plt.show()
+    #plt.show()
 
 
 def plot_sphere(pos, r_max):
@@ -99,19 +99,19 @@ def plot_sphere(pos, r_max):
     # plt.xlim([-1, 1]); plt.ylim([-1, 1])
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 10)
-    plt.show()
+    #plt.show()
 
 
-if __name__ == "__main__":
-    n_steps = 300
-    r_max = 1.5e-9
-    # r_max = 0
-    x0, y0, z0 = r_max / 2, 0, 0
-    mut_D = 1e-5 / 10000  # dab
-    del_T = 40e-12
-
-    # np.random.seed(42)
-    delta_r = get_delta_r(mut_D, del_T)
-    pos, dist, ang = randomwalk_3d(n_steps, x0, y0, z0, delta_r, r_max)
-    # plot2(pos)
-    plot_sphere(pos)
+#if __name__ == "__main__":
+#    n_steps = 300
+#    r_max = 1.5e-9
+#    # r_max = 0
+#    x0, y0, z0 = r_max / 2, 0, 0
+#    mut_D = 1e-5 / 10000  # dab
+#    del_T = 40e-12
+#
+#    # np.random.seed(42)
+#    delta_r = get_delta_r(mut_D, del_T)
+#    pos, dist, ang = randomwalk_3d(n_steps, x0, y0, z0, delta_r, r_max)
+#    # plot2(pos)
+#    plot_sphere(pos)
