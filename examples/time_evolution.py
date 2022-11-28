@@ -12,6 +12,8 @@ def main():
 	sim = rp.simulation.HilbertSimulation([flavin, Z])
 	print(sim)
 	H = sim.total_hamiltonian(B=0, D=0, J=0)
+	plt.spy(H)
+	plt.show()
 	
 	time = np.arange(0, 2e-6, 5e-9)
 	rhos = sim.time_evolution(State.SINGLET, time, H)
