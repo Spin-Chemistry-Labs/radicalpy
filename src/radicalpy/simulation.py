@@ -742,6 +742,10 @@ class HilbertSimulation:
             theta = [theta]
         if isinstance(phi, float):
             phi = [phi]
+        if min(theta) < 0 or np.pi < max(theta):
+            raise ValueError("Value of `theta` needs to be between 0 and pi!")
+        if min(phi) < 0 or 2 * np.pi < max(phi):
+            raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
         lt, lp = len(theta), len(phi)
         if lt > 1 and lp > 1:
             # theta odd, phi even
