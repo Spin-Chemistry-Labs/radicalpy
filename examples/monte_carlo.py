@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import radicalpy as rp
-from radicalpy import utils, classical
+from radicalpy import utils, classical, plot
 
 def main():
 	n_steps = 200000
@@ -16,7 +16,7 @@ def main():
 	
 	delta_r = classical.get_delta_r(mut_D, del_T)
 	pos, dist, ang = classical.randomwalk_3d(n_steps, x0, y0, z0, delta_r, r_max)
-	classical.plot_sphere(pos, r_max)
+	plot.monte_carlo_caged(pos, r_max)
 	
 	path = __file__[:-3] + f"_{0}.png"
 	plt.savefig(path)
