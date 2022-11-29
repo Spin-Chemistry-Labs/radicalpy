@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from . import utils, estimations
+from . import estimations, utils
 
 
 def get_delta_r(mutual_diffusion, delta_T):
@@ -42,79 +42,19 @@ def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r, r_max=0):
     return pos, dist, angle
 
 
-def plot2(pos):
-    f = 1e9
-    pos *= f
-
-    fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "3d", "aspect": "auto"})
-    ax.set_facecolor("none")
-    ax.grid(False)
-    plt.axis("on")
-    ax.plot(*pos.T, alpha=0.9, color="cyan")
-    ax.plot(*pos[0], "bo", markersize=15)
-    ax.plot(0, 0, 0, "mo", markersize=15)
-    ax.set_title(
-        "3D Monte Carlo random walk simulation for a radical pair in water", size=16
-    )
-    ax.set_xlabel("$X$ (nm)", size=14)
-    ax.set_ylabel("$Y$ (nm)", size=14)
-    ax.set_zlabel("$Z$ (nm)", size=14)
-    # plt.xlim([-1, 1]); plt.ylim([-1, 1])
-    plt.tick_params(labelsize=14)
-    fig.set_size_inches(10, 10)
-    #plt.show()
-
-
-def plot_sphere(pos, r_max):
-    phi = np.linspace(0, np.pi, 20)
-    theta = np.linspace(0, 2 * np.pi, 40)
-    x_frame = r_max * np.outer(np.sin(theta), np.cos(phi))
-    y_frame = r_max * np.outer(np.sin(theta), np.sin(phi))
-    z_frame = r_max * np.outer(np.cos(theta), np.ones_like(phi))
-
-    f = 1e9
-
-    fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "3d", "aspect": "auto"})
-    ax.set_facecolor("none")
-    ax.grid(False)
-    plt.axis("on")
-    ax.plot_wireframe(
-        x_frame * f,
-        y_frame * f,
-        z_frame * f,
-        color="k",
-        alpha=0.1,
-        rstride=1,
-        cstride=1,
-    )
-    pos = f * pos
-    ax.plot(*pos.T, alpha=0.9, color="cyan")
-    ax.plot(*pos[0], "bo", markersize=15)
-    ax.plot(0, 0, 0, "ro", markersize=15)
-    #     ax.set_title("3D Monte Carlo random walk simulation for an encapsulated radical pair", size=16)
-    ax.set_xlabel("$X$ (nm)", size=14)
-    ax.set_ylabel("$Y$ (nm)", size=14)
-    ax.set_zlabel("$Z$ (nm)", size=14)
-    # plt.xlim([-1, 1]); plt.ylim([-1, 1])
-    plt.tick_params(labelsize=14)
-    fig.set_size_inches(10, 10)
-    #plt.show()
-
-
 def monte_carlo_exchange_dipolar(n_steps, r_min, del_T, radA_x, dist, angle):
-    
+
     r_min = radA_x[0]
     dist[0] = r_min
     r = dist
-    r_tot = (r + r_min)
-	
+    r_tot = r + r_min
+
     theta = angle
-	
+
     t_tot = n_steps * del_T * 1e9
     t = np.linspace(0, t_tot, n_steps)
 
     J = estimations.exchange_interaction_monte_carlo(r)
     D = estimations.dipolar_interaction_monte_carlo(r_tot, theta)
-	
-    return t, r_tot, J, D
 
+    return t, r_tot, J, D
