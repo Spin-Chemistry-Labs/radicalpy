@@ -47,7 +47,7 @@ def monte_carlo_exchange_dipolar(n_steps, r_min, del_T, radA_x, dist, angle):
     r_min = radA_x[0]
     dist[0] = r_min
     r = dist
-    r_tot = r + r_min
+    r_tot = r_min + r
 
     theta = angle
 
