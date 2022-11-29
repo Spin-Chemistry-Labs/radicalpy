@@ -38,7 +38,7 @@ def spherical_average_subtraction(lst, n_theta, theta_step, n_phi, phi_step):
 def main():
 
     theta = np.linspace(0, np.pi, 17)
-    phi = np.linspace(0, 2 * np.pi, 32)
+    phi = np.linspace(0, 2 * np.pi, 34)
 
     # flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
     # trp = rp.simulation.Molecule("tryptophan_cation", ["N1"])
@@ -62,8 +62,7 @@ def main():
         kinetics=[rp.kinetics.Exponential(k)],
     )
 
-    Y = results["product_yields"]
-    Y = np.trapz(Y, dx=time[1]) * k
+    Y = results["product_yield_sums"]
     Y = Y - rp.utils.spherical_average(Y, theta, phi)
 
     rp.plot.anisotropy_surface(theta, phi, Y)
