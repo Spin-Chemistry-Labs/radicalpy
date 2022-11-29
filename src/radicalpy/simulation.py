@@ -500,7 +500,7 @@ class HilbertSimulation:
         """
         if hfc_anisotropy:
             for h in self.hfcs:
-                if not isinstance(h, np.array) and h.shape == (3, 3):
+                if not isinstance(h, np.ndarray) and h.shape == (3, 3):
                     raise ValueError(
                         "Not all molecules have 3x3 HFC tensors! Please use `hfc_anisotropy=False`"
                     )
@@ -597,7 +597,7 @@ class HilbertSimulation:
         """
         H = (
             self.zeeman_hamiltonian(B, theta, phi)
-            + self.hyperfine_hamiltonian()
+            + self.hyperfine_hamiltonian(hfc_anisotropy)
             + self.exchange_hamiltonian(J)
             + self.dipolar_hamiltonian(D)
         )
