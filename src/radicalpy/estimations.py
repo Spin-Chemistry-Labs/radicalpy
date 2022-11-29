@@ -50,13 +50,13 @@ def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
         float: The dipolar coupling constant in milli Tesla (mT).
 
     """
-    mu_0 = constants.value("mu_0")
-    mu_B = constants.value("mu_B")
-    g_e = constants.value("g_e")
-    hbar = constants.value("hbar")
+    #mu_0 = constants.value("mu_0")
+    #mu_B = constants.value("mu_B")
+    #g_e = constants.value("g_e")
+    #hbar = constants.value("hbar")
 
-    return (-(3 / 2) * (mu_0 / (4 * np.pi)) * ((g_e**2 * mu_B**2) / (hbar * r**3)) * (3 * np.cos(theta)**2 - 1)) / 1e3
-
+    #return (-(3 / 2) * (mu_0 / (4 * np.pi)) * ((g_e**2 * mu_B**2) / (hbar * r**3)) * (3 * np.cos(theta)**2 - 1)) / 1e3
+    return dipolar_interaction_1d(r) * (3 * np.cos(theta)**2 - 1)
 
 def exchange_interaction_monte_carlo(r: float) -> float:
     """Construct the exchange interaction constant for Monte Carlo simulation.
