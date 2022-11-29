@@ -55,7 +55,7 @@ def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
     g_e = constants.value("g_e")
     hbar = constants.value("hbar")
 
-    return -(3 / 2) * (mu_0 / (4 * np.pi)) * ((g_e**2 * mu_B**2) / (hbar * r**3)) * (3 * np.cos(theta)**2 - 1)) / 1e3
+    return (-(3 / 2) * (mu_0 / (4 * np.pi)) * ((g_e**2 * mu_B**2) / (hbar * r**3)) * (3 * np.cos(theta)**2 - 1)) / 1e3
 
 
 def exchange_interaction_monte_carlo(r: float) -> float:
