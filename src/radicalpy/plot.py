@@ -78,8 +78,9 @@ def anisotropy_surface(theta, phi, Y):
     Yx, Yy, Yz = Y.real * xyz
 
     # Colour the plotted surface according to the sign of Y
-    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
-    cmap.set_clim(-0.1, 0.1)
+    # cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    cmap.set_clim(-0.01, 0.01)
 
     fig = plt.figure(figsize=plt.figaspect(1.0))
     ax = fig.add_subplot(projection="3d")

@@ -102,7 +102,7 @@ def Gauss_to_mT(Gauss: float) -> float:
 
 def get_idx(values, target):
     return np.abs(target - values).argmin()
-	
+
 
 def isotropic(anisotropic: np.ndarray or list):
     return np.trace(anisotropic) / 3

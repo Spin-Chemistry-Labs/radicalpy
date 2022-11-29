@@ -37,12 +37,12 @@ def spherical_average_subtraction(lst, n_theta, theta_step, n_phi, phi_step):
 
 def main():
 
-    theta = np.linspace(0, np.pi, 9)
-    phi = np.linspace(0, 2 * np.pi, 18)
+    theta = np.linspace(0, np.pi, 17)
+    phi = np.linspace(0, 2 * np.pi, 32)
 
     # flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
     # trp = rp.simulation.Molecule("tryptophan_cation", ["N1"])
-    flavin = rp.simulation.Molecule("flavin_anion", ["N5", "N10"])
+    flavin = rp.simulation.Molecule("flavin_anion", ["N5"])
     trp = rp.simulation.Molecule("tryptophan_cation", [])
     sim = rp.simulation.HilbertSimulation([flavin, trp])
 
@@ -61,20 +61,14 @@ def main():
         J=0,
         kinetics=[rp.kinetics.Exponential(k)],
     )
-    print(results.keys())
-    for key, val in results.items():
-        try:
-            print(f"{key} {val.shape}")
-        except:
-            pass
-    Y = results["product_yields"][:, :, 1]
-    # Y = results["product_yield_sums"]
-    Y = np.sum(results["product_yields"], axis=2) * time[1] * k
-    print(Y)
+
+    Y = results["product_yields"]
+    Y = np.trapz(Y, dx=time[1]) * k
     Y = Y - rp.utils.spherical_average(Y, theta, phi)
 
-    print(f"{Y.shape=}")
     rp.plot.anisotropy_surface(theta, phi, Y)
+    delta_phi_s = Y.max() - Y.min()
+    print(f"{delta_phi_s=}")
     plt.show()
     return 0
 
