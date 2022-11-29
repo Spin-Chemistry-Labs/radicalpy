@@ -23,17 +23,17 @@ def main():
 
 	time_evol = sim.product_probability(State.TRIPLET, rhos)
 	sim.apply_hilbert_kinetics(time, time_evol, kinetics)
-	product_yields, product_yield_sums = sim.product_yield(time_evol, time, k)
+	product_yield, product_yield_sum = sim.product_yield(time_evol, time, k)
 	
 	x = time * 1e6
 	
 	plt.plot(x, time_evol, color="red", linewidth=2)
-	plt.fill_between(x, product_yields, color="blue", alpha=0.2)
+	plt.fill_between(x, product_yield, color="blue", alpha=0.2)
 	plt.xlabel("Time ($\mu s$)")
 	plt.ylabel("Probability"); plt.ylim([0, 1])
 	plt.legend([r"$P_i(t)$", r"$\Phi_i$"])
 	
-	print(f"PY = {product_yield_sums}")    
+	print(f"PY = {product_yield_sum}")    
 	
 	path = __file__[:-3] + f"_{0}.png"
 	plt.savefig(path)
