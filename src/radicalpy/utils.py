@@ -146,6 +146,12 @@ def mT_to_MHz(mT: float) -> float:
     mu_B = constants.value("mu_B")
     h = constants.value("h")
     return mT * (1e-9 * -g_e * mu_B / h)
+	
+	
+def multiexponential_fit(x, *args):
+    n = len(args) // 2
+    A, tau = list(args)[:n], list(args)[n:]
+    return sum(a * np.exp(-t * x) for a, t in zip(A, tau))
 
 
 def rotation_matrix_x(phi: float) -> np.ndarray:
