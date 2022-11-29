@@ -235,6 +235,13 @@ def square_vectors(rhos):
     return rhos
 
 
+def yield_anisotropy(yields, theta, phi):
+    delta_phi = yields.max() - yields.min()
+    yield_av = spherical_average(yields, theta, phi)
+    gamma = delta_phi / yield_av
+    return delta_phi, gamma
+	
+
 def _anisotropy_check(
     theta: Iterable or float, phi: Iterable or float
 ) -> (Iterable, Iterable):
