@@ -3,8 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from . import utils
-#import utils
+from . import estimations
 
 
 def get_delta_r(mutual_diffusion, delta_T):
@@ -102,16 +101,20 @@ def plot_sphere(pos, r_max):
     #plt.show()
 
 
-#if __name__ == "__main__":
-#    n_steps = 300
-#    r_max = 1.5e-9
-#    # r_max = 0
-#    x0, y0, z0 = r_max / 2, 0, 0
-#    mut_D = 1e-5 / 10000  # dab
-#    del_T = 40e-12
-#
-#    # np.random.seed(42)
-#    delta_r = get_delta_r(mut_D, del_T)
-#    pos, dist, ang = randomwalk_3d(n_steps, x0, y0, z0, delta_r, r_max)
-#    # plot2(pos)
-#    plot_sphere(pos)
+def monte_carlo_exchange_dipolar(n_steps, r_min, del_T, radA_x, dist, angle):
+    
+    r_min = radA_x[0]
+    dist[0] = r_min
+    r = dist
+    r_tot = (r + r_min)
+	
+    theta = angle
+	
+    t_tot = n_steps * del_T * 1e9
+    t = np.linspace(0, t_tot, n_steps)
+
+    J = estimations.exchange_interaction_monte_carlo(r)
+    D = estimations.dipolar_interaction_monte_carlo(r_tot, theta)
+	
+    return t, r_tot, J, D
+
