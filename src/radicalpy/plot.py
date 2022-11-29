@@ -7,6 +7,7 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 
 from .simulation import HilbertSimulation, State
+from .utils import spherical_to_cartesian
 
 
 def _format_label(t):
@@ -72,10 +73,11 @@ def density_matrix_animation(rhos, frames, bar3d_kwargs, axes_kwargs):
 
 
 def anisotropy_surface(theta, phi, Y):
+    # TODO(vatai): clean up
     PH, TH = np.meshgrid(phi, theta)
     xyz = np.array([np.sin(TH) * np.cos(PH), np.sin(TH) * np.sin(PH), np.cos(TH)])
 
-    Yx, Yy, Yz = Y.real * xyz
+    Yx, Yy, Yz = Y.real * spherical_to_cartesian(TH, PH)
 
     # Colour the plotted surface according to the sign of Y
     # cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
