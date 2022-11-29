@@ -6,45 +6,14 @@ import radicalpy as rp
 from radicalpy.simulation import State
 
 
-def spherical_average_subtraction(lst, n_theta, theta_step, n_phi, phi_step):
-    # Subtracting the spherical average from the singlet yield
-    # Simpson's rule integration over theta (0, pi) and phi (0, 2pi)
-    # n_theta = odd, n_phi = even
-
-    w_theta = np.ones(n_theta) * 4
-    w_theta[2:-2:2] = 2
-    w_theta[0] = 1
-    w_theta[-1] = 1
-
-    w_phi = np.ones(n_phi) * 4
-    w_phi[0:-1:2] = 2
-    sintheta = np.sin(np.linspace(0, np.pi, n_theta))
-
-    spherical_average = (
-        sum(
-            lst[i, j] * sintheta[i] * w_theta[i] * w_phi[j]
-            for i in range(n_theta)
-            for j in range(n_phi)
-        )
-        * theta_step
-        * phi_step
-        / (4 * np.pi)
-        / 9
-    )
-
-    return lst - spherical_average
-
-
 def main():
 
     theta = np.linspace(0, np.pi, 17)
     phi = np.linspace(0, 2 * np.pi, 34)
 
-    # flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
-    # trp = rp.simulation.Molecule("tryptophan_cation", ["N1"])
     flavin = rp.simulation.Molecule("flavin_anion", ["N5"])
-    trp = rp.simulation.Molecule("tryptophan_cation", [])
-    sim = rp.simulation.HilbertSimulation([flavin, trp])
+    Z = rp.simulation.Molecule("zorro", [])
+    sim = rp.simulation.HilbertSimulation([flavin, Z])
 
     time = np.arange(0, 5e-6, 5e-9)
     B0 = 0.05
@@ -63,12 +32,17 @@ def main():
     )
 
     Y = results["product_yield_sums"]
-    Y = Y - rp.utils.spherical_average(Y, theta, phi)
+    delta_phi_s, gamma_s = rp.utils.yield_anisotropy(Y, theta, phi)
+    Y_av = rp.utils.spherical_average(Y, theta, phi)
+    Y = Y - Y_av
 
     rp.plot.anisotropy_surface(theta, phi, Y)
-    delta_phi_s = Y.max() - Y.min()
+    
+    print(f"{Y_av=}")
     print(f"{delta_phi_s=}")
+    print(f"{gamma_s=}")
     plt.show()
+
     return 0
 
 
