@@ -6,7 +6,7 @@ import radicalpy as rp
 from radicalpy import utils, classical
 
 def main():
-	n_steps = 6000
+	n_steps = 4000
 	r_min = 0.5e-9 / 2
 	r_max = 2e-9 / 2
 	r = (r_min) + np.random.sample() * ((r_max) - (r_min))
