@@ -72,14 +72,8 @@ def density_matrix_animation(rhos, frames, bar3d_kwargs, axes_kwargs):
 
 
 def anisotropy_surface(theta, phi, Y):
-    xyz = np.array(
-        [np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)]
-    )
-
-    #     Ypos = Y.copy()
-    #     Yneg = Y.copy()
-    #     Ypos[Ypos < 0] = 0
-    #     Yneg[Yneg > 0] = 0
+    PH, TH = np.meshgrid(phi, theta)
+    xyz = np.array([np.sin(TH) * np.cos(PH), np.sin(TH) * np.sin(PH), np.cos(TH)])
 
     Yx, Yy, Yz = Y.real * xyz
 

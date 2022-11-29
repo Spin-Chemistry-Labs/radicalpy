@@ -37,52 +37,46 @@ def spherical_average_subtraction(lst, n_theta, theta_step, n_phi, phi_step):
 
 def main():
 
-    theta = np.linspace(0, np.pi, 2)
-    phi = np.linspace(0, 2 * np.pi, n_phi)
-    print(f"{len(phi) - n_phi=}")
-    print(f"{phi[1] - phi_step=}")
-    print(f"{phi[1]=}")
+    theta = np.linspace(0, np.pi, 9)
+    phi = np.linspace(0, 2 * np.pi, 18)
 
-    flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
-    trp = rp.simulation.Molecule("tryptophan_cation", ["N1"])
+    # flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
+    # trp = rp.simulation.Molecule("tryptophan_cation", ["N1"])
+    flavin = rp.simulation.Molecule("flavin_anion", ["N5", "N10"])
+    trp = rp.simulation.Molecule("tryptophan_cation", [])
     sim = rp.simulation.HilbertSimulation([flavin, trp])
 
     time = np.arange(0, 5e-6, 5e-9)
     B0 = 0.05
-    k = 3e6
+    k = 1e6
 
     results = sim.anisotropy(
         init_state=State.SINGLET,
         obs_state=State.SINGLET,
         time=time,
+        theta=theta,
+        phi=phi,
         B=B0,
         D=0,
         J=0,
         kinetics=[rp.kinetics.Exponential(k)],
     )
-    print(results)
+    print(results.keys())
+    for key, val in results.items():
+        try:
+            print(f"{key} {val.shape}")
+        except:
+            pass
+    Y = results["product_yields"][:, :, 1]
+    # Y = results["product_yield_sums"]
+    Y = np.sum(results["product_yields"], axis=2) * time[1] * k
+    print(Y)
+    Y = Y - rp.utils.spherical_average(Y, theta, phi)
 
-    # for phi in np.linspace(0, 2 * np.pi - phi_step, n_phi)
-    # for theta in np.linspace(0, np.pi, n_theta)
-
-    # Grids of polar and azimuthal angles
-    theta = np.linspace(0, np.pi, n_theta)
-    phi = np.linspace(0, 2 * np.pi - phi_step, n_phi)
-
-    # Create a 2-D meshgrid of (theta, phi) angles
-    phi, theta = np.meshgrid(phi, theta)
-
-    # Calculate the Cartesian coordinates of each point in the mesh
-    xyz = rp.utils.spherical_to_cartesian(theta, phi)
-
-    Yx, Yy, Yz = Y.real * xyz
-
-    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
-    cmap.set_clim(-0.1, 0.1)
-    fig = plt.figure(figsize=plt.figaspect(1.0))
-    ax = fig.add_subplot(projection="3d")
-    ax.set_facecolor("none")
-    ax.plot_surface(Yx, Yy, Yz, facecolors=cmap.to_rgba(Y.real), rstride=2, cstride=2)
+    print(f"{Y.shape=}")
+    rp.plot.anisotropy_surface(theta, phi, Y)
+    plt.show()
+    return 0
 
 
 if __name__ == "__main__":
