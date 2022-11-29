@@ -212,7 +212,7 @@ def spherical_to_cartesian(theta, phi):
         [
             np.sin(theta) * np.cos(phi),
             np.sin(theta) * np.sin(phi),
-            np.cos(phi),
+            np.cos(theta),
         ]
     )
 
