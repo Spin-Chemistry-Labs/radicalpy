@@ -18,7 +18,7 @@ def anisotropy_surface(theta, phi, Y):
     Yx, Yy, Yz = Y.real * spherical_to_cartesian(TH, PH)
 
     # Colour the plotted surface according to the sign of Y
-    # cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
+    #cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
     cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
     cmap.set_clim(-0.01, 0.01)
 
