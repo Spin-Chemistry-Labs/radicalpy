@@ -13,6 +13,14 @@ def Bhalf_theoretical(sim):
     return np.sqrt(3) * (sum_hfc2 / sum_hfc)
 
 
+def correlation_time_from_fit(*args):
+    n = len(args) // 2
+    As, taus = list(args)[:n], list(args)[n:]
+    As_norm = As / np.array(As).sum()
+    y = As_norm / taus
+    return As, taus, np.trapz(y, dx=1)
+	
+
 def dipolar_interaction_1d(r: float) -> float:
     """Construct the Dipolar interaction constant.
 
@@ -101,28 +109,12 @@ def exchange_interaction(r: float, model: str = "solution"):
     return methods[model](r)
 
 
-def rotational_correlation_time(radius, temp, eta=0.89e-3):
-    k_B = constants.value("k_B")
-
-    # Calculate isotropic rotational correlation time (tau_c) in s
-    tau_c = (4 * np.pi * eta * radius**3) / (3 * k_B * temp)
-    return tau_c
-
-
-def rotational_correlation_time_protein(Mr, temp, eta=0.89e-3):
-    V = constants.value("V")
-    rw = constants.value("rw")
-    N_A = constants.value("N_A")
-    # k_B = constants.value("k_B")
-
-    # Calculate Rh - effective hydrodynamic radius of the protein in m
-    Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
-
-    # Calculate isotropic rotational correlation time (tau_c) in s
-    tau_c = rotational_correlation_time(Rh, temp, eta)
-    # tau_c = (4 * np.pi * eta * Rh**3) / (3 * k_B * temp)
-    return tau_c
-
+def g_tensor_relaxation_rate_constant(tau_c, g1, g2):
+    ge = constants.value("g_e")
+    g1sum = sum([(gi - ge) ** 2 for gi in g1])
+    g2sum = sum([(gi - ge) ** 2 for gi in g2])
+    return (g1sum + g2sum) / (9 * tau_c)
+	
 
 def k_STD(J, tau_c):
     # J-modulation rate
@@ -163,8 +155,24 @@ def k_triplet_relaxation(B0, tau_c, D, E):
     return (D**2 + 3 * E**2) * jnu0tc
 
 
-def g_tensor_relaxation_rate_constant(tau_c, g1, g2):
-    ge = constants.value("g_e")
-    g1sum = sum([(gi - ge) ** 2 for gi in g1])
-    g2sum = sum([(gi - ge) ** 2 for gi in g2])
-    return (g1sum + g2sum) / (9 * tau_c)
+def rotational_correlation_time(radius, temp, eta=0.89e-3):
+    k_B = constants.value("k_B")
+
+    # Calculate isotropic rotational correlation time (tau_c) in s
+    tau_c = (4 * np.pi * eta * radius**3) / (3 * k_B * temp)
+    return tau_c
+
+
+def rotational_correlation_time_protein(Mr, temp, eta=0.89e-3):
+    V = constants.value("V")
+    rw = constants.value("rw")
+    N_A = constants.value("N_A")
+    # k_B = constants.value("k_B")
+
+    # Calculate Rh - effective hydrodynamic radius of the protein in m
+    Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
+
+    # Calculate isotropic rotational correlation time (tau_c) in s
+    tau_c = rotational_correlation_time(Rh, temp, eta)
+    # tau_c = (4 * np.pi * eta * Rh**3) / (3 * k_B * temp)
+    return tau_c
