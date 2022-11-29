@@ -39,7 +39,35 @@ def dipolar_interaction_3d(r: float, gamma: float = gamma_mT("E")) -> float:
     dipolar1d = dipolar_interaction_1d(r)  # , **kwargs)
     dipolar = gamma * (2 / 3) * dipolar1d
     return dipolar * np.diag([-1, -1, 2])
+	
 
+def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
+    """Construct the Dipolar interaction constant for Monte Carlo simulation.
+
+    Construct the Dipolar interaction based on the inter-radical separation `r`.
+
+    Returns:
+        float: The dipolar coupling constant in milli Tesla (mT).
+
+    """
+    mu_0 = constants.value("mu_0")
+    mu_B = constants.value("mu_B")
+    g_e = constants.value("g_e")
+    hbar = constants.value("hbar")
+
+    return -(3 / 2) * (mu_0 / (4 * np.pi)) * ((g_e**2 * mu_B**2) / (hbar * r**3)) * (3 * np.cos(theta)**2 - 1)) / 1e3
+
+
+def exchange_interaction_monte_carlo(r: float) -> float:
+    """Construct the exchange interaction constant for Monte Carlo simulation.
+
+    .. todo::
+        Write proper docs.
+    """
+    J0 = -570e-3
+    alpha = 2e10
+    return (-J0 * np.exp(-alpha * (r))) * 1e3
+	
 
 def exchange_interaction_protein(
     r: float, beta: float = 1.4e10, J0: float = 9.7e12
