@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from . import estimations
+from . import utils, estimations
 
 
 def get_delta_r(mutual_diffusion, delta_T):
