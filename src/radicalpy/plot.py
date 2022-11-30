@@ -73,15 +73,37 @@ def density_matrix_animation(rhos, frames, bar3d_kwargs, axes_kwargs):
     return FuncAnimation(fig, anim_func, frames=frames)
 
 
-def linear_energy_level_plot_2d(H, B, linecolour, title):
+def linear_energy_levels(H, B, linecolour, title):
     # todo(vatai): clean up
-    eigval = np.linalg.eigh(H)
+    eigval = np.linalg.eigh(H)  # try eig(H)
     E = np.real(eigval[0])  # 0 = eigenvalues, 1 = eigenvectors
 
     fig = plt.figure(figsize=(4, 8))
     ax = fig.add_axes([0, 0, 1, 1])
     ax.eventplot(E, orientation="vertical", color=linecolour, linewidth=3)
     ax.set_title(title, size=18)
+    ax.set_ylabel("Spin state energy (J)", size=14)
+    plt.tick_params(labelsize=14)
+
+
+def energy_levels(sim: HilbertSimulation, B: np.ndarray, J=0, D=0):
+    # TODO(VATAI): DO THIS PROPERLY
+    # TODO(VATAI): use tick labels
+    H_base = sim.total_hamiltonian(0, J, D)
+    H_zee = sim.zeeman_hamiltonian(1)
+
+    E = np.zeros([len(B), len(H_base)], dtype=np.complex_)
+
+    for i, B0 in enumerate(B):
+        H = H_base + B0 * H_zee
+        eigval = np.linalg.eigh(H)
+        E[i] = eigval[0]  # 0 = eigenvalues, 1 = eigenvectors
+
+    fig = plt.figure()
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.plot(B, np.real(E[:, ::-1]), linewidth=2)
+    # ax.set_title(title, size=18)
+    ax.set_xlabel("$B_0 (T)$", size=14)
     ax.set_ylabel("Spin state energy (J)", size=14)
     plt.tick_params(labelsize=14)
 
