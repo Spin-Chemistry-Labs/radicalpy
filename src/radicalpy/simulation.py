@@ -328,7 +328,10 @@ class HilbertSimulation:
     """
 
     def __init__(
-        self, molecules: list[Molecule], custom_gfactors=False, basis=Basis.ST
+        self,
+        molecules: list[Molecule],
+        custom_gfactors: bool = False,
+        basis: Basis = Basis.ST,
     ):
         self.molecules = molecules
         self.custom_gfactors = custom_gfactors
@@ -339,16 +342,16 @@ class HilbertSimulation:
         return sum([[i] * m.num_particles for i, m in enumerate(self.molecules)], [])
 
     @property
-    def num_electrons(self):
-        return len(self.molecules)
-
-    @property
     def electrons(self):
         return ["E"] * self.num_electrons
 
     @property
     def hfcs(self):
         return sum([m.hfcs for m in self.molecules], [])
+
+    @property
+    def num_electrons(self):
+        return len(self.molecules)
 
     @property
     def num_nuclei(self):
