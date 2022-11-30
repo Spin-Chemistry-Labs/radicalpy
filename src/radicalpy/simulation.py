@@ -324,20 +324,65 @@ class HilbertSimulation:
 
     def __init__(self, molecules: list[Molecule], custom_gfactors=False):
         self.molecules = molecules
-        self.coupling = [i for i, m in enumerate(molecules) for _ in m.gammas_mT]
+        self.custom_gfactors = custom_gfactors
 
-        self.num_electrons = 2
-        self.electrons = ["E"] * self.num_electrons
-        self.hfcs = sum([m.hfcs for m in molecules], [])
-        self.num_particles = self.num_electrons
-        self.num_particles += sum([m.num_particles for m in molecules])
-        self.multiplicities = list(map(multiplicity, self.electrons))
-        self.multiplicities += sum([m.multiplicities for m in molecules], [])
-        self.gammas_mT = self._get_electron_gammas_mT(custom_gfactors)
-        self.gammas_mT += sum([m.gammas_mT for m in molecules], [])
+    @property
+    def coupling(self):
+        return sum([[i] * m.num_particles for i, m in enumerate(self.molecules)], [])
+
+    @property
+    def num_electrons(self):
+        return len(self.molecules)
+
+    @property
+    def electrons(self):
+        return ["E"] * self.num_electrons
+
+    @property
+    def hfcs(self):
+        return sum([m.hfcs for m in self.molecules], [])
+
+    @property
+    def num_nuclei(self):
+        return sum([m.num_particles for m in self.molecules])
+
+    @property
+    def num_particles(self):
+        return self.num_electrons + self.num_nuclei
+
+    @property
+    def electron_multiplicities(self):
+        return list(map(multiplicity, self.electrons))
+
+    @property
+    def nuclei_multiplicities(self):
+        return sum([m.multiplicities for m in self.molecules], [])
+
+    @property
+    def multiplicities(self):
+        return self.electron_multiplicities + self.nuclei_multiplicities
+
+    @property
+    def electron_gammas_mT(self):
+        g = 2.0023  # free electron g-factor
+        gfactor = [g, g]
+        if self.custom_gfactors:
+            # overwrite gfactor list TODO
+            pass
+        # muB = 9.274e-24
+        # hbar = 1.05459e-34
+        # return [gfactor[i] * muB / hbar / 1000 for i in range(self.num_electrons)]
+        return [gamma_mT(e) * gfactor[i] / g for i, e in enumerate(self.electrons)]
+
+    @property
+    def nuclei_gammas_mT(self):
+        return sum([m.gammas_mT for m in self.molecules], [])
+
+    @property
+    def gammas_mT(self):
+        return self.electron_gammas_mT + self.nuclei_gammas_mT
 
     def __repr__(self) -> str:
-        # molecules = "\n".join([str(m) for m in self.molecules])
         return "\n".join(
             [
                 # "Simulation summary:",
@@ -346,24 +391,13 @@ class HilbertSimulation:
                 f"Number of particles: {self.num_particles}",
                 f"Multiplicities: {self.multiplicities}",
                 f"Magnetogyric ratios (mT): {self.gammas_mT}",
-                f"Nuclei: {self.molecules[0].nuclei+self.molecules[1].nuclei}",
+                f"Nuclei: {sum([m.nuclei for m in self.molecules], [])}",
                 f"Couplings: {self.coupling}",
                 f"HFCs (mT): {self.hfcs}",
                 # "",
                 # f"Simulated molecules:\n{molecules}",
             ]
         )
-
-    def _get_electron_gammas_mT(self, custom_gfactors):
-        g = 2.0023  # free electron g-factor
-        gfactor = [g, g]
-        if custom_gfactors:
-            # overwrite gfactor list TODO
-            pass
-        # muB = 9.274e-24
-        # hbar = 1.05459e-34
-        # return [gfactor[i] * muB / hbar / 1000 for i in range(self.num_electrons)]
-        return [gamma_mT(e) * gfactor[i] / g for i, e in enumerate(self.electrons)]
 
     def ST_basis(self, M):
         # T+  T0  S  T-
