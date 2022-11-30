@@ -386,6 +386,45 @@ class HilbertTests(unittest.TestCase):
                 #     H,
                 # )
 
+    @unittest.skip("Numerical difference")
+    def test_ST_vs_Zeeman_basis(self):
+        k = np.random.uniform()
+        st_sim = rpsim.HilbertSimulation(RADICAL_PAIR, basis=Basis.ST)
+        ts = np.arange(0, 5e-6, 5e-9)
+        for i, init_state in enumerate(rpsim.State):
+            for j, obs_state in enumerate(rpsim.State):
+                if obs_state == rpsim.State.EQUILIBRIUM:
+                    continue
+                kwargs = dict(
+                    init_state=init_state,
+                    obs_state=obs_state,
+                    time=ts,
+                    B=PARAMS["B"],
+                    D=PARAMS["D"],
+                    J=PARAMS["J"],
+                    kinetics=[kinetics.Exponential(k)],
+                )
+                rslt = self.sim.MARY(**kwargs)
+                strs = st_sim.MARY(**kwargs)
+
+                key = "time_evolutions"
+                Bi = 1
+                # print(results.keys())
+                # print(results["product_yields"])
+                B = PARAMS["B"]
+                n = len(rpsim.State)
+                idx = i * n + j + 1
+                plt.subplot(n, n, idx)
+
+                title = f"{init_state.value}, {obs_state.value}"
+                suptitle = f"{key}: B={B[Bi]}"
+                plt.title(title)
+                plt.suptitle(suptitle)
+                plt.plot(rslt["time"], rslt[key][Bi])
+                plt.plot(strs["time"], strs[key][Bi])
+        # np.testing.assert_almost_equal(rslt[key], strs[key])
+        plt.show()
+
     def test_hyperfine_3d(self):
 
         results = self.sim.MARY(
