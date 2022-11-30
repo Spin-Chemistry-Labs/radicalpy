@@ -18,7 +18,7 @@ def anisotropy_surface(theta, phi, Y):
     Yx, Yy, Yz = Y.real * spherical_to_cartesian(TH, PH)
 
     # Colour the plotted surface according to the sign of Y
-    #cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
+    # cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
     cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
     cmap.set_clim(-0.01, 0.01)
 
@@ -71,6 +71,19 @@ def density_matrix_animation(rhos, frames, bar3d_kwargs, axes_kwargs):
         return frame
 
     return FuncAnimation(fig, anim_func, frames=frames)
+
+
+def linear_energy_level_plot_2d(H, B, linecolour, title):
+    # todo(vatai): clean up
+    eigval = np.linalg.eigh(H)
+    E = np.real(eigval[0])  # 0 = eigenvalues, 1 = eigenvectors
+
+    fig = plt.figure(figsize=(4, 8))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.eventplot(E, orientation="vertical", color=linecolour, linewidth=3)
+    ax.set_title(title, size=18)
+    ax.set_ylabel("Spin state energy (J)", size=14)
+    plt.tick_params(labelsize=14)
 
 
 def monte_carlo_free(pos):
