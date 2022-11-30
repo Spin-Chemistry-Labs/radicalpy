@@ -11,6 +11,7 @@ from src.radicalpy import data as rpdata
 from src.radicalpy import estimations, kinetics, relaxation
 from src.radicalpy import simulation as rpsim
 from src.radicalpy import utils
+from src.radicalpy.simulation import Basis
 
 import tests.radpy as radpy
 
@@ -93,7 +94,7 @@ class HilbertTests(unittest.TestCase):
         if MEASURE_TIME:
             self.start_time = time.time()
         self.data = rpsim.MOLECULE_DATA["adenine_cation"]["data"]
-        self.sim = rpsim.HilbertSimulation(RADICAL_PAIR)
+        self.sim = rpsim.HilbertSimulation(RADICAL_PAIR, basis=Basis.ZEEMAN)
         self.gamma_mT = rpdata.gamma_mT("E")
         self.dt = 0.01
         self.t_max = 1.0
@@ -221,17 +222,15 @@ class HilbertTests(unittest.TestCase):
         HE_true = radpy.HamiltonianExchange(
             self.sim.num_particles, PARAMS["J"], gamma=self.gamma_mT
         )
-        assert np.array_equal(
-            self.sim.exchange_hamiltonian(PARAMS["J"]), HE_true
-        ), "Exchange (J-coupling) Hamiltonian not calculated properly."
+        HE = self.sim.exchange_hamiltonian(PARAMS["J"])
+        np.testing.assert_almost_equal(HE, HE_true)
 
     def test_HD(self):
         HD_true = radpy.HamiltonianDipolar(
             self.sim.num_particles, PARAMS["D"], self.gamma_mT
         )
-        assert np.all(  # close not equal
-            np.isclose(self.sim.dipolar_hamiltonian(PARAMS["D"]), HD_true)
-        ), "Dipolar Hamiltonian not calculated properly."
+        HD = self.sim.dipolar_hamiltonian(PARAMS["D"])
+        np.testing.assert_almost_equal(HD, HD_true)
 
     @unittest.skip("This needs to be figured out")
     def test_HH_3D(self):
@@ -467,7 +466,7 @@ class HilbertTests(unittest.TestCase):
 
 class LiouvilleTests(unittest.TestCase):
     def setUp(self):
-        self.sim = rpsim.LiouvilleSimulation(RADICAL_PAIR)
+        self.sim = rpsim.LiouvilleSimulation(RADICAL_PAIR, basis=Basis.ZEEMAN)
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)

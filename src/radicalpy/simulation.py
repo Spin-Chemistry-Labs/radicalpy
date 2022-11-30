@@ -22,6 +22,11 @@ class State(enum.Enum):
     TRIPLET_MINUS = "T_-"
 
 
+class Basis(enum.Enum):
+    ZEEMAN = "Zeeman"
+    ST = "ST"
+
+
 class Molecule:
     """Representation of a molecule for the simulation.
 
@@ -322,9 +327,12 @@ class HilbertSimulation:
            [-0.2003,  0.2803, -0.5398]])]
     """
 
-    def __init__(self, molecules: list[Molecule], custom_gfactors=False):
+    def __init__(
+        self, molecules: list[Molecule], custom_gfactors=False, basis=Basis.ST
+    ):
         self.molecules = molecules
         self.custom_gfactors = custom_gfactors
+        self.basis = basis
 
     @property
     def coupling(self):
@@ -410,7 +418,7 @@ class HilbertSimulation:
             ]
         )
 
-        C = np.kron(ST, np.eye(2 ** (self - 2)))
+        C = np.kron(ST, np.eye(prod(self.nuclei_multiplicities)))
         return C @ M @ C.T
 
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
@@ -436,7 +444,11 @@ class HilbertSimulation:
         eye_before = np.eye(prod(m for m in self.multiplicities[:idx]))
         eye_after = np.eye(prod(m for m in self.multiplicities[idx + 1 :]))
 
-        return np.kron(np.kron(eye_before, sigma), eye_after)
+        spinop = np.kron(np.kron(eye_before, sigma), eye_after)
+        if self.basis == Basis.ST:
+            return self.ST_basis(spinop)
+        else:
+            return spinop
 
     def product_operator(self, idx1: int, idx2: int, h: float = 1) -> np.ndarray:
         """Projection operator."""
