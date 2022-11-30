@@ -365,6 +365,20 @@ class HilbertSimulation:
         # return [gfactor[i] * muB / hbar / 1000 for i in range(self.num_electrons)]
         return [gamma_mT(e) * gfactor[i] / g for i, e in enumerate(self.electrons)]
 
+    def ST_basis(self, M):
+        # T+  T0  S  T-
+        ST = np.array(
+            [
+                [1, 0, 0, 0],
+                [0, 1 / np.sqrt(2), 1 / np.sqrt(2), 0],
+                [0, -1 / np.sqrt(2), 1 / np.sqrt(2), 0],
+                [0, 0, 0, 1],
+            ]
+        )
+
+        C = np.kron(ST, np.eye(2 ** (self - 2)))
+        return C @ M @ C.T
+
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator for a particle.
 
