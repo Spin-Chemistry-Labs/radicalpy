@@ -96,7 +96,7 @@ def energy_levels(sim: HilbertSimulation, B: np.ndarray, J=0, D=0):
 
     for i, B0 in enumerate(B):
         H = H_base + B0 * H_zee
-        eigval = np.linalg.eigh(H)
+        eigval = np.linalg.eig(H)
         E[i] = eigval[0]  # 0 = eigenvalues, 1 = eigenvectors
 
     fig = plt.figure()
