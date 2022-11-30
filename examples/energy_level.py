@@ -15,7 +15,7 @@ def main():
     eigval = np.linalg.eigh(H)
     E = np.real(eigval[0])  # 0 = eigenvalues, 1 = eigenvectors
 
-    rp.plot.energy_levels(sim, B=np.arange(0, 1e3, 10), J=10, D=0)
+    rp.plot.energy_levels(sim, B=np.arange(0.01, 1, 0.01), J=0, D=0)
     plt.show()
 
 
