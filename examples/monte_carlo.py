@@ -68,7 +68,6 @@ def main():
 	plt.savefig(path)
 	
 	acf_j = utils.autocorrelation(J, factor=2)
-	acf_d = utils.autocorrelation(D, factor=2)
 	
 	t_tot = n_steps * del_T
 	t = np.linspace(del_T, t_tot, len(acf_j))
@@ -88,20 +87,7 @@ def main():
 	path = __file__[:-3] + f"_{4}.png"
 	plt.savefig(path)
 	
-	fig = plt.figure()
-	ax = fig.add_axes([0, 0, 1, 1])
-	ax.set_facecolor("none")
-	ax.grid(False)
-	plt.axis("on")
-	plt.xscale("log")
-	plt.rc("axes", edgecolor="k")
-	plt.plot(t, acf_d, "g", label="D")
-	ax.set_xlabel(r"$\tau$ (s)", size=14)
-	ax.set_ylabel(r"$g_D(\tau)$", size=14)
-	plt.tick_params(labelsize=14)
-	ax.set_title("Autocorrelation: dipolar interaction", size=16)
-	path = __file__[:-3] + f"_{5}.png"
-	plt.savefig(path)
+
 	
 	
 if __name__ == "__main__":

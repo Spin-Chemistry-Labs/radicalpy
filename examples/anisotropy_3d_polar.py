@@ -9,7 +9,7 @@ from radicalpy.simulation import State
 def main():
 
     theta = np.linspace(0, np.pi, 17)
-    phi = np.linspace(0, 2 * np.pi, 34)
+    phi = np.linspace(0, 2 * np.pi, 32)
 
     flavin = rp.simulation.Molecule("flavin_anion", ["N5"])
     Z = rp.simulation.Molecule("zorro", [])
