@@ -57,13 +57,13 @@ def pauli(mult: int):
     Return:
         dict: A dictionary containing 6 `np.array` matrices of
         shape `(mult, mult)`:
-            - the unit operator `result["u"]`,
-            - raising operator `result["p"]`,
-            - lowering operator `result["m"]`,
-            - Pauli matrix for x axis `result["x"]`,
-            - Pauli matrix for y axis `result["y"]`,
-            - Pauli matrix for z axis `result["z"]`.
 
+        - the unit operator `result["u"]`,
+        - raising operator `result["p"]`,
+        - lowering operator `result["m"]`,
+        - Pauli matrix for x axis `result["x"]`,
+        - Pauli matrix for y axis `result["y"]`,
+        - Pauli matrix for z axis `result["z"]`.
     """
     assert mult > 1
     result = {}
