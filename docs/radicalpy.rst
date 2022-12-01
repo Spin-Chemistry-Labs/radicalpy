@@ -12,14 +12,6 @@ radicalpy.data module
    :undoc-members:
    :show-inheritance:
 
-radicalpy.pauli\_matrices module
---------------------------------
-
-.. automodule:: radicalpy.pauli_matrices
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 radicalpy.simulation module
 ---------------------------
 
