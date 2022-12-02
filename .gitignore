@@ -3,6 +3,7 @@
 \#*\#
 *.gif
 *.png
+!docs/quick-start/**/*.png
 
 __pycache__/
 *.py[cod]
