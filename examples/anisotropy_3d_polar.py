@@ -11,7 +11,7 @@ def main():
     theta = np.linspace(0, np.pi, 17)
     phi = np.linspace(0, 2 * np.pi, 32)
 
-    flavin = rp.simulation.Molecule("flavin_anion", ["N5"])
+    flavin = rp.simulation.Molecule("flavin_anion", ["N5", "N10"])
     Z = rp.simulation.Molecule("zorro", [])
     sim = rp.simulation.HilbertSimulation([flavin, Z])
 
