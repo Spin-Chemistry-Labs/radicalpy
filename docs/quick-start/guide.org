@@ -1,4 +1,4 @@
-#+PROPERTY: header-args:python  :session *python* :results output :exports both
+#+PROPERTY: header-args:python  :session *python* :results output
 
 #+begin_src python :results silent
   import sys
@@ -26,7 +26,7 @@
 
 * Helpful error messages
 
-#+begin_src python
+#+begin_src python :exports both
   try:
     Molecule("adenine_cation", ["buz"])
   except ValueError as e:
