@@ -18,7 +18,7 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     url="https://github.com/Spin-Chemistry-Labs/radicalpy",
-    keywords="quantum spin chemistry",
+    keywords="simulation spin-dynamics radical-pair",
     install_requires=["numpy", "scipy", "matplotlib", "scikit-learn"],
     include_package_data=True,
     long_description=long_description,
