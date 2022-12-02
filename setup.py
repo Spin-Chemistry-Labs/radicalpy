@@ -9,7 +9,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="radicalpy",
-    version="0.4rc4",
+    version="0.5rc1",
     license="MIT",
     author="Lewis M. Antill",
     author_email="lewismantill@gmail.com",
@@ -19,7 +19,7 @@ setup(
     package_dir={"": "src"},
     url="https://github.com/Spin-Chemistry-Labs/radicalpy",
     keywords="quantum spin chemistry",
-    install_requires=["numpy", "scipy"],
+    install_requires=["numpy", "scipy", "matplotlib", "scikit-learn"],
     include_package_data=True,
     long_description=long_description,
     long_description_content_type="text/markdown",
