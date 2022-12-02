@@ -9,7 +9,7 @@
 
 * Using the molecule database
 
-#+begin_src python
+#+begin_src python :exports both
   flavin = Molecule(radical="flavin_anion", nuclei=["H25"])
   print(flavin)
 #+end_src
