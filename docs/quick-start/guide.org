@@ -107,6 +107,7 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
 
 #+begin_src python :exports both :results output file
   H = sim.total_hamiltonian(B=0, D=0, J=0)
+  plt.clf()
   plt.spy(H)
   fname = "img/hamiltonian.png"
   plt.savefig(fname)
@@ -135,10 +136,12 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
   product_yield, product_yield_sum = sim.product_yield(time_evol, time, k)
   x = time * 1e6
 
+  plt.clf()
   plt.plot(x, time_evol, color="red", linewidth=2)
   plt.fill_between(x, product_yield, color="blue", alpha=0.2)
   plt.xlabel("Time ($\mu s$)")
-  plt.ylabel("Probability"); plt.ylim([0, 1])
+  plt.ylabel("Probability")
+  plt.ylim([0, 1])
   plt.legend([r"$P_i(t)$", r"$\Phi_i$"])
   plt.suptitle(f"PY = {product_yield_sum}")
 
