@@ -1,4 +1,4 @@
-#+PROPERTY: header-args:python  :session *python* :results output
+#+PROPERTY: header-args:python  :session *python* :results output :exports both
 
 #+begin_src python :results silent
   import sys
