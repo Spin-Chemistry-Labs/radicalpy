@@ -154,5 +154,5 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
 [[file:img/time_evolution.png]]
 
 
-*Document still not finished! Sorry!*
+* Document still not finished! Sorry!
 
