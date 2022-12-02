@@ -117,6 +117,39 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
 [[file:img/hamiltonian.png]]
 
 
+* Time evolution
+
+#+begin_src python :exports both :results output file
+  import numpy as np
+  from radicalpy.simulation import State
+
+  time = np.arange(0, 2e-6, 5e-9)
+  rhos = sim.time_evolution(State.SINGLET, time, H)
+
+  k = 3e6
+  kinetics=[rp.kinetics.Exponential(k)]
+  time_evol = sim.product_probability(State.TRIPLET, rhos)
+
+  sim.apply_hilbert_kinetics(time, time_evol, kinetics)
+
+  product_yield, product_yield_sum = sim.product_yield(time_evol, time, k)
+  x = time * 1e6
+
+  plt.plot(x, time_evol, color="red", linewidth=2)
+  plt.fill_between(x, product_yield, color="blue", alpha=0.2)
+  plt.xlabel("Time ($\mu s$)")
+  plt.ylabel("Probability"); plt.ylim([0, 1])
+  plt.legend([r"$P_i(t)$", r"$\Phi_i$"])
+  plt.suptitle(f"PY = {product_yield_sum}")
+
+  fname = "img/time_evolution.png"
+  plt.savefig(fname)
+  print(fname)
+#+end_src
+
+#+RESULTS:
+[[file:img/time_evolution.png]]
 
 
 *Document still not finished! Sorry!*
+
