@@ -1,0 +1,41 @@
+#+PROPERTY: header-args:python  :session *python* :results output
+
+#+begin_src python :results silent
+  import sys
+  sys.stderr=sys.stdout
+  from radicalpy.simulation import Molecule
+#+end_src
+
+
+* Using the molecule database
+
+#+begin_src python
+  flavin = Molecule(radical="flavin_anion", nuclei=["H25"])
+  print(flavin)
+#+end_src
+
+#+RESULTS:
+: Molecule: flavin_anion
+:   HFCs: [array([[ 0.47570582,  0.04192216, -0.00921916],
+:        [ 0.04192216,  0.4626044 , -0.00827001],
+:        [-0.00921916, -0.00827001,  0.42560999]])]
+:   Multiplicities: [2]
+:   Magnetogyric ratios (mT): [267522.18744]
+:   Number of particles: 1
+
+
+* Helpful error messages
+
+#+begin_src python
+  try:
+    Molecule("adenine_cation", ["buz"])
+  except ValueError as e:
+    print(e)
+#+end_src
+
+#+RESULTS:
+: Available nuclei below.
+: N6-H2 (hfc = -0.66)
+: N6-H1 (hfc = -0.63)
+: C8-H (hfc = -0.55)
+
