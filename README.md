@@ -7,7 +7,7 @@ To get started take a look at the [quick start
 guide](docs/quick-start/guide.org) or the [examples](examples).
 
 The package is still under development.  Basic functionality is
-implemented, [documentations](https://radicalpy.readthedocs.io/) is
+implemented, [documentation](https://radicalpy.readthedocs.io/) is
 sparse, testing partial.
 
 ## Installation
