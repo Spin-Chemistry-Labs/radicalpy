@@ -29,9 +29,8 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
 
 
 def autocorrelation(data, factor=2):
-    # todo(lewis): emil, check please
     datap = ifftshift((data - np.average(data)) / np.std(data))
-    (n,) = datap.shape
+    n = datap.shape[0]
     datap = np.r_[datap[: n // factor], np.zeros_like(datap), datap[n // factor :]]
     f = fft(datap)
     p = np.absolute(f) ** 2
