@@ -669,7 +669,12 @@ class HilbertSimulation:
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
-        """Evolve the system through time."""
+        """Evolve the system through time.
+
+		Args:
+			init_state (State): blah blah
+
+		"""
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
 
