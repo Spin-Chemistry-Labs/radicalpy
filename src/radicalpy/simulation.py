@@ -678,6 +678,9 @@ class HilbertSimulation:
 
 			H (np.ndarray): blah blah
 
+		Returns:
+			np.ndarray: blah blah
+
 		"""
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
