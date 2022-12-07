@@ -145,8 +145,8 @@ def mT_to_MHz(mT: float) -> float:
     mu_B = constants.value("mu_B")
     h = constants.value("h")
     return mT * (1e-9 * -g_e * mu_B / h)
-	
-	
+
+
 def multiexponential_fit(x, *args):
     n = len(args) // 2
     A, tau = list(args)[:n], list(args)[n:]
@@ -239,7 +239,7 @@ def yield_anisotropy(yields, theta, phi):
     yield_av = spherical_average(yields, theta, phi)
     gamma = delta_phi / yield_av
     return delta_phi, gamma
-	
+
 
 def _anisotropy_check(
     theta: Iterable or float, phi: Iterable or float
