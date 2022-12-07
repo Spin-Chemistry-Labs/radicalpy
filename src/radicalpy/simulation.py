@@ -8,8 +8,7 @@ import numpy as np
 import scipy as sp
 
 from . import utils
-from .data import (MOLECULE_DATA, SPIN_DATA, gamma_mT, get_molecules,
-                   multiplicity, pauli)
+from .data import MOLECULE_DATA, SPIN_DATA, gamma_mT, get_molecules, multiplicity, pauli
 
 
 class State(enum.Enum):
@@ -669,7 +668,19 @@ class HilbertSimulation:
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
-        """Evolve the system through time."""
+        """Evolve the system through time.
+
+        Args:
+                init_state (State): blah blah
+
+                time (np.ndarray): blah blah
+
+                H (np.ndarray): blah blah
+
+        Returns:
+                np.ndarray: blah blah
+
+        """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
 

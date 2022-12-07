@@ -2,9 +2,12 @@ from math import prod
 
 import numpy as np
 
-from .simulation import (KineticsRelaxationBase,
-                         LiouvilleKineticsRelaxationBase, LiouvilleSimulation,
-                         State)
+from .simulation import (
+    KineticsRelaxationBase,
+    LiouvilleKineticsRelaxationBase,
+    LiouvilleSimulation,
+    State,
+)
 
 
 class Exponential(KineticsRelaxationBase):
