@@ -19,7 +19,7 @@ def correlation_time_from_fit(*args):
     As_norm = As / np.array(As).sum()
     y = As_norm / taus
     return As, taus, np.trapz(y, dx=1)
-	
+
 
 def dipolar_interaction_1d(r: float) -> float:
     """Construct the Dipolar interaction constant.
@@ -47,7 +47,7 @@ def dipolar_interaction_3d(r: float, gamma: float = gamma_mT("E")) -> float:
     dipolar1d = dipolar_interaction_1d(r)  # , **kwargs)
     dipolar = gamma * (2 / 3) * dipolar1d
     return dipolar * np.diag([-1, -1, 2])
-	
+
 
 def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
     """Construct the Dipolar interaction constant for Monte Carlo simulation.
@@ -58,8 +58,9 @@ def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
         float: The dipolar coupling constant in milli Tesla (mT).
 
     """
-	
-    return dipolar_interaction_1d(r) * (3 * np.cos(theta)**2 - 1)
+
+    return dipolar_interaction_1d(r) * (3 * np.cos(theta) ** 2 - 1)
+
 
 def exchange_interaction_monte_carlo(r: float) -> float:
     """Construct the exchange interaction constant for Monte Carlo simulation.
@@ -70,7 +71,7 @@ def exchange_interaction_monte_carlo(r: float) -> float:
     J0 = -570e-3
     alpha = 2e10
     return (-J0 * np.exp(-alpha * (r))) * 1e3
-	
+
 
 def exchange_interaction_protein(
     r: float, beta: float = 1.4e10, J0: float = 9.7e12
@@ -114,7 +115,7 @@ def g_tensor_relaxation_rate_constant(tau_c, g1, g2):
     g1sum = sum([(gi - ge) ** 2 for gi in g1])
     g2sum = sum([(gi - ge) ** 2 for gi in g2])
     return (g1sum + g2sum) / (9 * tau_c)
-	
+
 
 def k_STD(J, tau_c):
     # J-modulation rate
