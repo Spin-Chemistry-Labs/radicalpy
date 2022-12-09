@@ -699,10 +699,10 @@ class HilbertSimulation:
         return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
 
     @staticmethod
-    def product_yield(probuct_probability, time, k):
+    def product_yield(product_probability, time, k):
         """Calculate the product yield and the product yield sum."""
-        product_yield = sp.integrate.cumtrapz(probuct_probability, time, initial=0) * k
-        product_yield_sum = np.trapz(probuct_probability, dx=time[1]) * k
+        product_yield = sp.integrate.cumtrapz(product_probability, time, initial=0) * k
+        product_yield_sum = np.trapz(product_probability, dx=time[1]) * k
         return product_yield, product_yield_sum
 
     def apply_liouville_hamiltonian_modifiers(self, H, modifiers):
