@@ -35,8 +35,6 @@ def main():
     HFE = results["HFE"]
     LFE = results["LFE"]
 
-    #Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2 = rp.utils.Bhalf_fit(Bs, MARY)
-
     results2 = sim2.MARY(
         init_state=State.SINGLET,
         obs_state=State.SINGLET,
@@ -52,28 +50,17 @@ def main():
     HFE2 = results2["HFE"]
     LFE2 = results2["LFE"]
 
-    #Bhalf2, x_model_MARY2, y_model_MARY2, MARY_fit_error2, R22 = rp.utils.Bhalf_fit(Bs, MARY2)
-
     plt.plot(Bs, MARY, color="red", linewidth=2)
-    #plt.plot(x_model_MARY, y_model_MARY, "k--", linewidth=1, label="Lorentzian fit")
     plt.plot(Bs, MARY2, color="blue", linewidth=2)
-    #plt.plot(x_model_MARY2, y_model_MARY2, "g--", linewidth=1, label="Lorentzian fit")
 
     plt.xlabel("$B_0 (mT)$")
     plt.ylabel("MFE (%)")
-    #plt.legend([r"Simulation", r"Fit"])
 
     print(f"HFE = {HFE: .2f} %")
     print(f"LFE = {LFE: .2f} %")
-    #print(f"B1/2 = {Bhalf: .2f} mT")
-    #print(f"B1/2 fit error = {MARY_fit_error[1]: .2f} mT")
-    #print(f"R^2 for B1/2 fit = {R2: .3f}")
 
     print(f"HFE = {HFE2: .2f} %")
     print(f"LFE = {LFE2: .2f} %")
-    #print(f"B1/2 = {Bhalf2: .2f} mT")
-    #print(f"B1/2 fit error = {MARY_fit_error2[1]: .2f} mT")
-    #print(f"R^2 for B1/2 fit = {R22: .3f}")
 
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
