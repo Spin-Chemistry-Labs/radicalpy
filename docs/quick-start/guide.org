@@ -2,15 +2,18 @@
 
 #+begin_src python :results silent
   import sys
-  sys.stderr=sys.stdout
+
   from radicalpy.simulation import Molecule
+
+  sys.stderr = sys.stdout
 #+end_src
 
 
 * Using the molecule database
 
 #+begin_src python :exports both
-  flavin = Molecule(radical="flavin_anion", nuclei=["H25"])
+  flavin = Molecule(radical="flavin_anion",
+                    nuclei=["H25"])
   print(flavin)
 #+end_src
 
@@ -28,9 +31,9 @@
 
 #+begin_src python :exports both
   try:
-    Molecule("adenine_cation", ["buz"])
+      Molecule("adenine_cation", ["buz"])
   except ValueError as e:
-    print(e)
+      print(e)
 #+end_src
 
 #+RESULTS:
@@ -43,7 +46,8 @@
 * Using the isotope database
 
 #+begin_src python :exports both
-  print(Molecule(nuclei=["1H", "14N"], hfcs=[0.41, 1.82]))
+  print(Molecule(nuclei=["1H", "14N"],
+                 hfcs=[0.41, 1.82]))
 #+end_src
 
 #+RESULTS:
@@ -87,6 +91,7 @@
 #+begin_src python :exports both
   import radicalpy as rp
   import matplotlib.pyplot as plt
+
   sim = rp.simulation.HilbertSimulation([flavin, Z])
   print(sim)
 #+end_src
@@ -160,14 +165,14 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
   from radicalpy import classical, plot
 
   n_steps = 2000
-  r_min = 0.5e-9 /2
+  r_min = 0.5e-9 / 2
   r_max = 2e-9 / 2
   r = (r_min) + np.random.sample() * ((r_max) - (r_min))
   x0, y0, z0 = r, 0, 0
   mut_D = 1e-6 / 10000
   del_T = 40e-12
   delta_r = classical.get_delta_r(mut_D, del_T)
-  pos, dist, ang = classical.randomwalk_3d(n_steps, x0, y0,z0, delta_r, r_max)
+  pos, dist, ang = classical.randomwalk_3d(n_steps, x0, y0, z0, delta_r, r_max)
   plot.monte_carlo_caged(pos, r_max)
 
   fname = "img/monte_carlo.png"
