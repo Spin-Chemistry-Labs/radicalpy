@@ -11,14 +11,16 @@ from .data import constants
 
 
 def angular_frequency_to_Gauss(ang_freq: float) -> float:
-    """
-        Converts the units of angular frequency to Gauss.
+    """Convert units: angular frequency to Gauss.
 
     Args:
-            angular frequency (float):
+
+            ang_freq (float): The angular frequency in
+                :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot
+                \\text{T}^{-1}`.
 
     Returns:
-            float:
+            float: The angular frequency converted to Gauss (G).
 
     """
     g_e = constants.value("g_e")
