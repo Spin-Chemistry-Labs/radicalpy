@@ -14,7 +14,6 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
     """Convert units: angular frequency to Gauss.
 
     Args:
-
             ang_freq (float): The angular frequency in
                 :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot
                 \\text{T}^{-1}`.
