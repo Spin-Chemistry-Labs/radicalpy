@@ -12,7 +12,7 @@ from .data import constants
 
 def angular_frequency_to_Gauss(ang_freq: float) -> float:
     """
-	Converts the units of angular frequency to Gauss.
+        Converts the units of angular frequency to Gauss.
 
     Args:
             angular frequency (float):
@@ -20,7 +20,7 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
     Returns:
             float:
 
-	"""
+    """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
@@ -29,15 +29,15 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
 
 def angular_frequency_to_MHz(ang_freq: float) -> float:
     """
-	Converts the units of angular frequency to MHz.
-	"""
+    Converts the units of angular frequency to MHz.
+    """
     return ang_freq / (2 * np.pi)
 
 
 def angular_frequency_to_mT(ang_freq: float) -> float:
     """
-	Converts the units of angular frequency to milli-Tesla.
-	"""
+    Converts the units of angular frequency to milli-Tesla.
+    """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
@@ -46,8 +46,8 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
 
 def autocorrelation(data, factor=2):
     """
-	FFT-based autocorrelation for analysing the degree of similarity between a given time series and a lagged version of itself over successive time intervals.
-	"""
+    FFT-based autocorrelation for analysing the degree of similarity between a given time series and a lagged version of itself over successive time intervals.
+    """
     datap = ifftshift((data - np.average(data)) / np.std(data))
     n = datap.shape[0]
     datap = np.r_[datap[: n // factor], np.zeros_like(datap), datap[n // factor :]]
