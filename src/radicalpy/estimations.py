@@ -31,7 +31,6 @@ def dipolar_interaction_1d(r: float) -> float:
 
     Returns:
         float: The dipolar coupling constant in milli Tesla (mT).
-
     """
     mu_0 = constants.value("mu_0")
     mu_B = constants.value("mu_B")
@@ -56,7 +55,6 @@ def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
 
     Returns:
         float: The dipolar coupling constant in milli Tesla (mT).
-
     """
 
     return dipolar_interaction_1d(r) * (3 * np.cos(theta) ** 2 - 1)
@@ -65,8 +63,7 @@ def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
 def exchange_interaction_monte_carlo(r: float) -> float:
     """Construct the exchange interaction constant for Monte Carlo simulation.
 
-    .. todo::
-        Write proper docs.
+    .. todo::     Write proper docs.
     """
     J0 = -570e-3
     alpha = 2e10
@@ -78,8 +75,7 @@ def exchange_interaction_protein(
 ) -> float:
     """Construct the exchange interaction constant in a protein.
 
-    .. todo::
-        Write proper docs.
+    .. todo::     Write proper docs.
     """
     return J0 * np.exp(-beta * r) / 1000
 
@@ -87,8 +83,7 @@ def exchange_interaction_protein(
 def exchange_interaction_solution(r: float) -> float:
     """Construct the exchange interaction constant in a solution.
 
-    .. todo::
-        Write proper docs.
+    .. todo::     Write proper docs.
     """
     J0rad = 1.7e17
     rj = 0.049e-9
@@ -100,8 +95,7 @@ def exchange_interaction_solution(r: float) -> float:
 def exchange_interaction(r: float, model: str = "solution"):
     """Construct the exchange interaction constant in a solution.
 
-    .. todo::
-        Write proper docs.
+    .. todo::     Write proper docs.
     """
     methods = {
         "solution": exchange_interaction_solution,
