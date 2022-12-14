@@ -10,9 +10,151 @@ from sklearn.metrics import r2_score
 from .data import constants
 
 
+def Bhalf_fit(
+    B: np.ndarray, MARY: np.ndarray
+) -> (float, np.ndarray, np.ndarray, float, float):
+    """B_1/2 fit for MARY spectra.
+
+    Args:
+            B (np.ndarray): Magnetic field values (x-axis).
+            MARY (np.ndarray): Magnetic field effect data
+                (y-axis). Use the `MARY` entry in the result of
+                `radicalpy.simulation.HilbertSimulation.MARY`.
+
+    Returns:
+            (float, np.ndarray, np.ndarray, float, float):
+            - `Bhalf` (float): The magnetic field strength at half the saturation magnetic field.
+            - `x_model_MARY` (np.ndarray): x-axis from fit.
+            - `y_model_MARY` (np.ndarray): y-axis from fit.
+            - `MARY_fit_error` (float): Standard error for the fit.
+            - `R2` (float): R-squared value for the fit.
+    """
+    popt_MARY, pcov_MARY = curve_fit(
+        Lorentzian,
+        B,
+        MARY,
+        p0=[MARY[-1], int(len(B) / 2)],
+        maxfev=1000000,
+    )
+    MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
+
+    A_opt_MARY, Bhalf_opt_MARY = popt_MARY
+    x_model_MARY = np.linspace(min(B), max(B), len(B))
+    y_model_MARY = Lorentzian(x_model_MARY, *popt_MARY)
+    Bhalf = np.abs(Bhalf_opt_MARY)
+
+    y_pred_MARY = Lorentzian(B, *popt_MARY)
+    R2 = r2_score(MARY, y_pred_MARY)
+
+    return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
+
+
+def Gauss_to_MHz(Gauss: float) -> float:
+    """Convert Gauss to MHz.
+
+    Args:
+            Gauss (float): The magnetic flux density in Gauss (G).
+
+    Returns:
+            float: The magnetic flux density converted to MHz.
+    """
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    h = constants.value("h")
+    return Gauss / (1e-10 * -g_e * mu_B / h)
+
+
+def Gauss_to_angular_frequency(Gauss: float) -> float:
+    """Convert Gauss to angular frequency.
+
+    Args:
+            Gauss (float): The magnetic flux density in Gauss (G).
+
+    Returns:
+            float: The magnetic flux density converted to angular
+            frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot
+            \\text{T}^{-1}`).
+    """
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    hbar = constants.value("hbar")
+    return Gauss * (mu_B / hbar * -g_e / 1e10)
+
+
+def Gauss_to_mT(Gauss: float) -> float:
+    """Convert Gauss to millitesla.
+
+    Args:
+            Gauss (float): The magnetic flux density in Gauss (G).
+
+    Returns:
+            float: The magnetic flux density converted to millitesla
+            (mT).
+    """
+    return Gauss / 10
+
+
+def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
+    """Lorentzian function for MARY spectra.
+
+    More information in `radicalpy.utils.Bhalf_fit` (where this is
+    used).
+
+    Args:
+            B (np.ndarray): The x-axis magnetic field values.
+            amplitude (float): The amplitude of the saturation field value.
+            Bhalf (float): The magnetic field strength at half the saturation field value.
+
+    Returns:
+            np.ndarray: Lorentzian function for MARY spectrum.
+    """
+    return (amplitude / Bhalf**2) - (amplitude / (B**2 + Bhalf**2))
+
+
+def MHz_to_Gauss(MHz: float) -> float:
+    """Convert units: Megahertz (MHz) to Gauss (G).
+
+    Args:
+            MHz (float): The frequency in Megahertz (MHz).
+
+    Returns:
+            float: Megahertz (MHz) converted to Gauss (G).
+    """
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    h = constants.value("h")
+    return MHz / (1e-10 * -g_e * mu_B / h)
+
+
+def MHz_to_angular_frequency(MHz: float) -> float:
+    """Convert MHz to angular frequency.
+
+    Args:
+            MHz (float): The angular frequency in :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
+
+    Returns:
+            float: Angular frequency converted to :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+    """
+    return MHz * (2 * np.pi)
+
+
+def MHz_to_mT(MHz: float) -> float:
+    """Convert units: Megahertz (MHz) to milltesla (mT).
+
+    Args:
+            MHz (float): The frequency in Megahertz (MHz).
+
+    Returns:
+            float: Megahertz (MHz) converted to millitesla (mT).
+    """
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    h = constants.value("h")
+    return MHz / (1e-9 * -g_e * mu_B / h)
+
+
 def angular_frequency_to_Gauss(ang_freq: float) -> float:
-    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot
-    \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to Gauss (G).
+    """Convert units: Angular frequency to Gauss.
 
     Args:
             ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
@@ -27,22 +169,19 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
 
 
 def angular_frequency_in_MHz(ang_freq: float) -> float:
-    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot
-    \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to (:math:`\\text{MHz} \\cdot
-    \\text{T}^{-1}`).
+    """Convert angular frequency into MHz.
 
     Args:
             ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
 
     Returns:
-            float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
+            float: The angular frequency converted to :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
     """
     return ang_freq / (2 * np.pi)
 
 
 def angular_frequency_to_mT(ang_freq: float) -> float:
-    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot
-    \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to millitesla (mT).
+    """Convert angular frequency to millitesla.
 
     Args:
             ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
@@ -76,42 +215,6 @@ def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
     result = np.real(pi)[: n // factor] / np.arange(n, 0, -1)[: n // factor]
     result = np.delete(result, 0)
     return result
-
-
-def Bhalf_fit(
-    B: np.ndarray, MARY: np.ndarray
-) -> (float, np.ndarray, np.ndarray, float, float):
-    """Curve fitting: Lorentzian fit for MARY spectra.
-
-    Args:
-            B (np.ndarray): Magnetic field values (x-axis).
-            MARY (np.ndarray): Magnetic field effect data (y-axis).
-
-    Returns:
-            Bhalf (float): The magnetic field strength at half the saturation magnetic field.
-            x_model_MARY (np.ndarray): x-axis from fit.
-            y_model_MARY (np.ndarray): y-axis from fit.
-            MARY_fit_error (float): Standard error for the fit.
-            R2 (float): R-squared value for the fit.
-    """
-    popt_MARY, pcov_MARY = curve_fit(
-        Lorentzian_fit,
-        B,
-        MARY,
-        p0=[MARY[-1], int(len(B) / 2)],
-        maxfev=1000000,
-    )
-    MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
-
-    A_opt_MARY, Bhalf_opt_MARY = popt_MARY
-    x_model_MARY = np.linspace(min(B), max(B), len(B))
-    y_model_MARY = Lorentzian_fit(x_model_MARY, *popt_MARY)
-    Bhalf = np.abs(Bhalf_opt_MARY)
-
-    y_pred_MARY = Lorentzian_fit(B, *popt_MARY)
-    R2 = r2_score(MARY, y_pred_MARY)
-
-    return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
 
 
 def cartesian_to_spherical(
@@ -148,49 +251,6 @@ def check_full_sphere_coordinates(theta: Iterable, phi: Iterable) -> (int, int):
     return nth, nph
 
 
-def Gauss_to_angular_frequency(Gauss: float) -> float:
-    """Convert units: Gauss (G) to angular frequency (:math:`\\text{rad} \\cdot
-    \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
-
-    Args:
-            Gauss (float): The magnetic flux density in Gauss (G).
-
-    Returns:
-            float: Gauss (G) converted to angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
-    """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
-    return Gauss * (mu_B / hbar * -g_e / 1e10)
-
-
-def Gauss_to_MHz(Gauss: float) -> float:
-    """Convert units: Gauss (G) to Megahertz (MHz).
-
-    Args:
-            Gauss (float): The magnetic flux density in Gauss (G).
-
-    Returns:
-            float: Gauss (G) converted to Megahertz (MHz).
-    """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
-    return Gauss / (1e-10 * -g_e * mu_B / h)
-
-
-def Gauss_to_mT(Gauss: float) -> float:
-    """Convert units: Gauss (G) to millitesla (mT).
-
-    Args:
-            Gauss (float): The magnetic flux density in Gauss (G).
-
-    Returns:
-            float: Gauss (G) converted to millitesla (mT).
-    """
-    return Gauss / 10
-
-
 def get_idx(values, target):
     return np.abs(target - values).argmin()
 
@@ -207,67 +267,8 @@ def isotropic(anisotropic: np.ndarray or list) -> float:
     return np.trace(anisotropic) / 3
 
 
-def Lorentzian_fit(x: np.ndarray, A: np.ndarray, Bhalf: float) -> np.ndarray:
-    """Curve fitting: Lorentzian function for MARY spectra.
-
-    Args:
-            x (np.ndarray): The x-axis values.
-            A (np.ndarray): The amplitudes (intensity scaling).
-            Bhalf (float): The magnetic field strength at half the saturation magnetic field.
-
-    Returns:
-            np.ndarray: Lorentzian fit for MARY spectrum.
-    """
-    return (A / Bhalf**2) - (A / (x**2 + Bhalf**2))
-
-
-def MHz_to_angular_frequency(MHz: float) -> float:
-    """Convert units: Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`) to
-    angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot
-    \\text{T}^{-1}`).
-
-    Args:
-            MHz (float): The frequency in Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`).
-
-    Returns:
-            float: Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`) converted to angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
-    """
-    return MHz * (2 * np.pi)
-
-
-def MHz_to_Gauss(MHz: float) -> float:
-    """Convert units: Megahertz (MHz) to Gauss (G).
-
-    Args:
-            MHz (float): The frequency in Megahertz (MHz).
-
-    Returns:
-            float: Megahertz (MHz) converted to Gauss (G).
-    """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
-    return MHz / (1e-10 * -g_e * mu_B / h)
-
-
-def MHz_to_mT(MHz: float) -> float:
-    """Convert units: Megahertz (MHz) to milltesla (mT).
-
-    Args:
-            MHz (float): The frequency in Megahertz (MHz).
-
-    Returns:
-            float: Megahertz (MHz) converted to millitesla (mT).
-    """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
-    return MHz / (1e-9 * -g_e * mu_B / h)
-
-
 def mT_to_angular_frequency(mT: float) -> float:
-    """Convert units: millitesla (mT) to angular frequency (:math:`\\text{rad}
-    \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
+    """Convert millitesla to angular frequency.
 
     Args:
             mT (float): The magnetic flux density in millitesla (mT).
