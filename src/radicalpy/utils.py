@@ -60,7 +60,7 @@ def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
 
     Args:
             data (np.ndarray): The time dependent trajectory.
-			factor (int): Data length reduction factor.
+                        factor (int): Data length reduction factor.
 
     Returns:
             np.ndarray: The autocorrelation of the trajectory.
@@ -77,19 +77,21 @@ def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
     return result
 
 
-def Bhalf_fit(B: np.ndarray, MARY: np.ndarray) -> (float, np.ndarray, np.ndarray, float, float):
+def Bhalf_fit(
+    B: np.ndarray, MARY: np.ndarray
+) -> (float, np.ndarray, np.ndarray, float, float):
     """Curve fitting: Lorentzian fit for MARY spectra.
 
     Args:
             B (np.ndarray): Magnetic field values (x-axis).
-			MARY (np.ndarray): Magnetic field effect data (y-axis).
+                        MARY (np.ndarray): Magnetic field effect data (y-axis).
 
     Returns:
             Bhalf (float): The magnetic field strength at half the saturation magnetic field.
-			x_model_MARY (np.ndarray): x-axis from fit.
-			y_model_MARY (np.ndarray): y-axis from fit.
-			MARY_fit_error (float): Standard error for the fit.
-			R2 (float): R-squared value for the fit.
+                        x_model_MARY (np.ndarray): x-axis from fit.
+                        y_model_MARY (np.ndarray): y-axis from fit.
+                        MARY_fit_error (float): Standard error for the fit.
+                        R2 (float): R-squared value for the fit.
 
     """
     popt_MARY, pcov_MARY = curve_fit(
@@ -112,18 +114,20 @@ def Bhalf_fit(B: np.ndarray, MARY: np.ndarray) -> (float, np.ndarray, np.ndarray
     return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
 
 
-def cartesian_to_spherical(x: float or np.ndarray, y: float or np.ndarray, z: float or np.ndarray) -> (float or np.ndarray, float or np.ndarray, float or np.ndarray):
+def cartesian_to_spherical(
+    x: float or np.ndarray, y: float or np.ndarray, z: float or np.ndarray
+) -> (float or np.ndarray, float or np.ndarray, float or np.ndarray):
     """Convert units: Cartesian coordinates to spherical coordinates.
 
     Args:
             x (float or np.ndarray): Coordinate(s) in the x plane.
-			y (float or np.ndarray): Coordinate(s) in the y plane.
-			z (float or np.ndarray): Coordinate(s) in the z plane.
+                        y (float or np.ndarray): Coordinate(s) in the y plane.
+                        z (float or np.ndarray): Coordinate(s) in the z plane.
 
     Returns:
             r (float or np.ndarray): The radial distance(s).
-			theta (float or np.ndarray): The polar angle(s).
-			phi (float or np.ndarray): The azimuthal angle(s).
+                        theta (float or np.ndarray): The polar angle(s).
+                        phi (float or np.ndarray): The azimuthal angle(s).
 
     """
     r = np.sqrt(x**2 + y**2 + z**2)
@@ -212,8 +216,8 @@ def Lorentzian_fit(x: np.ndarray, A: np.ndarray, Bhalf: float) -> np.ndarray:
 
     Args:
             x (np.ndarray): The x-axis values.
-			A (np.ndarray): The amplitudes (intensity scaling).
-			Bhalf (float): The magnetic field strength at half the saturation magnetic field.
+                        A (np.ndarray): The amplitudes (intensity scaling).
+                        Bhalf (float): The magnetic field strength at half the saturation magnetic field.
 
     Returns:
             np.ndarray: Lorentzian fit for MARY spectrum.
