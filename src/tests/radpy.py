@@ -246,13 +246,9 @@ def HamiltonianDipolar3D(DipolarInteractions):
 
 
 def Kinetics(spins, k=0, time=0, model="Haberkorn-singlet"):
-
-    """
-    Kinetic models include:
-    "Exponential"
-    "Diffusion"
-    Haberkorn superoperators (singlet and triplet recombination, free radical (RP2) production)
-    Jones-Hore superoperator
+    """Kinetic models include: "Exponential" "Diffusion" Haberkorn
+    superoperators (singlet and triplet recombination, free radical (RP2)
+    production) Jones-Hore superoperator.
 
     Arguments:
         spins: an integer = sum of the number of electrons and nuclei
@@ -308,14 +304,9 @@ def Kinetics(spins, k=0, time=0, model="Haberkorn-singlet"):
 
 
 def Relaxation(spins, k=0, model="ST-Dephasing"):
-
-    """
-    Relaxation models include:
-    Singlet-Triplet Dephasing (STD)
-    Triplet-Triplet Dephasing (TTD)
-    Triplet-Triplet Relaxation (TTR)
-    Random Field Relaxation (RFR)
-    Dipolar Modulation (DM)
+    """Relaxation models include: Singlet-Triplet Dephasing (STD) Triplet-
+    Triplet Dephasing (TTD) Triplet-Triplet Relaxation (TTR) Random Field
+    Relaxation (RFR) Dipolar Modulation (DM)
 
     Arguments:
         spins: an integer = sum of the number of electrons and nuclei
@@ -402,9 +393,7 @@ def Relaxation(spins, k=0, model="ST-Dephasing"):
 
 
 def Hilbert2Liouville(H):
-
-    """
-    Converts a spin Hamiltonian matrix in Hilbert space to Liouville space
+    """Converts a spin Hamiltonian matrix in Hilbert space to Liouville space.
 
     Arguments:
         H: a matrix = spin Hamiltonian in Hilbert space
@@ -420,9 +409,8 @@ def Hilbert2Liouville(H):
 
 
 def Hilbert_initial(state, spins, H):
-
-    """
-    Creates an initial density matrix for time evolution of the spin Hamiltonian density matrix
+    """Creates an initial density matrix for time evolution of the spin
+    Hamiltonian density matrix.
 
     Arguments:
         state: a string = spin state projection operator
@@ -447,9 +435,8 @@ def Hilbert_initial(state, spins, H):
 
 
 def Hilbert_observable(state, spins):
-
-    """
-    Creates an observable density matrix for time evolution of the spin Hamiltonian density matrix
+    """Creates an observable density matrix for time evolution of the spin
+    Hamiltonian density matrix.
 
     Arguments:
         state: a string = spin state projection operator
@@ -482,9 +469,8 @@ def Hilbert_observable(state, spins):
 
 
 def Liouville_initial(state, spins, H):
-
-    """
-    Creates an initial density matrix for time evolution of the spin Hamiltonian density matrix
+    """Creates an initial density matrix for time evolution of the spin
+    Hamiltonian density matrix.
 
     Arguments:
         state: a string = spin state projection operator
@@ -510,9 +496,8 @@ def Liouville_initial(state, spins, H):
 
 
 def Liouville_observable(state, spins):
-
-    """
-    Creates an observable density matrix for time evolution of the spin Hamiltonian density matrix
+    """Creates an observable density matrix for time evolution of the spin
+    Hamiltonian density matrix.
 
     Arguments:
         state: a string = spin state projection operator
@@ -550,9 +535,8 @@ def Liouville_observable(state, spins):
 
 
 def UnitaryPropagator(H, dt, space="Hilbert"):
-
-    """
-    Creates unitary propagator matrices for time evolution of the spin Hamiltonian density matrix in both Hilbert and Liouville space
+    """Creates unitary propagator matrices for time evolution of the spin
+    Hamiltonian density matrix in both Hilbert and Liouville space.
 
     Arguments:
         H: a matrix = spin Hamiltonian in Hilbert or Liouville space
@@ -651,7 +635,6 @@ def TimeEvolution(
 
 
 def MARY(spins, initial, observable, t_max, t_stepsize, k, B, Hplot, space="Hilbert"):
-
     timing = np.arange(0, t_max, t_stepsize)
     MFE = np.zeros((len(B), len(timing)))
 
@@ -740,7 +723,6 @@ def T1_T2_RelaxationTimes(g_tensors, B, tau_c):
 
 
 def EffectiveHyperfine(radical_hfc, radical_spin):
-
     radical_HFC = np.array(radical_hfc)
     spin_quantum_number = np.array(radical_spin)
 
@@ -1126,7 +1108,6 @@ def DensityMatrixPlot2D(
 
 
 def LinearEnergyLevelPlot2D(H, B, linecolour, title):
-
     eigval = np.linalg.eigh(H)
     E = np.real(eigval[0])  # 0 = eigenvalues, 1 = eigenvectors
 
@@ -1139,7 +1120,6 @@ def LinearEnergyLevelPlot2D(H, B, linecolour, title):
 
 
 def EnergyLevelPlot2D(spins, HFC, B_max, B_steps, J, D, xlabel, title):
-
     H = HamiltonianZeeman_RadicalPair(spins, B_max)
     B = np.linspace(0, B_max, B_steps)
     E = np.zeros([B_steps, len(H)], dtype=np.complex_)
@@ -1353,7 +1333,6 @@ def MC_randomwalk3D_cage(n_steps, r_max, x_0, y_0, z_0, mut_D, del_T):
 
 
 def MC_exchange_dipolar(n_steps, r_min, del_T, radA_x, dist, angle):
-
     r_min = radA_x[0]
     t = np.linspace(0, n_steps, n_steps)
     dist[0] = r_min

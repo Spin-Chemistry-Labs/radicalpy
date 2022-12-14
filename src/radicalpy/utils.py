@@ -11,14 +11,14 @@ from .data import constants
 
 
 def angular_frequency_to_Gauss(ang_freq: float) -> float:
-    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to Gauss (G).
+    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot
+    \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to Gauss (G).
 
     Args:
             ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
 
     Returns:
             float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to Gauss (G).
-
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -27,27 +27,28 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
 
 
 def angular_frequency_to_MHz(ang_freq: float) -> float:
-    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`).
+    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot
+    \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to (:math:`\\text{MHz} \\cdot
+    \\text{T}^{-1}`).
 
     Args:
             ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
 
     Returns:
             float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
-
     """
     return ang_freq / (2 * np.pi)
 
 
 def angular_frequency_to_mT(ang_freq: float) -> float:
-    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to millitesla (mT).
+    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot
+    \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to millitesla (mT).
 
     Args:
             ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
 
     Returns:
             float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to millitesla (mT).
-
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -56,7 +57,8 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
 
 
 def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
-    """FFT-based autocorrelation of Monte Carlo or molecular dynamics trajectories.
+    """FFT-based autocorrelation of Monte Carlo or molecular dynamics
+    trajectories.
 
     Args:
             data (np.ndarray): The time dependent trajectory.
@@ -64,7 +66,6 @@ def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
 
     Returns:
             np.ndarray: The autocorrelation of the trajectory.
-
     """
     datap = ifftshift((data - np.average(data)) / np.std(data))
     n = datap.shape[0]
@@ -92,7 +93,6 @@ def Bhalf_fit(
             y_model_MARY (np.ndarray): y-axis from fit.
             MARY_fit_error (float): Standard error for the fit.
             R2 (float): R-squared value for the fit.
-
     """
     popt_MARY, pcov_MARY = curve_fit(
         Lorentzian_fit,
@@ -128,7 +128,6 @@ def cartesian_to_spherical(
             r (float or np.ndarray): The radial distance(s).
             theta (float or np.ndarray): The polar angle(s).
             phi (float or np.ndarray): The azimuthal angle(s).
-
     """
     r = np.sqrt(x**2 + y**2 + z**2)
     theta = np.arccos(z / r)
@@ -150,14 +149,14 @@ def check_full_sphere_coordinates(theta: Iterable, phi: Iterable) -> (int, int):
 
 
 def Gauss_to_angular_frequency(Gauss: float) -> float:
-    """Convert units: Gauss (G) to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
+    """Convert units: Gauss (G) to angular frequency (:math:`\\text{rad} \\cdot
+    \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
 
     Args:
             Gauss (float): The magnetic flux density in Gauss (G).
 
     Returns:
             float: Gauss (G) converted to angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
-
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -173,7 +172,6 @@ def Gauss_to_MHz(Gauss: float) -> float:
 
     Returns:
             float: Gauss (G) converted to Megahertz (MHz).
-
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -189,7 +187,6 @@ def Gauss_to_mT(Gauss: float) -> float:
 
     Returns:
             float: Gauss (G) converted to millitesla (mT).
-
     """
     return Gauss / 10
 
@@ -206,7 +203,6 @@ def isotropic(anisotropic: np.ndarray or list) -> float:
 
     Returns:
             float: isotropic value.
-
     """
     return np.trace(anisotropic) / 3
 
@@ -221,20 +217,20 @@ def Lorentzian_fit(x: np.ndarray, A: np.ndarray, Bhalf: float) -> np.ndarray:
 
     Returns:
             np.ndarray: Lorentzian fit for MARY spectrum.
-
     """
     return (A / Bhalf**2) - (A / (x**2 + Bhalf**2))
 
 
 def MHz_to_angular_frequency(MHz: float) -> float:
-    """Convert units: Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`) to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
+    """Convert units: Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`) to
+    angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot
+    \\text{T}^{-1}`).
 
     Args:
             MHz (float): The frequency in Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`).
 
     Returns:
             float: Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`) converted to angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
-
     """
     return MHz * (2 * np.pi)
 
@@ -247,7 +243,6 @@ def MHz_to_Gauss(MHz: float) -> float:
 
     Returns:
             float: Megahertz (MHz) converted to Gauss (G).
-
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -263,7 +258,6 @@ def MHz_to_mT(MHz: float) -> float:
 
     Returns:
             float: Megahertz (MHz) converted to millitesla (mT).
-
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -272,14 +266,14 @@ def MHz_to_mT(MHz: float) -> float:
 
 
 def mT_to_angular_frequency(mT: float) -> float:
-    """Convert units: millitesla (mT) to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
+    """Convert units: millitesla (mT) to angular frequency (:math:`\\text{rad}
+    \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
 
     Args:
             mT (float): The magnetic flux density in millitesla (mT).
 
     Returns:
             float: millitesla (mT) converted to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
-
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -295,7 +289,6 @@ def mT_to_Gauss(mT: float) -> float:
 
     Returns:
             float: millitesla (mT) converted to Gauss (G).
-
     """
     return mT * 10
 
@@ -308,7 +301,6 @@ def mT_to_MHz(mT: float) -> float:
 
     Returns:
             float: millitesla (mT) converted to Megahertz (MHz).
-
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -325,7 +317,6 @@ def multiexponential_fit(x, *args):
 
     Returns:
             np.ndarray: Multiexponential fit for autocorrelations.
-
     """
     n = len(args) // 2
     A, tau = list(args)[:n], list(args)[n:]
@@ -333,14 +324,14 @@ def multiexponential_fit(x, *args):
 
 
 def rotation_matrix_x(alpha: float) -> np.ndarray:
-    """Tensor transformation: Rotation matrix to rotate a vector or matrix by an angle alpha about the x-axis in 3D.
+    """Tensor transformation: Rotation matrix to rotate a vector or matrix by
+    an angle alpha about the x-axis in 3D.
 
     Args:
             alpha (float): The angle to rotate a vector about the x-axis.
 
     Returns:
             np.ndarray: Rotated vector or matrix.
-
     """
     return np.array(
         [
@@ -352,14 +343,14 @@ def rotation_matrix_x(alpha: float) -> np.ndarray:
 
 
 def rotation_matrix_y(beta: float) -> np.ndarray:
-    """Tensor transformation: Rotation matrix to rotate a vector or matrix by an angle beta about the y-axis in 3D.
+    """Tensor transformation: Rotation matrix to rotate a vector or matrix by
+    an angle beta about the y-axis in 3D.
 
     Args:
             beta (float): The angle to rotate a vector about the x-axis.
 
     Returns:
             np.ndarray: Rotated vector or matrix.
-
     """
     return np.array(
         [
@@ -371,14 +362,14 @@ def rotation_matrix_y(beta: float) -> np.ndarray:
 
 
 def rotation_matrix_z(gamma: float) -> np.ndarray:
-    """Tensor transformation: Rotation matrix to rotate a vector or matrix by an angle gamma about the z-axis in 3D.
+    """Tensor transformation: Rotation matrix to rotate a vector or matrix by
+    an angle gamma about the z-axis in 3D.
 
     Args:
             gamma (float): The angle to rotate a vector about the x-axis.
 
     Returns:
             np.ndarray: Rotated vector or matrix.
-
     """
     return np.array(
         [
@@ -390,7 +381,8 @@ def rotation_matrix_z(gamma: float) -> np.ndarray:
 
 
 def spectral_density(omega: float, tau_c: float) -> float:
-    """Spectral density: The frequency at which the motion of the particle exists.
+    """Spectral density: The frequency at which the motion of the particle
+    exists.
 
     Args:
             omega (float): The Larmor frequency of the electron.
@@ -398,7 +390,6 @@ def spectral_density(omega: float, tau_c: float) -> float:
 
     Returns:
             float: Spectral density frequency.
-
     """
     return tau_c / (1 + omega**2 * tau_c**2)
 
@@ -415,7 +406,6 @@ def spherical_average(
 
     Returns:
             float: The spherical average of the anisotropic product yields.
-
     """
     theta, phi = _anisotropy_check(theta, phi)
     nth, nph = check_full_sphere_coordinates(theta, phi)
@@ -448,7 +438,6 @@ def spherical_to_cartesian(
 
     Returns:
             np.ndarray: The Cartesian coordinates.
-
     """
     return np.array(
         [
