@@ -11,15 +11,13 @@ from .data import constants
 
 
 def angular_frequency_to_Gauss(ang_freq: float) -> float:
-    """Convert units: angular frequency to Gauss.
+    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to Gauss (G).
 
     Args:
-            ang_freq (float): The angular frequency in
-                :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot
-                \\text{T}^{-1}`.
+            ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
 
     Returns:
-            float: The angular frequency converted to Gauss (G).
+            float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to Gauss (G).
 
     """
     g_e = constants.value("g_e")
@@ -29,15 +27,27 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
 
 
 def angular_frequency_to_MHz(ang_freq: float) -> float:
-    """
-    Converts the units of angular frequency to MHz.
+    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`).
+
+    Args:
+            ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+
+    Returns:
+            float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
+
     """
     return ang_freq / (2 * np.pi)
 
 
 def angular_frequency_to_mT(ang_freq: float) -> float:
-    """
-    Converts the units of angular frequency to milli-Tesla.
+    """Convert units: Angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to millitesla (mT).
+
+    Args:
+            ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+
+    Returns:
+            float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to millitesla (mT).
+
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -45,9 +55,16 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     return ang_freq / (mu_B / hbar * -g_e / 1e9)
 
 
-def autocorrelation(data, factor=2):
-    """
-    FFT-based autocorrelation for analysing the degree of similarity between a given time series and a lagged version of itself over successive time intervals.
+def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
+    """FFT-based autocorrelation of Monte Carlo or molecular dynamics trajectories.
+
+    Args:
+            data (np.ndarray): The time dependent trajectory.
+			factor (int): Data length reduction factor.
+
+    Returns:
+            np.ndarray: The autocorrelation of the trajectory.
+
     """
     datap = ifftshift((data - np.average(data)) / np.std(data))
     n = datap.shape[0]
@@ -60,7 +77,21 @@ def autocorrelation(data, factor=2):
     return result
 
 
-def Bhalf_fit(B, MARY):
+def Bhalf_fit(B: np.ndarray, MARY: np.ndarray) -> (float, np.ndarray, np.ndarray, float, float):
+    """Curve fitting: Lorentzian fit for MARY spectra.
+
+    Args:
+            B (np.ndarray): Magnetic field values (x-axis).
+			MARY (np.ndarray): Magnetic field effect data (y-axis).
+
+    Returns:
+            Bhalf (float): The magnetic field strength at half the saturation magnetic field.
+			x_model_MARY (np.ndarray): x-axis from fit.
+			y_model_MARY (np.ndarray): y-axis from fit.
+			MARY_fit_error (float): Standard error for the fit.
+			R2 (float): R-squared value for the fit.
+
+    """
     popt_MARY, pcov_MARY = curve_fit(
         Lorentzian_fit,
         B,
@@ -81,7 +112,20 @@ def Bhalf_fit(B, MARY):
     return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
 
 
-def cartesian_to_spherical(x, y, z):
+def cartesian_to_spherical(x: float or np.ndarray, y: float or np.ndarray, z: float or np.ndarray) -> (float or np.ndarray, float or np.ndarray, float or np.ndarray):
+    """Convert units: Cartesian coordinates to spherical coordinates.
+
+    Args:
+            x (float or np.ndarray): Coordinate(s) in the x plane.
+			y (float or np.ndarray): Coordinate(s) in the y plane.
+			z (float or np.ndarray): Coordinate(s) in the z plane.
+
+    Returns:
+            r (float or np.ndarray): The radial distance(s).
+			theta (float or np.ndarray): The polar angle(s).
+			phi (float or np.ndarray): The azimuthal angle(s).
+
+    """
     r = np.sqrt(x**2 + y**2 + z**2)
     theta = np.arccos(z / r)
     phi = np.arctan2(y, x)
@@ -102,6 +146,15 @@ def check_full_sphere_coordinates(theta: Iterable, phi: Iterable) -> (int, int):
 
 
 def Gauss_to_angular_frequency(Gauss: float) -> float:
+    """Convert units: Gauss (G) to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
+
+    Args:
+            Gauss (float): The magnetic flux density in Gauss (G).
+
+    Returns:
+            float: Gauss (G) converted to angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+
+    """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
@@ -109,6 +162,15 @@ def Gauss_to_angular_frequency(Gauss: float) -> float:
 
 
 def Gauss_to_MHz(Gauss: float) -> float:
+    """Convert units: Gauss (G) to Megahertz (MHz).
+
+    Args:
+            Gauss (float): The magnetic flux density in Gauss (G).
+
+    Returns:
+            float: Gauss (G) converted to Megahertz (MHz).
+
+    """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
     h = constants.value("h")
@@ -116,6 +178,15 @@ def Gauss_to_MHz(Gauss: float) -> float:
 
 
 def Gauss_to_mT(Gauss: float) -> float:
+    """Convert units: Gauss (G) to millitesla (mT).
+
+    Args:
+            Gauss (float): The magnetic flux density in Gauss (G).
+
+    Returns:
+            float: Gauss (G) converted to millitesla (mT).
+
+    """
     return Gauss / 10
 
 
@@ -123,15 +194,44 @@ def get_idx(values, target):
     return np.abs(target - values).argmin()
 
 
-def isotropic(anisotropic: np.ndarray or list):
+def isotropic(anisotropic: np.ndarray or list) -> float:
+    """Convert tensors: Anisotropic tensor to isotropic value.
+
+    Args:
+            anisotropic (np.ndarray or list): The 3x3 interaction tensor matrix.
+
+    Returns:
+            float: isotropic value.
+
+    """
     return np.trace(anisotropic) / 3
 
 
-def Lorentzian_fit(x, A, Bhalf):
+def Lorentzian_fit(x: np.ndarray, A: np.ndarray, Bhalf: float) -> np.ndarray:
+    """Curve fitting: Lorentzian function for MARY spectra.
+
+    Args:
+            x (np.ndarray): The x-axis values.
+			A (np.ndarray): The amplitudes (intensity scaling).
+			Bhalf (float): The magnetic field strength at half the saturation magnetic field.
+
+    Returns:
+            np.ndarray: Lorentzian fit for MARY spectrum.
+
+    """
     return (A / Bhalf**2) - (A / (x**2 + Bhalf**2))
 
 
 def MHz_to_angular_frequency(MHz: float) -> float:
+    """Convert units: Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`) to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
+
+    Args:
+            MHz (float): The frequency in Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`).
+
+    Returns:
+            float: Megahertz (:math:`\\text{MHz} \\cdot \\text{T}^{-1}`) converted to angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+
+    """
     return MHz * (2 * np.pi)
 
 
