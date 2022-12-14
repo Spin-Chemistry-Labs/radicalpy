@@ -60,8 +60,7 @@ def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
 
     Args:
             data (np.ndarray): The time dependent trajectory.
-
-			factor (int): Data length reduction factor.
+            factor (int): Data length reduction factor.
 
     Returns:
             np.ndarray: The autocorrelation of the trajectory.
@@ -85,19 +84,14 @@ def Bhalf_fit(
 
     Args:
             B (np.ndarray): Magnetic field values (x-axis).
-
-			MARY (np.ndarray): Magnetic field effect data (y-axis).
+            MARY (np.ndarray): Magnetic field effect data (y-axis).
 
     Returns:
             Bhalf (float): The magnetic field strength at half the saturation magnetic field.
-
-			x_model_MARY (np.ndarray): x-axis from fit.
-
-			y_model_MARY (np.ndarray): y-axis from fit.
-
-			MARY_fit_error (float): Standard error for the fit.
-
-			R2 (float): R-squared value for the fit.
+            x_model_MARY (np.ndarray): x-axis from fit.
+            y_model_MARY (np.ndarray): y-axis from fit.
+            MARY_fit_error (float): Standard error for the fit.
+            R2 (float): R-squared value for the fit.
 
     """
     popt_MARY, pcov_MARY = curve_fit(
@@ -135,9 +129,9 @@ def cartesian_to_spherical(
     Returns:
             r (float or np.ndarray): The radial distance(s).
 
-			theta (float or np.ndarray): The polar angle(s).
+                        theta (float or np.ndarray): The polar angle(s).
 
-			phi (float or np.ndarray): The azimuthal angle(s).
+                        phi (float or np.ndarray): The azimuthal angle(s).
 
     """
     r = np.sqrt(x**2 + y**2 + z**2)
@@ -227,9 +221,9 @@ def Lorentzian_fit(x: np.ndarray, A: np.ndarray, Bhalf: float) -> np.ndarray:
     Args:
             x (np.ndarray): The x-axis values.
 
-			A (np.ndarray): The amplitudes (intensity scaling).
+                        A (np.ndarray): The amplitudes (intensity scaling).
 
-			Bhalf (float): The magnetic field strength at half the saturation magnetic field.
+                        Bhalf (float): The magnetic field strength at half the saturation magnetic field.
 
     Returns:
             np.ndarray: Lorentzian fit for MARY spectrum.
@@ -408,7 +402,7 @@ def spectral_density(omega: float, tau_c: float) -> float:
     Args:
             omega (float): The Larmor frequency of the electron.
 
-			tau_c (float): The rotational correlation time.
+                        tau_c (float): The rotational correlation time.
 
     Returns:
             float: Spectral density frequency.
@@ -417,15 +411,17 @@ def spectral_density(omega: float, tau_c: float) -> float:
     return tau_c / (1 + omega**2 * tau_c**2)
 
 
-def spherical_average(product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray) -> float:
+def spherical_average(
+    product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
+) -> float:
     """Spherical average: The spherical average of anisotropic product yields.
 
     Args:
             product_yield (np.ndarray): The anisotropic product yields.
 
-			theta (np.ndarray): The angles theta by which the anisotropic product yields were calculated.
+                        theta (np.ndarray): The angles theta by which the anisotropic product yields were calculated.
 
-			phi (np.ndarray): The angles phi by which the anisotropic product yields were calculated.
+                        phi (np.ndarray): The angles phi by which the anisotropic product yields were calculated.
 
     Returns:
             float: The spherical average of the anisotropic product yields.
@@ -451,13 +447,15 @@ def spherical_average(product_yield: np.ndarray, theta: np.ndarray, phi: np.ndar
     return spherical_average * theta[1] * phi[1] / (4 * np.pi) / 9
 
 
-def spherical_to_cartesian(theta: float or np.ndarray, phi: float or np.ndarray) -> np.ndarray:
+def spherical_to_cartesian(
+    theta: float or np.ndarray, phi: float or np.ndarray
+) -> np.ndarray:
     """Convert units: spherical coordinates to Cartesian coordinates.
 
     Args:
             theta (float or np.ndarray): The polar angle(s).
 
-			phi (float or np.ndarray): The azimuthal angle(s).
+                        phi (float or np.ndarray): The azimuthal angle(s).
 
     Returns:
             np.ndarray: The Cartesian coordinates.
@@ -493,20 +491,22 @@ def square_vectors(rhos):
     return rhos
 
 
-def yield_anisotropy(product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray) -> (float, float):
+def yield_anisotropy(
+    product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
+) -> (float, float):
     """Calculate the yield anisotropy.
 
     Args:
             product_yield (np.ndarray): The anisotropic product yields.
 
-			theta (np.ndarray): The angles theta by which the anisotropic product yields were calculated.
+						theta (np.ndarray): The angles theta by which the anisotropic product yields were calculated.
 
-			phi (np.ndarray): The angles phi by which the anisotropic product yields were calculated.
+                        phi (np.ndarray): The angles phi by which the anisotropic product yields were calculated.
 
     Returns:
             delta_phi (float): Maximum yield - minimum yield.
 
-			gamma (float): delta_phi / spherical average.
+                        gamma (float): delta_phi / spherical average.
 
     """
     delta_phi = product_yield.max() - product_yield.min()
