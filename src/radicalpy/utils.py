@@ -493,7 +493,6 @@ def yield_anisotropy(
     Returns:
             delta_phi (float): Maximum yield - minimum yield.
             gamma (float): delta_phi / spherical average.
-
     """
     delta_phi = product_yield.max() - product_yield.min()
     yield_av = spherical_average(product_yield, theta, phi)
