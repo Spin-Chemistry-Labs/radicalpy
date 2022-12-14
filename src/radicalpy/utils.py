@@ -26,7 +26,7 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
     return ang_freq / (mu_B / hbar * -g_e / 1e10)
 
 
-def angular_frequency_to_MHz(ang_freq: float) -> float:
+def angular_frequency_in_MHz(ang_freq: float) -> float:
     """Convert units: Angular frequency (:math:`\\text{rad} \\cdot
     \\text{s}^{-1} \\cdot \\text{T}^{-1}`) to (:math:`\\text{MHz} \\cdot
     \\text{T}^{-1}`).
