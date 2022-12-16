@@ -54,9 +54,14 @@ def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
 
     Construct the Dipolar interaction based on the inter-radical separation `r`.
 
+    Source: `Miura et al. J. Phys. Chem. A, 119, 22, 5534-5544
+    (2015)`_.
+
     Returns:
         float: The dipolar coupling constant in milli Tesla (mT).
 
+    .. _Miura et al. J. Phys. Chem. A, 119, 22, 5534-5544 (2015):
+       https://doi.org/10.1021/acs.jpca.5b02183
     """
 
     return dipolar_interaction_1d(r) * (3 * np.cos(theta) ** 2 - 1)
@@ -65,12 +70,15 @@ def dipolar_interaction_monte_carlo(r: float, theta: float) -> float:
 def exchange_interaction_monte_carlo(r: float) -> float:
     """Construct the exchange interaction constant for Monte Carlo simulation.
 
+    Source: `Miura et al. J. Phys. Chem. A, 119, 22, 5534-5544
+    (2015)`_.
+
     .. todo::
         Write proper docs.
     """
-    J0 = -570e-3
+    J0 = 570e-3
     alpha = 2e10
-    return (-J0 * np.exp(-alpha * (r))) * 1e3
+    return (-J0 * np.exp(-alpha * (r - r.min()))) * 1e3
 
 
 def exchange_interaction_protein(

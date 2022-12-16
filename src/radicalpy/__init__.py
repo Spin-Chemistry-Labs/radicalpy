@@ -1,1 +1,10 @@
-from . import data, estimations, kinetics, plot, relaxation, simulation, utils
+from . import (
+    classical,
+    data,
+    estimations,
+    kinetics,
+    plot,
+    relaxation,
+    simulation,
+    utils,
+)

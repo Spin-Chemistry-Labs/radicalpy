@@ -18,10 +18,10 @@ def _random_theta_phi():
     return theta, phi
 
 
-def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r, r_max=0):
+def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r, r_min, r_max=0):
     pos = np.zeros([n_steps, 3])
     dist = np.zeros(n_steps)
-    angle = np.zeros(n_steps - 1)
+    angle = np.zeros(n_steps)
 
     pos[0] = np.array([x_0, y_0, z_0])
     dist[0] = np.linalg.norm(pos[0])
@@ -29,14 +29,12 @@ def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r, r_max=0):
     for i in range(1, n_steps):
         theta, phi = _random_theta_phi()
         new_pos = pos[i - 1] + delta_r * utils.spherical_to_cartesian(theta, phi)
-        # _random_vector(delta_r)
         d = np.linalg.norm(new_pos)
-        while r_max > 0 and d >= r_max:
+        while (r_max > 0 and d >= r_max - r_min) or d <= r_min + r_min:
             theta, phi = _random_theta_phi()
             new_pos = pos[i - 1] + delta_r * utils.spherical_to_cartesian(theta, phi)
-            # _random_vector(delta_r)
             d = np.linalg.norm(new_pos)
-        angle[i - 1] = theta
+        angle[i] = theta
         pos[i] = new_pos
         dist[i] = d
     return pos, dist, angle
