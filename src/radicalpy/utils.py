@@ -112,7 +112,7 @@ def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
 
 
 def MHz_to_Gauss(MHz: float) -> float:
-    """Convert units: Megahertz (MHz) to Gauss (G).
+    """Convert Megahertz to Gauss.
 
     Args:
             MHz (float): The frequency in Megahertz (MHz).
@@ -126,8 +126,8 @@ def MHz_to_Gauss(MHz: float) -> float:
     return MHz / (1e-10 * -g_e * mu_B / h)
 
 
-def MHz_to_angular_frequency(MHz: float) -> float:
-    """Convert MHz to angular frequency.
+def MHz_in_angular_frequency(MHz: float) -> float:
+    """Convert MHz into angular frequency.
 
     Args:
             MHz (float): The angular frequency in :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
@@ -139,7 +139,7 @@ def MHz_to_angular_frequency(MHz: float) -> float:
 
 
 def MHz_to_mT(MHz: float) -> float:
-    """Convert units: Megahertz (MHz) to milltesla (mT).
+    """Convert Megahertz to milltesla.
 
     Args:
             MHz (float): The frequency in Megahertz (MHz).
@@ -154,7 +154,7 @@ def MHz_to_mT(MHz: float) -> float:
 
 
 def angular_frequency_to_Gauss(ang_freq: float) -> float:
-    """Convert units: Angular frequency to Gauss.
+    """Convert angular frequency to Gauss.
 
     Args:
             ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
@@ -196,7 +196,7 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
 
 
 def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
-    """FFT-based autocorrelation of Monte Carlo or molecular dynamics
+    """FFT-based autocorrelation for Monte Carlo or molecular dynamics
     trajectories.
 
     Args:
@@ -220,7 +220,7 @@ def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
 def cartesian_to_spherical(
     x: float or np.ndarray, y: float or np.ndarray, z: float or np.ndarray
 ) -> (float or np.ndarray, float or np.ndarray, float or np.ndarray):
-    """Convert units: Cartesian coordinates to spherical coordinates.
+    """Convert Cartesian coordinates to spherical coordinates.
 
     Args:
             x (float or np.ndarray): Coordinate(s) in the x plane.
@@ -256,7 +256,7 @@ def get_idx(values, target):
 
 
 def isotropic(anisotropic: np.ndarray or list) -> float:
-    """Tensor transformation: Anisotropic tensor to isotropic value.
+    """Anisotropic tensor to isotropic value.
 
     Args:
             anisotropic (np.ndarray or list): The 3x3 interaction tensor matrix.
@@ -283,7 +283,7 @@ def mT_to_angular_frequency(mT: float) -> float:
 
 
 def mT_to_Gauss(mT: float) -> float:
-    """Convert units: millitesla (mT) to Gauss (G).
+    """Convert millitesla to Gauss.
 
     Args:
             mT (float): The magnetic flux density in millitesla (mT).
@@ -295,7 +295,7 @@ def mT_to_Gauss(mT: float) -> float:
 
 
 def mT_to_MHz(mT: float) -> float:
-    """Convert units: millitesla (mT) to Megahertz (MHz).
+    """Convert millitesla to Megahertz.
 
     Args:
             mT (float): The magnetic flux density in millitesla (mT).
@@ -309,11 +309,11 @@ def mT_to_MHz(mT: float) -> float:
     return mT * (1e-9 * -g_e * mu_B / h)
 
 
-def multiexponential_fit(x, *args):
-    """Curve fitting: Multiexponential function for autocorrelation fitting.
+def multiexponential(x, *args):
+    """Multiexponential function for autocorrelation fitting.
 
     Args:
-            x (np.ndarray): The x-axis values.
+            x (np.ndarray): The time lags.
             args (np.ndarray): The amplitudes (A) and taus for fitting.
 
     Returns:
@@ -325,7 +325,7 @@ def multiexponential_fit(x, *args):
 
 
 def rotation_matrix_x(alpha: float) -> np.ndarray:
-    """Tensor transformation: Rotation matrix to rotate a vector or matrix by
+    """Rotation matrix to rotate a vector or matrix by
     an angle alpha about the x-axis in 3D.
 
     Args:
@@ -344,7 +344,7 @@ def rotation_matrix_x(alpha: float) -> np.ndarray:
 
 
 def rotation_matrix_y(beta: float) -> np.ndarray:
-    """Tensor transformation: Rotation matrix to rotate a vector or matrix by
+    """Rotation matrix to rotate a vector or matrix by
     an angle beta about the y-axis in 3D.
 
     Args:
@@ -363,7 +363,7 @@ def rotation_matrix_y(beta: float) -> np.ndarray:
 
 
 def rotation_matrix_z(gamma: float) -> np.ndarray:
-    """Tensor transformation: Rotation matrix to rotate a vector or matrix by
+    """Rotation matrix to rotate a vector or matrix by
     an angle gamma about the z-axis in 3D.
 
     Args:
@@ -382,7 +382,7 @@ def rotation_matrix_z(gamma: float) -> np.ndarray:
 
 
 def spectral_density(omega: float, tau_c: float) -> float:
-    """Spectral density: The frequency at which the motion of the particle
+    """The frequency at which the motion of the particle
     exists.
 
     Args:
@@ -398,7 +398,7 @@ def spectral_density(omega: float, tau_c: float) -> float:
 def spherical_average(
     product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
 ) -> float:
-    """Spherical average: The spherical average of anisotropic product yields.
+    """The spherical average of anisotropic product yields.
 
     Args:
             product_yield (np.ndarray): The anisotropic product yields.
@@ -431,7 +431,7 @@ def spherical_average(
 def spherical_to_cartesian(
     theta: float or np.ndarray, phi: float or np.ndarray
 ) -> np.ndarray:
-    """Convert units: spherical coordinates to Cartesian coordinates.
+    """Spherical coordinates to Cartesian coordinates.
 
     Args:
             theta (float or np.ndarray): The polar angle(s).
@@ -450,7 +450,7 @@ def spherical_to_cartesian(
 
 
 def spin_quantum_number(multiplicity: int) -> float:
-    """Conversion: Multiplicity to spin quantum number.
+    """Spin multiplicity to spin quantum number.
 
     Args:
             multiplicity (int): Spin multiplicity.
