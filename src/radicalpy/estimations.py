@@ -7,6 +7,19 @@ from .data import MOLECULE_DATA, constants, gamma_mT, multiplicity
 
 
 def Bhalf_theoretical(sim):
+    """B1/2 estimation.
+
+    Source: `Weller et al. Chem. Phys. Lett. 96, 1, 24-27 (1983)`_.
+
+    Args:
+            sim: The hyperfine coupling constants used in the sim object.
+
+    Returns:
+            float: The B1/2 value (mT).
+
+    .. _Weller et al. Chem. Phys. Lett. 96, 1, 24-27 (1983):
+       https://doi.org/10.1016/0009-2614(83)80109-2
+    """
     assert len(sim.molecules) == 2
     sum_hfc2 = sum([m.effective_hyperfine**2 for m in sim.molecules])
     sum_hfc = sum([m.effective_hyperfine for m in sim.molecules])
@@ -117,7 +130,24 @@ def exchange_interaction(r: float, model: str = "solution"):
     return methods[model](r)
 
 
-def g_tensor_relaxation_rate_constant(tau_c, g1, g2):
+def g_tensor_relaxation_rate_constant(tau_c: float, g1: list, g2: list) -> float:
+    """g-tensor relaxation rate estimation.
+
+    To be used with `radicalpy.relaxation.RandomFields`.
+
+    Source: `Player et al. J. Chem. Phys. 153, 084303 (2020)`_.
+
+    Args:
+            tau_c (float): The rotational correlation time (s).
+            g1 (list): The principle components of g-tensor of radical A.
+            g2 (list): The principle components of g-tensor of radical B.
+
+    Returns:
+            float: The g-tensor relaxation rate (s^-1).
+
+    .. _Player et al. J. Chem. Phys. 153, 084303 (2020):
+       https://doi.org/10.1063/5.0021643
+    """
     ge = constants.value("g_e")
     g1sum = sum([(gi - ge) ** 2 for gi in g1])
     g2sum = sum([(gi - ge) ** 2 for gi in g2])
@@ -127,16 +157,16 @@ def g_tensor_relaxation_rate_constant(tau_c, g1, g2):
 def k_STD(J: np.ndarray, tau_c: float) -> float:
     """ST-dephasing rate estimation for trajectories.
 
-    Source: `Kattnig et al. New J Phys, 18, 063007 (2016)`_.
+    Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
 
     Args:
-            J (np.ndarray): The exchange interaction trajectory.
+            J (np.ndarray): The exchange interaction trajectory (mT).
             tau_c (float): The rotational correlation time (s).
 
     Returns:
             float: The ST-dephasing rate (s^-1).
 
-    .. _Kattnig et al. New J Phys, 18, 063007 (2016):
+    .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
        https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007
     """
     J_var_MHz = utils.mT_to_MHz(utils.mT_to_MHz(np.var(J)))
@@ -146,7 +176,7 @@ def k_STD(J: np.ndarray, tau_c: float) -> float:
 def k_STD_microreactor(D: float, V: float, d=5e-10, J0=1e11, alpha=2e10) -> float:
     """ST-dephasing rate estimation for radical pairs in microreactors.
 
-    Source: `Shushin, Chem. Phys. Letts., 181, 2–3, 274-278 (1991)`_.
+    Source: `Shushin, Chem. Phys. Lett., 181, 2–3, 274-278 (1991)`_.
 
     Args:
             D (float): The mutual diffusion coefficient (m^2 s^-1).
@@ -159,7 +189,7 @@ def k_STD_microreactor(D: float, V: float, d=5e-10, J0=1e11, alpha=2e10) -> floa
     Returns:
             float: The ST-dephasing rate (s^-1).
 
-    .. _Shushin, Chem. Phys. Letts., 181, 2–3, 274-278 (1991):
+    .. _Shushin, Chem. Phys. Lett., 181, 2–3, 274-278 (1991):
        https://doi.org/10.1016/0009-2614(91)90366-H
     """
     l = d + 1 / alpha * (np.log(2 * np.abs(J0) / (D * alpha**2)) + 1.15)
@@ -170,16 +200,16 @@ def k_STD_microreactor(D: float, V: float, d=5e-10, J0=1e11, alpha=2e10) -> floa
 def k_D(D: np.ndarray, tau_c: float) -> float:
     """D (dipolar)-dephasing rate estimation for trajectories.
 
-    Source: `Kattnig et al. New J Phys, 18, 063007 (2016)`_.
+    Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
 
     Args:
-            D (np.ndarray): The dipolar interaction trajectory.
+            D (np.ndarray): The dipolar interaction trajectory (mT).
             tau_c (float): The rotational correlation time (s).
 
     Returns:
             float: The D-dephasing rate (s^-1).
 
-    .. _Kattnig et al. New J Phys, 18, 063007 (2016):
+    .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
        https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007
     """
     D_var_MHz = utils.mT_to_MHz(utils.mT_to_MHz(np.var(D)))
@@ -187,13 +217,42 @@ def k_D(D: np.ndarray, tau_c: float) -> float:
 
 
 def k_ST_mixing(Bhalf: float) -> float:
+    """Singlet-triplet mixing rate estimation.
+
+    Source: `Steiner et al. Chem. Rev. 89, 1, 51–147 (1989)`_.
+
+    Args:
+            Bhalf (float): The theoretical B1/2 value (mT).
+
+    Returns:
+            float: The ST-mixing rate (s^-1).
+
+    .. Steiner et al. Chem. Rev. 89, 1, 51–147 (1989):
+       https://doi.org/10.1021/cr00091a003
+    """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B") * 1e-3
     h = constants.value("h")
     return -g_e * mu_B * Bhalf / h
 
 
-def k_triplet_relaxation(B0, tau_c, D, E):
+def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
+    """Excited triplet state relaxation rate estimation.
+
+    Source: `Atkins et al. Mol. Phys., 27, 6 (1974)`_.
+
+    Args:
+            B0 (float): The external magnetic field (MHz).
+            tau_c (float): The rotational correlation time (s).
+            D (float): The zero field splitting (ZFS) parameter D (Hz).
+            E (float): The zero field splitting (ZFS) parameter E (Hz).
+
+    Returns:
+            float: The excited triplet state relaxation rate (s^-1).
+
+    .. _Atkins et al. Mol. Phys., 27, 6 (1974):
+       https://doi.org/10.1080/00268977400101361
+    """
     g = constants.value("g_e")
     muB = constants.value("mu_B") * 1e-3
     h = constants.value("h")
@@ -271,23 +330,19 @@ def rotational_correlation_time(radius, temp, eta=0.89e-3):
     k_B = constants.value("k_B")
 
     # Calculate isotropic rotational correlation time (tau_c) in s
-    tau_c = (4 * np.pi * eta * radius**3) / (3 * k_B * temp)
-    return tau_c
+    return (4 * np.pi * eta * radius**3) / (3 * k_B * temp)
 
 
 def rotational_correlation_time_protein(Mr, temp, eta=0.89e-3):
     V = constants.value("V")
     rw = constants.value("rw")
     N_A = constants.value("N_A")
-    # k_B = constants.value("k_B")
 
     # Calculate Rh - effective hydrodynamic radius of the protein in m
     Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
 
     # Calculate isotropic rotational correlation time (tau_c) in s
-    tau_c = rotational_correlation_time(Rh, temp, eta)
-    # tau_c = (4 * np.pi * eta * Rh**3) / (3 * k_B * temp)
-    return tau_c
+    return rotational_correlation_time(Rh, temp, eta)
 
 
 def viscosity_glycerol_mixture(frac_glyc: float, temp: float) -> float:
