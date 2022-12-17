@@ -17,6 +17,7 @@ class SingletTripletDephasing(LiouvilleKineticsRelaxationBase):
     .. _Shushin, Chem. Phys. Lett. 181, 2,3, 274-278 (1991):
        https://doi.org/10.1016/0009-2614(91)90366-H
     """
+
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         QS = sim.projection_operator(State.SINGLET)
@@ -32,6 +33,7 @@ class TripletTripletDephasing(LiouvilleKineticsRelaxationBase):
     .. _Gorelik et al. J. Phys. Chem. A 105, 8011-8017 (2001):
        https://doi.org/10.1021/jp0109628
     """
+
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         QTp = sim.projection_operator(State.TRIPLET_PLUS)
@@ -55,6 +57,7 @@ class TripletTripletRelaxation(LiouvilleKineticsRelaxationBase):
     .. _Miura et al. J. Phys. Chem. A 119, 5534−5544 (2015):
        https://doi.org/10.1021/acs.jpca.5b02183
     """
+
     # restrict to
     # init_state=rpsim.State.TRIPLET_ZERO,
     # obs_state=rpsim.State.TRIPLET_ZERO,
@@ -82,6 +85,7 @@ class RandomFields(LiouvilleKineticsRelaxationBase):
     .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
        http://dx.doi.org/10.1088/1367-2630/18/6/063007
     """
+
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         QS = sim.projection_operator(State.SINGLET)
@@ -102,6 +106,7 @@ class DipolarModulation(LiouvilleKineticsRelaxationBase):
     .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
        http://dx.doi.org/10.1088/1367-2630/18/6/063007
     """
+
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         QTp = sim.projection_operator(State.TRIPLET_PLUS)
@@ -149,6 +154,7 @@ class GTensorAnisotropy(LiouvilleKineticsRelaxationBase):
     .. _Kivelson, J. Chem. Phys. 33, 1094 (1960):
        https://doi.org/10.1063/1.1731340
     """
+
     def __init__(self, g1, g2, omega1, omega2, tau_c1, tau_c2):
         self.g1 = g1
         self.g2 = g2
@@ -170,6 +176,7 @@ class T1Relaxation(LiouvilleKineticsRelaxationBase):
     .. _Bloch, Phys. Rev. 70, 460-474 (1946):
        https://doi.org/10.1103/PhysRev.70.460
     """
+
     def init(self, sim: LiouvilleSimulation):
         SAz = sim.spin_operator(0, "z")
         SBz = sim.spin_operator(1, "z")
@@ -187,6 +194,7 @@ class T2Relaxation(LiouvilleKineticsRelaxationBase):
     .. _Bloch, Phys. Rev. 70, 460-474 (1946):
        https://doi.org/10.1103/PhysRev.70.460
     """
+
     def init(self, sim: LiouvilleSimulation):
         SAx, SAy = sim.spin_operator(0, "x"), sim.spin_operator(0, "y")
         SBx, SBy = sim.spin_operator(1, "x"), sim.spin_operator(1, "y")
