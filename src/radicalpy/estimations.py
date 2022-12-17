@@ -78,7 +78,9 @@ def dipolar_interaction_3d(r: float, gamma: float = gamma_mT("E")) -> np.ndarray
     return dipolar * np.diag([-1, -1, 2])
 
 
-def dipolar_interaction_monte_carlo(r: float or np.ndarray, theta: float or np.ndarray) -> float:
+def dipolar_interaction_monte_carlo(
+    r: float or np.ndarray, theta: float or np.ndarray
+) -> float:
     """Dipolar interaction for Monte Carlo trajectories.
 
     Source: `O'Dea et al. J. Phys. Chem. A, 109, 5, 869-873 (2005)`_.
@@ -99,7 +101,9 @@ def dipolar_interaction_monte_carlo(r: float or np.ndarray, theta: float or np.n
     return dipolar_interaction_1d(r) * (3 * np.cos(theta) ** 2 - 1)
 
 
-def exchange_interaction_monte_carlo(r: float, beta: float = 2e10, J0: float = -570) -> float:
+def exchange_interaction_monte_carlo(
+    r: float, beta: float = 2e10, J0: float = -570
+) -> float:
     """Exchange interaction for Monte Carlo trajectories.
 
     Source: `O'Dea et al. J. Phys. Chem. A, 109, 5, 869-873 (2005)`_.
@@ -113,10 +117,12 @@ def exchange_interaction_monte_carlo(r: float, beta: float = 2e10, J0: float = -
     Returns:
             float: The exchange coupling constant in milli Tesla (mT).
     """
-    return (J0 * np.exp(-beta * (r - r.min())))
+    return J0 * np.exp(-beta * (r - r.min()))
 
 
-def exchange_interaction_protein(r: float, beta: float = 14e9, J0: float = 9.7e9) -> float:
+def exchange_interaction_protein(
+    r: float, beta: float = 14e9, J0: float = 9.7e9
+) -> float:
     """Exchange interaction for radical pairs embedded in proteins.
 
     Source: `Moser et al. Nature 355, 796–802 (1992)`_.
@@ -135,7 +141,9 @@ def exchange_interaction_protein(r: float, beta: float = 14e9, J0: float = 9.7e9
     return J0 * np.exp(-beta * r)
 
 
-def exchange_interaction_solution(r: float, beta: float = 0.049e-9, J0rad: float = 1.7e17) -> float:
+def exchange_interaction_solution(
+    r: float, beta: float = 0.049e-9, J0rad: float = 1.7e17
+) -> float:
     """Exchange interaction for radical pairs in solution.
 
     Source: `McLauchlan et al. Mol. Phys. 73:2, 241-263 (1991)`_.
@@ -215,7 +223,9 @@ def k_STD(J: np.ndarray, tau_c: float) -> float:
     return 4 * tau_c * J_var_MHz * 4 * np.pi**2 * 1e12
 
 
-def k_STD_microreactor(D: float, V: float, d: float = 5e-10, J0: float = 1e11, alpha: float = 2e10) -> float:
+def k_STD_microreactor(
+    D: float, V: float, d: float = 5e-10, J0: float = 1e11, alpha: float = 2e10
+) -> float:
     """ST-dephasing rate estimation for radical pairs in microreactors.
 
     Source: `Shushin, Chem. Phys. Lett., 181, 2–3, 274-278 (1991)`_.
