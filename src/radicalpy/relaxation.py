@@ -10,6 +10,13 @@ from .utils import spectral_density
 
 
 class SingletTripletDephasing(LiouvilleKineticsRelaxationBase):
+    """Singlet-triplet dephasing relaxation superoperator.
+
+    Source: `Shushin, Chem. Phys. Lett. 181, 2,3, 274-278 (1991)`_.
+
+    .. _Shushin, Chem. Phys. Lett. 181, 2,3, 274-278 (1991):
+       https://doi.org/10.1016/0009-2614(91)90366-H
+    """
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         QS = sim.projection_operator(State.SINGLET)
@@ -18,6 +25,13 @@ class SingletTripletDephasing(LiouvilleKineticsRelaxationBase):
 
 
 class TripletTripletDephasing(LiouvilleKineticsRelaxationBase):
+    """Triplet-triplet dephasing relaxation superoperator.
+
+    Source: `Gorelik et al. J. Phys. Chem. A 105, 8011-8017 (2001)`_.
+
+    .. _Gorelik et al. J. Phys. Chem. A 105, 8011-8017 (2001):
+       https://doi.org/10.1021/jp0109628
+    """
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         QTp = sim.projection_operator(State.TRIPLET_PLUS)
@@ -34,6 +48,13 @@ class TripletTripletDephasing(LiouvilleKineticsRelaxationBase):
 
 
 class TripletTripletRelaxation(LiouvilleKineticsRelaxationBase):
+    """Triplet-triplet relaxation superoperator.
+
+    Source: `Miura et al. J. Phys. Chem. A 119, 5534−5544 (2015)`_.
+
+    .. _Miura et al. J. Phys. Chem. A 119, 5534−5544 (2015):
+       https://doi.org/10.1021/acs.jpca.5b02183
+    """
     # restrict to
     # init_state=rpsim.State.TRIPLET_ZERO,
     # obs_state=rpsim.State.TRIPLET_ZERO,
@@ -54,6 +75,13 @@ class TripletTripletRelaxation(LiouvilleKineticsRelaxationBase):
 
 
 class RandomFields(LiouvilleKineticsRelaxationBase):
+    """Random fields relaxation superoperator.
+
+    Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
+
+    .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
+       http://dx.doi.org/10.1088/1367-2630/18/6/063007
+    """
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         QS = sim.projection_operator(State.SINGLET)
@@ -67,6 +95,13 @@ class RandomFields(LiouvilleKineticsRelaxationBase):
 
 
 class DipolarModulation(LiouvilleKineticsRelaxationBase):
+    """Dipolar modulation relaxation superoperator.
+
+    Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
+
+    .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
+       http://dx.doi.org/10.1088/1367-2630/18/6/063007
+    """
     def init(self, sim: LiouvilleSimulation):
         super().init(sim)
         QTp = sim.projection_operator(State.TRIPLET_PLUS)
@@ -107,6 +142,13 @@ def g_tensor_anisotropy_term(sim: LiouvilleSimulation, idx, g, omega, tau_c):
 # See note below
 # Instead of omega1 & omega2 use B and calculate omegas inside
 class GTensorAnisotropy(LiouvilleKineticsRelaxationBase):
+    """g-tensor anisotropy relaxation superoperator.
+
+    Source: `Kivelson, J. Chem. Phys. 33, 1094 (1960)`_.
+
+    .. _Kivelson, J. Chem. Phys. 33, 1094 (1960):
+       https://doi.org/10.1063/1.1731340
+    """
     def __init__(self, g1, g2, omega1, omega2, tau_c1, tau_c2):
         self.g1 = g1
         self.g2 = g2
@@ -121,6 +163,13 @@ class GTensorAnisotropy(LiouvilleKineticsRelaxationBase):
 
 
 class T1Relaxation(LiouvilleKineticsRelaxationBase):
+    """T1 (spin-lattice, longitudinal, thermal) relaxation superoperator.
+
+    Source: `Bloch, Phys. Rev. 70, 460-474 (1946)`_.
+
+    .. _Bloch, Phys. Rev. 70, 460-474 (1946):
+       https://doi.org/10.1103/PhysRev.70.460
+    """
     def init(self, sim: LiouvilleSimulation):
         SAz = sim.spin_operator(0, "z")
         SBz = sim.spin_operator(1, "z")
@@ -131,6 +180,13 @@ class T1Relaxation(LiouvilleKineticsRelaxationBase):
 
 
 class T2Relaxation(LiouvilleKineticsRelaxationBase):
+    """T2 (spin-spin, transverse) relaxation superoperator.
+
+    Source: `Bloch, Phys. Rev. 70, 460-474 (1946)`_.
+
+    .. _Bloch, Phys. Rev. 70, 460-474 (1946):
+       https://doi.org/10.1103/PhysRev.70.460
+    """
     def init(self, sim: LiouvilleSimulation):
         SAx, SAy = sim.spin_operator(0, "x"), sim.spin_operator(0, "y")
         SBx, SBy = sim.spin_operator(1, "x"), sim.spin_operator(1, "y")
