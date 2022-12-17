@@ -161,53 +161,131 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
 
 * Monte Carlo random walk
 
-#+begin_src python :exports both :results output file
-  from radicalpy import classical, plot
+** 3D random walk
 
-  n_steps = 2000
+#+begin_src python :exports both :results output file
+  np.random.seed(42)
+
+  t = np.arange(0, 8e-6, 40e-12)
   r_min = 0.5e-9 / 2
-  r_max = 2e-9 / 2
+  r_max = 1.5e-9
   r = (r_min) + np.random.sample() * ((r_max) - (r_min))
   x0, y0, z0 = r, 0, 0
-  mut_D = 1e-6 / 10000
-  del_T = 40e-12
-  delta_r = classical.get_delta_r(mut_D, del_T)
-  pos, dist, ang = classical.randomwalk_3d(n_steps, x0, y0, z0, delta_r, r_max)
-  plot.monte_carlo_caged(pos, r_max)
+  mutual_diffusion = 1e-6 / 10000
 
-  fname = "img/monte_carlo.png"
+  delta_r = rp.classical.get_delta_r(mutual_diffusion, t[1] - t[0])
+  pos, dist, ang = rp.classical.randomwalk_3d(
+      len(t), x0, y0, z0, delta_r, r_min, r_max
+  )
+
+  rp.plot.monte_carlo_caged(pos, r_max)
+
+  fname = "img/monte_carlo_3d.png"
   plt.savefig(fname)
   print(fname)
 #+end_src
 
 #+RESULTS:
-[[file:img/monte_carlo.png]]
+[[file:img/monte_carlo_3d.png]]
 
 
-* Correlation time estimation
+** Distance
 
 #+begin_src python :exports both :results output file
-  t, r, J, D = classical.monte_carlo_exchange_dipolar(n_steps -1, r_min, del_T, pos[:,0], dist[0:-1], ang)
-
   t_convert = 1e3
 
   plt.clf()
-  plt.rc('axes',edgecolor='k')
   plt.grid(False)
-  plt.axis('on')
-  plt.plot(t / t_convert, r * 1e9, 'r')
+  plt.axis("on")
+  plt.rc("axes", edgecolor="k")
+  plt.plot(t / t_convert, dist * 1e9, "r")
   plt.title("Time evolution of radical pair separation", size=16)
-  plt.xlabel('$t$ ($\mu s$)', size=14)
-  plt.ylabel('$r$ (nm)', size=14)
+  plt.xlabel("$t$ ($\mu s$)", size=14)
+  plt.ylabel("$r$ (nm)", size=14)
   plt.tick_params(labelsize=14)
 
-  fname = "img/correlation_time_estimation_J.png"
+  fname = "img/monte_carlo_distance.png"
   plt.savefig(fname)
   print(fname)
 #+end_src
 
 #+RESULTS:
-[[file:img/correlation_time_estimation_J.png]]
+[[file:img/monte_carlo_distance.png]]
+
+** Exchange interaction estimation
+
+#+begin_src python :exports both :results output file
+  J = rp.estimations.exchange_interaction_monte_carlo(dist)
+
+  plt.clf()
+  plt.grid(False)
+  plt.axis("on")
+  plt.rc("axes", edgecolor="k")
+  plt.plot(t / t_convert, J)
+  plt.title("Time evolution of the exchange interaction", size=16)
+  plt.xlabel("$t$ ($\mu s$)", size=14)
+  plt.ylabel("$J$ (mT)", size=14)
+  plt.tick_params(labelsize=14)
+
+  fname = "img/monte_carlo_exchange.png"
+  plt.savefig(fname)
+  print(fname)
+#+end_src
+
+#+RESULTS:
+[[file:img/monte_carlo_exchange.png]]
+
+** Dipolar interaction
+
+#+begin_src python :exports both :results output file
+  D = rp.estimations.dipolar_interaction_monte_carlo(dist, ang)
+
+  plt.clf()
+  plt.grid(False)
+  plt.axis("on")
+  plt.rc("axes", edgecolor="k")
+  plt.plot(t / t_convert, D, "g")
+  plt.title("Time evolution of the dipolar interaction", size=16)
+  plt.xlabel("$t$ ($\mu s$)", size=14)
+  plt.ylabel("$D$ (mT)", size=14)
+  plt.tick_params(labelsize=14)
+
+  fname = "img/monte_carlo_dipolar.png"
+  plt.savefig(fname)
+  print(fname)
+#+end_src
+
+
+#+RESULTS:
+[[file:img/monte_carlo_dipolar.png]]
+
+
+** Autocorrelation
+
+#+begin_src python :exports both :results output file
+  acf_j = rp.utils.autocorrelation(J, factor=2)
+
+  t = np.linspace(0, t[-1], len(acf_j))
+
+  # ax.set_facecolor("none")
+  plt.clf()
+  plt.grid(False)
+  plt.axis("on")
+  plt.xscale("log")
+  plt.rc("axes", edgecolor="k")
+  plt.plot(t, acf_j, "b", label="J")
+  plt.xlabel(r"$\tau$ (s)", size=14)
+  plt.ylabel(r"$g_J(\tau)$", size=14)
+  plt.title("Autocorrelation: exchange interaction", size=16)
+  plt.tick_params(labelsize=14)
+
+  fname = "img/monte_carlo_autocorrelation.png"
+  plt.savefig(fname)
+  print(fname)
+#+end_src
+
+#+RESULTS:
+[[file:img/monte_carlo_autocorrelation.png]]
 
 
 * Document still not finished! Sorry!
