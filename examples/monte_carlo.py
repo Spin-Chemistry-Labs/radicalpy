@@ -8,8 +8,8 @@ import radicalpy as rp
 def main():
     np.random.seed(42)
 
-    # t = np.arange(0, 8e-6, 40e-12)
-    t = np.arange(0, 50e-9, 40e-12)
+    t = np.arange(0, 8e-6, 40e-12)
+    # t = np.arange(0, 50e-9, 40e-12)
     r_min = 0.5e-9 / 2
     r_max = 2e-9 / 2
     r_max = 1.5e-9
@@ -26,9 +26,6 @@ def main():
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
 
-    J = rp.estimations.exchange_interaction_monte_carlo(dist)
-    D = rp.estimations.dipolar_interaction_monte_carlo(dist, ang)
-
     t_convert = 1e-6
 
     # plt.set_facecolor("none")
@@ -44,6 +41,8 @@ def main():
     path = __file__[:-3] + f"_{1}.png"
     plt.savefig(path)
 
+    J = rp.estimations.exchange_interaction_monte_carlo(dist)
+
     # plt.set_facecolor("none")
     plt.clf()
     plt.grid(False)
@@ -56,6 +55,8 @@ def main():
     plt.tick_params(labelsize=14)
     path = __file__[:-3] + f"_{2}.png"
     plt.savefig(path)
+
+    D = rp.estimations.dipolar_interaction_monte_carlo(dist, ang)
 
     # plt.facecolor("none")
     plt.clf()
