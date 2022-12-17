@@ -389,7 +389,7 @@ def rotational_correlation_time(radius, temp, eta=0.89e-3):
 def rotational_correlation_time_protein(Mr, temp, eta=0.89e-3):
     """Rotational correlation time (molecular Brownian rotation).
 
-    Source: `Cavanagh et al. Protein NMR  Spectroscopy. Principles and Practice, Elsevier Academic Press (2007)`_.
+    Source: `Cavanagh et al. Protein NMR Spectroscopy. Principles and Practice, Elsevier Academic Press (2007)`_.
 
     Args:
             Mr (float): The molecular weight of the protein (kDa).
