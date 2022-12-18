@@ -31,7 +31,15 @@ def _random_theta_phi():
     return theta, phi
 
 
-def randomwalk_3d(n_steps: float, x_0: float, y_0: float, z_0: float, delta_r: float, r_min: float, r_max: float = 0) -> (np.ndarray, np.ndarray, np.ndarray):
+def randomwalk_3d(
+    n_steps: float,
+    x_0: float,
+    y_0: float,
+    z_0: float,
+    delta_r: float,
+    r_min: float,
+    r_max: float = 0,
+) -> (np.ndarray, np.ndarray, np.ndarray):
     """Monte Carlo random walk for radicals pairs in both solution and microreactor environments.
 
     Args:
