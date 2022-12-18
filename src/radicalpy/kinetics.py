@@ -22,6 +22,7 @@ class Exponential(KineticsRelaxationBase):
     .. _Kaptein et al. Chem. Phys. Lett. 4, 4, 195-197 (1969):
        https://doi.org/10.1016/0009-2614(69)80098-9
     """
+
     def adjust_product_probabilities(
         self,
         product_probabilities: np.ndarray,
