@@ -34,6 +34,10 @@ class TripletTripletDephasing(LiouvilleKineticsRelaxationBase):
 
     Source: `Gorelik et al. J. Phys. Chem. A 105, 8011-8017 (2001)`_.
 
+    >>> TripletTripletDephasing(rate_constant=1e6)
+    Relaxation: TripletTripletDephasing
+    Rate constant: 1000000.0
+
     .. _Gorelik et al. J. Phys. Chem. A 105, 8011-8017 (2001):
        https://doi.org/10.1021/jp0109628
     """
@@ -57,6 +61,10 @@ class TripletTripletRelaxation(LiouvilleKineticsRelaxationBase):
     """Triplet-triplet relaxation superoperator.
 
     Source: `Miura et al. J. Phys. Chem. A 119, 5534−5544 (2015)`_.
+
+    >>> TripletTripletRelaxation(rate_constant=1e6)
+    Relaxation: TripletTripletRelaxation
+    Rate constant: 1000000.0
 
     .. _Miura et al. J. Phys. Chem. A 119, 5534−5544 (2015):
        https://doi.org/10.1021/acs.jpca.5b02183
@@ -86,6 +94,10 @@ class RandomFields(LiouvilleKineticsRelaxationBase):
 
     Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
 
+    >>> RandomFields(rate_constant=1e6)
+    Relaxation: RandomFields
+    Rate constant: 1000000.0
+
     .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
        http://dx.doi.org/10.1088/1367-2630/18/6/063007
     """
@@ -106,6 +118,10 @@ class DipolarModulation(LiouvilleKineticsRelaxationBase):
     """Dipolar modulation relaxation superoperator.
 
     Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
+
+    >>> DipolarModulation(rate_constant=1e6)
+    Relaxation: DipolarModulation
+    Rate constant: 1000000.0
 
     .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
        http://dx.doi.org/10.1088/1367-2630/18/6/063007
@@ -155,6 +171,15 @@ class GTensorAnisotropy(LiouvilleKineticsRelaxationBase):
 
     Source: `Kivelson, J. Chem. Phys. 33, 1094 (1960)`_.
 
+    >>> GTensorAnisotropy(g1=[2.0032, 1.9975, 2.0014], g2=[2.00429, 2.00389, 2.00216], omega1=-158477366720.7, omega2=-158477366720.7, tau_c1=5e-12, tau_c2=100e-12)
+    Relaxation: GTensorAnisotropy
+    g1: [2.0032, 1.9975, 2.0014]
+    g2: [2.00429, 2.00389, 2.00216]
+    omega1: -158477366720.7
+    omega2: -158477366720.7
+    tau_c1: 5e-12
+    tau_c2: 100e-12
+
     .. _Kivelson, J. Chem. Phys. 33, 1094 (1960):
        https://doi.org/10.1063/1.1731340
     """
@@ -177,6 +202,10 @@ class T1Relaxation(LiouvilleKineticsRelaxationBase):
 
     Source: `Bloch, Phys. Rev. 70, 460-474 (1946)`_.
 
+    >>> T1Relaxation(rate_constant=1e6)
+    Relaxation: T1Relaxation
+    Rate constant: 1000000.0
+
     .. _Bloch, Phys. Rev. 70, 460-474 (1946):
        https://doi.org/10.1103/PhysRev.70.460
     """
@@ -194,6 +223,10 @@ class T2Relaxation(LiouvilleKineticsRelaxationBase):
     """T2 (spin-spin, transverse) relaxation superoperator.
 
     Source: `Bloch, Phys. Rev. 70, 460-474 (1946)`_.
+
+    >>> T2Relaxation(rate_constant=1e6)
+    Relaxation: T2Relaxation
+    Rate constant: 1000000.0
 
     .. _Bloch, Phys. Rev. 70, 460-474 (1946):
        https://doi.org/10.1103/PhysRev.70.460
