@@ -14,6 +14,10 @@ class SingletTripletDephasing(LiouvilleKineticsRelaxationBase):
 
     Source: `Shushin, Chem. Phys. Lett. 181, 2,3, 274-278 (1991)`_.
 
+    >>> SingletTripletDephasing(rate_constant=1e6)
+    Relaxation: SingletTripletDephasing
+    Rate constant: 1000000.0
+
     .. _Shushin, Chem. Phys. Lett. 181, 2,3, 274-278 (1991):
        https://doi.org/10.1016/0009-2614(91)90366-H
     """
