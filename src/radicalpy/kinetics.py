@@ -11,6 +11,17 @@ from .simulation import (
 
 
 class Exponential(KineticsRelaxationBase):
+    """Exponential model kinetics operator.
+
+    Source: `Kaptein et al. Chem. Phys. Lett. 4, 4, 195-197 (1969)`_.
+
+    >>> Exponential(rate_constant=1e6)
+    Kinetics: Exponential
+    Rate constant: 1000000.0
+
+    .. _Kaptein et al. Chem. Phys. Lett. 4, 4, 195-197 (1969):
+       https://doi.org/10.1016/0009-2614(69)80098-9
+    """
     def adjust_product_probabilities(
         self,
         product_probabilities: np.ndarray,
@@ -26,7 +37,10 @@ class KineticsBase(LiouvilleKineticsRelaxationBase):
 
 
 class Haberkorn(KineticsBase):
-    """
+    """Haberkorn kinetics superoperator for singlet/triplet recombination/product formation.
+
+    Source: `Haberkorn, Mol. Phys. 32:5, 1491-1493 (1976)`_.
+
     >>> Haberkorn(rate_constant=1e6, target=State.SINGLET)
     Kinetics: Haberkorn
     Rate constant: 1000000.0
@@ -36,6 +50,9 @@ class Haberkorn(KineticsBase):
     Kinetics: Haberkorn
     Rate constant: 1000000.0
     Target: T
+
+    .. _Haberkorn, Mol. Phys. 32:5, 1491-1493 (1976):
+       http://dx.doi.org/10.1080/00268977600102851
     """
 
     def __init__(self, rate_constant: float, target: State):
@@ -59,10 +76,16 @@ class Haberkorn(KineticsBase):
 
 
 class HaberkornFree(KineticsBase):
-    """
+    """Haberkorn kinetics superoperator for free radical/RP2 formation.
+
+    Source: `Haberkorn, Mol. Phys. 32:5, 1491-1493 (1976)`_.
+
     >>> HaberkornFree(rate_constant=1e6)
     Kinetics: HaberkornFree
     Rate constant: 1000000.0
+
+    .. _Haberkorn, Mol. Phys. 32:5, 1491-1493 (1976):
+       http://dx.doi.org/10.1080/00268977600102851
     """
 
     def __init__(self, rate_constant: float):
@@ -74,11 +97,17 @@ class HaberkornFree(KineticsBase):
 
 
 class JonesHore(KineticsBase):
-    """
+    """Jones-Hore kinetics superoperator for two-site models.
+
+    Source: `Jones et al. Chem. Phys. Lett. 507, 269-273 (2011)`_.
+
     >>> JonesHore(1e6, 1e7)
     Kinetics: JonesHore
     Singlet rate: 1000000.0
     Triplet rate: 10000000.0
+
+    .. _Jones et al. Chem. Phys. Lett. 507, 269-273 (2011):
+       https://doi.org/10.1016/j.cplett.2011.03.082
     """
 
     def __init__(self, singlet_rate: float, triplet_rate: float):
