@@ -14,8 +14,8 @@ def Bhalf_theoretical(sim: HilbertSimulation) -> float:
 
     Args:
             sim: The `sim` object containing the hyperfine coupling
-            constants. (We'll change this to a list of molecules). It
-            should contain exactly two molecules.
+                constants. (We'll change this to a list of molecules). It
+                should contain exactly two molecules.
 
     Returns:
             float: The B1/2 value (mT).
