@@ -29,6 +29,63 @@ def Bhalf_theoretical(sim: HilbertSimulation) -> float:
     return np.sqrt(3) * (sum_hfc2 / sum_hfc)
 
 
+def T1T2_relaxation_gtensor_term(g: list) -> float:
+    return sum([(gi - np.mean(g)) ** 2 for gi in g])
+
+
+def T1_relaxation_rate_gtensor(g_tensors: list, B: float, tau_c: float) -> float:
+    """g-tensor anisotropy induced T1 relaxation rate estimation.
+
+    Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
+
+    Args:
+            g_tensors (list): The principle components of g-tensor.
+            B (float): The external magnetic field strength (mT).
+            tau_c (float): The rotational correlation time (s).
+
+    Returns:
+            float: The T1 relaxation rate (s^-1)
+
+    .. _Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004):
+       https://doi.org/10.1142/9789812562654_0015
+    """
+    hbar = constants.value("hbar")
+    muB = constants.value("mu_B")
+    omega = gamma_mT("E") * B
+    g_innerproduct = T1T2_relaxation_gtensor_term(g_tensors)
+    return (
+        (1 / 5)
+        * ((muB * B) / hbar) ** 2
+        * g_innerproduct
+        * (tau_c / (1 + omega**2 * tau_c**2))
+    )
+
+
+def T2_relaxation_rate_gtensor(g_tensors, B, tau_c):
+    """g-tensor anisotropy induced T2 relaxation rate estimation.
+
+    Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
+
+    Args:
+            g_tensors (list): The principle components of g-tensor.
+            B (float): The external magnetic field strength (mT).
+            tau_c (float): The rotational correlation time (s).
+
+    Returns:
+            float: The T2 relaxation rate (s^-1).
+    """
+    hbar = constants.value("hbar")
+    muB = constants.value("mu_B")
+    omega = gamma_mT("E") * B
+    g_innerproduct = T1T2_relaxation_gtensor_term(g_tensors)
+    return (
+        (1 / 30)
+        * ((muB * B) / hbar) ** 2
+        * g_innerproduct
+        * (4 * tau_c + (3 * tau_c / (1 + omega**2 * tau_c**2)))
+    )
+
+
 def correlation_time_from_fit(*args: np.ndarray) -> float:
     """Correlation time estimation from multiexponential fitting of autocorrelation curves.
 
@@ -315,63 +372,6 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
         + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )
     return (D**2 + 3 * E**2) * jnu0tc
-
-
-def T1T2_relaxation_gtensor_term(g: list) -> float:
-    return sum([(gi - np.mean(g)) ** 2 for gi in g])
-
-
-def T1_relaxation_rate_gtensor(g_tensors: list, B: float, tau_c: float) -> float:
-    """g-tensor anisotropy induced T1 relaxation rate estimation.
-
-    Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
-
-    Args:
-            g_tensors (list): The principle components of g-tensor.
-            B (float): The external magnetic field strength (mT).
-            tau_c (float): The rotational correlation time (s).
-
-    Returns:
-            float: The T1 relaxation rate (s^-1)
-
-    .. _Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004):
-       https://doi.org/10.1142/9789812562654_0015
-    """
-    hbar = constants.value("hbar")
-    muB = constants.value("mu_B")
-    omega = gamma_mT("E") * B
-    g_innerproduct = T1T2_relaxation_gtensor_term(g_tensors)
-    return (
-        (1 / 5)
-        * ((muB * B) / hbar) ** 2
-        * g_innerproduct
-        * (tau_c / (1 + omega**2 * tau_c**2))
-    )
-
-
-def T2_relaxation_rate_gtensor(g_tensors, B, tau_c):
-    """g-tensor anisotropy induced T2 relaxation rate estimation.
-
-    Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
-
-    Args:
-            g_tensors (list): The principle components of g-tensor.
-            B (float): The external magnetic field strength (mT).
-            tau_c (float): The rotational correlation time (s).
-
-    Returns:
-            float: The T2 relaxation rate (s^-1).
-    """
-    hbar = constants.value("hbar")
-    muB = constants.value("mu_B")
-    omega = gamma_mT("E") * B
-    g_innerproduct = T1T2_relaxation_gtensor_term(g_tensors)
-    return (
-        (1 / 30)
-        * ((muB * B) / hbar) ** 2
-        * g_innerproduct
-        * (4 * tau_c + (3 * tau_c / (1 + omega**2 * tau_c**2)))
-    )
 
 
 def rotational_correlation_time(radius, temp, eta=0.89e-3):
