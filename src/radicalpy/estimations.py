@@ -3,7 +3,7 @@
 import numpy as np
 
 from . import utils
-from .data import MOLECULE_DATA, constants, gamma_mT, multiplicity
+from .data import constants, gamma_mT
 
 
 def Bhalf_theoretical(sim) -> float:
