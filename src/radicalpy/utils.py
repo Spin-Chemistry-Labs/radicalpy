@@ -107,6 +107,18 @@ def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
     return (amplitude / Bhalf**2) - (amplitude / (B**2 + Bhalf**2))
 
 
+def MHz_in_angular_frequency(MHz: float) -> float:
+    """Convert MHz into angular frequency.
+
+    Args:
+            MHz (float): The angular frequency in :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
+
+    Returns:
+            float: The angular frequency converted to :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+    """
+    return MHz * (2 * np.pi)
+
+
 def MHz_to_Gauss(MHz: float) -> float:
     """Convert Megahertz to Gauss.
 
@@ -120,18 +132,6 @@ def MHz_to_Gauss(MHz: float) -> float:
     mu_B = constants.value("mu_B")
     h = constants.value("h")
     return MHz / (1e-10 * -g_e * mu_B / h)
-
-
-def MHz_in_angular_frequency(MHz: float) -> float:
-    """Convert MHz into angular frequency.
-
-    Args:
-            MHz (float): The angular frequency in :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
-
-    Returns:
-            float: The angular frequency converted to :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
-    """
-    return MHz * (2 * np.pi)
 
 
 def MHz_to_mT(MHz: float) -> float:
@@ -149,21 +149,6 @@ def MHz_to_mT(MHz: float) -> float:
     return MHz / (1e-9 * -g_e * mu_B / h)
 
 
-def angular_frequency_to_Gauss(ang_freq: float) -> float:
-    """Convert angular frequency to Gauss.
-
-    Args:
-            ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
-
-    Returns:
-            float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to Gauss (G).
-    """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
-    return ang_freq / (mu_B / hbar * -g_e / 1e10)
-
-
 def angular_frequency_in_MHz(ang_freq: float) -> float:
     """Convert angular frequency into MHz.
 
@@ -176,6 +161,21 @@ def angular_frequency_in_MHz(ang_freq: float) -> float:
     return ang_freq / (2 * np.pi)
 
 
+def angular_frequency_to_Gauss(ang_freq: float) -> float:
+    """Convert angular frequency to Gauss.
+
+    Args:
+            ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+
+    Returns:
+            float: The angular frequency converted to Gauss (G).
+    """
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    hbar = constants.value("hbar")
+    return ang_freq / (mu_B / hbar * -g_e / 1e10)
+
+
 def angular_frequency_to_mT(ang_freq: float) -> float:
     """Convert angular frequency to millitesla.
 
@@ -183,7 +183,7 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
             ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
 
     Returns:
-            float: The angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`) converted to millitesla (mT).
+            float: The angular frequency converted to millitesla (mT).
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -265,21 +265,6 @@ def isotropic(anisotropic: np.ndarray or list) -> float:
     return np.trace(anisotropic) / 3
 
 
-def mT_to_angular_frequency(mT: float) -> float:
-    """Convert millitesla to angular frequency.
-
-    Args:
-            mT (float): The magnetic flux density in millitesla (mT).
-
-    Returns:
-            float: millitesla (mT) converted to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
-    """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
-    return mT * (mu_B / hbar * -g_e / 1e9)
-
-
 def mT_to_Gauss(mT: float) -> float:
     """Convert millitesla to Gauss.
 
@@ -305,6 +290,21 @@ def mT_to_MHz(mT: float) -> float:
     mu_B = constants.value("mu_B")
     h = constants.value("h")
     return mT * (1e-9 * -g_e * mu_B / h)
+
+
+def mT_to_angular_frequency(mT: float) -> float:
+    """Convert millitesla to angular frequency.
+
+    Args:
+            mT (float): The magnetic flux density in millitesla (mT).
+
+    Returns:
+            float: The magnetic flux density converted to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
+    """
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    hbar = constants.value("hbar")
+    return mT * (mu_B / hbar * -g_e / 1e9)
 
 
 def multiexponential(x, *args):
