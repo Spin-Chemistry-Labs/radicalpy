@@ -87,7 +87,9 @@ def T2_relaxation_rate_gtensor(g_tensors, B, tau_c):
 
 
 def correlation_time_from_fit(*args: np.ndarray) -> float:
-    """Correlation time estimation from multiexponential fitting of autocorrelation curves.
+    """Estimate correlation time from a fited curve.
+
+    Usually used with multiexponential fitting of autocorrelation curves.
 
     Args:
             args (np.ndarray): The amplitudes and taus from the multiexponential fit.
