@@ -129,7 +129,7 @@ def MHz_in_angular_frequency(MHz: float) -> float:
             MHz (float): The angular frequency in :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
 
     Returns:
-            float: Angular frequency converted to :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+            float: The angular frequency converted to :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
     """
     return MHz * (2 * np.pi)
 
@@ -191,9 +191,10 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     return ang_freq / (mu_B / hbar * -g_e / 1e9)
 
 
-def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
-    """FFT-based autocorrelation for Monte Carlo or molecular dynamics
-    trajectories.
+def autocorrelation(data: np.ndarray, factor: int = 2) -> np.ndarray:
+    """Calculate the autocorrelation of a trajectory.
+
+    An FFT-based implementation of the autocorrelation for Monte Carlo or molecular dynamics trajectories (or any other time dependent value).
 
     Args:
             data (np.ndarray): The time dependent trajectory.
@@ -202,6 +203,7 @@ def autocorrelation(data: np.ndarray, factor=2) -> np.ndarray:
     Returns:
             np.ndarray: The autocorrelation of the trajectory.
     """
+
     datap = ifftshift((data - np.average(data)) / np.std(data))
     n = datap.shape[0]
     datap = np.r_[datap[: n // factor], np.zeros_like(datap), datap[n // factor :]]
@@ -285,7 +287,7 @@ def mT_to_Gauss(mT: float) -> float:
             mT (float): The magnetic flux density in millitesla (mT).
 
     Returns:
-            float: millitesla (mT) converted to Gauss (G).
+            float: The magnetic flux density converted to Gauss (G).
     """
     return mT * 10
 
@@ -297,7 +299,7 @@ def mT_to_MHz(mT: float) -> float:
             mT (float): The magnetic flux density in millitesla (mT).
 
     Returns:
-            float: millitesla (mT) converted to Megahertz (MHz).
+            float: The magnetic flux density converted to Megahertz (MHz).
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
