@@ -24,14 +24,3 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
 )
-
-# Build with:
-# python setup.py sdist
-#
-# Local install with:
-# pip install dist/*.tar.gz --user
-#
-# Upload:
-# twine upload dist/*
-#
-# Create tag/release to upload from github

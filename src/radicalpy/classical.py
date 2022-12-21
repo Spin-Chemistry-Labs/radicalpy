@@ -43,7 +43,6 @@ def randomwalk_3d(n_steps, x_0, y_0, z_0, delta_r, r_max=0):
 
 
 def monte_carlo_exchange_dipolar(n_steps, r_min, del_T, radA_x, dist, angle):
-
     r_min = radA_x[0]
     dist[0] = r_min
     r = dist
