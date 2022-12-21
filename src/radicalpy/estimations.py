@@ -4,15 +4,18 @@ import numpy as np
 
 from . import utils
 from .data import constants, gamma_mT
+from .simulation import HilbertSimulation
 
 
-def Bhalf_theoretical(sim) -> float:
+def Bhalf_theoretical(sim: HilbertSimulation) -> float:
     """Theoretical B1/2 for radical pairs in solution.
 
     Source: `Weller et al. Chem. Phys. Lett. 96, 1, 24-27 (1983)`_.
 
     Args:
-            sim: The hyperfine coupling constants used in the sim object.
+            sim: The `sim` object containing the hyperfine coupling
+            constants. (We'll change this to a list of molecules). It
+            should contain exactly two molecules.
 
     Returns:
             float: The B1/2 value (mT).
