@@ -105,7 +105,7 @@ def correlation_time_from_fit(*args: np.ndarray) -> float:
 
 
 def dipolar_interaction_1d(r: float) -> float:
-    """Isotropic dipolar coupling constant using the point dipole approximation.
+    """Point dipole approximation for isotropic dipolar coupling.
 
     Source: `Santabarbara et al. Biochemistry, 44, 6, 2119–2128 (2005)`_.
 
