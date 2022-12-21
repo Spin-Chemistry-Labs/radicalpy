@@ -10,9 +10,7 @@ from sklearn.metrics import r2_score
 from .data import constants
 
 
-def Bhalf_fit(
-    B: np.ndarray, MARY: np.ndarray
-) -> (float, np.ndarray, np.ndarray, float, float):
+def Bhalf_fit(B: np.ndarray, MARY: np.ndarray) -> (float, np.ndarray, float, float):
     """B_1/2 fit for MARY spectra.
 
     Args:
@@ -22,11 +20,10 @@ def Bhalf_fit(
                 `radicalpy.simulation.HilbertSimulation.MARY`.
 
     Returns:
-            (float, np.ndarray, np.ndarray, float, float):
+            (float, np.ndarray, float, float):
             - `Bhalf` (float): The magnetic field strength at half the saturation magnetic field.
-            - `x_model_MARY` (np.ndarray): x-axis from fit.
-            - `y_model_MARY` (np.ndarray): y-axis from fit.
-            - `MARY_fit_error` (float): Standard error for the fit.
+            - `fit_result` (np.ndarray): y-axis from fit.
+            - `fit_error` (float): Standard error for the fit.
             - `R2` (float): R-squared value for the fit.
     """
     popt_MARY, pcov_MARY = curve_fit(
@@ -36,17 +33,16 @@ def Bhalf_fit(
         p0=[MARY[-1], int(len(B) / 2)],
         maxfev=1000000,
     )
-    MARY_fit_error = np.sqrt(np.diag(pcov_MARY))
+    fit_error = np.sqrt(np.diag(pcov_MARY))
 
     A_opt_MARY, Bhalf_opt_MARY = popt_MARY
-    x_model_MARY = np.linspace(min(B), max(B), len(B))
-    y_model_MARY = Lorentzian(x_model_MARY, *popt_MARY)
+    fit_result = Lorentzian(B, *popt_MARY)
     Bhalf = np.abs(Bhalf_opt_MARY)
 
     y_pred_MARY = Lorentzian(B, *popt_MARY)
     R2 = r2_score(MARY, y_pred_MARY)
 
-    return Bhalf, x_model_MARY, y_model_MARY, MARY_fit_error, R2
+    return Bhalf, fit_result, fit_error, R2
 
 
 def Gauss_to_MHz(Gauss: float) -> float:
