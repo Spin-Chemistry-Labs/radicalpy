@@ -46,7 +46,7 @@ def T1_relaxation_rate_gtensor(g_tensors: list, B: float, tau_c: float) -> float
     Returns:
             float: The T1 relaxation rate (s^-1)
 
-    .. _Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004):
+    .. _Hayashi, Introduction to Dynamic Spin Chemistry\: Magnetic Field Effects on Chemical and Biochemical Reactions (2004):
        https://doi.org/10.1142/9789812562654_0015
     """
     hbar = constants.value("hbar")
