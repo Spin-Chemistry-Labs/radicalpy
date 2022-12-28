@@ -273,7 +273,7 @@ def k_D(D: np.ndarray, tau_c: float) -> float:
     Returns:
             float: The D-dephasing rate (1/s).
     """
-    D_var_MHz = utils.mT_to_MHz(utils.mT_to_MHz(np.var(D)))
+    D_var_MHz = np.var(utils.mT_to_MHz(D))
     return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12  # (1/s) D-modulation rate
 
 
@@ -292,7 +292,7 @@ def k_STD(J: np.ndarray, tau_c: float) -> float:
     .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
        https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007
     """
-    J_var_MHz = utils.mT_to_MHz(utils.mT_to_MHz(np.var(J)))
+    J_var_MHz = np.var(utils.mT_to_MHz(J))
     return 4 * tau_c * J_var_MHz * 4 * np.pi**2 * 1e12
 
 
