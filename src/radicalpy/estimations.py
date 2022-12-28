@@ -182,7 +182,7 @@ def exchange_interaction_in_protein(
 
     Args:
             r (float or np.ndarray): The interradical separation (m).
-            beta (float): The range parameter (m^-1).
+            beta (float): The range parameter (1/m).
             J0 (float): The strength of the interaction (mT).
 
     Returns:
@@ -196,7 +196,7 @@ def exchange_interaction_in_protein(
 
 def exchange_interaction_in_solution(
     r: float or np.ndarray, beta: float = 0.049e-9, J0rad: float = 1.7e17
-) -> float:
+) -> (float or np.ndarray):
     """Exchange interaction for radical pairs in solution.
 
     Source: `McLauchlan et al. Mol. Phys. 73:2, 241-263 (1991)`_.
@@ -204,10 +204,10 @@ def exchange_interaction_in_solution(
     Args:
             r (float or np.ndarray): The interradical separation (m).
             beta (float): The range parameter (m).
-            J0rad (float): The strength of the interaction (rad s^-1).
+            J0rad (float): The strength of the interaction (rad/s).
 
     Returns:
-            float: The exchange interaction (mT).
+            (float or np.ndarray): The exchange interaction (mT).
 
     .. _McLauchlan et al. Mol. Phys. 73:2, 241-263 (1991):
        https://doi.org/10.1080/00268979100101181
@@ -218,7 +218,7 @@ def exchange_interaction_in_solution(
 
 def exchange_interaction_in_solution_MC(
     r: float or np.ndarray, beta: float = 2e10, J0: float = -570
-) -> float:
+) -> (float or np.ndarray):
     """Exchange interaction for Monte Carlo trajectories.
 
     Sources:
@@ -228,17 +228,17 @@ def exchange_interaction_in_solution_MC(
 
     Args:
             r (float or np.ndarray): The interradical separation (m).
-            beta (float): The range parameter (m^-1).
+            beta (float): The range parameter (1/m).
             J0 (float): The strength of the interaction (mT).
 
     Returns:
-            float: The exchange coupling constant in milli Tesla (mT).
+            (float or np.ndarray): The exchange coupling constant in milli Tesla (mT).
     """
     return J0 * np.exp(-beta * (r - r.min()))
 
 
 def g_tensor_relaxation_rate_constant(tau_c: float, g1: list, g2: list) -> float:
-    """g-tensor relaxation rate estimation.
+    """g-tensor relaxation rate.
 
     To be used with `radicalpy.relaxation.RandomFields`.
 
@@ -246,11 +246,11 @@ def g_tensor_relaxation_rate_constant(tau_c: float, g1: list, g2: list) -> float
 
     Args:
             tau_c (float): The rotational correlation time (s).
-            g1 (list): The principle components of g-tensor of radical A.
-            g2 (list): The principle components of g-tensor of radical B.
+            g1 (list): The principle components of g-tensor of the first radical.
+            g2 (list): The principle components of g-tensor of the second radical.
 
     Returns:
-            float: The g-tensor relaxation rate (s^-1).
+            float: The g-tensor relaxation rate (1/s).
 
     .. _Player et al. J. Chem. Phys. 153, 084303 (2020):
        https://doi.org/10.1063/5.0021643
