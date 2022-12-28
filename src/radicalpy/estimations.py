@@ -371,7 +371,9 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     return (D**2 + 3 * E**2) * jnu0tc
 
 
-def rotational_correlation_time_for_solution(radius, temp, eta=0.89e-3):
+def rotational_correlation_time_for_solution(
+    radius: float, temp: float, eta: float = 0.89e-3
+) -> float:
     """Rotational correlation time (molecular Brownian rotation).
 
     Args:
@@ -386,7 +388,9 @@ def rotational_correlation_time_for_solution(radius, temp, eta=0.89e-3):
     return (4 * np.pi * eta * radius**3) / (3 * k_B * temp)
 
 
-def rotational_correlation_time_for_protein(Mr, temp, eta=0.89e-3):
+def rotational_correlation_time_for_protein(
+    Mr: float, temp: float, eta: float = 0.89e-3
+) -> float:
     """Rotational correlation time (molecular Brownian rotation).
 
     Source: `Cavanagh et al. Protein NMR Spectroscopy. Principles and Practice, Elsevier Academic Press (2007)`_.
