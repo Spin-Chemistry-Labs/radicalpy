@@ -26,8 +26,8 @@ def main():
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
 
-    J = rp.estimations.exchange_interaction_monte_carlo(dist)
-    D = rp.estimations.dipolar_interaction_monte_carlo(dist, ang)
+    J = rp.estimations.exchange_interaction_in_solution_MC(dist)
+    D = rp.estimations.dipolar_interaction_MC(dist, ang)
 
     t_convert = 1e-6
 
