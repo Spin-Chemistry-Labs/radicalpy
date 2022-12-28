@@ -153,7 +153,6 @@ class Molecule:
       Multiplicities: [2]
       Magnetogyric ratios (mT): [267522.18744]
       Number of particles: 1
-
     """
 
     def __init__(
@@ -475,8 +474,7 @@ class HilbertSimulation:
     def projection_operator(self, state: State):
         """Construct.
 
-        .. todo::
-            Write proper docs.
+        .. todo::     Write proper docs.
         """
         # Spin operators
         SAx, SAy, SAz = [self.spin_operator(0, ax) for ax in "xyz"]
@@ -524,7 +522,6 @@ class HilbertSimulation:
             np.ndarray: The Zeeman Hamiltonian corresponding to the
             system described by the `Quantum` simulation object and
             the external magnetic field intensity `B`.
-
         """
         if theta is None and phi is None:
             return self.zeeman_hamiltonian_1d(B0)
@@ -558,7 +555,6 @@ class HilbertSimulation:
         Returns:
             np.ndarray: The Hyperfine Hamiltonian corresponding to the
             system described by the `Quantum` simulation object.
-
         """
         if hfc_anisotropy:
             for h in self.hfcs:
@@ -597,7 +593,6 @@ class HilbertSimulation:
             np.ndarray: The Exchange (J-coupling) Hamiltonian
             corresponding to the system described by the `Quantum`
             simulation object and the coupling constant `J`.
-
         """
         Jcoupling = self.gammas_mT[0] * J
         SASB = self.product_operator(0, 1)
@@ -616,7 +611,6 @@ class HilbertSimulation:
             np.ndarray: The Dipolar Hamiltonian corresponding to the
             system described by the `Quantum` simulation object and
             dipolar coupling constant `D`.
-
         """
         if isinstance(D, np.ndarray):
             return self.dipolar_hamiltonian_3d(D)
@@ -655,7 +649,6 @@ class HilbertSimulation:
 
         .. todo::
             Write proper docs.
-
         """
         H = (
             self.zeeman_hamiltonian(B, theta, phi)
@@ -679,7 +672,6 @@ class HilbertSimulation:
 
         Returns:
                 np.ndarray: blah blah
-
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
@@ -886,7 +878,6 @@ class HilbertSimulation:
 
         Returns:
             np.ndarray: A matrix in Hilbert space representing...
-
         """
         Pi = self.projection_operator(state)
 
@@ -919,7 +910,6 @@ class HilbertSimulation:
         Example:
             >> Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
             >> UL = UnitaryPropagator(HL, 3e-9, "Liouville")
-
         """
         Up = sp.sparse.linalg.expm(1j * H * dt)
         Um = sp.sparse.linalg.expm(-1j * H * dt)
@@ -948,7 +938,8 @@ class LiouvilleSimulation(HilbertSimulation):
         return Q.T
 
     def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
-        """Create an initial density matrix for time evolution of the spin Hamiltonian density matrix.
+        """Create an initial density matrix for time evolution of the spin
+        Hamiltonian density matrix.
 
         Arguments:
             state (State): a string = spin state projection operator
@@ -957,7 +948,6 @@ class LiouvilleSimulation(HilbertSimulation):
 
         Returns:
             A matrix in Liouville space
-
         """
         Pi = self.liouville_projection_operator(state)
         if state == State.EQUILIBRIUM:
