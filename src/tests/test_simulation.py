@@ -143,7 +143,6 @@ class HilbertTests(unittest.TestCase):
         - shape = (4, 4)
         - exactly two non-zero entries, and
         - those entries have opposite signs.
-
         """
         mol = rpsim.Molecule()
         sim = rpsim.HilbertSimulation([mol, mol])
