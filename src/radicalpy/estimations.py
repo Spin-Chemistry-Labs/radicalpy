@@ -34,7 +34,7 @@ def T1T2_relaxation_gtensor_term(g: list) -> float:
 
 
 def T1_relaxation_rate_gtensor(g_tensors: list, B: float, tau_c: float) -> float:
-    """Estimate g-tensor anisotropy induced T1 relaxation rate.
+    r"""Estimate g-tensor anisotropy induced T1 relaxation rate.
 
     Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
 
