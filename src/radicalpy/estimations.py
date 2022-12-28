@@ -271,10 +271,10 @@ def k_D(D: np.ndarray, tau_c: float) -> float:
             tau_c (float): The rotational correlation time (s).
 
     Returns:
-            float: The D-dephasing rate (s^-1).
+            float: The D-dephasing rate (1/s).
     """
     D_var_MHz = utils.mT_to_MHz(utils.mT_to_MHz(np.var(D)))
-    return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12  # (s^-1) D-modulation rate
+    return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12  # (1/s) D-modulation rate
 
 
 def k_STD(J: np.ndarray, tau_c: float) -> float:
