@@ -33,8 +33,10 @@ def _relaxation_gtensor_term(g: list) -> float:
     return sum([(gi - np.mean(g)) ** 2 for gi in g])
 
 
-def T1_relaxation_rate_gtensor(g_tensors: list, B: float, tau_c: float) -> float:
-    r"""Estimate g-tensor anisotropy induced T1 relaxation rate.
+def T1_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
+    r"""T1 relaxation rate.
+
+    Estimate T1 relaxation rate based on tau_c and g-tensor anisotropy.
 
     Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
 
@@ -61,8 +63,10 @@ def T1_relaxation_rate_gtensor(g_tensors: list, B: float, tau_c: float) -> float
     )
 
 
-def T2_relaxation_rate_gtensor(g_tensors, B, tau_c):
-    """Estimate g-tensor anisotropy induced T2 relaxation rate.
+def T2_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
+    """T2 relaxation rate.
+
+    Estimate T2 relaxation rate based on tau_c and g-tensor anisotropy.
 
     Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
 
@@ -84,6 +88,49 @@ def T2_relaxation_rate_gtensor(g_tensors, B, tau_c):
         * g_innerproduct
         * (4 * tau_c + (3 * tau_c / (1 + omega**2 * tau_c**2)))
     )
+
+
+def aqueous_glycerol_viscosity(frac_glyc: float, temp: float) -> float:
+    """Viscosity of aqueous glycerol solutions.
+
+    Gives a good approximation for temperatures in the range 0-100°C.
+
+    Source: `Volk et al. Experiments in Fluids, 59, 76, (2018)`_.
+
+    Args:
+            frac_glyc (float): The fraction of glycerol in solution (0.00-1.00).
+            temp (float): The temperature in °C (0-100) (<0.07% accuracy between 15-30°C).
+
+    Returns:
+            float: The viscosity of the glycerol/water mixture in N s/m^2.
+
+    .. _Volk et al. Experiments in Fluids, 59, 76, (2018):
+       https://doi.org/10.1007/s00348-018-2527-y
+    """
+    vol_glyc = frac_glyc
+    vol_water = 1 - frac_glyc
+    density_glyc = 1273.3 - 0.6121 * temp
+    density_water = 1000 * (1 - ((np.abs(temp - 3.98)) / 615) ** 1.71)
+
+    mass_glyc = density_glyc * vol_glyc
+    mass_water = density_water * vol_water
+    tot_mass = mass_glyc + mass_water
+    mass_frac = mass_glyc / tot_mass
+
+    viscosity_glyc = 0.001 * 12100 * np.exp((-1233 + temp) * temp / (9900 + 70 * temp))
+    viscosity_water = (
+        0.001 * 1.790 * np.exp((-1230 - temp) * temp / (36100 + 360 * temp))
+    )
+
+    a = 0.705 - 0.0017 * temp
+    b = (4.9 + 0.036 * temp) * a**2.5
+    alpha = (
+        1
+        - mass_frac
+        + (a * b * mass_frac * (1 - mass_frac)) / (a * mass_frac + b * (1 - mass_frac))
+    )
+    A = np.log(viscosity_water / viscosity_glyc)
+    return viscosity_glyc * np.exp(A * alpha)
 
 
 def correlation_time(*args: np.ndarray) -> float:
@@ -262,7 +309,7 @@ def g_tensor_relaxation_rate_constant(tau_c: float, g1: list, g2: list) -> float
 
 
 def k_D(D: np.ndarray, tau_c: float) -> float:
-    """D (dipolar)-dephasing rate estimation for trajectories.
+    """D (dipolar)-dephasing rate for trajectories.
 
     Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
 
@@ -278,7 +325,7 @@ def k_D(D: np.ndarray, tau_c: float) -> float:
 
 
 def k_STD(J: np.ndarray, tau_c: float) -> float:
-    """ST-dephasing rate estimation for trajectories.
+    """ST-dephasing rate for trajectories.
 
     Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
 
@@ -299,7 +346,7 @@ def k_STD(J: np.ndarray, tau_c: float) -> float:
 def k_STD_microreactor(
     D: float, V: float, d: float = 5e-10, J0: float = 1e11, alpha: float = 2e10
 ) -> float:
-    """ST-dephasing rate estimation for radical pairs in microreactors.
+    """ST-dephasing rate for radical pairs in microreactors.
 
     Source: `Shushin, Chem. Phys. Lett., 181, 2–3, 274-278 (1991)`_.
 
@@ -322,7 +369,7 @@ def k_STD_microreactor(
 
 
 def k_ST_mixing(Bhalf: float) -> float:
-    """Singlet-triplet mixing rate estimation.
+    """Singlet-triplet mixing rate.
 
     Source: `Steiner et al. Chem. Rev. 89, 1, 51–147 (1989)`_.
 
@@ -342,7 +389,7 @@ def k_ST_mixing(Bhalf: float) -> float:
 
 
 def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
-    """Excited triplet state relaxation rate estimation.
+    """Excited triplet state relaxation rate.
 
     Source: `Atkins et al. Mol. Phys., 27, 6 (1974)`_.
 
@@ -371,15 +418,19 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     return (D**2 + 3 * E**2) * jnu0tc
 
 
-def rotational_correlation_time_for_solution(
+def rotational_correlation_time_for_molecule(
     radius: float, temp: float, eta: float = 0.89e-3
 ) -> float:
-    """Rotational correlation time (molecular Brownian rotation).
+    """Rotational correlation time.
+
+    Rotational correlation time is the average time it takes for a molecule (smaller than a protein) to rotate one radian. For proteins see `radicalpy.estimations.rotational_correlation_time_for_protein`.
+
+    To calculate viscosity (eta) for glycerol-water mixtures see `radicalpy.estimations.aqueous_glycerol_viscosity`.
 
     Args:
             radius (float): The radius of a spherical molecule (m).
             temp (float): The temperature of the solution (K).
-            eta (float): The viscosity of the solution (N s/m^2).
+            eta (float): The viscosity of the solution (N s/m^2) (default: 0.89e-3 corresponds to water).
 
     Returns:
             float: The rotational correlation time (s).
@@ -391,14 +442,18 @@ def rotational_correlation_time_for_solution(
 def rotational_correlation_time_for_protein(
     Mr: float, temp: float, eta: float = 0.89e-3
 ) -> float:
-    """Rotational correlation time (molecular Brownian rotation).
+    """Rotational correlation time.
+
+    Rotational correlation time is the average time it takes for a protein to rotate one radian. For small molecules see `radicalpy.estimations.rotational_correlation_time_for_molecule`.
+
+    To calculate viscosity (eta) for glycerol-water mixtures see `radicalpy.estimations.aqueous_glycerol_viscosity`.
 
     Source: `Cavanagh et al. Protein NMR Spectroscopy. Principles and Practice, Elsevier Academic Press (2007)`_.
 
     Args:
             Mr (float): The molecular weight of the protein (kDa).
             temp (float): The temperature of the solution (K).
-            eta (float): The viscosity of the solution (N s/m^2).
+            eta (float): The viscosity of the solution (N s/m^2) (default: 0.89e-3 corresponds to water).
 
     Returns:
             float: The rotational correlation time (s).
@@ -412,47 +467,4 @@ def rotational_correlation_time_for_protein(
 
     # Calculate Rh - effective hydrodynamic radius of the protein in m
     Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
-    return rotational_correlation_time_for_solution(Rh, temp, eta)
-
-
-def viscosity_glycerol_mixture(frac_glyc: float, temp: float) -> float:
-    """Calculate the viscosity of aqueous glycerol solutions.
-
-    Gives a good approximation for temperatures in the range 0-100°C.
-
-    Source: `Volk et al. Experiments in Fluids, 59, 76, (2018)`_.
-
-    Args:
-            frac_glyc (float): The fraction of glycerol in solution (0.00-1.00).
-            temp (float): The temperature in °C (0-100) (<0.07% accuracy between 15-30°C).
-
-    Returns:
-            float: The viscosity of the glycerol/water mixture in N s/m^2.
-
-    .. _Volk et al. Experiments in Fluids, 59, 76, (2018):
-       https://doi.org/10.1007/s00348-018-2527-y
-    """
-    vol_glyc = frac_glyc
-    vol_water = 1 - frac_glyc
-    density_glyc = 1273.3 - 0.6121 * temp
-    density_water = 1000 * (1 - ((np.abs(temp - 3.98)) / 615) ** 1.71)
-
-    mass_glyc = density_glyc * vol_glyc
-    mass_water = density_water * vol_water
-    tot_mass = mass_glyc + mass_water
-    mass_frac = mass_glyc / tot_mass
-
-    viscosity_glyc = 0.001 * 12100 * np.exp((-1233 + temp) * temp / (9900 + 70 * temp))
-    viscosity_water = (
-        0.001 * 1.790 * np.exp((-1230 - temp) * temp / (36100 + 360 * temp))
-    )
-
-    a = 0.705 - 0.0017 * temp
-    b = (4.9 + 0.036 * temp) * a**2.5
-    alpha = (
-        1
-        - mass_frac
-        + (a * b * mass_frac * (1 - mass_frac)) / (a * mass_frac + b * (1 - mass_frac))
-    )
-    A = np.log(viscosity_water / viscosity_glyc)
-    return viscosity_glyc * np.exp(A * alpha)
+    return rotational_correlation_time_for_molecule(Rh, temp, eta)
