@@ -99,9 +99,6 @@ class RandomFields(LiouvilleRelaxationBase):
     >>> RandomFields(rate_constant=1e6)
     Relaxation: RandomFields
     Rate constant: 1000000.0
-
-    .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
-       http://dx.doi.org/10.1088/1367-2630/18/6/063007
     """
 
     def init(self, sim: LiouvilleSimulation):
@@ -119,17 +116,12 @@ class RandomFields(LiouvilleRelaxationBase):
 class DipolarModulation(LiouvilleRelaxationBase):
     """Dipolar modulation relaxation superoperator.
 
-    Source: `Kattnig et al. New J.Phys., 18, 063007 (2016)`_.
+    Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
 
     >>> DipolarModulation(rate_constant=1e6)
     Relaxation: DipolarModulation
     Rate constant: 1000000.0
-
-    .. _Kattnig et al. New J.Phys., 18, 063007 (2016):
-        http://dx.doi.org/10.1088/1367-2630/18/6/063007
     """
-
-    # .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
 
     def init(self, sim: LiouvilleSimulation):
         """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
