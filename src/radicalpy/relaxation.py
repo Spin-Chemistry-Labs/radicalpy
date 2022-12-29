@@ -4,6 +4,12 @@ from .simulation import LiouvilleIncoherentProcessBase, LiouvilleSimulation, Sta
 from .utils import spectral_density
 
 
+class LiouvilleRelaxationBase(LiouvilleIncoherentProcessBase):
+    def _name(self):
+        name = super()._name()
+        return f"Relaxation: {name}"
+
+
 class DipolarModulation(LiouvilleRelaxationBase):
     """Dipolar modulation relaxation superoperator.
 
@@ -85,12 +91,6 @@ class GTensorAnisotropy(LiouvilleRelaxationBase):
             f"tau_c2: {self.tau_c2}",
         ]
         return "\n".join(lines)
-
-
-class LiouvilleRelaxationBase(LiouvilleIncoherentProcessBase):
-    def _name(self):
-        name = super()._name()
-        return f"Relaxation: {name}"
 
 
 class RandomFields(LiouvilleRelaxationBase):
