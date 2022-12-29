@@ -26,9 +26,6 @@ def main():
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
 
-    J = rp.estimations.exchange_interaction_in_solution_MC(dist)
-    D = rp.estimations.dipolar_interaction_MC(dist, ang)
-
     t_convert = 1e-6
 
     # plt.set_facecolor("none")
@@ -44,6 +41,8 @@ def main():
     path = __file__[:-3] + f"_{1}.png"
     plt.savefig(path)
 
+    J = rp.estimations.exchange_interaction_in_solution_MC(dist)
+
     # plt.set_facecolor("none")
     plt.clf()
     plt.grid(False)
@@ -56,6 +55,9 @@ def main():
     plt.tick_params(labelsize=14)
     path = __file__[:-3] + f"_{2}.png"
     plt.savefig(path)
+
+    # NOTE: D should average out to 0, since we're in solution.
+    D = rp.estimations.dipolar_interaction_MC(dist, ang)
 
     # plt.facecolor("none")
     plt.clf()
