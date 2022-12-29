@@ -305,7 +305,7 @@ class HilbertTests(unittest.TestCase):
         H = self.sim.zeeman_hamiltonian_3d(1, 10, 20)
 
     def test_dipolar_interaction_1d(self):
-        approx = estimations.dipolar_interaction_1d(1)
+        approx = estimations.dipolar_interaction_isotropic(1)
         gold = approx
         self.assertEqual(gold, approx)
 
