@@ -24,7 +24,7 @@ class SingletTripletDephasing(LiouvilleRelaxationBase):
     """
 
     def init(self, sim: LiouvilleSimulation):
-        """See"""
+        """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         super().init(sim)
         QS = sim.projection_operator(State.SINGLET)
         QT = sim.projection_operator(State.TRIPLET)
@@ -45,6 +45,7 @@ class TripletTripletDephasing(LiouvilleRelaxationBase):
     """
 
     def init(self, sim: LiouvilleSimulation):
+        """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         super().init(sim)
         QTp = sim.projection_operator(State.TRIPLET_PLUS)
         QTm = sim.projection_operator(State.TRIPLET_MINUS)
@@ -76,6 +77,7 @@ class TripletTripletRelaxation(LiouvilleRelaxationBase):
     # init_state=rpsim.State.TRIPLET_ZERO,
     # obs_state=rpsim.State.TRIPLET_ZERO,
     def init(self, sim: LiouvilleSimulation):
+        """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         QTp = sim.projection_operator(State.TRIPLET_PLUS)
         QTm = sim.projection_operator(State.TRIPLET_MINUS)
         QT0 = sim.projection_operator(State.TRIPLET_ZERO)
@@ -102,6 +104,7 @@ class RandomFields(LiouvilleRelaxationBase):
     """
 
     def init(self, sim: LiouvilleSimulation):
+        """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         super().init(sim)
         QS = sim.projection_operator(State.SINGLET)
         self.SABxyz = [
@@ -195,6 +198,7 @@ class GTensorAnisotropy(LiouvilleRelaxationBase):
         self.tau_c2 = tau_c2
 
     def init(self, sim: LiouvilleSimulation):
+        """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         self.subH = g_tensor_anisotropy_term(sim, 0, self.g1, self.omega1, self.tau_c1)
         self.subH += g_tensor_anisotropy_term(sim, 1, self.g2, self.omega2, self.tau_c2)
 
@@ -225,6 +229,7 @@ class T1Relaxation(LiouvilleRelaxationBase):
     """
 
     def init(self, sim: LiouvilleSimulation):
+        """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         SAz = sim.spin_operator(0, "z")
         SBz = sim.spin_operator(1, "z")
 
@@ -247,6 +252,7 @@ class T2Relaxation(LiouvilleRelaxationBase):
     """
 
     def init(self, sim: LiouvilleSimulation):
+        """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         SAx, SAy = sim.spin_operator(0, "x"), sim.spin_operator(0, "y")
         SBx, SBy = sim.spin_operator(1, "x"), sim.spin_operator(1, "y")
 
