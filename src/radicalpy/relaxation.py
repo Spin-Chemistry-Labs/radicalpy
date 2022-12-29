@@ -1,3 +1,7 @@
+"""Relaxation superoperators.
+
+.. todo:: Add module docstring.
+"""
 import numpy as np
 
 from .simulation import LiouvilleIncoherentProcessBase, LiouvilleSimulation, State
@@ -5,7 +9,10 @@ from .utils import spectral_density
 
 
 class LiouvilleRelaxationBase(LiouvilleIncoherentProcessBase):
+    """Base class for relaxation superoperators (Liouville space)."""
+
     def _name(self):
+        """First line of `__repr__()`."""
         name = super()._name()
         return f"Relaxation: {name}"
 
@@ -65,6 +72,8 @@ class GTensorAnisotropy(LiouvilleRelaxationBase):
 
     .. _Kivelson, J. Chem. Phys. 33, 1094 (1960):
        https://doi.org/10.1063/1.1731340
+
+    .. todo:: Add args.
     """
 
     def __init__(self, g1, g2, omega1, omega2, tau_c1, tau_c2):
