@@ -14,14 +14,14 @@ def Bhalf_theoretical(sim: HilbertSimulation) -> float:
 
     Args:
             sim: The `sim` object containing the hyperfine coupling
-                constants. (We'll change this to a list of molecules). It
-                should contain exactly two molecules.
+                constants. It should contain exactly two molecules.
 
     Returns:
             float: The B1/2 value (mT).
 
     .. _Weller et al. Chem. Phys. Lett. 96, 1, 24-27 (1983):
        https://doi.org/10.1016/0009-2614(83)80109-2
+    .. todo:: Change `sim` to a list of molecules.
     """
     assert len(sim.molecules) == 2
     sum_hfc2 = sum([m.effective_hyperfine**2 for m in sim.molecules])
