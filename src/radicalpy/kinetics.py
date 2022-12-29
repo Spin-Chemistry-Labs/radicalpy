@@ -3,14 +3,30 @@ from math import prod
 import numpy as np
 
 from .simulation import (
-    KineticsRelaxationBase,
-    LiouvilleKineticsRelaxationBase,
+    HilbertIncoherentProcessBase,
+    LiouvilleIncoherentProcessBase,
     LiouvilleSimulation,
     State,
 )
 
 
-class Exponential(KineticsRelaxationBase):
+class HilbertKineticsBase(HilbertIncoherentProcessBase):
+    def _name(self):
+        name = super()._name()
+        return f"Kinetics: {name}"
+
+
+class LiouvilleKineticsBase(LiouvilleIncoherentProcessBase):
+    def _name(self):
+        name = super()._name()
+        return f"Kinetics: {name}"
+
+    @staticmethod
+    def _convert(Q: np.ndarray) -> np.ndarray:
+        return np.kron(Q, np.eye(len(Q))) + np.kron(np.eye(len(Q)), Q.T)
+
+
+class Exponential(HilbertKineticsBase):
     def adjust_product_probabilities(
         self,
         product_probabilities: np.ndarray,
@@ -19,13 +35,7 @@ class Exponential(KineticsRelaxationBase):
         product_probabilities *= np.exp(-self.rate * time)
 
 
-class KineticsBase(LiouvilleKineticsRelaxationBase):
-    @staticmethod
-    def _convert(Q: np.ndarray) -> np.ndarray:
-        return np.kron(Q, np.eye(len(Q))) + np.kron(np.eye(len(Q)), Q.T)
-
-
-class Haberkorn(KineticsBase):
+class Haberkorn(LiouvilleKineticsBase):
     """
     >>> Haberkorn(rate_constant=1e6, target=State.SINGLET)
     Kinetics: Haberkorn
@@ -58,7 +68,7 @@ class Haberkorn(KineticsBase):
         return "\n".join(lines)
 
 
-class HaberkornFree(KineticsBase):
+class HaberkornFree(LiouvilleKineticsBase):
     """
     >>> HaberkornFree(rate_constant=1e6)
     Kinetics: HaberkornFree
@@ -73,7 +83,7 @@ class HaberkornFree(KineticsBase):
         self.subH = 0.5 * self.rate * np.eye(size)
 
 
-class JonesHore(KineticsBase):
+class JonesHore(LiouvilleKineticsBase):
     """
     >>> JonesHore(1e6, 1e7)
     Kinetics: JonesHore

@@ -1,10 +1,16 @@
 import numpy as np
 
-from .simulation import LiouvilleKineticsRelaxationBase, LiouvilleSimulation, State
+from .simulation import LiouvilleIncoherentProcessBase, LiouvilleSimulation, State
 from .utils import spectral_density
 
 
-class SingletTripletDephasing(LiouvilleKineticsRelaxationBase):
+class LiouvilleRelaxationBase(LiouvilleIncoherentProcessBase):
+    def _name(self):
+        name = super()._name()
+        return f"Relaxation: {name}"
+
+
+class SingletTripletDephasing(LiouvilleRelaxationBase):
     """Singlet-triplet dephasing relaxation superoperator.
 
     Source: `Shushin, Chem. Phys. Lett. 181, 2,3, 274-278 (1991)`_.
@@ -18,13 +24,14 @@ class SingletTripletDephasing(LiouvilleKineticsRelaxationBase):
     """
 
     def init(self, sim: LiouvilleSimulation):
+        """See"""
         super().init(sim)
         QS = sim.projection_operator(State.SINGLET)
         QT = sim.projection_operator(State.TRIPLET)
         self.subH = self.rate * (np.kron(QS, QT) + np.kron(QT, QS))
 
 
-class TripletTripletDephasing(LiouvilleKineticsRelaxationBase):
+class TripletTripletDephasing(LiouvilleRelaxationBase):
     """Triplet-triplet dephasing relaxation superoperator.
 
     Source: `Gorelik et al. J. Phys. Chem. A 105, 8011-8017 (2001)`_.
@@ -52,7 +59,7 @@ class TripletTripletDephasing(LiouvilleKineticsRelaxationBase):
         )
 
 
-class TripletTripletRelaxation(LiouvilleKineticsRelaxationBase):
+class TripletTripletRelaxation(LiouvilleRelaxationBase):
     """Triplet-triplet relaxation superoperator.
 
     Source: `Miura et al. J. Phys. Chem. A 119, 5534−5544 (2015)`_.
@@ -84,7 +91,7 @@ class TripletTripletRelaxation(LiouvilleKineticsRelaxationBase):
         self.subH = self.rate * (2 / 3 * term0 + 1 / 3 * (term1 - term2))
 
 
-class RandomFields(LiouvilleKineticsRelaxationBase):
+class RandomFields(LiouvilleRelaxationBase):
     """Random fields relaxation superoperator.
 
     Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
@@ -109,20 +116,23 @@ class RandomFields(LiouvilleKineticsRelaxationBase):
         self.subH = self.rate * (1.5 * term0 - term1)
 
 
-class DipolarModulation(LiouvilleKineticsRelaxationBase):
+class DipolarModulation(LiouvilleRelaxationBase):
     """Dipolar modulation relaxation superoperator.
 
-    Source: `Kattnig et al. New J. Phys., 18, 063007 (2016)`_.
+    Source: `Kattnig et al. New J.Phys., 18, 063007 (2016)`_.
 
     >>> DipolarModulation(rate_constant=1e6)
     Relaxation: DipolarModulation
     Rate constant: 1000000.0
 
-    .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
-       http://dx.doi.org/10.1088/1367-2630/18/6/063007
+    .. _Kattnig et al. New J.Phys., 18, 063007 (2016):
+        http://dx.doi.org/10.1088/1367-2630/18/6/063007
     """
 
+    # .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
+
     def init(self, sim: LiouvilleSimulation):
+        """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         super().init(sim)
         QTp = sim.projection_operator(State.TRIPLET_PLUS)
         QTm = sim.projection_operator(State.TRIPLET_MINUS)
@@ -161,19 +171,24 @@ def g_tensor_anisotropy_term(sim: LiouvilleSimulation, idx, g, omega, tau_c):
 # !!!!!!!!!! omega depends on B, which changes in every step (MARY loop)
 # See note below
 # Instead of omega1 & omega2 use B and calculate omegas inside
-class GTensorAnisotropy(LiouvilleKineticsRelaxationBase):
+class GTensorAnisotropy(LiouvilleRelaxationBase):
     """g-tensor anisotropy relaxation superoperator.
 
     Source: `Kivelson, J. Chem. Phys. 33, 1094 (1960)`_.
 
-    >>> GTensorAnisotropy(g1=[2.0032, 1.9975, 2.0014], g2=[2.00429, 2.00389, 2.00216], omega1=-158477366720.7, omega2=-158477366720.7, tau_c1=5e-12, tau_c2=100e-12)
+    >>> GTensorAnisotropy(g1=[2.0032, 1.9975, 2.0014],
+    ...                   g2=[2.00429, 2.00389, 2.00216],
+    ...                   omega1=-158477366720.7,
+    ...                   omega2=-158477366720.7,
+    ...                   tau_c1=5e-12,
+    ...                   tau_c2=100e-12)
     Relaxation: GTensorAnisotropy
     g1: [2.0032, 1.9975, 2.0014]
     g2: [2.00429, 2.00389, 2.00216]
     omega1: -158477366720.7
     omega2: -158477366720.7
     tau_c1: 5e-12
-    tau_c2: 100e-12
+    tau_c2: 1e-10
 
     .. _Kivelson, J. Chem. Phys. 33, 1094 (1960):
        https://doi.org/10.1063/1.1731340
@@ -191,8 +206,20 @@ class GTensorAnisotropy(LiouvilleKineticsRelaxationBase):
         self.subH = g_tensor_anisotropy_term(sim, 0, self.g1, self.omega1, self.tau_c1)
         self.subH += g_tensor_anisotropy_term(sim, 1, self.g2, self.omega2, self.tau_c2)
 
+    def __repr__(self):
+        lines = [
+            self._name(),
+            f"g1: {self.g1}",
+            f"g2: {self.g2}",
+            f"omega1: {self.omega1}",
+            f"omega2: {self.omega2}",
+            f"tau_c1: {self.tau_c1}",
+            f"tau_c2: {self.tau_c2}",
+        ]
+        return "\n".join(lines)
 
-class T1Relaxation(LiouvilleKineticsRelaxationBase):
+
+class T1Relaxation(LiouvilleRelaxationBase):
     """T1 (spin-lattice, longitudinal, thermal) relaxation superoperator.
 
     Source: `Bloch, Phys. Rev. 70, 460-474 (1946)`_.
@@ -214,7 +241,7 @@ class T1Relaxation(LiouvilleKineticsRelaxationBase):
         )
 
 
-class T2Relaxation(LiouvilleKineticsRelaxationBase):
+class T2Relaxation(LiouvilleRelaxationBase):
     """T2 (spin-spin, transverse) relaxation superoperator.
 
     Source: `Bloch, Phys. Rev. 70, 460-474 (1946)`_.
