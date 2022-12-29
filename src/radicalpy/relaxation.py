@@ -100,8 +100,10 @@ class GTensorAnisotropy(LiouvilleRelaxationBase):
 
     def init(self, sim: LiouvilleSimulation):
         """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
-        self.subH = g_tensor_anisotropy_term(sim, 0, self.g1, self.omega1, self.tau_c1)
-        self.subH += g_tensor_anisotropy_term(sim, 1, self.g2, self.omega2, self.tau_c2)
+        self.subH = _g_tensor_anisotropy_term(sim, 0, self.g1, self.omega1, self.tau_c1)
+        self.subH += _g_tensor_anisotropy_term(
+            sim, 1, self.g2, self.omega2, self.tau_c2
+        )
 
     def __repr__(self):
         lines = [
@@ -272,7 +274,9 @@ class TripletTripletRelaxation(LiouvilleRelaxationBase):
         self.subH = self.rate * (2 / 3 * term0 + 1 / 3 * (term1 - term2))
 
 
-def g_tensor_anisotropy_term(sim: LiouvilleSimulation, idx, g, omega, tau_c):
+def _g_tensor_anisotropy_term(
+    sim: LiouvilleSimulation, idx: int, g: list, omega: float, tau_c: float
+) -> np.ndarray:
     giso = np.mean(g)
     SAx, SAy, SAz = [sim.spin_operator(idx, ax) for ax in "xyz"]
     H = 0.5 * np.eye(len(SAx) * len(SAx), dtype=complex)
