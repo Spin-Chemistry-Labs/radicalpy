@@ -110,7 +110,7 @@
   },
   "rw": {
     "name": "hydration layer",
-    "value": 2.4e-10,
+    "value": 1.6e-10,
     "unit": "m",
     "alt_def": "average of 1.6 to 3.2 A (1/2 to 1 hydration shell)"
   }
