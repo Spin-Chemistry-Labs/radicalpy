@@ -56,6 +56,14 @@ class GTensorAnisotropy(LiouvilleRelaxationBase):
 
     Source: `Kivelson, J. Chem. Phys. 33, 1094 (1960)`_.
 
+    Args:
+        g1 (list): The principle components of g-tensor of the first radical.
+        g2 (list): The principle components of g-tensor of the second radical.
+        omega1 (float): The Larmor frequency of the first radical.
+        omega2 (float): The Larmor frequency of the second radical.
+        tau_c1 (float): The rotational correlation time of the first radical.
+        tau_c2 (float): The rotational correlation time of the second radical.
+
     >>> GTensorAnisotropy(g1=[2.0032, 1.9975, 2.0014],
     ...                   g2=[2.00429, 2.00389, 2.00216],
     ...                   omega1=-158477366720.7,
@@ -72,11 +80,17 @@ class GTensorAnisotropy(LiouvilleRelaxationBase):
 
     .. _Kivelson, J. Chem. Phys. 33, 1094 (1960):
        https://doi.org/10.1063/1.1731340
-
-    .. todo:: Add args.
     """
 
-    def __init__(self, g1, g2, omega1, omega2, tau_c1, tau_c2):
+    def __init__(
+        self,
+        g1: list,
+        g2: list,
+        omega1: float,
+        omega2: float,
+        tau_c1: float,
+        tau_c2: float,
+    ):
         self.g1 = g1
         self.g2 = g2
         self.omega1 = omega1
