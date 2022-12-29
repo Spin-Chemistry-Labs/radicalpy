@@ -10,7 +10,7 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
     """Mean path between two radicals.
 
     Args:
-            mutual_diffusion (float): The mutual diffusion coefficient (m^2 s^-1).
+            mutual_diffusion (float): The mutual diffusion coefficient (m^2/s).
             delta_T (float): The time interval (s).
 
     Returns:
@@ -40,7 +40,11 @@ def randomwalk_3d(
     r_min: float,
     r_max: float = 0,
 ) -> (np.ndarray, np.ndarray, np.ndarray):
-    """Monte Carlo random walk for radicals pairs in both solution and microreactor environments.
+    """Simulate Monte Carlo random walk.
+
+    The MC random walk is simulated for radicals pairs in both
+    solution (`r_max = 0`) and microreactor (`r_max > 0`)
+    environments.
 
     Args:
             n_steps (float): The number of simulation steps.
@@ -49,14 +53,22 @@ def randomwalk_3d(
             z_0 (float): The initial position in the x-axis (m).
             delta_r (float): The mean path between two radicals (m).
             r_min (float): The distance of closest approach (m).
-            r_max (float): The diameter of the microreactor (m). Set to 0 for solution-based simulations.
+            r_max (float): The diameter of the microreactor (m). Set
+                to 0 for solution-based, and to a positive value for
+                microreactor-based simulations.
 
     Returns:
-            (np.ndarray, np.ndarray, np.ndarray)
-            pos (np.ndarray): The positions of the moving radical (m).
-            dist (np.ndarray): The mutual distances between the radical pairs (m).
-            angle (np.ndarray): The angles (theta) of the vector trajectories of the moving radical (m).
+        (np.ndarray, np.ndarray, np.ndarray):
+            - pos: The positions of the moving radical (m).
+            - dist: The mutual distances between the radical pairs (m).
+            - angle: The angles (theta) of the vector trajectories of
+                the moving radical (m).
+
     """
+    if r_max != 0 and r_min > r_max:
+        raise ValueError("r_min should be less than (or equal to) r_max.")
+    if r_min < 0 or r_max < 0:
+        raise ValueError("r_min and r_max should not be negative.")
     pos = np.zeros([n_steps, 3])
     dist = np.zeros(n_steps)
     angle = np.zeros(n_steps)
