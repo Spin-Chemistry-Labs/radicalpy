@@ -38,7 +38,8 @@ def T1_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
 
     Estimate T1 relaxation rate based on tau_c and g-tensor anisotropy.
 
-    Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
+    Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic
+    Field Effects on Chemical and Biochemical Reactions (2004)`_.
 
     Args:
             g_tensors (list): The principle components of g-tensor.
@@ -48,8 +49,10 @@ def T1_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
     Returns:
             float: The T1 relaxation rate (1/s)
 
-    .. _Hayashi, Introduction to Dynamic Spin Chemistry\: Magnetic Field Effects on Chemical and Biochemical Reactions (2004):
+    .. _Hayashi, Introduction to Dynamic Spin Chemistry\: Magnetic
+       Field Effects on Chemical and Biochemical Reactions (2004):
        https://doi.org/10.1142/9789812562654_0015
+
     """
     hbar = constants.value("hbar")
     muB = constants.value("mu_B")
@@ -68,7 +71,8 @@ def T2_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
 
     Estimate T2 relaxation rate based on tau_c and g-tensor anisotropy.
 
-    Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic Field Effects on Chemical and Biochemical Reactions (2004)`_.
+    Source: `Hayashi, Introduction to Dynamic Spin Chemistry: Magnetic
+    Field Effects on Chemical and Biochemical Reactions (2004)`_.
 
     Args:
             g_tensors (list): The principle components of g-tensor.
@@ -99,7 +103,8 @@ def aqueous_glycerol_viscosity(frac_glyc: float, temp: float) -> float:
 
     Args:
             frac_glyc (float): The fraction of glycerol in solution (0.00-1.00).
-            temp (float): The temperature in °C (0-100) (<0.07% accuracy between 15-30°C).
+            temp (float): The temperature in °C (0-100) (<0.07%
+                accuracy between 15-30°C).
 
     Returns:
             float: The viscosity of the glycerol/water mixture in N s/m^2.
@@ -136,7 +141,10 @@ def aqueous_glycerol_viscosity(frac_glyc: float, temp: float) -> float:
 def correlation_time(*args: np.ndarray) -> float:
     """Estimate correlation time.
 
-    The optimal parameters (amplitudes and taus) obtained from the multiexponential fit of the autocorrelation curve are used to estimate the correlation time.  See `radicalpy.utils.multiexponential_fit`.
+    The optimal parameters (amplitudes and taus) obtained from the
+    multiexponential fit of the autocorrelation curve are used to
+    estimate the correlation time.  See
+    `radicalpy.utils.multiexponential_fit`.
 
     Args:
         args (np.ndarray): The amplitudes and taus from the
@@ -164,10 +172,12 @@ def dipolar_interaction_MC(
 
     Args:
             r (float or np.ndarray): The interradical separation (m).
-            theta (float or np.ndarray): The angle of molecular rotation (rad).
+            theta (float or np.ndarray): The angle of molecular
+            rotation (rad).
 
     Returns:
-            (float or np.ndarray): The dipolar coupling constant in milli Tesla (mT).
+            (float or np.ndarray): The dipolar coupling constant in
+            milli Tesla (mT).
 
     .. _O'Dea et al. J. Phys. Chem. A, 109, 5, 869-873 (2005):
        https://doi.org/10.1021/jp0456943
@@ -207,7 +217,8 @@ def dipolar_interaction_isotropic(r: float or np.ndarray) -> (float or np.ndarra
             r (float or np.ndarray): The interradical separation (m).
 
     Returns:
-            (float or np.ndarray): The dipolar coupling constant in millitesla (mT).
+            (float or np.ndarray): The dipolar coupling constant in
+            millitesla (mT).
 
     .. _Santabarbara et al. Biochemistry, 44, 6, 2119–2128 (2005):
        https://pubs.acs.org/doi/10.1021/bi048445d
@@ -279,7 +290,8 @@ def exchange_interaction_in_solution_MC(
             J0 (float): The strength of the interaction (mT).
 
     Returns:
-            (float or np.ndarray): The exchange coupling constant in milli Tesla (mT).
+            (float or np.ndarray): The exchange coupling constant in
+            milli Tesla (mT).
     """
     return J0 * np.exp(-beta * (r - r.min()))
 
@@ -293,8 +305,10 @@ def g_tensor_relaxation_rate_constant(tau_c: float, g1: list, g2: list) -> float
 
     Args:
             tau_c (float): The rotational correlation time (s).
-            g1 (list): The principle components of g-tensor of the first radical.
-            g2 (list): The principle components of g-tensor of the second radical.
+            g1 (list): The principle components of g-tensor of the
+                first radical.
+            g2 (list): The principle components of g-tensor of the
+                second radical.
 
     Returns:
             float: The g-tensor relaxation rate (1/s).
@@ -423,14 +437,19 @@ def rotational_correlation_time_for_molecule(
 ) -> float:
     """Rotational correlation time.
 
-    Rotational correlation time is the average time it takes for a molecule (smaller than a protein) to rotate one radian. For proteins see `radicalpy.estimations.rotational_correlation_time_for_protein`.
+    Rotational correlation time is the average time it takes for a
+    molecule (smaller than a protein) to rotate one radian. For
+    proteins see
+    `radicalpy.estimations.rotational_correlation_time_for_protein`.
 
-    To calculate viscosity (eta) for glycerol-water mixtures see `radicalpy.estimations.aqueous_glycerol_viscosity`.
+    To calculate viscosity (eta) for glycerol-water mixtures see
+    `radicalpy.estimations.aqueous_glycerol_viscosity`.
 
     Args:
             radius (float): The radius of a spherical molecule (m).
             temp (float): The temperature of the solution (K).
-            eta (float): The viscosity of the solution (N s/m^2) (default: 0.89e-3 corresponds to water).
+            eta (float): The viscosity of the solution (N s/m^2)
+                (default: 0.89e-3 corresponds to water).
 
     Returns:
             float: The rotational correlation time (s).
@@ -444,16 +463,21 @@ def rotational_correlation_time_for_protein(
 ) -> float:
     """Rotational correlation time.
 
-    Rotational correlation time is the average time it takes for a protein to rotate one radian. For small molecules see `radicalpy.estimations.rotational_correlation_time_for_molecule`.
+    Rotational correlation time is the average time it takes for a
+    protein to rotate one radian. For small molecules see
+    `radicalpy.estimations.rotational_correlation_time_for_molecule`.
 
-    To calculate viscosity (eta) for glycerol-water mixtures see `radicalpy.estimations.aqueous_glycerol_viscosity`.
+    To calculate viscosity (eta) for glycerol-water mixtures see
+    `radicalpy.estimations.aqueous_glycerol_viscosity`.
 
-    Source: `Cavanagh et al. Protein NMR Spectroscopy. Principles and Practice, Elsevier Academic Press (2007)`_.
+    Source: `Cavanagh et al. Protein NMR Spectroscopy. Principles and
+    Practice, Elsevier Academic Press (2007)`_.
 
     Args:
             Mr (float): The molecular weight of the protein (kDa).
             temp (float): The temperature of the solution (K).
-            eta (float): The viscosity of the solution (N s/m^2) (default: 0.89e-3 corresponds to water).
+            eta (float): The viscosity of the solution (N s/m^2)
+                (default: 0.89e-3 corresponds to water).
 
     Returns:
             float: The rotational correlation time (s).
