@@ -44,7 +44,7 @@ def T1_relaxation_rate_gtensor(g_tensors: list, B: float, tau_c: float) -> float
             tau_c (float): The rotational correlation time (s).
 
     Returns:
-            float: The T1 relaxation rate (:math:`s^{-1}`)
+            float: The T1 relaxation rate (1/s)
 
     .. _Hayashi, Introduction to Dynamic Spin Chemistry\: Magnetic Field Effects on Chemical and Biochemical Reactions (2004):
        https://doi.org/10.1142/9789812562654_0015
@@ -72,7 +72,7 @@ def T2_relaxation_rate_gtensor(g_tensors, B, tau_c):
             tau_c (float): The rotational correlation time (s).
 
     Returns:
-            float: The T2 relaxation rate (:math:`s^{-1}`).
+            float: The T2 relaxation rate (1/s).
     """
     hbar = constants.value("hbar")
     muB = constants.value("mu_B")
@@ -287,7 +287,7 @@ def k_STD(J: np.ndarray, tau_c: float) -> float:
             tau_c (float): The rotational correlation time (s).
 
     Returns:
-            float: The ST-dephasing rate (s^-1).
+            float: The ST-dephasing rate (1/s).
 
     .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
        https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007
@@ -304,14 +304,14 @@ def k_STD_microreactor(
     Source: `Shushin, Chem. Phys. Lett., 181, 2–3, 274-278 (1991)`_.
 
     Args:
-            D (float): The mutual diffusion coefficient (m^2 s^-1).
+            D (float): The mutual diffusion coefficient (m^2/s).
             V (float): The volume of the microreactor (e.g. micelle) (m^3).
             d (float): The distance of closest approach (m).
-            J0 (float): The maximum exchange interaction (s^-1).
-            alpha (float): The characteristic length factor (m^-1).
+            J0 (float): The maximum exchange interaction (1/s).
+            alpha (float): The characteristic length factor (1/m).
 
     Returns:
-            float: The ST-dephasing rate (s^-1).
+            float: The ST-dephasing rate (1/s).
 
     .. _Shushin, Chem. Phys. Lett., 181, 2–3, 274-278 (1991):
        https://doi.org/10.1016/0009-2614(91)90366-H
@@ -330,7 +330,7 @@ def k_ST_mixing(Bhalf: float) -> float:
             Bhalf (float): The theoretical B1/2 value (mT).
 
     Returns:
-            float: The ST-mixing rate (s^-1).
+            float: The ST-mixing rate (1/s).
 
     .. _Steiner et al. Chem. Rev. 89, 1, 51–147 (1989):
        https://doi.org/10.1021/cr00091a003
@@ -353,7 +353,7 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
             E (float): The zero field splitting (ZFS) parameter E (Hz).
 
     Returns:
-            float: The excited triplet state relaxation rate (s^-1).
+            float: The excited triplet state relaxation rate (1/s).
 
     .. _Atkins et al. Mol. Phys., 27, 6 (1974):
        https://doi.org/10.1080/00268977400101361
@@ -379,7 +379,7 @@ def rotational_correlation_time_for_solution(
     Args:
             radius (float): The radius of a spherical molecule (m).
             temp (float): The temperature of the solution (K).
-            eta (float): The viscosity of the solution (N s m^-2).
+            eta (float): The viscosity of the solution (N s/m^2).
 
     Returns:
             float: The rotational correlation time (s).
@@ -398,7 +398,7 @@ def rotational_correlation_time_for_protein(
     Args:
             Mr (float): The molecular weight of the protein (kDa).
             temp (float): The temperature of the solution (K).
-            eta (float): The viscosity of the solution (N s m^-2).
+            eta (float): The viscosity of the solution (N s/m^2).
 
     Returns:
             float: The rotational correlation time (s).
@@ -427,7 +427,7 @@ def viscosity_glycerol_mixture(frac_glyc: float, temp: float) -> float:
             temp (float): The temperature in °C (0-100) (<0.07% accuracy between 15-30°C).
 
     Returns:
-            float: The viscosity of the glycerol/water mixture in N s m^-2.
+            float: The viscosity of the glycerol/water mixture in N s/m^2.
 
     .. _Volk et al. Experiments in Fluids, 59, 76, (2018):
        https://doi.org/10.1007/s00348-018-2527-y
