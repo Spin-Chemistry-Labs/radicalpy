@@ -285,6 +285,7 @@ class HilbertIncoherentProcessBase:
 
     @property
     def rate_constant(self) -> float:
+        """Rate of the incoherent process."""
         return self.rate
 
     def _name(self) -> str:
