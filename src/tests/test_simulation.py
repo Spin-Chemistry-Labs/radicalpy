@@ -143,7 +143,6 @@ class HilbertTests(unittest.TestCase):
         - shape = (4, 4)
         - exactly two non-zero entries, and
         - those entries have opposite signs.
-
         """
         mol = rpsim.Molecule()
         sim = rpsim.HilbertSimulation([mol, mol])
@@ -306,7 +305,7 @@ class HilbertTests(unittest.TestCase):
         H = self.sim.zeeman_hamiltonian_3d(1, 10, 20)
 
     def test_dipolar_interaction_1d(self):
-        approx = estimations.dipolar_interaction_1d(1)
+        approx = estimations.dipolar_interaction_isotropic(1)
         gold = approx
         self.assertEqual(gold, approx)
 

@@ -3,14 +3,30 @@ from math import prod
 import numpy as np
 
 from .simulation import (
-    KineticsRelaxationBase,
-    LiouvilleKineticsRelaxationBase,
+    HilbertIncoherentProcessBase,
+    LiouvilleIncoherentProcessBase,
     LiouvilleSimulation,
     State,
 )
 
 
-class Exponential(KineticsRelaxationBase):
+class HilbertKineticsBase(HilbertIncoherentProcessBase):
+    def _name(self):
+        name = super()._name()
+        return f"Kinetics: {name}"
+
+
+class LiouvilleKineticsBase(LiouvilleIncoherentProcessBase):
+    def _name(self):
+        name = super()._name()
+        return f"Kinetics: {name}"
+
+    @staticmethod
+    def _convert(Q: np.ndarray) -> np.ndarray:
+        return np.kron(Q, np.eye(len(Q))) + np.kron(np.eye(len(Q)), Q.T)
+
+
+class Exponential(HilbertKineticsBase):
     """Exponential model kinetics operator.
 
     Source: `Kaptein et al. Chem. Phys. Lett. 4, 4, 195-197 (1969)`_.
@@ -31,13 +47,7 @@ class Exponential(KineticsRelaxationBase):
         product_probabilities *= np.exp(-self.rate * time)
 
 
-class KineticsBase(LiouvilleKineticsRelaxationBase):
-    @staticmethod
-    def _convert(Q: np.ndarray) -> np.ndarray:
-        return np.kron(Q, np.eye(len(Q))) + np.kron(np.eye(len(Q)), Q.T)
-
-
-class Haberkorn(KineticsBase):
+class Haberkorn(LiouvilleKineticsBase):
     """Haberkorn kinetics superoperator for singlet/triplet recombination/product formation.
 
     Source: `Haberkorn, Mol. Phys. 32:5, 1491-1493 (1976)`_.
@@ -76,7 +86,7 @@ class Haberkorn(KineticsBase):
         return "\n".join(lines)
 
 
-class HaberkornFree(KineticsBase):
+class HaberkornFree(LiouvilleKineticsBase):
     """Haberkorn kinetics superoperator for free radical/RP2 formation.
 
     Source: `Haberkorn, Mol. Phys. 32:5, 1491-1493 (1976)`_.
@@ -97,7 +107,7 @@ class HaberkornFree(KineticsBase):
         self.subH = 0.5 * self.rate * np.eye(size)
 
 
-class JonesHore(KineticsBase):
+class JonesHore(LiouvilleKineticsBase):
     """Jones-Hore kinetics superoperator for two-site models.
 
     Source: `Jones et al. Chem. Phys. Lett. 507, 269-273 (2011)`_.
