@@ -17,7 +17,7 @@ class EstimationsTests(unittest.TestCase):
         gold = 60.65e-9  # 31.93e-9
         Mr = 122  # 61
         temp = 310
-        t = rp.estimations.rotational_correlation_time_protein(Mr, temp)
+        t = rp.estimations.rotational_correlation_time_for_protein(Mr, temp)
         self.assertAlmostEqual(gold, t)
 
     def test_k_ST_mixing(self):
