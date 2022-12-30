@@ -62,7 +62,7 @@ def randomwalk_3d(
             - pos: The positions of the moving radical (m).
             - dist: The mutual distances between the radical pairs (m).
             - angle: The angles (theta) of the vector trajectories of
-                the moving radical (m).
+              the moving radical (m).
 
     """
     if r_max != 0 and r_min > r_max:
