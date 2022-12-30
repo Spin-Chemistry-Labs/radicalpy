@@ -296,7 +296,7 @@ def exchange_interaction_in_solution_MC(
     return J0 * np.exp(-beta * (r - r.min()))
 
 
-def g_tensor_relaxation_rate_constant(tau_c: float, g1: list, g2: list) -> float:
+def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     """g-tensor relaxation rate.
 
     To be used with `radicalpy.relaxation.RandomFields`.
