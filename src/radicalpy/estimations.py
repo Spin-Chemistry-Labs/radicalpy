@@ -43,7 +43,7 @@ def T1_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
 
     Args:
             g_tensors (list): The principle components of g-tensor.
-            B (float): The external magnetic field strength (mT).
+            B (float): The external magnetic field strength (T).
             tau_c (float): The rotational correlation time (s).
 
     Returns:
@@ -76,7 +76,7 @@ def T2_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
 
     Args:
             g_tensors (list): The principle components of g-tensor.
-            B (float): The external magnetic field strength (mT).
+            B (float): The external magnetic field strength (T).
             tau_c (float): The rotational correlation time (s).
 
     Returns:
@@ -296,7 +296,7 @@ def exchange_interaction_in_solution_MC(
     return J0 * np.exp(-beta * (r - r.min()))
 
 
-def g_tensor_relaxation_rate_constant(tau_c: float, g1: list, g2: list) -> float:
+def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     """g-tensor relaxation rate.
 
     To be used with `radicalpy.relaxation.RandomFields`.
