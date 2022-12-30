@@ -479,8 +479,9 @@ def yield_anisotropy(
             phi (np.ndarray): The angles phi by which the anisotropic product yields were calculated.
 
     Returns:
-            delta_phi (float): Maximum yield - minimum yield.
-            gamma (float): delta_phi / spherical average.
+            (float, float):
+            - delta_phi (float): Maximum yield - minimum yield.
+            - gamma (float): delta_phi / spherical average.
     """
     delta_phi = product_yield.max() - product_yield.min()
     yield_av = spherical_average(product_yield, theta, phi)
