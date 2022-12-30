@@ -270,7 +270,7 @@ class Molecule:
         return len(self.multiplicities)
 
 
-class KineticsRelaxationBase:
+class HilbertIncoherentProcessBase:
     def __init__(self, rate_constant: float):
         self.rate = rate_constant
 
@@ -287,8 +287,8 @@ class KineticsRelaxationBase:
     def rate_constant(self) -> float:
         return self.rate
 
-    def _name(self):
-        return f"Kinetics: {type(self).__name__}"
+    def _name(self) -> str:
+        return str(type(self).__name__)
 
     def __repr__(self) -> str:
         lines = [
@@ -764,8 +764,8 @@ class HilbertSimulation:
         B: np.ndarray,
         D: float,
         J: float,
-        kinetics: list[KineticsRelaxationBase] = [],
-        relaxations: list[KineticsRelaxationBase] = [],
+        kinetics: list[HilbertIncoherentProcessBase] = [],
+        relaxations: list[HilbertIncoherentProcessBase] = [],
         theta: Optional[float] = None,
         phi: Optional[float] = None,
         hfc_anisotropy: bool = False,
@@ -833,8 +833,8 @@ class HilbertSimulation:
         B: float,
         D: np.ndarray,
         J: float,
-        kinetics: list[KineticsRelaxationBase] = [],
-        relaxations: list[KineticsRelaxationBase] = [],
+        kinetics: list[HilbertIncoherentProcessBase] = [],
+        relaxations: list[HilbertIncoherentProcessBase] = [],
     ) -> dict:
         H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=True)
 
@@ -977,6 +977,6 @@ class LiouvilleSimulation(HilbertSimulation):
         return propagator @ rho
 
 
-class LiouvilleKineticsRelaxationBase(KineticsRelaxationBase):
+class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
     def adjust_hamiltonian(self, H: np.ndarray):
         H -= self.subH
