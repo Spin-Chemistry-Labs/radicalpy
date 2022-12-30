@@ -45,7 +45,7 @@ def T1_relaxation_rate(
 
     Args:
             g_tensors (list): The principle components of g-tensor.
-            B (float or np.ndarray): The external magnetic field strength (mT).
+            B (float or np.ndarray): The external magnetic field strength (T).
             tau_c (float or np.ndarray): The rotational correlation time (s).
 
     Returns:
@@ -80,7 +80,7 @@ def T2_relaxation_rate(
 
     Args:
             g_tensors (list): The principle components of g-tensor.
-            B (float or np.ndarray): The external magnetic field strength (mT).
+            B (float or np.ndarray): The external magnetic field strength (T).
             tau_c (float or np.ndarray): The rotational correlation time (s).
 
     Returns:
