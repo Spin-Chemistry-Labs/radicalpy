@@ -59,10 +59,10 @@ class GTensorAnisotropy(LiouvilleRelaxationBase):
     Args:
         g1 (list): The principle components of g-tensor of the first radical.
         g2 (list): The principle components of g-tensor of the second radical.
-        omega1 (float): The Larmor frequency of the first radical.
-        omega2 (float): The Larmor frequency of the second radical.
-        tau_c1 (float): The rotational correlation time of the first radical.
-        tau_c2 (float): The rotational correlation time of the second radical.
+        omega1 (float): The Larmor frequency of the first radical (rad/s/mT).
+        omega2 (float): The Larmor frequency of the second radical (rad/s/mT).
+        tau_c1 (float): The rotational correlation time of the first radical (s).
+        tau_c2 (float): The rotational correlation time of the second radical (s).
 
     >>> GTensorAnisotropy(g1=[2.0032, 1.9975, 2.0014],
     ...                   g2=[2.00429, 2.00389, 2.00216],
