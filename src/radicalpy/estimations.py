@@ -33,7 +33,9 @@ def _relaxation_gtensor_term(g: list) -> float:
     return sum([(gi - np.mean(g)) ** 2 for gi in g])
 
 
-def T1_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
+def T1_relaxation_rate(
+    g_tensors: list, B: float or np.ndarray, tau_c: float or np.ndarray
+) -> float or np.ndarray:
     r"""T1 relaxation rate.
 
     Estimate T1 relaxation rate based on tau_c and g-tensor anisotropy.
@@ -43,11 +45,11 @@ def T1_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
 
     Args:
             g_tensors (list): The principle components of g-tensor.
-            B (float): The external magnetic field strength (mT).
-            tau_c (float): The rotational correlation time (s).
+            B (float or np.ndarray): The external magnetic field strength (mT).
+            tau_c (float or np.ndarray): The rotational correlation time (s).
 
     Returns:
-            float: The T1 relaxation rate (1/s)
+            float or np.ndarray: The T1 relaxation rate (1/s)
 
     .. _Hayashi, Introduction to Dynamic Spin Chemistry\: Magnetic
        Field Effects on Chemical and Biochemical Reactions (2004):
@@ -66,7 +68,9 @@ def T1_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
     )
 
 
-def T2_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
+def T2_relaxation_rate(
+    g_tensors: list, B: float or np.ndarray, tau_c: float or np.ndarray
+) -> float or np.ndarray:
     """T2 relaxation rate.
 
     Estimate T2 relaxation rate based on tau_c and g-tensor anisotropy.
@@ -76,11 +80,11 @@ def T2_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
 
     Args:
             g_tensors (list): The principle components of g-tensor.
-            B (float): The external magnetic field strength (mT).
-            tau_c (float): The rotational correlation time (s).
+            B (float or np.ndarray): The external magnetic field strength (mT).
+            tau_c (float or np.ndarray): The rotational correlation time (s).
 
     Returns:
-            float: The T2 relaxation rate (1/s).
+            float or np.ndarray: The T2 relaxation rate (1/s).
     """
     hbar = constants.value("hbar")
     muB = constants.value("mu_B")
@@ -94,7 +98,9 @@ def T2_relaxation_rate(g_tensors: list, B: float, tau_c: float) -> float:
     )
 
 
-def aqueous_glycerol_viscosity(frac_glyc: float, temp: float) -> float:
+def aqueous_glycerol_viscosity(
+    frac_glyc: float or np.ndarray, temp: float
+) -> float or np.ndarray:
     """Viscosity of aqueous glycerol solutions.
 
     Gives a good approximation for temperatures in the range 0-100°C.
@@ -102,15 +108,17 @@ def aqueous_glycerol_viscosity(frac_glyc: float, temp: float) -> float:
     Source: `Volk et al. Experiments in Fluids, 59, 76, (2018)`_.
 
     Args:
-            frac_glyc (float): The fraction of glycerol in solution (0.00-1.00).
+            frac_glyc (float or np.ndarray): The fraction of glycerol
+                in solution (0.00-1.00).
             temp (float): The temperature in °C (0-100) (<0.07%
                 accuracy between 15-30°C).
 
     Returns:
-            float: The viscosity of the glycerol/water mixture in N s/m^2.
+            float or np.ndarray: The viscosity of the glycerol/water mixture in N s/m^2.
 
     .. _Volk et al. Experiments in Fluids, 59, 76, (2018):
        https://doi.org/10.1007/s00348-018-2527-y
+
     """
     vol_glyc = frac_glyc
     vol_water = 1 - frac_glyc
