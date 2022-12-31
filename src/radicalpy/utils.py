@@ -68,8 +68,7 @@ def Gauss_to_angular_frequency(Gauss: float) -> float:
 
     Returns:
             float: The magnetic flux density converted to angular
-            frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot
-            \\text{T}^{-1}`).
+            frequency (rad/s/T).
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
@@ -111,10 +110,10 @@ def MHz_in_angular_frequency(MHz: float) -> float:
     """Convert MHz into angular frequency.
 
     Args:
-            MHz (float): The angular frequency in :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
+            MHz (float): The angular frequency in MHz/T
 
     Returns:
-            float: The angular frequency converted to :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+            float: The angular frequency converted to rad/s/T.
     """
     return MHz * (2 * np.pi)
 
@@ -153,10 +152,10 @@ def angular_frequency_in_MHz(ang_freq: float) -> float:
     """Convert angular frequency into MHz.
 
     Args:
-            ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+            ang_freq (float): The angular frequency in rad/s/T.
 
     Returns:
-            float: The angular frequency converted to :math:`\\text{MHz} \\cdot \\text{T}^{-1}`.
+            float: The angular frequency converted to MHz/T.
     """
     return ang_freq / (2 * np.pi)
 
@@ -165,7 +164,7 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
     """Convert angular frequency to Gauss.
 
     Args:
-            ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+            ang_freq (float): The angular frequency in rad/s/T.
 
     Returns:
             float: The angular frequency converted to Gauss (G).
@@ -180,7 +179,7 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     """Convert angular frequency to millitesla.
 
     Args:
-            ang_freq (float): The angular frequency in :math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`.
+            ang_freq (float): The angular frequency in rad/s/T.
 
     Returns:
             float: The angular frequency converted to millitesla (mT).
@@ -299,7 +298,7 @@ def mT_to_angular_frequency(mT: float) -> float:
             mT (float): The magnetic flux density in millitesla (mT).
 
     Returns:
-            float: The magnetic flux density converted to angular frequency (:math:`\\text{rad} \\cdot \\text{s}^{-1} \\cdot \\text{T}^{-1}`).
+            float: The magnetic flux density converted to angular frequency (rad/s/T).
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
