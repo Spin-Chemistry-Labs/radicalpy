@@ -197,7 +197,9 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
 def autocorrelation(data: np.ndarray, factor: int = 2) -> np.ndarray:
     """Calculate the autocorrelation of a trajectory.
 
-    An FFT-based implementation of the autocorrelation for Monte Carlo or molecular dynamics trajectories (or any other time dependent value).
+    An FFT-based implementation of the autocorrelation for Monte Carlo
+    or molecular dynamics trajectories (or any other time dependent
+    value).
 
     Args:
             data (np.ndarray): The time dependent trajectory.
@@ -206,7 +208,6 @@ def autocorrelation(data: np.ndarray, factor: int = 2) -> np.ndarray:
     Returns:
             np.ndarray: The autocorrelation of the trajectory.
     """
-
     datap = ifftshift((data - np.average(data)) / np.std(data))
     n = datap.shape[0]
     datap = np.r_[datap[: n // factor], np.zeros_like(datap), datap[n // factor :]]
@@ -402,12 +403,16 @@ def spherical_average(
     """The spherical average of anisotropic product yields.
 
     Args:
-            product_yield (np.ndarray): The anisotropic product yields.
-            theta (np.ndarray): The angles theta by which the anisotropic product yields were calculated.
-            phi (np.ndarray): The angles phi by which the anisotropic product yields were calculated.
+            product_yield (np.ndarray): The anisotropic product
+                yields.
+            theta (np.ndarray): The angles theta by which the
+                anisotropic product yields were calculated.
+            phi (np.ndarray): The angles phi by which the anisotropic
+                product yields were calculated.
 
     Returns:
-            float: The spherical average of the anisotropic product yields.
+            float: The spherical average of the anisotropic product
+                yields.
     """
     theta, phi = _anisotropy_check(theta, phi)
     nth, nph = check_full_sphere_coordinates(theta, phi)
