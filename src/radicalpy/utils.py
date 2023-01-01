@@ -396,6 +396,27 @@ def spectral_density(omega: float, tau_c: float) -> float:
     return tau_c / (1 + omega**2 * tau_c**2)
 
 
+def _anisotropy_check(
+    theta: Iterable or float, phi: Iterable or float
+) -> (Iterable, Iterable):
+    if isinstance(theta, float):
+        theta = [theta]
+    if isinstance(phi, float):
+        phi = [phi]
+    if min(theta) < 0 or np.pi < max(theta):
+        raise ValueError("Value of `theta` needs to be between 0 and pi!")
+    if min(phi) < 0 or 2 * np.pi < max(phi):
+        raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
+    lt, lp = len(theta), len(phi)
+    if lt > 1 and lp > 1:
+        # theta odd, phi even
+        if lt % 2 == 0:
+            raise ValueError("Number of `len(theta)` needs to be odd!")
+        if lp % 2 == 1:
+            raise ValueError("Number of `len(phi)` needs to be even!")
+    return theta, phi
+
+
 def spherical_average(
     product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
 ) -> float:
@@ -494,24 +515,3 @@ def yield_anisotropy(
     yield_av = spherical_average(product_yield, theta, phi)
     gamma = delta_phi / yield_av
     return delta_phi, gamma
-
-
-def _anisotropy_check(
-    theta: Iterable or float, phi: Iterable or float
-) -> (Iterable, Iterable):
-    if isinstance(theta, float):
-        theta = [theta]
-    if isinstance(phi, float):
-        phi = [phi]
-    if min(theta) < 0 or np.pi < max(theta):
-        raise ValueError("Value of `theta` needs to be between 0 and pi!")
-    if min(phi) < 0 or 2 * np.pi < max(phi):
-        raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
-    lt, lp = len(theta), len(phi)
-    if lt > 1 and lp > 1:
-        # theta odd, phi even
-        if lt % 2 == 0:
-            raise ValueError("Number of `len(theta)` needs to be odd!")
-        if lp % 2 == 1:
-            raise ValueError("Number of `len(phi)` needs to be even!")
-    return theta, phi
