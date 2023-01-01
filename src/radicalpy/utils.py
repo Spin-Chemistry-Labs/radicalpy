@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""Utility functions.
+
+.. todo:: Add module docstring.
+"""
 from typing import Iterable
 
 import numpy as np
