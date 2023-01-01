@@ -240,19 +240,6 @@ def cartesian_to_spherical(
     return r, theta, phi
 
 
-def check_full_sphere_coordinates(theta: Iterable, phi: Iterable) -> (int, int):
-    nth, nph = len(theta), len(phi)
-    if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
-        raise ValueError(
-            "Not a full sphere: `theta` should be `linspace(0, np.pi, ntheta)`"
-        )
-    if not np.all(np.isclose(phi, np.linspace(0, 2 * np.pi, nph))):
-        raise ValueError(
-            "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
-        )
-    return nth, nph
-
-
 def get_idx(values, target):
     return np.abs(target - values).argmin()
 
@@ -417,6 +404,19 @@ def _anisotropy_check(
     return theta, phi
 
 
+def _check_full_sphere(theta: Iterable, phi: Iterable) -> (int, int):
+    nth, nph = len(theta), len(phi)
+    if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
+        raise ValueError(
+            "Not a full sphere: `theta` should be `linspace(0, np.pi, ntheta)`"
+        )
+    if not np.all(np.isclose(phi, np.linspace(0, 2 * np.pi, nph))):
+        raise ValueError(
+            "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
+        )
+    return nth, nph
+
+
 def spherical_average(
     product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
 ) -> float:
@@ -435,7 +435,7 @@ def spherical_average(
                 yields.
     """
     theta, phi = _anisotropy_check(theta, phi)
-    nth, nph = check_full_sphere_coordinates(theta, phi)
+    nth, nph = _check_full_sphere(theta, phi)
 
     wt = 4 * np.ones(nth)
     wt[2:-2:2] = 2
