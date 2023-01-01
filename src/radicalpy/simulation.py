@@ -757,6 +757,10 @@ class HilbertSimulation:
         MARY = (MARY - MARY[idx]) / MARY[idx] * 100
         return MARY, LFE, HFE
 
+    @staticmethod
+    def _square_liouville_rhos(rhos):
+        return rhos
+
     def MARY(
         self,
         init_state: State,
@@ -785,7 +789,7 @@ class HilbertSimulation:
 
         dt = time[1] - time[0]
         MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
-        rhos = utils.square_vectors(rhos)
+        rhos = self._square_liouville_rhos(rhos)
 
         return dict(
             time=time,
@@ -849,7 +853,7 @@ class HilbertSimulation:
         product_yields, product_yield_sums = self.product_yield(
             product_probabilities, time, k
         )
-        rhos = utils.square_vectors(rhos)
+        rhos = self._square_liouville_rhos(rhos)
 
         return dict(
             time=time,
@@ -930,6 +934,12 @@ class LiouvilleSimulation(HilbertSimulation):
         """Convert the Hamiltonian from Hilbert to Liouville space."""
         eye = np.eye(len(H))
         return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
+
+    @staticmethod
+    def _square_liouville_rhos(rhos):
+        shape = rhos.shape
+        dim = int(np.sqrt(shape[-2]))
+        return rhos.reshape(shape[0], shape[1], dim, dim)
 
     def liouville_projection_operator(self, state: State) -> np.ndarray:
         return np.reshape(self.projection_operator(state), (-1, 1))
