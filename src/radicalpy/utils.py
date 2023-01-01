@@ -240,10 +240,6 @@ def cartesian_to_spherical(
     return r, theta, phi
 
 
-def get_idx(values, target):
-    return np.abs(target - values).argmin()
-
-
 def isotropic(anisotropic: np.ndarray or list) -> float:
     """Anisotropic tensor to isotropic value.
 
