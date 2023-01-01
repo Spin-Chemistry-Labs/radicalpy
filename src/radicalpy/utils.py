@@ -384,8 +384,7 @@ def rotation_matrix_z(gamma: float) -> np.ndarray:
 
 
 def spectral_density(omega: float, tau_c: float) -> float:
-    """The frequency at which the motion of the particle
-    exists.
+    """Frequency at which the motion of the particle exists.
 
     Args:
             omega (float): The Larmor frequency of the electron.
@@ -400,7 +399,7 @@ def spectral_density(omega: float, tau_c: float) -> float:
 def spherical_average(
     product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
 ) -> float:
-    """The spherical average of anisotropic product yields.
+    """Spherical average of anisotropic product yields.
 
     Args:
             product_yield (np.ndarray): The anisotropic product
