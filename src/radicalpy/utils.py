@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""Utility functions.
+
+.. todo:: Add module docstring.
+"""
 from typing import Iterable
 
 import numpy as np
@@ -193,7 +197,9 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
 def autocorrelation(data: np.ndarray, factor: int = 2) -> np.ndarray:
     """Calculate the autocorrelation of a trajectory.
 
-    An FFT-based implementation of the autocorrelation for Monte Carlo or molecular dynamics trajectories (or any other time dependent value).
+    An FFT-based implementation of the autocorrelation for Monte Carlo
+    or molecular dynamics trajectories (or any other time dependent
+    value).
 
     Args:
             data (np.ndarray): The time dependent trajectory.
@@ -202,7 +208,6 @@ def autocorrelation(data: np.ndarray, factor: int = 2) -> np.ndarray:
     Returns:
             np.ndarray: The autocorrelation of the trajectory.
     """
-
     datap = ifftshift((data - np.average(data)) / np.std(data))
     n = datap.shape[0]
     datap = np.r_[datap[: n // factor], np.zeros_like(datap), datap[n // factor :]]
@@ -233,23 +238,6 @@ def cartesian_to_spherical(
     theta = np.arccos(z / r)
     phi = np.arctan2(y, x)
     return r, theta, phi
-
-
-def check_full_sphere_coordinates(theta: Iterable, phi: Iterable) -> (int, int):
-    nth, nph = len(theta), len(phi)
-    if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
-        raise ValueError(
-            "Not a full sphere: `theta` should be `linspace(0, np.pi, ntheta)`"
-        )
-    if not np.all(np.isclose(phi, np.linspace(0, 2 * np.pi, nph))):
-        raise ValueError(
-            "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
-        )
-    return nth, nph
-
-
-def get_idx(values, target):
-    return np.abs(target - values).argmin()
 
 
 def isotropic(anisotropic: np.ndarray or list) -> float:
@@ -379,8 +367,7 @@ def rotation_matrix_z(gamma: float) -> np.ndarray:
 
 
 def spectral_density(omega: float, tau_c: float) -> float:
-    """The frequency at which the motion of the particle
-    exists.
+    """Frequency at which the motion of the particle exists.
 
     Args:
             omega (float): The Larmor frequency of the electron.
@@ -392,21 +379,59 @@ def spectral_density(omega: float, tau_c: float) -> float:
     return tau_c / (1 + omega**2 * tau_c**2)
 
 
+def _anisotropy_check(
+    theta: Iterable or float, phi: Iterable or float
+) -> (Iterable, Iterable):
+    if isinstance(theta, float):
+        theta = [theta]
+    if isinstance(phi, float):
+        phi = [phi]
+    if min(theta) < 0 or np.pi < max(theta):
+        raise ValueError("Value of `theta` needs to be between 0 and pi!")
+    if min(phi) < 0 or 2 * np.pi < max(phi):
+        raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
+    lt, lp = len(theta), len(phi)
+    if lt > 1 and lp > 1:
+        # theta odd, phi even
+        if lt % 2 == 0:
+            raise ValueError("Number of `len(theta)` needs to be odd!")
+        if lp % 2 == 1:
+            raise ValueError("Number of `len(phi)` needs to be even!")
+    return theta, phi
+
+
+def _check_full_sphere(theta: Iterable, phi: Iterable) -> (int, int):
+    nth, nph = len(theta), len(phi)
+    if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
+        raise ValueError(
+            "Not a full sphere: `theta` should be `linspace(0, np.pi, ntheta)`"
+        )
+    if not np.all(np.isclose(phi, np.linspace(0, 2 * np.pi, nph))):
+        raise ValueError(
+            "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
+        )
+    return nth, nph
+
+
 def spherical_average(
     product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
 ) -> float:
-    """The spherical average of anisotropic product yields.
+    """Spherical average of anisotropic product yields.
 
     Args:
-            product_yield (np.ndarray): The anisotropic product yields.
-            theta (np.ndarray): The angles theta by which the anisotropic product yields were calculated.
-            phi (np.ndarray): The angles phi by which the anisotropic product yields were calculated.
+            product_yield (np.ndarray): The anisotropic product
+                yields.
+            theta (np.ndarray): The angles theta by which the
+                anisotropic product yields were calculated.
+            phi (np.ndarray): The angles phi by which the anisotropic
+                product yields were calculated.
 
     Returns:
-            float: The spherical average of the anisotropic product yields.
+            float: The spherical average of the anisotropic product
+                yields.
     """
     theta, phi = _anisotropy_check(theta, phi)
-    nth, nph = check_full_sphere_coordinates(theta, phi)
+    nth, nph = _check_full_sphere(theta, phi)
 
     wt = 4 * np.ones(nth)
     wt[2:-2:2] = 2
@@ -459,14 +484,6 @@ def spin_quantum_number(multiplicity: int) -> float:
     return float(multiplicity - 1) / 2.0
 
 
-def square_vectors(rhos):
-    shape = rhos.shape
-    if shape[-1] != shape[-2]:
-        dim = int(np.sqrt(shape[-2]))
-        rhos = rhos.reshape(shape[0], shape[1], dim, dim)
-    return rhos
-
-
 def yield_anisotropy(
     product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
 ) -> (float, float):
@@ -486,24 +503,3 @@ def yield_anisotropy(
     yield_av = spherical_average(product_yield, theta, phi)
     gamma = delta_phi / yield_av
     return delta_phi, gamma
-
-
-def _anisotropy_check(
-    theta: Iterable or float, phi: Iterable or float
-) -> (Iterable, Iterable):
-    if isinstance(theta, float):
-        theta = [theta]
-    if isinstance(phi, float):
-        phi = [phi]
-    if min(theta) < 0 or np.pi < max(theta):
-        raise ValueError("Value of `theta` needs to be between 0 and pi!")
-    if min(phi) < 0 or 2 * np.pi < max(phi):
-        raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
-    lt, lp = len(theta), len(phi)
-    if lt > 1 and lp > 1:
-        # theta odd, phi even
-        if lt % 2 == 0:
-            raise ValueError("Number of `len(theta)` needs to be odd!")
-        if lp % 2 == 1:
-            raise ValueError("Number of `len(phi)` needs to be even!")
-    return theta, phi
