@@ -56,13 +56,13 @@ def T1_relaxation_rate(
        https://doi.org/10.1142/9789812562654_0015
 
     """
+    mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
-    muB = constants.value("mu_B")
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 5)
-        * ((muB * B) / hbar) ** 2
+        * ((mu_B * B) / hbar) ** 2
         * g_innerproduct
         * (tau_c / (1 + omega**2 * tau_c**2))
     )
@@ -86,13 +86,13 @@ def T2_relaxation_rate(
     Returns:
             float or np.ndarray: The T2 relaxation rate (1/s).
     """
+    mu_B = constants.value("mu_B")
     hbar = constants.value("hbar")
-    muB = constants.value("mu_B")
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 30)
-        * ((muB * B) / hbar) ** 2
+        * ((mu_B * B) / hbar) ** 2
         * g_innerproduct
         * (4 * tau_c + (3 * tau_c / (1 + omega**2 * tau_c**2)))
     )
@@ -231,10 +231,9 @@ def dipolar_interaction_isotropic(r: float or np.ndarray) -> (float or np.ndarra
     .. _Santabarbara et al. Biochemistry, 44, 6, 2119–2128 (2005):
        https://pubs.acs.org/doi/10.1021/bi048445d
     """
-    mu_0 = constants.value("mu_0")
-    mu_B = constants.value("mu_B")
     g_e = constants.value("g_e")
-
+    mu_B = constants.value("mu_B")
+    mu_0 = constants.value("mu_0")
     conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
     return (-conversion / r**3) * 1000
 
@@ -324,10 +323,55 @@ def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     .. _Player et al. J. Chem. Phys. 153, 084303 (2020):
        https://doi.org/10.1063/5.0021643
     """
-    ge = constants.value("g_e")
-    g1sum = sum([(gi - ge) ** 2 for gi in g1])
-    g2sum = sum([(gi - ge) ** 2 for gi in g2])
+    g_e = constants.value("g_e")
+    g1sum = sum([(gi - g_e) ** 2 for gi in g1])
+    g2sum = sum([(gi - g_e) ** 2 for gi in g2])
     return (g1sum + g2sum) / (9 * tau_c)
+
+
+def k_electron_transfer(R: float, deltaG: float = -1, lambd: float = 1) -> float:
+    """Electron transfer rate.
+
+    The default values return the maximum electron transfer rate (lambd = -deltaG).
+
+    Source: `Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010)`_.
+
+    Args:
+            R (float): The edge-to-edge separation (Å).
+            deltaG (float): The driving force (eV).
+            lambd (float): The reorganisation energy (eV).
+
+    Returns:
+            float: The electron transfer rate (1/s).
+
+    .. _Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010):
+       https://doi.org/10.1016/j.bbabio.2010.04.441
+
+    """
+    return 10 ** (13 - 0.6 * (R - 3.6) - 3.1 * ((deltaG + lambd) ** 2 / lambd))
+
+
+def k_excitation(
+    power: float, wavelength: float, volume: float, pathlength: float, epsilon: float
+) -> float:
+    """Groundstate excitation rate.
+
+    Args:
+            power (float): The excitation laser power (W).
+            wavelength (float): The excitation wavelength (m).
+            volume (float): The excitation beam volume (L).
+            pathlength (float): The path length of the sample cell (m).
+            epsilon (float): The extinction coefficient of the molecule (1/M/s).
+
+    Returns:
+            float: The excitation rate (1/s).
+    """
+    c = constants.value("c")
+    h = constants.value("h")
+    N_A = constants.value("N_A")
+    nu = c / wavelength  # Frequency of excitation beam (1/s)
+    I0 = power / (h * nu * N_A * volume)  # Initial intensity (I0)
+    return I0 * np.log(10) * epsilon * pathlength
 
 
 def k_D(D: np.ndarray, tau_c: float) -> float:
@@ -343,7 +387,26 @@ def k_D(D: np.ndarray, tau_c: float) -> float:
             float: The D-dephasing rate (1/s).
     """
     D_var_MHz = np.var(utils.mT_to_MHz(D))
-    return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12  # (1/s) D-modulation rate
+    return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12
+
+
+def k_recombination(MFE: float, k_escape: float) -> float:
+    """Singlet recombination rate.
+
+    Source: `Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019)`_.
+
+    Args:
+            MFE (float): The magnetic field effect (0.00-1.00).
+            k_escape (float): The free radical formation rate constant (1/s).
+
+    Returns:
+            float: The singlet recombination rate (1/s).
+
+    .. _Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019):
+       https://doi.org/10.1080/00268976.2019.1580779
+    """
+    b = (1 - 6 * MFE) * k_escape
+    return 0.5 * (-b + np.sqrt(b**2 + 48 * k_escape**2 * MFE))
 
 
 def k_STD(J: np.ndarray, tau_c: float) -> float:
@@ -405,9 +468,9 @@ def k_ST_mixing(Bhalf: float) -> float:
        https://doi.org/10.1021/cr00091a003
     """
     g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B") * 1e-3
+    mu_B = constants.value("mu_B")
     h = constants.value("h")
-    return -g_e * mu_B * Bhalf / h
+    return -g_e * (mu_B * 1e-3) * Bhalf / h
 
 
 def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
@@ -427,17 +490,36 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     .. _Atkins et al. Mol. Phys., 27, 6 (1974):
        https://doi.org/10.1080/00268977400101361
     """
-    g = constants.value("g_e")
-    muB = constants.value("mu_B") * 1e-3
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
     h = constants.value("h")
     B0 = utils.mT_to_MHz(B0)
 
-    nu_0 = (g * muB * B0) / h
+    nu_0 = (g_e * (mu_B * 1e-3) * B0) / h
     jnu0tc = (2 / 15) * (
         (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2)
         + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )
     return (D**2 + 3 * E**2) * jnu0tc
+
+
+def number_of_photons(
+    k_excitation: float, concentration: float, volume: float
+) -> float:
+    """Number of photons.
+
+    The number of photons produced via groundstate excitation.
+
+    Args:
+            k_excitation (float): The excitation rate (1/s).
+            concentration (float): The sample concentration (M).
+            volume (float): The excitation beam volume (L).
+
+    Returns:
+            float: The number of photons.
+    """
+    N_A = constants.value("N_A")
+    return k_excitation * concentration * volume * N_A
 
 
 def rotational_correlation_time_for_molecule(
@@ -494,9 +576,7 @@ def rotational_correlation_time_for_protein(
        https://doi.org/10.1016/B978-0-12-164491-8.X5000-3
     """
     V = constants.value("V")
-    rw = constants.value("rw")
     N_A = constants.value("N_A")
-
-    # Calculate Rh - effective hydrodynamic radius of the protein in m
+    rw = constants.value("rw")
     Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
     return rotational_correlation_time_for_molecule(Rh, temp, eta)
