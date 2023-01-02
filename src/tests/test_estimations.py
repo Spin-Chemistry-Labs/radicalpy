@@ -3,6 +3,7 @@
 import unittest
 
 from src import radicalpy as rp
+from .data import constants as C
 
 
 class EstimationsTests(unittest.TestCase):
