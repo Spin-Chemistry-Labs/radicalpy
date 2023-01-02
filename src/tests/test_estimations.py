@@ -107,21 +107,7 @@ class EstimationsTests(unittest.TestCase):
         tau_c = rp.estimations.test_rotational_correlation_time_for_molecule(a, T)
         self.assertAlmostEqual(gold, tau_c)
 
-
     def test_rotational_correlation_time_for_protein(self):
         gold = 3.595786684051539e-08
         tau_c = rp.estimations.rotational_correlation_time_for_protein(61, 278)
         self.assertAlmostEqual(gold, viscosity)
-
-
-
-
-
-
-
-
-
-
-
-
-
