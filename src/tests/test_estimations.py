@@ -66,11 +66,11 @@ class EstimationsTests(unittest.TestCase):
         k_rec = rp.estimations.k_recombination(MFE, k_escape)
         self.assertAlmostEqual(gold, k_rec)
 
-    def test_kSTD_microreactor(self):
+    def test_k_STD_microreactor(self):
         gold = 21131271.24997083
         D = 5e-11
         V = 2e-26
-        k_std = rp.estimations.kSTD_microreactor(D, V)
+        k_std = rp.estimations.k_STD_microreactor(D, V)
         self.assertAlmostEqual(gold, k_std)
 
     def test_k_ST_mixing(self):
@@ -105,7 +105,7 @@ class EstimationsTests(unittest.TestCase):
         gold = 5.5745926978864795e-11
         a = 0.4e-9
         T = 310
-        tau_c = rp.estimations.test_rotational_correlation_time_for_molecule(a, T)
+        tau_c = rp.estimations.rotational_correlation_time_for_molecule(a, T)
         self.assertAlmostEqual(gold, tau_c)
 
     def test_rotational_correlation_time_for_protein(self):
