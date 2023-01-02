@@ -88,6 +88,8 @@ def pauli(mult: int):
         result["y"] = -0.5 * 1j * (result["p"] - result["m"])
         result["z"] = sp.spdiags(prjs, 0, mult, mult).toarray()
     return result
+
+
 CONSTANTS_JSON = DATA_DIR / "constants.json"
 with open(CONSTANTS_JSON) as f:
     CONSTANTS_DATA = json.load(f)
@@ -95,7 +97,8 @@ with open(CONSTANTS_JSON) as f:
 
     :meta hide-value:"""
 
-class constants: # faking a module!
+
+class constants:  # faking a module!
     @staticmethod
     def value(var_name: str) -> float:
         return CONSTANTS_DATA[var_name]["value"]
@@ -103,6 +106,3 @@ class constants: # faking a module!
 
 def details(var_name: str) -> dict:
     return CONSTANTS_DATA[var_name]
-
-
-
