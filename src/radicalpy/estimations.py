@@ -3,8 +3,7 @@
 import numpy as np
 
 from . import utils
-from .data import constants as C
-from .data import gamma_mT
+from .data import constants, gamma_mT
 from .simulation import HilbertSimulation
 
 
@@ -57,11 +56,13 @@ def T1_relaxation_rate(
        https://doi.org/10.1142/9789812562654_0015
 
     """
+    mu_B = constants.value("mu_B")
+    hbar = constants.value("hbar")
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 5)
-        * ((C.mu_B * B) / C.hbar) ** 2
+        * ((mu_B * B) / hbar) ** 2
         * g_innerproduct
         * (tau_c / (1 + omega**2 * tau_c**2))
     )
@@ -85,11 +86,13 @@ def T2_relaxation_rate(
     Returns:
             float or np.ndarray: The T2 relaxation rate (1/s).
     """
+    mu_B = constants.value("mu_B")
+    hbar = constants.value("hbar")
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 30)
-        * ((C.mu_B * B) / C.hbar) ** 2
+        * ((mu_B * B) / hbar) ** 2
         * g_innerproduct
         * (4 * tau_c + (3 * tau_c / (1 + omega**2 * tau_c**2)))
     )
@@ -228,7 +231,10 @@ def dipolar_interaction_isotropic(r: float or np.ndarray) -> (float or np.ndarra
     .. _Santabarbara et al. Biochemistry, 44, 6, 2119–2128 (2005):
        https://pubs.acs.org/doi/10.1021/bi048445d
     """
-    conversion = (3 * -C.g_e * C.mu_B * C.mu_0) / (8 * np.pi)
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    hbar = constants.value("mu_0")
+    conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
     return (-conversion / r**3) * 1000
 
 
@@ -317,8 +323,9 @@ def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     .. _Player et al. J. Chem. Phys. 153, 084303 (2020):
        https://doi.org/10.1063/5.0021643
     """
-    g1sum = sum([(gi - C.g_e) ** 2 for gi in g1])
-    g2sum = sum([(gi - C.g_e) ** 2 for gi in g2])
+    g_e = constants.value("g_e")
+    g1sum = sum([(gi - g_e) ** 2 for gi in g1])
+    g2sum = sum([(gi - g_e) ** 2 for gi in g2])
     return (g1sum + g2sum) / (9 * tau_c)
 
 
@@ -359,8 +366,11 @@ def k_excitation(
     Returns:
             float: The excitation rate (1/s).
     """
-    nu = C.c / wavelength  # Frequency of excitation beam (1/s)
-    I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
+    c = constants.value("c")
+    h = constants.value("h")
+    N_A = constants.value("N_A")
+    nu = c / wavelength  # Frequency of excitation beam (1/s)
+    I0 = power / (h * nu * N_A * volume)  # Initial intensity (I0)
     return I0 * np.log(10) * epsilon * pathlength
 
 
@@ -457,7 +467,10 @@ def k_ST_mixing(Bhalf: float) -> float:
     .. _Steiner et al. Chem. Rev. 89, 1, 51–147 (1989):
        https://doi.org/10.1021/cr00091a003
     """
-    return -C.g_e * (C.mu_B * 1e-3) * Bhalf / C.h
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    h = constants.value("h")
+    return -g_e * (mu_B * 1e-3) * Bhalf / h
 
 
 def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
@@ -477,9 +490,12 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     .. _Atkins et al. Mol. Phys., 27, 6 (1974):
        https://doi.org/10.1080/00268977400101361
     """
+    g_e = constants.value("g_e")
+    mu_B = constants.value("mu_B")
+    h = constants.value("h")
     B0 = utils.mT_to_MHz(B0)
 
-    nu_0 = (C.g_e * (C.mu_B * 1e-3) * B0) / C.h
+    nu_0 = (g_e * (mu_B * 1e-3) * B0) / h
     jnu0tc = (2 / 15) * (
         (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2)
         + (tau_c) / (1 + nu_0**2 * tau_c**2)
@@ -502,7 +518,8 @@ def number_of_photons(
     Returns:
             float: The number of photons.
     """
-    return k_excitation * concentration * volume * C.N_A
+    N_A = constants.value("N_A")
+    return k_excitation * concentration * volume * N_A
 
 
 def rotational_correlation_time_for_molecule(
@@ -527,7 +544,8 @@ def rotational_correlation_time_for_molecule(
     Returns:
             float: The rotational correlation time (s).
     """
-    return (4 * np.pi * eta * radius**3) / (3 * C.k_B * temp)
+    k_B = constants.value("k_B")
+    return (4 * np.pi * eta * radius**3) / (3 * k_B * temp)
 
 
 def rotational_correlation_time_for_protein(
@@ -557,5 +575,8 @@ def rotational_correlation_time_for_protein(
     .. _Cavanagh et al. Protein NMR  Spectroscopy. Principles and Practice, Elsevier Academic Press (2007):
        https://doi.org/10.1016/B978-0-12-164491-8.X5000-3
     """
-    Rh = ((3 * C.V * Mr) / (4 * np.pi * C.N_A)) ** 0.33 + C.rw
+    V = constants.value("V")
+    N_A = constants.value("N_A")
+    rw = constants.value("rw")
+    Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
     return rotational_correlation_time_for_molecule(Rh, temp, eta)
