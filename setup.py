@@ -5,6 +5,7 @@ from pathlib import Path
 from setuptools import find_packages, setup
 
 this_directory = Path(__file__).parent
+requirements = (this_directory / "requirements.txt").read_text().split()
 long_description = (this_directory / "README.md").read_text()
 
 setup(
@@ -19,7 +20,7 @@ setup(
     package_dir={"": "src"},
     url="https://github.com/Spin-Chemistry-Labs/radicalpy",
     keywords="simulation spin-dynamics radical-pair",
-    install_requires=["numpy", "scipy", "matplotlib", "scikit-learn"],
+    install_requires=requirements,
     include_package_data=True,
     long_description=long_description,
     long_description_content_type="text/markdown",
