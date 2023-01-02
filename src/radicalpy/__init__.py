@@ -1,3 +1,5 @@
+from pint import UnitRegistry
+
 from . import (
     classical,
     data,
@@ -8,3 +10,6 @@ from . import (
     simulation,
     utils,
 )
+
+ureg = UnitRegistry()
+Q_ = ureg.Quantity
