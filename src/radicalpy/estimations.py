@@ -56,8 +56,8 @@ def T1_relaxation_rate(
        https://doi.org/10.1142/9789812562654_0015
 
     """
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
+    mu_B = constants.mu_B
+    hbar = constants.hbar
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
@@ -86,8 +86,8 @@ def T2_relaxation_rate(
     Returns:
             float or np.ndarray: The T2 relaxation rate (1/s).
     """
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
+    mu_B = constants.mu_B
+    hbar = constants.hbar
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
@@ -231,9 +231,9 @@ def dipolar_interaction_isotropic(r: float or np.ndarray) -> (float or np.ndarra
     .. _Santabarbara et al. Biochemistry, 44, 6, 2119–2128 (2005):
        https://pubs.acs.org/doi/10.1021/bi048445d
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    mu_0 = constants.value("mu_0")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    mu_0 = constants.mu_0
     conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
     return (-conversion / r**3) * 1000
 
@@ -323,7 +323,7 @@ def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     .. _Player et al. J. Chem. Phys. 153, 084303 (2020):
        https://doi.org/10.1063/5.0021643
     """
-    g_e = constants.value("g_e")
+    g_e = constants.g_e
     g1sum = sum([(gi - g_e) ** 2 for gi in g1])
     g2sum = sum([(gi - g_e) ** 2 for gi in g2])
     return (g1sum + g2sum) / (9 * tau_c)
@@ -366,9 +366,9 @@ def k_excitation(
     Returns:
             float: The excitation rate (1/s).
     """
-    c = constants.value("c")
-    h = constants.value("h")
-    N_A = constants.value("N_A")
+    c = constants.c
+    h = constants.h
+    N_A = constants.N_A
     nu = c / wavelength  # Frequency of excitation beam (1/s)
     I0 = power / (h * nu * N_A * volume)  # Initial intensity (I0)
     return I0 * np.log(10) * epsilon * pathlength
@@ -467,9 +467,9 @@ def k_ST_mixing(Bhalf: float) -> float:
     .. _Steiner et al. Chem. Rev. 89, 1, 51–147 (1989):
        https://doi.org/10.1021/cr00091a003
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    h = constants.h
     return -g_e * (mu_B * 1e-3) * Bhalf / h
 
 
@@ -490,9 +490,9 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     .. _Atkins et al. Mol. Phys., 27, 6 (1974):
        https://doi.org/10.1080/00268977400101361
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    h = constants.h
     B0 = utils.mT_to_MHz(B0)
 
     nu_0 = (g_e * (mu_B * 1e-3) * B0) / h
@@ -518,7 +518,7 @@ def number_of_photons(
     Returns:
             float: The number of photons.
     """
-    N_A = constants.value("N_A")
+    N_A = constants.N_A
     return k_excitation * concentration * volume * N_A
 
 
@@ -544,7 +544,7 @@ def rotational_correlation_time_for_molecule(
     Returns:
             float: The rotational correlation time (s).
     """
-    k_B = constants.value("k_B")
+    k_B = constants.k_B
     return (4 * np.pi * eta * radius**3) / (3 * k_B * temp)
 
 
@@ -575,8 +575,8 @@ def rotational_correlation_time_for_protein(
     .. _Cavanagh et al. Protein NMR  Spectroscopy. Principles and Practice, Elsevier Academic Press (2007):
        https://doi.org/10.1016/B978-0-12-164491-8.X5000-3
     """
-    V = constants.value("V")
-    N_A = constants.value("N_A")
-    rw = constants.value("rw")
+    V = constants.V
+    N_A = constants.N_A
+    rw = constants.rw
     Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
     return rotational_correlation_time_for_molecule(Rh, temp, eta)
