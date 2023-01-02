@@ -58,9 +58,9 @@ def Gauss_to_MHz(Gauss: float) -> float:
     Returns:
             float: The magnetic flux density converted to MHz.
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    h = constants.h
     return Gauss / (1e-10 * -g_e * mu_B / h)
 
 
@@ -74,9 +74,9 @@ def Gauss_to_angular_frequency(Gauss: float) -> float:
             float: The magnetic flux density converted to angular
             frequency (rad/s/T).
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    hbar = constants.hbar
     return Gauss * (mu_B / hbar * -g_e / 1e10)
 
 
@@ -131,9 +131,9 @@ def MHz_to_Gauss(MHz: float) -> float:
     Returns:
             float: Megahertz (MHz) converted to Gauss (G).
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    h = constants.h
     return MHz / (1e-10 * -g_e * mu_B / h)
 
 
@@ -146,9 +146,9 @@ def MHz_to_mT(MHz: float) -> float:
     Returns:
             float: Megahertz (MHz) converted to millitesla (mT).
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    h = constants.h
     return MHz / (1e-9 * -g_e * mu_B / h)
 
 
@@ -173,9 +173,9 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
     Returns:
             float: The angular frequency converted to Gauss (G).
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    hbar = constants.hbar
     return ang_freq / (mu_B / hbar * -g_e / 1e10)
 
 
@@ -188,9 +188,9 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     Returns:
             float: The angular frequency converted to millitesla (mT).
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    hbar = constants.hbar
     return ang_freq / (mu_B / hbar * -g_e / 1e9)
 
 
@@ -273,9 +273,9 @@ def mT_to_MHz(mT: float) -> float:
     Returns:
             float: The magnetic flux density converted to Megahertz (MHz).
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    h = constants.h
     return mT * (1e-9 * -g_e * mu_B / h)
 
 
@@ -288,9 +288,9 @@ def mT_to_angular_frequency(mT: float) -> float:
     Returns:
             float: The magnetic flux density converted to angular frequency (rad/s/T).
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
+    g_e = constants.g_e
+    mu_B = constants.mu_B
+    hbar = constants.hbar
     return mT * (mu_B / hbar * -g_e / 1e9)
 
 

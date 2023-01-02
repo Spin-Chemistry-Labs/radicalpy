@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import scipy.sparse as sp
@@ -9,6 +10,7 @@ import scipy.sparse as sp
 DATA_DIR = Path(__file__).parent / "data"
 SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
+CONSTANTS_JSON = DATA_DIR / "constants.json"
 
 with open(SPIN_DATA_JSON) as f:
     SPIN_DATA = json.load(f)
@@ -90,19 +92,17 @@ def pauli(mult: int):
     return result
 
 
-CONSTANTS_JSON = DATA_DIR / "constants.json"
-with open(CONSTANTS_JSON) as f:
-    CONSTANTS_DATA = json.load(f)
-    """Dictionary containing constants.
+class Constant(float):
+    def __new__(cls, details):
+        obj = super().__new__(cls, details.pop("value"))
+        obj.details = SimpleNamespace(**details)
+        return obj
 
-    :meta hide-value:"""
-
-
-class constants:  # faking a module!
     @staticmethod
-    def value(var_name: str) -> float:
-        return CONSTANTS_DATA[var_name]["value"]
+    def fromjson(json_file):
+        with open(json_file) as f:
+            const_data = json.load(f)
+        return SimpleNamespace(**{k: Constant(v) for k, v in const_data.items()})
 
 
-def details(var_name: str) -> dict:
-    return CONSTANTS_DATA[var_name]
+constants = Constant.fromjson(CONSTANTS_JSON)
