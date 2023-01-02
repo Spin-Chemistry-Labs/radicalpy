@@ -233,7 +233,7 @@ def dipolar_interaction_isotropic(r: float or np.ndarray) -> (float or np.ndarra
     """
     g_e = constants.value("g_e")
     mu_B = constants.value("mu_B")
-    hbar = constants.value("mu_0")
+    mu_0 = constants.value("mu_0")
     conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
     return (-conversion / r**3) * 1000
 
