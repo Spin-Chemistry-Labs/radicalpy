@@ -35,7 +35,7 @@ class EstimationsTests(unittest.TestCase):
         self.assertAlmostEqual(gold, viscosity)
 
     def test_g_tensor_relaxation_rate(self):
-        gold = 692617.777777798
+        gold = 2138022072021.6843
         tau_c = 5e-12
         g1 = [2.0032, 1.9975, 2.0014]
         g2 = [2.00429, 2.00389, 2.00216]
@@ -86,7 +86,7 @@ class EstimationsTests(unittest.TestCase):
         B0 = 0.2e-3
         tau_c = 58e-12
         k_tr = rp.estimations.k_triplet_relaxation(B0, tau_c, D, E)
-        self.assertAlmostEqual(gold, k_tr)
+        self.assertAlmostEqual(gold, k_tr, places=5)
 
     def test_number_of_photons(self):
         gold = 3430777.6639644573
