@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import scipy.sparse as sp
 
-DATA_DIR = Path(__file__).parent
+DATA_DIR = Path(__file__).parent / "data"
 SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
 
@@ -88,3 +88,21 @@ def pauli(mult: int):
         result["y"] = -0.5 * 1j * (result["p"] - result["m"])
         result["z"] = sp.spdiags(prjs, 0, mult, mult).toarray()
     return result
+CONSTANTS_JSON = DATA_DIR / "constants.json"
+with open(CONSTANTS_JSON) as f:
+    CONSTANTS_DATA = json.load(f)
+    """Dictionary containing constants.
+
+    :meta hide-value:"""
+
+class constants: # faking a module!
+    @staticmethod
+    def value(var_name: str) -> float:
+        return CONSTANTS_DATA[var_name]["value"]
+
+
+def details(var_name: str) -> dict:
+    return CONSTANTS_DATA[var_name]
+
+
+

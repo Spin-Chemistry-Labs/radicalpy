@@ -1,14 +1,6 @@
 radicalpy package
 =================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   radicalpy.data
-
 Submodules
 ----------
 
@@ -16,6 +8,14 @@ radicalpy.classical module
 --------------------------
 
 .. automodule:: radicalpy.classical
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+radicalpy.data module
+---------------------
+
+.. automodule:: radicalpy.data
    :members:
    :undoc-members:
    :show-inheritance:
