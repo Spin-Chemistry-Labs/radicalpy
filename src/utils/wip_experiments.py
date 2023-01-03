@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import json
 import sys
 from pathlib import Path
 
@@ -7,35 +8,75 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from types import SimpleNamespace
 
 from radicalpy import Q_, ureg
-from radicalpy.data import SPIN_DATA, gamma_mT
+from radicalpy.data import CONSTANTS_JSON, SPIN_DATA, gamma_mT
+
+with open(CONSTANTS_JSON) as f:
+    CONSTANTS_DATA = json.load(f)
 
 
-class Constant(float):
-    def __new__(cls, some_arg=None):
-        obj = float.__new__(cls, 10)
-        obj._some_arg = some_arg
+class Constant(Q_):
+    def __new__(cls, *args):
+        # By default, `pint.Quantity` aka `Q_` has `len(args) == 2`,
+        # i.e. value and unit, but a `Constant` we want to init with
+        # the single `dict` which contains all of that + other details
+        # which we want to save
+        if len(args) == 1:
+            data = args[0]
+            value = data.pop("value")
+            unit = ureg(data.pop("unit"))
+            obj = super().__new__(cls, value, unit)
+            obj.details = SimpleNamespace(**data)
+        else:
+            obj = super().__new__(cls, *args)
         return obj
 
 
-const = Constant(some_arg="Hi")
-print(f"{const=}")
-print(f"{100.0 + const=}")
-print(f"{const._some_arg=}")
+hbar_data = CONSTANTS_DATA["hbar"]
+c_data = CONSTANTS_DATA["c"]
+print(f"{hbar_data=}")
+# hbar_value = hbar_data.pop("value")
+# const = Constant(hbar_value, hbar_data)
+hbar = Constant(hbar_data)
+print(f"{type(hbar)=}")
+print(f"{hbar=}")
+print(f"{100.0 * hbar=}")
+print(f"{100.0 * ureg('J s') + hbar=}")
+print(f"{hbar.details=}")
+
+c = Constant(c_data)
+print(f"{type(c)=}")
+print(f"{c=}")
+print(f"{c.details=}")
+print(f"{hbar * c=}")
+prd = hbar * c
+print(f"{prd=}")
+print(f"{type(prd)=}")
+# print(f"{prd.details=}") # THIS BREAKS!
+
+
+print("=" * 80)
 
 
 class Isotope(str):
-    def __new__(cls, o):
-        obj = super().__new__(cls, o)
-        data = SPIN_DATA[o]
-        obj.gamma = data["gamma"]
-        obj.multiplicity = data["multiplicity"]
+    """Interface to isotope database."""
+
+    def __new__(cls, name):
+        gamma_unit = ureg("rad/s/T")
+        data = SPIN_DATA[name]
+        obj = super().__new__(cls, name)
+        gamma = data.pop("gamma")
+        multiplicity = data.pop("multiplicity")
+        obj.gamma = gamma * gamma_unit
+        obj.multiplicity = multiplicity
+        obj.details = data
         return obj
 
 
 print(SPIN_DATA["E"])
 print(gamma_mT("E"))
-e = Isotope("E")
 
-print(f"{e=}")
-print(f"{e.gamma=}")
-print(f"{e.multiplicity=}")
+electron = Isotope("E")
+print(f"{electron=}")
+print(f"{electron.gamma=}")
+print(f"{electron.gamma.to('rad/s/mT')=}")
+print(f"{electron.multiplicity=}")
