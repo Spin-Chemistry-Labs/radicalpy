@@ -8,7 +8,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from types import SimpleNamespace
 
 from radicalpy import Q_, ureg
-from radicalpy.data import CONSTANTS_JSON, SPIN_DATA, SPIN_DATA_JSON, Isotope
+from radicalpy.data import (
+    CONSTANTS_JSON,
+    SPIN_DATA,
+    SPIN_DATA_JSON,
+    Isotope,
+    constants,
+    isotopes,
+)
 
 with open(CONSTANTS_JSON) as f:
     CONSTANTS_DATA = json.load(f)
@@ -54,5 +61,9 @@ print(f"{type(prd)=}")
 # print(f"{prd.details=}") # THIS BREAKS!
 
 print("=" * 80)
+
+print(constants.hbar)
+print(isotopes.E)
+print(isotopes)
 
 print("DONE!")
