@@ -8,16 +8,7 @@ import numpy as np
 import scipy as sp
 
 from . import utils
-from .data import (
-    MOLECULE_DATA,
-    SPIN_DATA,
-    Molecule,
-    gamma_mT,
-    get_molecules,
-    isotropic,
-    multiplicity,
-    pauli,
-)
+from .data import Molecule, gamma_mT, isotropic, multiplicity, pauli
 
 
 class State(enum.Enum):
