@@ -3,10 +3,10 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, Path(__file__).parent)
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from types import SimpleNamespace
 
-from radicalpy import ureg
+from radicalpy import Q_, ureg
 from radicalpy.data import SPIN_DATA, gamma_mT
 
 
