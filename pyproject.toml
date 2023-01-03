@@ -3,3 +3,7 @@ line-length = 88
 
 [tool.pydocstyle]
 convention = "google"
+
+[tool.pylint]
+max-line-length = 88
+disable = ["C0103"]
