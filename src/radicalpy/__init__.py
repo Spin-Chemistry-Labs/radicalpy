@@ -1,15 +1,7 @@
+"""Radicalpy package root."""
 from pint import UnitRegistry
 
-from . import (
-    classical,
-    data,
-    estimations,
-    kinetics,
-    plot,
-    relaxation,
-    simulation,
-    utils,
-)
+from . import *
 
 ureg = UnitRegistry()
 Q_ = ureg.Quantity
