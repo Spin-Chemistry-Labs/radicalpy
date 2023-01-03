@@ -101,8 +101,8 @@ class Constant(float):
     @staticmethod
     def fromjson(json_file):
         with open(json_file) as f:
-            const_data = json.load(f)
-        return SimpleNamespace(**{k: Constant(v) for k, v in const_data.items()})
+            data = json.load(f)
+        return SimpleNamespace(**{k: Constant(v) for k, v in data.items()})
 
 
 constants = Constant.fromjson(CONSTANTS_JSON)
