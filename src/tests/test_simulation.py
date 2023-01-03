@@ -10,7 +10,7 @@ import numpy as np
 from src.radicalpy import data as rpdata
 from src.radicalpy import estimations, kinetics, relaxation
 from src.radicalpy import simulation as rpsim
-from src.radicalpy import utils
+from src.radicalpy.data import isotropic
 from src.radicalpy.simulation import Basis
 
 import tests.radpy as radpy
@@ -207,7 +207,7 @@ class HilbertTests(unittest.TestCase):
                     self.sim.num_particles,
                     ei,
                     2 + ni,
-                    utils.isotropic(hfcs[ni]),
+                    isotropic(hfcs[ni]),
                     self.gamma_mT,
                 )
                 for ni, ei in enumerate(couplings)
