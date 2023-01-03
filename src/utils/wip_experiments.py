@@ -53,24 +53,6 @@ print(f"{prd=}")
 print(f"{type(prd)=}")
 # print(f"{prd.details=}") # THIS BREAKS!
 
-
 print("=" * 80)
-
-
-E_data = SPIN_DATA["E"]
-print(E_data)
-
-electron = Isotope("E", E_data)
-print(f"{electron=}")
-print(f"{electron.gamma=}")
-# print(f"{electron.gamma.to('rad/s/mT')=}")
-print(f"{electron.multiplicity=}")
-
-isotopes = Isotope.fromjson(SPIN_DATA_JSON)
-print(isotopes.E)
-print(isotopes.E.gamma)
-print(isotopes.E.gamma_mT)
-print(isotopes.E.multiplicity)
-print(isotopes.E.details)
 
 print("DONE!")
