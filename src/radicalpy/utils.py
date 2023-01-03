@@ -240,18 +240,6 @@ def cartesian_to_spherical(
     return r, theta, phi
 
 
-def isotropic(anisotropic: np.ndarray or list) -> float:
-    """Anisotropic tensor to isotropic value.
-
-    Args:
-            anisotropic (np.ndarray or list): The 3x3 interaction tensor matrix.
-
-    Returns:
-            float: isotropic value.
-    """
-    return np.trace(anisotropic) / 3
-
-
 def mT_to_Gauss(mT: float) -> float:
     """Convert millitesla to Gauss.
 
@@ -469,19 +457,6 @@ def spherical_to_cartesian(
             np.cos(theta),
         ]
     )
-
-
-def spin_quantum_number(multiplicity: int) -> float:
-    """Spin multiplicity to spin quantum number.
-
-    Args:
-            multiplicity (int): Spin multiplicity.
-
-    Returns:
-            float: Spin quantum number.
-
-    """
-    return float(multiplicity - 1) / 2.0
 
 
 def yield_anisotropy(
