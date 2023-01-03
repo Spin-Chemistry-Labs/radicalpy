@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from types import SimpleNamespace
 
 from radicalpy import Q_, ureg
-from radicalpy.data import CONSTANTS_JSON, SPIN_DATA, gamma_mT
+from radicalpy.data import CONSTANTS_JSON, SPIN_DATA, SPIN_DATA_JSON, Isotope
 
 with open(CONSTANTS_JSON) as f:
     CONSTANTS_DATA = json.load(f)
@@ -57,26 +57,20 @@ print(f"{type(prd)=}")
 print("=" * 80)
 
 
-class Isotope(str):
-    """Interface to isotope database."""
+E_data = SPIN_DATA["E"]
+print(E_data)
 
-    def __new__(cls, name):
-        gamma_unit = ureg("rad/s/T")
-        data = SPIN_DATA[name]
-        obj = super().__new__(cls, name)
-        gamma = data.pop("gamma")
-        multiplicity = data.pop("multiplicity")
-        obj.gamma = gamma * gamma_unit
-        obj.multiplicity = multiplicity
-        obj.details = data
-        return obj
-
-
-print(SPIN_DATA["E"])
-print(gamma_mT("E"))
-
-electron = Isotope("E")
+electron = Isotope("E", E_data)
 print(f"{electron=}")
 print(f"{electron.gamma=}")
-print(f"{electron.gamma.to('rad/s/mT')=}")
+# print(f"{electron.gamma.to('rad/s/mT')=}")
 print(f"{electron.multiplicity=}")
+
+isotopes = Isotope.fromjson(SPIN_DATA_JSON)
+print(isotopes.E)
+print(isotopes.E.gamma)
+print(isotopes.E.gamma_mT)
+print(isotopes.E.multiplicity)
+print(isotopes.E.details)
+
+print("DONE!")
