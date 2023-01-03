@@ -3,7 +3,9 @@
 import numpy as np
 
 from . import utils
-from .data import constants, gamma_mT
+from .data import constants
+from .data import constants as C
+from .data import gamma_mT
 from .simulation import HilbertSimulation
 
 
@@ -86,13 +88,11 @@ def T2_relaxation_rate(
     Returns:
             float or np.ndarray: The T2 relaxation rate (1/s).
     """
-    mu_B = constants.mu_B
-    hbar = constants.hbar
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 30)
-        * ((mu_B * B) / hbar) ** 2
+        * ((C.mu_B * B) / C.hbar) ** 2
         * g_innerproduct
         * (4 * tau_c + (3 * tau_c / (1 + omega**2 * tau_c**2)))
     )
