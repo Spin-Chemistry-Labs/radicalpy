@@ -1,8 +1,8 @@
 #! /usr/bin/env python
-
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import scipy.sparse as sp
@@ -131,7 +131,7 @@ class Constant(float):
         return SimpleNamespace(**{k: Constant(v) for k, v in data.items()})
 
 
-class Isotope(str):
+class IsotopeOld(str):
     """Interface to isotope database."""
 
     def __new__(cls, name, data):
@@ -151,7 +151,76 @@ class Isotope(str):
     def fromjson(json_file):
         with open(json_file) as f:
             data = json.load(f)
-        return SimpleNamespace(**{k: Isotope(k, v) for k, v in data.items()})
+        return SimpleNamespace(**{k: __class__(k, v) for k, v in data.items()})
+
+
+class Isotope:
+    """Isotope."""
+
+    json_dir = DATA_DIR / "isotopes"
+
+    def __init__(self, name):
+        """Constructor."""
+        path = (self.json_dir / name).with_suffix(".json")
+        if not path.exists():
+            raise ValueError("Isotope doesn't exists!")
+        with open(path) as f:
+            data = json.load(f)
+            self.data = data
+            self.name = name
+
+    def __repr__(self):
+        """Isotope representation."""
+        return str(self.data)
+
+    @classmethod
+    @property
+    def available_isotopes(cls):
+        """List isotopes available in the database."""
+        paths = cls.json_dir.glob("*.json")
+        return [path.with_suffix("").name for path in paths]
+
+    def _get_key(self, key: str) -> Any:
+        if key not in self.data:
+            raise ValueError(f"Isotope {self.name} has no {key}")
+        return self.data[key]
+
+    @property
+    def multiplicity(self) -> int:
+        """Spin multiplicity of the isotope.
+
+        Returns:
+            int: Spin multiplicity.
+        """
+        return self._get_key("multiplicity")
+
+    @property
+    def spin_quantum_number(self) -> float:
+        return float(self.multiplicity - 1) / 2.0
+
+    @staticmethod
+    def spin2multiplicity():
+        """Spin quantum number to multiplicity.
+
+        Args:
+                spin (float): Spin quantum number.
+
+        Returns:
+                int: Spin multiplicity.
+
+        """
+
+    @staticmethod
+    def multiplicity2spin():
+        """Spin multiplicity to spin quantum number.
+
+        Args:
+                multiplicity (int): Spin multiplicity.
+
+        Returns:
+                float: Spin quantum number.
+
+        """
 
 
 class Molecule:
@@ -398,4 +467,4 @@ class Molecule:
 
 
 constants = Constant.fromjson(CONSTANTS_JSON)
-isotopes = Isotope.fromjson(SPIN_DATA_JSON)
+isotopes = IsotopeOld.fromjson(SPIN_DATA_JSON)

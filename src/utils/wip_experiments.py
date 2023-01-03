@@ -13,6 +13,7 @@ from radicalpy.data import (
     SPIN_DATA,
     SPIN_DATA_JSON,
     Isotope,
+    IsotopeOld,
     constants,
     isotopes,
 )
@@ -64,6 +65,9 @@ print("=" * 80)
 
 print(constants.hbar)
 print(isotopes.E)
-print(isotopes)
+print(Isotope.available_isotopes[:10])
+iso_39K = Isotope("39K")
+print(f"{iso_39K=}")
+print(f"{iso_39K.multiplicity=}")
 
 print("DONE!")
