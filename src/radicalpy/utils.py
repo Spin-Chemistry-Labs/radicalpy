@@ -4,17 +4,19 @@
 
 .. todo:: Add module docstring.
 """
-from typing import Iterable
+from typing import Tuple
 
 import numpy as np
 from scipy.fftpack import fft, ifft, ifftshift
 from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
 
-from .data import constants
+from .data import constants as C
 
 
-def Bhalf_fit(B: np.ndarray, MARY: np.ndarray) -> (float, np.ndarray, float, float):
+def Bhalf_fit(
+    B: np.ndarray, MARY: np.ndarray
+) -> Tuple[float, np.ndarray, float, float]:
     """B_1/2 fit for MARY spectra.
 
     Args:
@@ -25,10 +27,12 @@ def Bhalf_fit(B: np.ndarray, MARY: np.ndarray) -> (float, np.ndarray, float, flo
 
     Returns:
             (float, np.ndarray, float, float):
-            - `Bhalf` (float): The magnetic field strength at half the saturation magnetic field.
+            - `Bhalf` (float): The magnetic field strength at half the
+              saturation magnetic field.
             - `fit_result` (np.ndarray): y-axis from fit.
             - `fit_error` (float): Standard error for the fit.
             - `R2` (float): R-squared value for the fit.
+
     """
     popt_MARY, pcov_MARY = curve_fit(
         Lorentzian,
@@ -58,10 +62,7 @@ def Gauss_to_MHz(Gauss: float) -> float:
     Returns:
             float: The magnetic flux density converted to MHz.
     """
-    g_e = constants.g_e
-    mu_B = constants.mu_B
-    h = constants.h
-    return Gauss / (1e-10 * -g_e * mu_B / h)
+    return Gauss / (1e-10 * -C.g_e * C.mu_B / C.h)
 
 
 def Gauss_to_angular_frequency(Gauss: float) -> float:
@@ -74,10 +75,7 @@ def Gauss_to_angular_frequency(Gauss: float) -> float:
             float: The magnetic flux density converted to angular
             frequency (rad/s/T).
     """
-    g_e = constants.g_e
-    mu_B = constants.mu_B
-    hbar = constants.hbar
-    return Gauss * (mu_B / hbar * -g_e / 1e10)
+    return Gauss * (C.mu_B / C.hbar * -C.g_e / 1e10)
 
 
 def Gauss_to_mT(Gauss: float) -> float:
@@ -102,10 +100,12 @@ def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
     Args:
             B (np.ndarray): The x-axis magnetic field values.
             amplitude (float): The amplitude of the saturation field value.
-            Bhalf (float): The magnetic field strength at half the saturation field value.
+            Bhalf (float): The magnetic field strength at half the
+                saturation field value.
 
     Returns:
             np.ndarray: Lorentzian function for MARY spectrum.
+
     """
     return (amplitude / Bhalf**2) - (amplitude / (B**2 + Bhalf**2))
 
@@ -131,10 +131,7 @@ def MHz_to_Gauss(MHz: float) -> float:
     Returns:
             float: Megahertz (MHz) converted to Gauss (G).
     """
-    g_e = constants.g_e
-    mu_B = constants.mu_B
-    h = constants.h
-    return MHz / (1e-10 * -g_e * mu_B / h)
+    return MHz / (1e-10 * -C.g_e * C.mu_B / C.h)
 
 
 def MHz_to_mT(MHz: float) -> float:
@@ -146,10 +143,7 @@ def MHz_to_mT(MHz: float) -> float:
     Returns:
             float: Megahertz (MHz) converted to millitesla (mT).
     """
-    g_e = constants.g_e
-    mu_B = constants.mu_B
-    h = constants.h
-    return MHz / (1e-9 * -g_e * mu_B / h)
+    return MHz / (1e-9 * -C.g_e * C.mu_B / C.h)
 
 
 def angular_frequency_in_MHz(ang_freq: float) -> float:
@@ -173,10 +167,7 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
     Returns:
             float: The angular frequency converted to Gauss (G).
     """
-    g_e = constants.g_e
-    mu_B = constants.mu_B
-    hbar = constants.hbar
-    return ang_freq / (mu_B / hbar * -g_e / 1e10)
+    return ang_freq / (C.mu_B / C.hbar * -C.g_e / 1e10)
 
 
 def angular_frequency_to_mT(ang_freq: float) -> float:
@@ -188,10 +179,7 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     Returns:
             float: The angular frequency converted to millitesla (mT).
     """
-    g_e = constants.g_e
-    mu_B = constants.mu_B
-    hbar = constants.hbar
-    return ang_freq / (mu_B / hbar * -g_e / 1e9)
+    return ang_freq / (C.mu_B / C.hbar * -C.g_e / 1e9)
 
 
 def autocorrelation(data: np.ndarray, factor: int = 2) -> np.ndarray:
@@ -220,8 +208,8 @@ def autocorrelation(data: np.ndarray, factor: int = 2) -> np.ndarray:
 
 
 def cartesian_to_spherical(
-    x: float or np.ndarray, y: float or np.ndarray, z: float or np.ndarray
-) -> (float or np.ndarray, float or np.ndarray, float or np.ndarray):
+    x: float | np.ndarray, y: float | np.ndarray, z: float | np.ndarray
+) -> Tuple[float | np.ndarray, float | np.ndarray, float | np.ndarray]:
     """Convert Cartesian coordinates to spherical coordinates.
 
     Args:
@@ -261,10 +249,7 @@ def mT_to_MHz(mT: float) -> float:
     Returns:
             float: The magnetic flux density converted to Megahertz (MHz).
     """
-    g_e = constants.g_e
-    mu_B = constants.mu_B
-    h = constants.h
-    return mT * (1e-9 * -g_e * mu_B / h)
+    return mT * (1e-9 * -C.g_e * C.mu_B / C.h)
 
 
 def mT_to_angular_frequency(mT: float) -> float:
@@ -276,10 +261,7 @@ def mT_to_angular_frequency(mT: float) -> float:
     Returns:
             float: The magnetic flux density converted to angular frequency (rad/s/T).
     """
-    g_e = constants.g_e
-    mu_B = constants.mu_B
-    hbar = constants.hbar
-    return mT * (mu_B / hbar * -g_e / 1e9)
+    return mT * (C.mu_B / C.hbar * -C.g_e / 1e9)
 
 
 def multiexponential(x, *args):
@@ -297,63 +279,6 @@ def multiexponential(x, *args):
     return sum(a * np.exp(-t * x) for a, t in zip(A, tau))
 
 
-def rotation_matrix_x(alpha: float) -> np.ndarray:
-    """Rotation matrix to rotate a vector or matrix by
-    an angle alpha about the x-axis in 3D.
-
-    Args:
-            alpha (float): The angle to rotate a vector about the x-axis.
-
-    Returns:
-            np.ndarray: Rotated vector or matrix.
-    """
-    return np.array(
-        [
-            [1, 0, 0],
-            [0, np.cos(alpha), -np.sin(alpha)],
-            [0, np.sin(alpha), np.cos(alpha)],
-        ]
-    )
-
-
-def rotation_matrix_y(beta: float) -> np.ndarray:
-    """Rotation matrix to rotate a vector or matrix by
-    an angle beta about the y-axis in 3D.
-
-    Args:
-            beta (float): The angle to rotate a vector about the x-axis.
-
-    Returns:
-            np.ndarray: Rotated vector or matrix.
-    """
-    return np.array(
-        [
-            [np.cos(beta), 0, np.sin(beta)],
-            [0, 1, 0],
-            [-np.sin(beta), 0, np.cos(beta)],
-        ]
-    )
-
-
-def rotation_matrix_z(gamma: float) -> np.ndarray:
-    """Rotation matrix to rotate a vector or matrix by
-    an angle gamma about the z-axis in 3D.
-
-    Args:
-            gamma (float): The angle to rotate a vector about the x-axis.
-
-    Returns:
-            np.ndarray: Rotated vector or matrix.
-    """
-    return np.array(
-        [
-            [np.cos(gamma), -np.sin(gamma), 0],
-            [np.sin(gamma), np.cos(gamma), 0],
-            [0, 0, 1],
-        ]
-    )
-
-
 def spectral_density(omega: float, tau_c: float) -> float:
     """Frequency at which the motion of the particle exists.
 
@@ -368,13 +293,13 @@ def spectral_density(omega: float, tau_c: float) -> float:
 
 
 def _anisotropy_check(
-    theta: Iterable or float, phi: Iterable or float
-) -> (Iterable, Iterable):
+    theta: float | np.ndarray, phi: float | np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     if isinstance(theta, float):
-        theta = [theta]
+        theta = np.array([theta])
     if isinstance(phi, float):
-        phi = [phi]
-    if min(theta) < 0 or np.pi < max(theta):
+        phi = np.array([phi])
+    if theta.min() < 0 or np.pi < theta.max():
         raise ValueError("Value of `theta` needs to be between 0 and pi!")
     if min(phi) < 0 or 2 * np.pi < max(phi):
         raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
@@ -388,7 +313,7 @@ def _anisotropy_check(
     return theta, phi
 
 
-def _check_full_sphere(theta: Iterable, phi: Iterable) -> (int, int):
+def _check_full_sphere(theta: np.ndarray, phi: np.ndarray) -> Tuple[int, int]:
     nth, nph = len(theta), len(phi)
     if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
         raise ValueError(
@@ -429,17 +354,17 @@ def spherical_average(
     wp[0:-1:2] = 2
     sintheta = np.sin(np.linspace(0, np.pi, nth))
 
-    spherical_average = sum(
+    spherical_avg = sum(
         product_yield[i, j] * sintheta[i] * wt[i] * wp[j]
         for i in range(nth)
         for j in range(nph)
     )
 
-    return spherical_average * theta[1] * phi[1] / (4 * np.pi) / 9
+    return spherical_avg * theta[1] * phi[1] / (4 * np.pi) / 9
 
 
 def spherical_to_cartesian(
-    theta: float or np.ndarray, phi: float or np.ndarray
+    theta: float | np.ndarray, phi: float | np.ndarray
 ) -> np.ndarray:
     """Spherical coordinates to Cartesian coordinates.
 
@@ -461,18 +386,21 @@ def spherical_to_cartesian(
 
 def yield_anisotropy(
     product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
-) -> (float, float):
+) -> Tuple[float, float]:
     """Calculate the yield anisotropy.
 
     Args:
             product_yield (np.ndarray): The anisotropic product yields.
-            theta (np.ndarray): The angles theta by which the anisotropic product yields were calculated.
-            phi (np.ndarray): The angles phi by which the anisotropic product yields were calculated.
+            theta (np.ndarray): The angles theta by which the
+                anisotropic product yields were calculated.
+            phi (np.ndarray): The angles phi by which the anisotropic
+                product yields were calculated.
 
     Returns:
             (float, float):
             - delta_phi (float): Maximum yield - minimum yield.
             - gamma (float): delta_phi / spherical average.
+
     """
     delta_phi = product_yield.max() - product_yield.min()
     yield_av = spherical_average(product_yield, theta, phi)
