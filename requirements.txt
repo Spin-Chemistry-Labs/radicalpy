@@ -2,3 +2,6 @@ numpy
 scipy
 scikit-learn
 matplotlib
+seaborn
+sympy
+pint
