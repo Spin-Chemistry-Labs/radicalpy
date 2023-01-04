@@ -2,9 +2,9 @@
 
 import unittest
 
-from src.radicalpy.data import constants
+from src.radicalpy.data import constants as C
 
 
 class DataTests(unittest.TestCase):
     def test_constants(self):
-        self.assertEqual(constants.value("mu_0"), 1.25663706212e-06)
+        self.assertEqual(C.mu_0, 1.25663706212e-06)

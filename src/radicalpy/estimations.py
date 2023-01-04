@@ -3,7 +3,8 @@
 import numpy as np
 
 from . import utils
-from .data import constants, gamma_mT
+from .data import constants as C
+from .data import gamma_mT
 from .simulation import HilbertSimulation
 
 
@@ -24,18 +25,18 @@ def Bhalf_theoretical(sim: HilbertSimulation) -> float:
     .. todo:: Change `sim` to a list of molecules.
     """
     assert len(sim.molecules) == 2
-    sum_hfc2 = sum([m.effective_hyperfine**2 for m in sim.molecules])
-    sum_hfc = sum([m.effective_hyperfine for m in sim.molecules])
+    sum_hfc2 = sum(m.effective_hyperfine**2 for m in sim.molecules)
+    sum_hfc = sum(m.effective_hyperfine for m in sim.molecules)
     return np.sqrt(3) * (sum_hfc2 / sum_hfc)
 
 
 def _relaxation_gtensor_term(g: list) -> float:
-    return sum([(gi - np.mean(g)) ** 2 for gi in g])
+    return sum((gi - np.mean(g)) ** 2 for gi in g)
 
 
 def T1_relaxation_rate(
-    g_tensors: list, B: float or np.ndarray, tau_c: float or np.ndarray
-) -> float or np.ndarray:
+    g_tensors: list, B: float | np.ndarray, tau_c: float | np.ndarray
+) -> float | np.ndarray:
     r"""T1 relaxation rate.
 
     Estimate T1 relaxation rate based on tau_c and g-tensor anisotropy.
@@ -56,21 +57,19 @@ def T1_relaxation_rate(
        https://doi.org/10.1142/9789812562654_0015
 
     """
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 5)
-        * ((mu_B * B) / hbar) ** 2
+        * ((C.mu_B * B) / C.hbar) ** 2
         * g_innerproduct
         * (tau_c / (1 + omega**2 * tau_c**2))
     )
 
 
 def T2_relaxation_rate(
-    g_tensors: list, B: float or np.ndarray, tau_c: float or np.ndarray
-) -> float or np.ndarray:
+    g_tensors: list, B: float | np.ndarray, tau_c: float | np.ndarray
+) -> float | np.ndarray:
     """T2 relaxation rate.
 
     Estimate T2 relaxation rate based on tau_c and g-tensor anisotropy.
@@ -86,21 +85,19 @@ def T2_relaxation_rate(
     Returns:
             float or np.ndarray: The T2 relaxation rate (1/s).
     """
-    mu_B = constants.value("mu_B")
-    hbar = constants.value("hbar")
     omega = gamma_mT("E") * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 30)
-        * ((mu_B * B) / hbar) ** 2
+        * ((C.mu_B * B) / C.hbar) ** 2
         * g_innerproduct
         * (4 * tau_c + (3 * tau_c / (1 + omega**2 * tau_c**2)))
     )
 
 
 def aqueous_glycerol_viscosity(
-    frac_glyc: float or np.ndarray, temp: float
-) -> float or np.ndarray:
+    frac_glyc: float | np.ndarray, temp: float
+) -> float | np.ndarray:
     """Viscosity of aqueous glycerol solutions.
 
     Gives a good approximation for temperatures in the range 0-100°C.
@@ -169,8 +166,8 @@ def correlation_time(*args: np.ndarray) -> float:
 
 
 def dipolar_interaction_MC(
-    r: float or np.ndarray, theta: float or np.ndarray
-) -> (float or np.ndarray):
+    r: float | np.ndarray, theta: float | np.ndarray
+) -> float | np.ndarray:
     """Dipolar interaction for Monte Carlo trajectories.
 
     Sources:
@@ -179,12 +176,12 @@ def dipolar_interaction_MC(
         - `Miura et al. J. Phys. Chem. A, 119, 22, 5534-5544 (2015)`_.
 
     Args:
-            r (float or np.ndarray): The interradical separation (m).
-            theta (float or np.ndarray): The angle of molecular
-            rotation (rad).
+            r (float | np.ndarray): The interradical separation (m).
+            theta (float | np.ndarray): The angle of molecular
+                rotation (rad).
 
     Returns:
-            (float or np.ndarray): The dipolar coupling constant in
+            float | np.ndarray: The dipolar coupling constant in
             milli Tesla (mT).
 
     .. _O'Dea et al. J. Phys. Chem. A, 109, 5, 869-873 (2005):
@@ -196,7 +193,7 @@ def dipolar_interaction_MC(
 
 
 def dipolar_interaction_anisotropic(
-    r: float or np.ndarray, gamma: float = gamma_mT("E")
+    r: float | np.ndarray, gamma: float = gamma_mT("E")
 ) -> np.ndarray:
     """Anisotropic dipolar coupling.
 
@@ -214,7 +211,7 @@ def dipolar_interaction_anisotropic(
     return dipolar * np.diag([-1, -1, 2])
 
 
-def dipolar_interaction_isotropic(r: float or np.ndarray) -> (float or np.ndarray):
+def dipolar_interaction_isotropic(r: float | np.ndarray) -> float | np.ndarray:
     """Isotropic dipolar coupling.
 
     Point dipole approximation is used.
@@ -231,16 +228,13 @@ def dipolar_interaction_isotropic(r: float or np.ndarray) -> (float or np.ndarra
     .. _Santabarbara et al. Biochemistry, 44, 6, 2119–2128 (2005):
        https://pubs.acs.org/doi/10.1021/bi048445d
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    mu_0 = constants.value("mu_0")
-    conversion = (3 * -g_e * mu_B * mu_0) / (8 * np.pi)
+    conversion = (3 * -C.g_e * C.mu_B * C.mu_0) / (8 * np.pi)
     return (-conversion / r**3) * 1000
 
 
 def exchange_interaction_in_protein(
-    r: float or np.ndarray, beta: float = 14e9, J0: float = 9.7e9
-) -> (float or np.ndarray):
+    r: float | np.ndarray, beta: float = 14e9, J0: float = 9.7e9
+) -> float | np.ndarray:
     """Exchange interaction for radical pairs in proteins.
 
     Source: `Moser et al. Nature 355, 796–802 (1992)`_.
@@ -260,8 +254,8 @@ def exchange_interaction_in_protein(
 
 
 def exchange_interaction_in_solution(
-    r: float or np.ndarray, beta: float = 0.049e-9, J0rad: float = 1.7e17
-) -> (float or np.ndarray):
+    r: float | np.ndarray, beta: float = 0.049e-9, J0rad: float = 1.7e17
+) -> float | np.ndarray:
     """Exchange interaction for radical pairs in solution.
 
     Source: `McLauchlan et al. Mol. Phys. 73:2, 241-263 (1991)`_.
@@ -282,8 +276,8 @@ def exchange_interaction_in_solution(
 
 
 def exchange_interaction_in_solution_MC(
-    r: float or np.ndarray, beta: float = 2e10, J0: float = -570
-) -> (float or np.ndarray):
+    r: np.ndarray, beta: float = 2e10, J0: float = -570
+) -> np.ndarray:
     """Exchange interaction for Monte Carlo trajectories.
 
     Sources:
@@ -292,13 +286,13 @@ def exchange_interaction_in_solution_MC(
         - `Miura et al. J. Phys. Chem. A, 119, 22, 5534-5544 (2015)`_.
 
     Args:
-            r (float or np.ndarray): The interradical separation (m).
-            beta (float): The range parameter (1/m).
-            J0 (float): The strength of the interaction (mT).
+        r (np.ndarray): The interradical separation (m).
+        beta (float): The range parameter (1/m).
+        J0 (float): The strength of the interaction (mT).
 
     Returns:
-            (float or np.ndarray): The exchange coupling constant in
-            milli Tesla (mT).
+        np.ndarray: The exchange coupling constant in milli Tesla (mT).
+
     """
     return J0 * np.exp(-beta * (r - r.min()))
 
@@ -323,9 +317,8 @@ def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     .. _Player et al. J. Chem. Phys. 153, 084303 (2020):
        https://doi.org/10.1063/5.0021643
     """
-    g_e = constants.value("g_e")
-    g1sum = sum([(gi - g_e) ** 2 for gi in g1])
-    g2sum = sum([(gi - g_e) ** 2 for gi in g2])
+    g1sum = sum((gi - C.g_e) ** 2 for gi in g1)
+    g2sum = sum((gi - C.g_e) ** 2 for gi in g2)
     return (g1sum + g2sum) / (9 * tau_c)
 
 
@@ -366,11 +359,8 @@ def k_excitation(
     Returns:
             float: The excitation rate (1/s).
     """
-    c = constants.value("c")
-    h = constants.value("h")
-    N_A = constants.value("N_A")
-    nu = c / wavelength  # Frequency of excitation beam (1/s)
-    I0 = power / (h * nu * N_A * volume)  # Initial intensity (I0)
+    nu = C.c / wavelength  # Frequency of excitation beam (1/s)
+    I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
     return I0 * np.log(10) * epsilon * pathlength
 
 
@@ -467,10 +457,7 @@ def k_ST_mixing(Bhalf: float) -> float:
     .. _Steiner et al. Chem. Rev. 89, 1, 51–147 (1989):
        https://doi.org/10.1021/cr00091a003
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
-    return -g_e * (mu_B * 1e-3) * Bhalf / h
+    return -C.g_e * (C.mu_B * 1e-3) * Bhalf / C.h
 
 
 def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
@@ -490,12 +477,8 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     .. _Atkins et al. Mol. Phys., 27, 6 (1974):
        https://doi.org/10.1080/00268977400101361
     """
-    g_e = constants.value("g_e")
-    mu_B = constants.value("mu_B")
-    h = constants.value("h")
     B0 = utils.mT_to_MHz(B0)
-
-    nu_0 = (g_e * (mu_B * 1e-3) * B0) / h
+    nu_0 = (C.g_e * (C.mu_B * 1e-3) * B0) / C.h
     jnu0tc = (2 / 15) * (
         (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2)
         + (tau_c) / (1 + nu_0**2 * tau_c**2)
@@ -518,8 +501,7 @@ def number_of_photons(
     Returns:
             float: The number of photons.
     """
-    N_A = constants.value("N_A")
-    return k_excitation * concentration * volume * N_A
+    return k_excitation * concentration * volume * C.N_A
 
 
 def rotational_correlation_time_for_molecule(
@@ -544,8 +526,7 @@ def rotational_correlation_time_for_molecule(
     Returns:
             float: The rotational correlation time (s).
     """
-    k_B = constants.value("k_B")
-    return (4 * np.pi * eta * radius**3) / (3 * k_B * temp)
+    return (4 * np.pi * eta * radius**3) / (3 * C.k_B * temp)
 
 
 def rotational_correlation_time_for_protein(
@@ -575,8 +556,5 @@ def rotational_correlation_time_for_protein(
     .. _Cavanagh et al. Protein NMR  Spectroscopy. Principles and Practice, Elsevier Academic Press (2007):
        https://doi.org/10.1016/B978-0-12-164491-8.X5000-3
     """
-    V = constants.value("V")
-    N_A = constants.value("N_A")
-    rw = constants.value("rw")
-    Rh = ((3 * V * Mr) / (4 * np.pi * N_A)) ** 0.33 + rw
+    Rh = ((3 * C.V * Mr) / (4 * np.pi * C.N_A)) ** 0.33 + C.rw
     return rotational_correlation_time_for_molecule(Rh, temp, eta)
