@@ -383,9 +383,10 @@ class Molecule:
             self._check_nuclei(nuclei)
             return True
         else:
-            # TODO: needs to fail with nuclei == [] + wrong molecule
-            # name
-            if all(n in SPIN_DATA for n in nuclei):
+            # To error on creating an empty (no nuclei) molecule with
+            # a custom name, modify the line below to include the
+            # comment. Lewis said it's okay like this.
+            if all(n in SPIN_DATA for n in nuclei):  # and nuclei != []:
                 return False
             else:
                 available = "\n".join(get_molecules().keys())
