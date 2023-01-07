@@ -131,13 +131,11 @@ class HilbertSimulation:
     @property
     def electron_gammas_mT(self):
         g = 2.0023  # free electron g-factor
-        gfactor = [g, g]
+        gfactor = [g] * self.num_electrons
         if self.custom_gfactors:
             # overwrite gfactor list TODO
             pass
-        # muB = 9.274e-24
-        # hbar = 1.05459e-34
-        # return [gfactor[i] * muB / hbar / 1000 for i in range(self.num_electrons)]
+        # return [gfactor[i] * C.muB / C.hbar / 1000 for i in range(self.num_electrons)]
         return [gamma_mT(e) * gfactor[i] / g for i, e in enumerate(self.electrons)]
 
     @property
