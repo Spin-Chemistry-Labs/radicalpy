@@ -86,29 +86,6 @@ class Constant(float):
         return SimpleNamespace(**{k: Constant(v) for k, v in data.items()})
 
 
-class IsotopeOld(str):
-    """Interface to isotope database."""
-
-    def __new__(cls, name, data):
-        # gamma_unit = ureg("rad/s/T")
-        obj = super().__new__(cls, name)
-        if "gamma" in data:
-            gamma = data.pop("gamma")
-            obj.gamma = gamma  # * gamma_unit
-            obj.gamma_mT = gamma / 1000
-        if "multiplicity" in data:
-            multiplicity = data.pop("multiplicity")
-            obj.multiplicity = multiplicity
-        obj.details = data
-        return obj
-
-    @staticmethod
-    def fromjson(json_file):
-        with open(json_file) as f:
-            data = json.load(f)
-        return SimpleNamespace(**{k: __class__(k, v) for k, v in data.items()})
-
-
 class Isotope:
     """Isotope.
 
@@ -472,4 +449,3 @@ class Molecule:
 
 
 constants = Constant.fromjson(CONSTANTS_JSON)
-isotopes = IsotopeOld.fromjson(SPIN_DATA_JSON)
