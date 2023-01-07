@@ -91,16 +91,16 @@ class Isotope:
     Examples:
 
     >>> E = Isotope("E")
-    >>> print(E)
+    >>> E
     Symbol: E
     Multiplicity: 2
     Gamma: -176085963023.0
     Details: {'name': 'Electron', 'source': 'CODATA 2018'}
 
-    >>> print(E.multiplicity)
+    >>> E.multiplicity
     2
 
-    >>> print(E.details)
+    >>> E.details
     {'name': 'Electron', 'source': 'CODATA 2018'}
     """
 
@@ -148,7 +148,7 @@ class Isotope:
         Example:
 
         >>> available = Isotope.available
-        >>> print(available[:10])
+        >>> available[:10]
         ['G', 'E', 'N', 'M', 'P', '1H', '2H', '3H', '3He', '4He']
 
         >>> Isotope(available[0])
@@ -240,7 +240,7 @@ class Molecule:
 
 
     If the wrong molecule name is given, the error helps you find the
-    valid options.
+    valid options (the second argument `nuclei` must not be empty).
 
     >>> Molecule("foobar", ["H1"])
     Traceback (most recent call last):
@@ -311,6 +311,10 @@ class Molecule:
       Magnetogyric ratios (mT): []
       Number of particles: 0
 
+    Note: If the second argument (`nuclei`) is empty, no error is
+    triggered, you can get the look up the available molecules
+    with `Molecule.available`.
+
     Manual input for all relevant values (multiplicities, gammas,
     HFCs):
 
@@ -331,6 +335,7 @@ class Molecule:
       Multiplicities: [2]
       Magnetogyric ratios (mT): [267522.18744]
       Number of particles: 1
+
     """
 
     def __repr__(self) -> str:
@@ -434,7 +439,7 @@ class Molecule:
         Example:
 
         >>> available = Molecule.available
-        >>> print(available[:10])
+        >>> available[:10]
         ['adenine_cation', 'tyrosine_neutral', 'flavin_neutral', 'tryptophan_cation', '2_6_aqds', 'flavin_anion']
 
         """
