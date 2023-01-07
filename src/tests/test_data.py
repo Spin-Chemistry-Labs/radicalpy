@@ -1,8 +1,14 @@
 #! /usr/bin/env python
 
+import doctest
 import unittest
 
-from src.radicalpy.data import *
+from src.radicalpy import data
+
+
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(data))
+    return tests
 
 
 class ConstantTestCase(unittest.TestCase):
@@ -11,12 +17,12 @@ class ConstantTestCase(unittest.TestCase):
     def test_number_of_constants(self):
         """Check the number of constants to the previous state."""
         previous_number_of_constants = 21
-        current_number_of_constants = len(vars(constants))
+        current_number_of_constants = len(vars(data.constants))
         self.assertEqual(current_number_of_constants, previous_number_of_constants)
 
     def test_constants(self):
         """Test the values of all the constants."""
-        C = constants
+        C = data.constants
         self.assertEqual(C.c, 299792458.0)
         self.assertEqual(C.h, 6.6260693e-34)
         self.assertEqual(C.epsilon_0, 8.854187817e-12)
@@ -44,10 +50,12 @@ class IsotopeTestCase(unittest.TestCase):
     """Collect all the unittests for isotopes."""
 
     def test_number_of_isotopes(self):
-        previous_number_of_isotopes = 0  # 304
-        current_number_of_isotopes = len(Isotope.available_isotopes)
+        previous_number_of_isotopes = 293
+        current_number_of_isotopes = len(data.Isotope.available_isotopes)
         self.assertEqual(current_number_of_isotopes, previous_number_of_isotopes)
 
     def test_all_isotope_jsons(self):
         # """Test loading of all json isotopes."""
-        pass
+        for isotope in data.Isotope.available_isotopes:
+            with self.subTest(isotope):
+                data.Isotope(isotope)
