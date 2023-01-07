@@ -3,8 +3,8 @@
 import numpy as np
 
 from . import utils
+from .data import Isotope
 from .data import constants as C
-from .data import gamma_mT
 from .simulation import HilbertSimulation
 
 
@@ -57,7 +57,7 @@ def T1_relaxation_rate(
        https://doi.org/10.1142/9789812562654_0015
 
     """
-    omega = gamma_mT("E") * B
+    omega = Isotope("E").gamma_mT * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 5)
@@ -85,7 +85,7 @@ def T2_relaxation_rate(
     Returns:
             float or np.ndarray: The T2 relaxation rate (1/s).
     """
-    omega = gamma_mT("E") * B
+    omega = Isotope("E").gamma_mT * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 30)
@@ -193,7 +193,7 @@ def dipolar_interaction_MC(
 
 
 def dipolar_interaction_anisotropic(
-    r: float | np.ndarray, gamma: float = gamma_mT("E")
+    r: float | np.ndarray, gamma: float = Isotope("E").gamma_mT
 ) -> np.ndarray:
     """Anisotropic dipolar coupling.
 
@@ -271,7 +271,7 @@ def exchange_interaction_in_solution(
     .. _McLauchlan et al. Mol. Phys. 73:2, 241-263 (1991):
        https://doi.org/10.1080/00268979100101181
     """
-    J0 = J0rad / gamma_mT("E")
+    J0 = J0rad / Isotope("E").gamma_mT
     return J0 * np.exp(-r / beta)
 
 
