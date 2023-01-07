@@ -35,7 +35,6 @@ def isotropic(anisotropic: np.ndarray or list) -> float:
 DATA_DIR = Path(__file__).parent / "data"
 SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
-CONSTANTS_JSON = DATA_DIR / "constants.json"
 
 with open(SPIN_DATA_JSON) as f:
     SPIN_DATA = json.load(f)
@@ -140,7 +139,7 @@ class Isotope:
 
     @classmethod
     @property
-    def available_isotopes(cls):
+    def available(cls):
         """List isotopes available in the database.
 
         Returns:
@@ -148,7 +147,7 @@ class Isotope:
 
         Example:
 
-        >>> available = Isotope.available_isotopes
+        >>> available = Isotope.available
         >>> print(available[:10])
         ['G', 'E', 'N', 'M', 'P', '1H', '2H', '3H', '3He', '4He']
 
@@ -334,6 +333,22 @@ class Molecule:
       Number of particles: 1
     """
 
+    def __repr__(self) -> str:
+        """Pretty print the molecule.
+
+        Returns:
+            str: Representation of a molecule.
+        """
+        return (
+            f"Molecule: {self.radical}"
+            # f"\n  Nuclei: {self.nuclei}"
+            f"\n  HFCs: {self.hfcs}"
+            f"\n  Multiplicities: {self.multiplicities}"
+            f"\n  Magnetogyric ratios (mT): {self.gammas_mT}"
+            f"\n  Number of particles: {self.num_particles}"
+            # f"\n  elements: {self.elements}"
+        )
+
     def __init__(
         self,
         radical: str = "",
@@ -362,22 +377,6 @@ class Molecule:
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) == self.num_particles
-
-    def __repr__(self) -> str:
-        """Pretty print the molecule.
-
-        Returns:
-            str: Representation of a molecule.
-        """
-        return (
-            f"Molecule: {self.radical}"
-            # f"\n  Nuclei: {self.nuclei}"
-            f"\n  HFCs: {self.hfcs}"
-            f"\n  Multiplicities: {self.multiplicities}"
-            f"\n  Magnetogyric ratios (mT): {self.gammas_mT}"
-            f"\n  Number of particles: {self.num_particles}"
-            # f"\n  elements: {self.elements}"
-        )
 
     def _check_molecule_or_spin_db(self, radical, nuclei):
         if radical in MOLECULE_DATA:
@@ -423,6 +422,24 @@ class Molecule:
         self.gammas_mT = [gamma_mT(e) for e in nuclei]
         self.hfcs = hfcs
 
+    @classmethod
+    @property
+    def available(cls):
+        """List molecules available in the database.
+
+        Returns:
+            list[str]: List of available molecules (names).
+
+        Example:
+
+        >>> available = Molecule.available
+        >>> print(available[:10])
+        ['adenine_cation', 'tyrosine_neutral', 'flavin_neutral', 'tryptophan_cation', '2_6_aqds', 'flavin_anion']
+
+        """
+        paths = (DATA_DIR / "molecules").glob("*.json")
+        return [path.with_suffix("").name for path in paths]
+
     @property
     def effective_hyperfine(self) -> float:
         if self.custom_molecule:
@@ -448,4 +465,4 @@ class Molecule:
         return len(self.multiplicities)
 
 
-constants = Constant.fromjson(CONSTANTS_JSON)
+constants = Constant.fromjson(DATA_DIR / "constants.json")

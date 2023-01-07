@@ -12,7 +12,7 @@ def load_tests(loader, tests, ignore):
 
 
 class ConstantTestCase(unittest.TestCase):
-    """Collect all the unittests for constants."""
+    """Test case for the `Constant` class."""
 
     def test_number_of_constants(self):
         """Check the number of constants to the previous state."""
@@ -47,15 +47,24 @@ class ConstantTestCase(unittest.TestCase):
 
 
 class IsotopeTestCase(unittest.TestCase):
-    """Collect all the unittests for isotopes."""
+    """Test case for the `Isotope` class."""
 
     def test_number_of_isotopes(self):
-        previous_number_of_isotopes = 293
-        current_number_of_isotopes = len(data.Isotope.available_isotopes)
-        self.assertEqual(current_number_of_isotopes, previous_number_of_isotopes)
+        previous_number = 293
+        current_number = len(data.Isotope.available)
+        self.assertEqual(current_number, previous_number)
 
     def test_all_isotope_jsons(self):
-        # """Test loading of all json isotopes."""
-        for isotope in data.Isotope.available_isotopes:
+        """Test loading of all isotopes."""
+        for isotope in data.Isotope.available:
             with self.subTest(isotope):
                 data.Isotope(isotope)
+
+
+class MoleculeTestCase(unittest.TestCase):
+    """Test case for the `Molecule` class."""
+
+    def test_number_of_molecules(self):
+        previous_number = 6
+        current_number = len(data.Molecule.available)
+        self.assertEqual(current_number, previous_number)
