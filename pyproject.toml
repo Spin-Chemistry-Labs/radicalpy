@@ -7,3 +7,6 @@ convention = "google"
 [tool.pylint]
 max-line-length = 88
 disable = ["C0103"]
+
+[tool.mypy]
+plugins = ["numpy.typing.mypy_plugin"]
