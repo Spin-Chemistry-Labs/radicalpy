@@ -12,7 +12,7 @@ from src.radicalpy import estimations, kinetics, relaxation
 from src.radicalpy.data import isotropic
 from src.radicalpy.simulation import Basis
 
-import tests.radpy as radpy
+from . import radpy
 
 # np.seterr(divide="raise", invalid="raise")
 
