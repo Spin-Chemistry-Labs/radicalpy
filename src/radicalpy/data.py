@@ -120,6 +120,12 @@ class Isotope:
     Multiplicity: 2
     Gamma: -176085963023.0
     Details: {'name': 'Electron', 'source': 'CODATA 2018'}
+
+    >>> print(E.multiplicity)
+    2
+
+    >>> print(E.details)
+    {'name': 'Electron', 'source': 'CODATA 2018'}
     """
 
     json_dir = DATA_DIR / "isotopes"
@@ -158,19 +164,43 @@ class Isotope:
     @classmethod
     @property
     def available_isotopes(cls):
-        """List isotopes available in the database."""
+        """List isotopes available in the database.
+
+        Returns:
+            list[str]: List of available isotopes (symbols).
+
+        Example:
+
+        >>> available = Isotope.available_isotopes
+        >>> print(available[:10])
+        ['G', 'E', 'N', 'M', 'P', '1H', '2H', '3H', '3He', '4He']
+
+        >>> Isotope(available[0])
+        Symbol: G
+        Multiplicity: 1
+        Gamma: 0
+        Details: {'name': 'Ghost spin', 'source': 'Spin zero particle'}
+
+        >>> Isotope(available[2])
+        Symbol: N
+        Multiplicity: 2
+        Gamma: -183247171.0
+        Details: {'name': 'Neutron', 'source': 'CODATA 2018'}
+
+        >>> Isotope(available[6])
+        Symbol: 2H
+        Multiplicity: 3
+        Gamma: 41066279.1
+        Details: {'source': 'NMR Enc. 1996'}
+
+        """
         cls._load_data()
         items = cls.isotopes_data.items()
         return [k for k, v in items if "multiplicity" in v and "gamma" in v]
 
-    def _get_key(self, key: str) -> Any:
-        if key not in self.isotopes_data:
-            raise ValueError(f"Isotope {self.name} has no {key}")
-        return self.isotopes_data[key]
-
     @property
     def spin_quantum_number(self) -> float:
-        return float(self.multiplicity - 1) / 2.0
+        return self.multiplicity2spin(self.multiplicity)
 
     @staticmethod
     def spin2multiplicity():
@@ -185,7 +215,7 @@ class Isotope:
         """
 
     @staticmethod
-    def multiplicity2spin():
+    def multiplicity2spin(multiplicity: float) -> float:
         """Spin multiplicity to spin quantum number.
 
         Args:
@@ -195,6 +225,7 @@ class Isotope:
                 float: Spin quantum number.
 
         """
+        return float(multiplicity - 1) / 2.0
 
 
 class Molecule:
