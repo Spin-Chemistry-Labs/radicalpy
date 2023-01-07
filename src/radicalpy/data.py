@@ -148,31 +148,25 @@ class Isotope:
         Example:
 
         >>> available = Isotope.available
-        >>> available[:10]
-        ['G', 'E', 'N', 'M', 'P', '1H', '2H', '3H', '3He', '4He']
+        >>> available[-5:]
+        ['E', 'G', 'M', 'N', 'P']
 
-        >>> Isotope(available[0])
-        Symbol: G
-        Multiplicity: 1
-        Gamma: 0
-        Details: {'name': 'Ghost spin', 'source': 'Spin zero particle'}
+        >>> Isotope(available[-5])
+        Symbol: E
+        Multiplicity: 2
+        Gamma: -176085963023.0
+        Details: {'name': 'Electron', 'source': 'CODATA 2018'}
 
-        >>> Isotope(available[2])
+        >>> Isotope(available[-2])
         Symbol: N
         Multiplicity: 2
         Gamma: -183247171.0
         Details: {'name': 'Neutron', 'source': 'CODATA 2018'}
 
-        >>> Isotope(available[6])
-        Symbol: 2H
-        Multiplicity: 3
-        Gamma: 41066279.1
-        Details: {'source': 'NMR Enc. 1996'}
-
         """
         cls._load_data()
         items = cls.isotopes_data.items()
-        return [k for k, v in items if "multiplicity" in v and "gamma" in v]
+        return sorted([k for k, v in items if "multiplicity" in v and "gamma" in v])
 
     @property
     def spin_quantum_number(self) -> float:
@@ -365,14 +359,11 @@ class Molecule:
         self.radical = radical if radical else "N/A"
         self.nuclei = nuclei
         self.custom_molecule = True
-        if nuclei:
-            if self._check_molecule_or_spin_db(radical, nuclei):
-                self._init_from_molecule_db(radical, nuclei)
-            else:
-                self._init_from_spin_db(radical, nuclei, hfcs)
+        if self._check_molecule_or_spin_db(radical, nuclei):
+            self._init_from_molecule_db(radical, nuclei)
         else:
-            if self._check_molecule_or_spin_db(radical, nuclei):
-                self._init_from_molecule_db(radical, nuclei)
+            if nuclei:
+                self._init_from_spin_db(radical, nuclei, hfcs)
             else:
                 self.multiplicities = multiplicities
                 self.gammas_mT = gammas_mT
@@ -440,11 +431,11 @@ class Molecule:
 
         >>> available = Molecule.available
         >>> available[:10]
-        ['adenine_cation', 'tyrosine_neutral', 'flavin_neutral', 'tryptophan_cation', '2_6_aqds', 'flavin_anion']
+        ['2_6_aqds', 'adenine_cation', 'flavin_anion', 'flavin_neutral', 'tryptophan_cation', 'tyrosine_neutral']
 
         """
         paths = (DATA_DIR / "molecules").glob("*.json")
-        return [path.with_suffix("").name for path in paths]
+        return sorted([path.with_suffix("").name for path in paths])
 
     @property
     def effective_hyperfine(self) -> float:
