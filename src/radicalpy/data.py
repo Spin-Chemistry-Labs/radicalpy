@@ -379,7 +379,7 @@ class Molecule:
         assert len(self.hfcs) == self.num_particles
 
     def _check_molecule_or_spin_db(self, radical, nuclei):
-        if radical in MOLECULE_DATA:
+        if radical in self.available:
             self._check_nuclei(nuclei)
             return True
         else:
