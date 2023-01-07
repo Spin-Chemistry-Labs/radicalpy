@@ -110,44 +110,63 @@ class IsotopeOld(str):
 
 
 class Isotope:
-    """Isotope."""
+    """Isotope.
+
+    Examples:
+
+    >>> E = Isotope("E")
+    >>> print(E)
+    Symbol: E
+    Multiplicity: 2
+    Gamma: -176085963023.0
+    Details: {'name': 'Electron', 'source': 'CODATA 2018'}
+    """
 
     json_dir = DATA_DIR / "isotopes"
-
-    def __init__(self, name):
-        """Constructor."""
-        path = (self.json_dir / name).with_suffix(".json")
-        if not path.exists():
-            raise ValueError("Isotope doesn't exists!")
-        with open(path) as f:
-            data = json.load(f)
-            self.data = data
-            self.name = name
+    isotopes_json = DATA_DIR / "spin_data.json"
+    isotopes_data = None
 
     def __repr__(self):
         """Isotope representation."""
-        return str(self.data)
+        lines = [
+            f"Symbol: {self.symbol}",
+            f"Multiplicity: {self.multiplicity}",
+            f"Gamma: {self.gamma}",
+            f"Details: {self.details}",
+        ]
+        return "\n".join(lines)
+
+    @classmethod
+    def _load_data(cls):
+        if cls.isotopes_data is None:
+            with open(cls.isotopes_json) as f:
+                cls.isotopes_data = json.load(f)
+
+    def __init__(self, symbol):
+        """Constructor."""
+        self._load_data()
+        isotope = dict(self.isotopes_data[symbol])
+        self.symbol = symbol
+        self.multiplicity = isotope.pop("multiplicity")
+        self.gamma = isotope.pop("gamma")
+        self.details = isotope
+
+    @property
+    def gamma_mT(self):
+        return self.gamma * 0.001
 
     @classmethod
     @property
     def available_isotopes(cls):
         """List isotopes available in the database."""
-        paths = cls.json_dir.glob("*.json")
-        return [path.with_suffix("").name for path in paths]
+        cls._load_data()
+        items = cls.isotopes_data.items()
+        return [k for k, v in items if "multiplicity" in v and "gamma" in v]
 
     def _get_key(self, key: str) -> Any:
-        if key not in self.data:
+        if key not in self.isotopes_data:
             raise ValueError(f"Isotope {self.name} has no {key}")
-        return self.data[key]
-
-    @property
-    def multiplicity(self) -> int:
-        """Spin multiplicity of the isotope.
-
-        Returns:
-            int: Spin multiplicity.
-        """
-        return self._get_key("multiplicity")
+        return self.isotopes_data[key]
 
     @property
     def spin_quantum_number(self) -> float:
