@@ -391,7 +391,7 @@ class Molecule:
                 available = "\n".join(get_molecules().keys())
                 raise ValueError(f"Available molecules below:\n{available}")
 
-    def _check_nuclei(self, nuclei: list[str]) -> None:
+    def _check_nuclei(self, nuclei: list[str]) -> None:  # raises ValueError()
         molecule_data = MOLECULE_DATA[self.radical]["data"]
         for nucleus in nuclei:
             if nucleus not in molecule_data:
