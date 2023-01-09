@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import json
-from functools import singledispatchmethod
+from functools import cache, singledispatchmethod
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Optional
@@ -22,7 +22,7 @@ def spin_quantum_number(multiplicity: int) -> float:
     return float(multiplicity - 1) / 2.0
 
 
-def isotropic(anisotropic: np.ndarray or list) -> float:
+def isotropic(anisotropic: np.ndarray | list) -> float:
     """Anisotropic tensor to isotropic value.
 
     Args:
@@ -38,18 +38,19 @@ DATA_DIR = Path(__file__).parent / "data"
 SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
 
-with open(SPIN_DATA_JSON) as f:
-    SPIN_DATA = json.load(f)
+with open(SPIN_DATA_JSON, encoding="utf-8") as file:
+    SPIN_DATA = json.load(file)
     """Dictionary containing spin data for elements.
 
     :meta hide-value:"""
 
 
 def get_molecules(molecules_dir=MOLECULES_DIR):
+    """Delete this."""
     molecules = {}
     for json_path in sorted(molecules_dir.glob("*.json")):
         molecule_name = json_path.with_suffix("").name
-        with open(json_path) as f:
+        with open(json_path, encoding="utf-8") as f:
             molecules[molecule_name] = json.load(f)
     return molecules
 
@@ -71,44 +72,54 @@ def gamma_mT(element: str):
 
 
 def multiplicity(element: str):
+    """Return the `multiplicity` value of an element."""
     return SPIN_DATA[element]["multiplicity"]
 
 
 class Constant(float):
-    def __new__(cls, details):
+    """Constan class.
+
+    Extends float with the `Constant.details` member.
+    """
+
+    details: SimpleNamespace
+    """Details (e.g. units) of the constant."""
+
+    def __new__(cls, details: dict):  # noqa D102
         obj = super().__new__(cls, details.pop("value"))
         obj.details = SimpleNamespace(**details)
         return obj
 
     @staticmethod
-    def fromjson(json_file):
-        with open(json_file) as f:
+    def fromjson(json_file: Path) -> SimpleNamespace:
+        """Read all constants from the JSON file.
+
+        Args:
+            json_file (str)
+
+        Returns:
+            SimpleNamespace: A namespace containing all constants.
+        """
+        with open(json_file, encoding="utf-8") as f:
             data = json.load(f)
         return SimpleNamespace(**{k: Constant(v) for k, v in data.items()})
 
 
 class Isotope:
-    """Isotope.
+    """Class representing an isotope.
 
     Examples:
-
     >>> E = Isotope("E")
     >>> E
     Symbol: E
     Multiplicity: 2
     Gamma: -176085963023.0
     Details: {'name': 'Electron', 'source': 'CODATA 2018'}
-
     >>> E.multiplicity
     2
-
     >>> E.details
     {'name': 'Electron', 'source': 'CODATA 2018'}
     """
-
-    json_dir = DATA_DIR / "isotopes"
-    isotopes_json = DATA_DIR / "spin_data.json"
-    isotopes_data = None
 
     def __repr__(self):
         """Isotope representation."""
@@ -120,16 +131,16 @@ class Isotope:
         ]
         return "\n".join(lines)
 
-    @classmethod
-    def _load_data(cls):
-        if cls.isotopes_data is None:
-            with open(cls.isotopes_json) as f:
-                cls.isotopes_data = json.load(f)
+    @staticmethod
+    @cache
+    def _load_data() -> dict:
+        with open(DATA_DIR / "spin_data.json", encoding="utf-8") as f:
+            return json.load(f)
 
-    def __init__(self, symbol):
-        """Constructor."""
-        self._load_data()
-        isotope = dict(self.isotopes_data[symbol])
+    def __init__(self, symbol: str):
+        """Isotope constructor."""
+        isotopes_data = self._load_data()
+        isotope = dict(isotopes_data[symbol])
         self.symbol = symbol
         self.multiplicity = isotope.pop("multiplicity")
         self.gamma = isotope.pop("gamma")
@@ -137,11 +148,11 @@ class Isotope:
 
     @property
     def gamma_mT(self):
+        """Return gamma value in mT."""
         return self.gamma * 0.001
 
     @classmethod
-    @property
-    def available(cls):
+    def available(cls) -> list[str]:
         """List isotopes available in the database.
 
         Returns:
@@ -149,7 +160,7 @@ class Isotope:
 
         Example:
 
-        >>> available = Isotope.available
+        >>> available = Isotope.available()
         >>> available[-5:]
         ['E', 'G', 'M', 'N', 'P']
 
@@ -166,12 +177,12 @@ class Isotope:
         Details: {'name': 'Neutron', 'source': 'CODATA 2018'}
 
         """
-        cls._load_data()
-        items = cls.isotopes_data.items()
+        items = cls._load_data().items()
         return sorted([k for k, v in items if "multiplicity" in v and "gamma" in v])
 
     @property
     def spin_quantum_number(self) -> float:
+        """Spin quantum numer of `Isotope`."""
         return self.multiplicity2spin(self.multiplicity)
 
     @staticmethod
@@ -213,7 +224,6 @@ class Hfc:
             are stored.
 
     Examples:
-
     >>> with open(DATA_DIR/"molecules/flavin_anion.json") as f:
     ...      flavin_dict = json.load(f)
     >>> hfc_3d_data = flavin_dict["data"]["N5"]["hfc"]
@@ -253,7 +263,7 @@ class Hfc:
 
     @singledispatchmethod
     def __init__(self, hfc: list[list[float]]):
-        """Construct anisotropic `Hfc`."""
+        """Constructor for anisotropic `Hfc`."""
         self._anisotropic = np.array(hfc)
         if self._anisotropic.shape != (3, 3):
             raise ValueError("Anisotropic HFCs should be a 3x3 matrix or a float!")
@@ -261,7 +271,7 @@ class Hfc:
 
     @__init__.register
     def _(self, hfc: float):
-        """Construct isotropic only `Hfc`."""
+        """Constructor for isotropic only `Hfc`."""
         self._anisotropic = None
         self.isotropic = hfc
 
@@ -304,7 +314,6 @@ class Molecule:
     name of the molecule and the list of its nuclei.
 
     Examples:
-
     >>> Molecule(radical="adenine_cation",
     ...          nuclei=["N6-H1", "N6-H2"])
     Molecule: adenine_cation
@@ -437,6 +446,7 @@ class Molecule:
         gammas_mT: list[float] = [],
         hfcs: list[float] = [],
     ):
+        """Molecule constructor."""
         self.radical = radical if radical else "N/A"
         self.nuclei = nuclei
         self.custom_molecule = True  # todo(vatai): use info instead of this
@@ -444,7 +454,7 @@ class Molecule:
             self._init_from_molecule_db(radical, nuclei)
         else:
             if nuclei:
-                self._init_from_spin_db(radical, nuclei, hfcs)
+                self._init_from_spin_db(nuclei, hfcs)
             else:
                 self.multiplicities = multiplicities
                 self.gammas_mT = gammas_mT
@@ -456,18 +466,16 @@ class Molecule:
         assert len(self.hfcs) == self.num_particles
 
     def _check_molecule_or_spin_db(self, radical, nuclei):
-        if radical in self.available:
+        if radical in self.available():
             self._check_nuclei(nuclei)
             return True
-        else:
-            # To error on creating an empty (no nuclei) molecule with
-            # a custom name, modify the line below to include the
-            # comment. Lewis said it's okay like this.
-            if all(n in Isotope.available for n in nuclei):  # and nuclei != []:
-                return False
-            else:
-                available = "\n".join(get_molecules().keys())
-                raise ValueError(f"Available molecules below:\n{available}")
+        # To error on creating an empty (no nuclei) molecule with
+        # a custom name, modify the line below to include the
+        # comment. Lewis said it's okay like this.
+        if all(n in Isotope.available() for n in nuclei):  # and nuclei != []:
+            return False
+        available = "\n".join(Molecule.available())
+        raise ValueError(f"Available molecules below:\n{available}")
 
     def _check_nuclei(self, nuclei: list[str]) -> None:  # raises ValueError()
         molecule_data = MOLECULE_DATA[self.radical]["data"]
@@ -493,15 +501,12 @@ class Molecule:
         self.hfcs = [data[n]["hfc"] for n in nuclei]
         self.custom_molecule = False
 
-    def _init_from_spin_db(
-        self, radical: str, nuclei: list[str], hfcs: list[float]
-    ) -> None:
+    def _init_from_spin_db(self, nuclei: list[str], hfcs: list[float]) -> None:
         self.multiplicities = [multiplicity(e) for e in nuclei]
         self.gammas_mT = [gamma_mT(e) for e in nuclei]
         self.hfcs = hfcs
 
     @classmethod
-    @property
     def available(cls):
         """List molecules available in the database.
 
@@ -510,7 +515,7 @@ class Molecule:
 
         Example:
 
-        >>> available = Molecule.available
+        >>> available = Molecule.available()
         >>> available[:10]
         ['2_6_aqds', 'adenine_cation', 'flavin_anion', 'flavin_neutral', 'tryptophan_cation', 'tyrosine_neutral']
 
@@ -520,6 +525,7 @@ class Molecule:
 
     @property
     def effective_hyperfine(self) -> float:
+        """Effective hyperfine for the entire molecule."""
         if self.custom_molecule:
             multiplicities = self.multiplicities
             hfcs = self.hfcs

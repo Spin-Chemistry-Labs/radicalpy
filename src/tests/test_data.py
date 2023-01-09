@@ -51,12 +51,12 @@ class IsotopeTestCase(unittest.TestCase):
 
     def test_number_of_isotopes(self):
         previous_number = 293
-        current_number = len(data.Isotope.available)
+        current_number = len(data.Isotope.available())
         self.assertEqual(current_number, previous_number)
 
     def test_all_isotope_jsons(self):
         """Test loading of all isotopes."""
-        for isotope in data.Isotope.available:
+        for isotope in data.Isotope.available():
             with self.subTest(isotope):
                 data.Isotope(isotope)
 
@@ -66,5 +66,5 @@ class MoleculeTestCase(unittest.TestCase):
 
     def test_number_of_molecules(self):
         previous_number = 6
-        current_number = len(data.Molecule.available)
+        current_number = len(data.Molecule.available())
         self.assertEqual(current_number, previous_number)
