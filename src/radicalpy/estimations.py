@@ -157,6 +157,7 @@ def correlation_time(*args: np.ndarray) -> float:
 
     Returns:
             float: The correlation time (s).
+    .. todo:: Change to different approach.
     """
     n = len(args) // 2
     As, taus = list(args)[:n], list(args)[n:]
