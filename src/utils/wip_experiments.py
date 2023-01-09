@@ -1,73 +1,76 @@
 #!/usr/bin/env python
 
-import json
+# HFC experiments
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from types import SimpleNamespace
+sys.path.insert(0, "..")  ##############################################
 
-from radicalpy import Q_, ureg
-from radicalpy.data import (
-    CONSTANTS_JSON,
-    SPIN_DATA,
-    SPIN_DATA_JSON,
-    Isotope,
-    IsotopeOld,
-    constants,
-    isotopes,
-)
+from functools import singledispatchmethod  # noqa E402
+from typing import Optional
 
-with open(CONSTANTS_JSON) as f:
-    CONSTANTS_DATA = json.load(f)
+import numpy as np
+from numpy.typing import NDArray
+from radicalpy import data  # noqa E402
 
 
-class Constant(Q_):
-    def __new__(cls, *args):
-        # By default, `pint.Quantity` aka `Q_` has `len(args) == 2`,
-        # i.e. value and unit, but a `Constant` we want to init with
-        # the single `dict` which contains all of that + other details
-        # which we want to save
-        if len(args) == 1:
-            data = args[0]
-            value = data.pop("value")
-            unit = ureg(data.pop("unit"))
-            obj = super().__new__(cls, value, unit)
-            obj.details = SimpleNamespace(**data)
-        else:
-            obj = super().__new__(cls, *args)
-        return obj
+class Hfc:
+    """The Hfc class represents isotropic and anisotropic HFC values.
+
+    Args:
+        hfc (float | list[list[float]]): The HFC value.  In case of a
+            single `float`, only the isotropic value is set.  In case
+            of a 3x3 matrix both the isotropic and anisotropic values
+            are stored.
+    """
+
+    _anisotropic: Optional[NDArray]
+    """Optional anisotropic HFC value."""
+
+    isotropic: float
+    """Isotropic HFC value."""
+
+    def __repr__(self):  # noqa D105
+        available = "not " if self._anisotropic is None else ""
+        return f"{self.isotropic:.4} <anisotropic {available}available>"
+
+    @singledispatchmethod
+    def __init__(self, hfc: list[list[float]]):
+        """Construct anisotropic `Hfc`."""
+        self._anisotropic = np.array(hfc)
+        if self._anisotropic.shape != (3, 3):
+            raise ValueError("Anisotropic HFCs should be a 3x3 matrix or a float!")
+        self.isotropic = self._anisotropic.trace() / 3
+
+    @__init__.register
+    def _(self, hfc: float):
+        """Construct isotropic only `Hfc`."""
+        self._anisotropic = None
+        self.isotropic = hfc
+
+    @property
+    def anisotropic(self) -> NDArray:
+        """Anisotropic value if available.
+
+        Returns:
+            NDarray: The anisotropic HFC values.
+        """
+        if self._anisotropic is None:
+            raise ValueError("The molecule doesn't support anisotropic HFCs")
+        return self._anisotropic
 
 
-hbar_data = CONSTANTS_DATA["hbar"]
-c_data = CONSTANTS_DATA["c"]
-print(f"{hbar_data=}")
-# hbar_value = hbar_data.pop("value")
-# const = Constant(hbar_value, hbar_data)
-hbar = Constant(hbar_data)
-print(f"{type(hbar)=}")
-print(f"{hbar=}")
-print(f"{100.0 * hbar=}")
-print(f"{100.0 * ureg('J s') + hbar=}")
-print(f"{hbar.details=}")
+# with(open(DATA_DIR/"molecules/flavin_anion.json") as f:
+#      flavin_dict = json.load(f)
+flavin_dict = data.MOLECULE_DATA["flavin_anion"]
+hfc_3d_data = flavin_dict["data"]["N5"]["hfc"]
+hfc_3d_obj = Hfc(hfc_3d_data)
+print(f"{hfc_3d_obj=}")
+print(f"{hfc_3d_obj.isotropic=}")
+print(f"{hfc_3d_obj.anisotropic=}")
 
-c = Constant(c_data)
-print(f"{type(c)=}")
-print(f"{c=}")
-print(f"{c.details=}")
-print(f"{hbar * c=}")
-prd = hbar * c
-print(f"{prd=}")
-print(f"{type(prd)=}")
-# print(f"{prd.details=}") # THIS BREAKS!
-
-print("=" * 80)
-
-print(constants.hbar)
-print(isotopes.E)
-print(Isotope.available_isotopes[:10])
-iso_39K = Isotope("39K")
-print(f"{iso_39K=}")
-print(f"{iso_39K.multiplicity=}")
-
-print("DONE!")
+adenine_dict = data.MOLECULE_DATA["adenine_cation"]
+hfc_1d_data = adenine_dict["data"]["N6-H1"]["hfc"]
+hfc_1d_obj = Hfc(hfc_1d_data)
+print(f"{hfc_1d_obj=}")
+print(f"{hfc_1d_obj.isotropic=}")
+print(f"{hfc_1d_obj.anisotropic=}")
