@@ -165,6 +165,27 @@ def correlation_time(*args: np.ndarray) -> float:
     return np.trapz(y, dx=1)
 
 
+def diffusion_coefficient(radius: float, temperature: float, eta: float):
+    """Diffusion coefficient.
+
+    The Stokes-Einstein relation.
+
+    Source: `Einstein, Ann. der Physik, 17, 549-560 (1905)`_.
+
+    Args:
+            radius (float): The radius of the molecule (m).
+            temperature (float): The temperature of the solution (K).
+            eta (float): The viscosity of the solution (kg/m/s).
+
+    Returns:
+            float: The diffusion coefficient (m^2/s).
+
+    .. _Einstein, Ann. der Physik, 17, 549-560 (1905):
+       https://doi.org/10.1002/andp.19053220806
+    """
+    return (C.k_B * T) / (6 * np.pi * eta * radius)
+
+
 def dipolar_interaction_MC(
     r: float | np.ndarray, theta: float | np.ndarray
 ) -> float | np.ndarray:
@@ -458,6 +479,24 @@ def k_recombination(MFE: float, k_escape: float) -> float:
     """
     b = (1 - 6 * MFE) * k_escape
     return 0.5 * (-b + np.sqrt(b**2 + 48 * k_escape**2 * MFE))
+
+
+def k_reencounter(encounter_dist: float, diff_coeff: float) -> float:
+    """Re-encounter rate.
+
+    Source: `Salikhov, J. Magn. Reson., 63, 271-279 (1985)`_.
+
+    Args:
+            encounter_dist (float): The effective re-encounter distance (R*) (m).
+            diff_coeff (float): The diffusion coefficient (m^2/s).
+
+    Returns:
+            float: The re-encounter rate (1/s).
+
+    .. _Salikhov, J. Magn. Reson., 63, 271-279 (1985):
+       https://doi.org/10.1016/0022-2364(85)90316-6
+    """
+    return (encounter_dist**2 / diff_coeff)**-1
 
 
 def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
