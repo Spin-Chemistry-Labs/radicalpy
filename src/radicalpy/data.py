@@ -173,7 +173,7 @@ class Isotope:
         return self.multiplicity2spin(self.multiplicity)
 
     @staticmethod
-    def spin2multiplicity():
+    def spin2multiplicity(spin: float) -> int:
         """Spin quantum number to multiplicity.
 
         Args:
@@ -183,9 +183,12 @@ class Isotope:
                 int: Spin multiplicity.
 
         """
+        if int(2 * spin) != 2 * spin:
+            raise ValueError("Spin needs to be half of an integer.")
+        return int(2 * spin) + 1
 
     @staticmethod
-    def multiplicity2spin(multiplicity: float) -> float:
+    def multiplicity2spin(multiplicity: int) -> float:
         """Spin multiplicity to spin quantum number.
 
         Args:
