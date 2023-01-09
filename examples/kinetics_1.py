@@ -109,7 +109,7 @@ def main():
     rates_on = {**base, **on}
     result_off = rp.classical.kinetics(time, initial, my_states, rates_off)
     result_on = rp.classical.kinetics(time, initial, my_states, rates_on)
-    fac = 0.4
+    fac = 0.07
 
     triplet_off = result_off[:, 2] + result_off[:, 3]
     radical_pair_off = result_off[:, 4] + result_off[:, 5] + result_off[:, 6]
