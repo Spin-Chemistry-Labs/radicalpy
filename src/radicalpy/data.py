@@ -224,6 +224,8 @@ class Molecule:
     of its nuclei.  When using the database, one needs to specify the
     name of the molecule and the list of its nuclei.
 
+    Examples:
+
     >>> Molecule(radical="adenine_cation",
     ...          nuclei=["N6-H1", "N6-H2"])
     Molecule: adenine_cation
