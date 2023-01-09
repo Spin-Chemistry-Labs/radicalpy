@@ -198,7 +198,7 @@ class Isotope:
     @property
     def spin_quantum_number(self) -> float:
         """Spin quantum numer of `Isotope`."""
-        return self.multiplicity2spin(self.multiplicity)
+        return multiplicity_to_spin(self.multiplicity)
 
 
 class Hfc:
@@ -525,7 +525,7 @@ class Molecule:
             hfcs = [data[n]["hfc"] for n in nuclei]
 
         # spin quantum number
-        s = np.array(list(map(spin_quantum_number, multiplicities)))
+        s = np.array(list(map(multiplicity_to_spin, multiplicities)))
         hfcs = [isotropic(h) if isinstance(h, list) else h for h in hfcs]
         hfcs = np.array(hfcs)
         return np.sqrt((4 / 3) * sum((hfcs**2 * s) * (s + 1)))
