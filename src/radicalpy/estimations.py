@@ -322,48 +322,6 @@ def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     return (g1sum + g2sum) / (9 * tau_c)
 
 
-def k_electron_transfer(R: float, deltaG: float = -1, lambd: float = 1) -> float:
-    """Electron transfer rate.
-
-    The default values return the maximum electron transfer rate (lambd = -deltaG).
-
-    Source: `Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010)`_.
-
-    Args:
-            R (float): The edge-to-edge separation (Å).
-            deltaG (float): The driving force (eV).
-            lambd (float): The reorganisation energy (eV).
-
-    Returns:
-            float: The electron transfer rate (1/s).
-
-    .. _Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010):
-       https://doi.org/10.1016/j.bbabio.2010.04.441
-
-    """
-    return 10 ** (13 - 0.6 * (R - 3.6) - 3.1 * ((deltaG + lambd) ** 2 / lambd))
-
-
-def k_excitation(
-    power: float, wavelength: float, volume: float, pathlength: float, epsilon: float
-) -> float:
-    """Groundstate excitation rate.
-
-    Args:
-            power (float): The excitation laser power (W).
-            wavelength (float): The excitation wavelength (m).
-            volume (float): The excitation beam volume (L).
-            pathlength (float): The path length of the sample cell (m).
-            epsilon (float): The extinction coefficient of the molecule (1/M/s).
-
-    Returns:
-            float: The excitation rate (1/s).
-    """
-    nu = C.c / wavelength  # Frequency of excitation beam (1/s)
-    I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
-    return I0 * np.log(10) * epsilon * pathlength
-
-
 def k_D(D: np.ndarray, tau_c: float) -> float:
     """D (dipolar)-dephasing rate for trajectories.
 
@@ -378,25 +336,6 @@ def k_D(D: np.ndarray, tau_c: float) -> float:
     """
     D_var_MHz = np.var(utils.mT_to_MHz(D))
     return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12
-
-
-def k_recombination(MFE: float, k_escape: float) -> float:
-    """Singlet recombination rate.
-
-    Source: `Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019)`_.
-
-    Args:
-            MFE (float): The magnetic field effect (0.00-1.00).
-            k_escape (float): The free radical formation rate constant (1/s).
-
-    Returns:
-            float: The singlet recombination rate (1/s).
-
-    .. _Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019):
-       https://doi.org/10.1080/00268976.2019.1580779
-    """
-    b = (1 - 6 * MFE) * k_escape
-    return 0.5 * (-b + np.sqrt(b**2 + 48 * k_escape**2 * MFE))
 
 
 def k_STD(J: np.ndarray, tau_c: float) -> float:
@@ -458,6 +397,67 @@ def k_ST_mixing(Bhalf: float) -> float:
        https://doi.org/10.1021/cr00091a003
     """
     return -C.g_e * (C.mu_B * 1e-3) * Bhalf / C.h
+
+
+def k_electron_transfer(R: float, deltaG: float = -1, lambd: float = 1) -> float:
+    """Electron transfer rate.
+
+    The default values return the maximum electron transfer rate (lambd = -deltaG).
+
+    Source: `Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010)`_.
+
+    Args:
+            R (float): The edge-to-edge separation (Å).
+            deltaG (float): The driving force (eV).
+            lambd (float): The reorganisation energy (eV).
+
+    Returns:
+            float: The electron transfer rate (1/s).
+
+    .. _Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010):
+       https://doi.org/10.1016/j.bbabio.2010.04.441
+
+    """
+    return 10 ** (13 - 0.6 * (R - 3.6) - 3.1 * ((deltaG + lambd) ** 2 / lambd))
+
+
+def k_excitation(
+    power: float, wavelength: float, volume: float, pathlength: float, epsilon: float
+) -> float:
+    """Groundstate excitation rate.
+
+    Args:
+            power (float): The excitation laser power (W).
+            wavelength (float): The excitation wavelength (m).
+            volume (float): The excitation beam volume (L).
+            pathlength (float): The path length of the sample cell (m).
+            epsilon (float): The extinction coefficient of the molecule (1/M/s).
+
+    Returns:
+            float: The excitation rate (1/s).
+    """
+    nu = C.c / wavelength  # Frequency of excitation beam (1/s)
+    I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
+    return I0 * np.log(10) * epsilon * pathlength
+
+
+def k_recombination(MFE: float, k_escape: float) -> float:
+    """Singlet recombination rate.
+
+    Source: `Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019)`_.
+
+    Args:
+            MFE (float): The magnetic field effect (0.00-1.00).
+            k_escape (float): The free radical formation rate constant (1/s).
+
+    Returns:
+            float: The singlet recombination rate (1/s).
+
+    .. _Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019):
+       https://doi.org/10.1080/00268976.2019.1580779
+    """
+    b = (1 - 6 * MFE) * k_escape
+    return 0.5 * (-b + np.sqrt(b**2 + 48 * k_escape**2 * MFE))
 
 
 def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
