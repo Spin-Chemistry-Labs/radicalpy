@@ -19,7 +19,9 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
 
-def kinetics(time: np.ndarray, initial_populations: list, states: list, rate_equations: dict) -> np.ndarray:
+def kinetics(
+    time: np.ndarray, initial_populations: list, states: list, rate_equations: dict
+) -> np.ndarray:
     """Kinetic rate equation solver.
 
     Constructs the matrix propagator and performs a time evolution simulation.
