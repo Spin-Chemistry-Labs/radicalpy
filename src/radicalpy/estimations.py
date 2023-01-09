@@ -496,7 +496,7 @@ def k_reencounter(encounter_dist: float, diff_coeff: float) -> float:
     .. _Salikhov, J. Magn. Reson., 63, 271-279 (1985):
        https://doi.org/10.1016/0022-2364(85)90316-6
     """
-    return (encounter_dist**2 / diff_coeff)**-1
+    return (encounter_dist**2 / diff_coeff) ** -1
 
 
 def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
