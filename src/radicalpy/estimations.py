@@ -183,7 +183,7 @@ def diffusion_coefficient(radius: float, temperature: float, eta: float):
     .. _Einstein, Ann. der Physik, 17, 549-560 (1905):
        https://doi.org/10.1002/andp.19053220806
     """
-    return (C.k_B * T) / (6 * np.pi * eta * radius)
+    return (C.k_B * temperature) / (6 * np.pi * eta * radius)
 
 
 def dipolar_interaction_MC(
