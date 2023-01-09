@@ -8,7 +8,7 @@ import radicalpy as rp
 
 def main():
     # Kinetic simulation of intermolecular magnetic field effects.
-    # The example given here is FMN-HEWL or FMN-Trp
+    # The examples given here are FMN-HEWL and FMN-Trp
 
     # kinetic parameters
     kex = 1.36e4  # groundstate excitation rate
