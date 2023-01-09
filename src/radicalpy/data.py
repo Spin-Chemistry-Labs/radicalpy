@@ -9,7 +9,22 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def spin_quantum_number(multiplicity: int) -> float:
+def spin_to_multiplicity(spin: float) -> int:
+    """Spin quantum number to multiplicity.
+
+    Args:
+            spin (float): Spin quantum number.
+
+    Returns:
+            int: Spin multiplicity.
+
+    """
+    if int(2 * spin) != 2 * spin:
+        raise ValueError("Spin needs to be half of an integer.")
+    return int(2 * spin) + 1
+
+
+def multiplicity_to_spin(multiplicity: int) -> float:
     """Spin multiplicity to spin quantum number.
 
     Args:
@@ -184,34 +199,6 @@ class Isotope:
     def spin_quantum_number(self) -> float:
         """Spin quantum numer of `Isotope`."""
         return self.multiplicity2spin(self.multiplicity)
-
-    @staticmethod
-    def spin2multiplicity(spin: float) -> int:
-        """Spin quantum number to multiplicity.
-
-        Args:
-                spin (float): Spin quantum number.
-
-        Returns:
-                int: Spin multiplicity.
-
-        """
-        if int(2 * spin) != 2 * spin:
-            raise ValueError("Spin needs to be half of an integer.")
-        return int(2 * spin) + 1
-
-    @staticmethod
-    def multiplicity2spin(multiplicity: int) -> float:
-        """Spin multiplicity to spin quantum number.
-
-        Args:
-                multiplicity (int): Spin multiplicity.
-
-        Returns:
-                float: Spin quantum number.
-
-        """
-        return float(multiplicity - 1) / 2.0
 
 
 class Hfc:
