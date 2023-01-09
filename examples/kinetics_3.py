@@ -42,7 +42,7 @@ def main():
     base = {}
     base["A-D"] = {
         "A-D": -kex,
-        "A-D*": kds,
+        "A*-D": kds,
         "S": kbet,
         "RP2": kbet2,
         "AR-D": ka,
