@@ -19,17 +19,19 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
 
-def kinetics(time, initial_populations, states, rate_equations):
+def kinetics(time: np.ndarray, initial_populations: list, states: list, rate_equations: dict) -> np.ndarray:
     """Kinetic rate equation solver.
 
+    Constructs the matrix propagator and performs a time evolution simulation.
+
     Args:
-            time (float): The mutual diffusion coefficient (m^2/s).
-            initial_populations (float): The time interval (s).
-            states
-            rate_equations
+            time (np.ndarray): The timescale of the reaction kinetics (s).
+            initial_populations (list): The initial populations of all states.
+            states (list): The states involved in the chemical reaction.
+            rate_equations (dict): The rate equations for all states.
 
     Returns:
-            float: The mean path between two radicals (m).
+            np.ndarray: The time evolution of all states.
     """
     shape = (len(states), len(states))
     arrange = [
