@@ -360,7 +360,7 @@ class Molecule:
     ):
         self.radical = radical if radical else "N/A"
         self.nuclei = nuclei
-        self.custom_molecule = True
+        self.custom_molecule = True  # todo(vatai): use info instead of this
         if self._check_molecule_or_spin_db(radical, nuclei):
             self._init_from_molecule_db(radical, nuclei)
         else:
