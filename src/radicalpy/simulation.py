@@ -8,7 +8,8 @@ import numpy as np
 import scipy as sp
 
 from . import utils
-from .data import Molecule, constants, gamma_mT, multiplicity
+from .data import Molecule, gamma_mT, multiplicity
+from .shared import constants
 
 
 class State(enum.Enum):
