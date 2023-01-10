@@ -4,7 +4,7 @@ import numpy as np
 
 from . import utils
 from .data import Isotope
-from .data import constants as C
+from .shared import constants as C
 from .simulation import HilbertSimulation
 
 

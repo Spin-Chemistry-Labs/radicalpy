@@ -2,11 +2,12 @@
 import json
 from functools import cache, singledispatchmethod
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
+
+DATA_DIR = Path(__file__).parent / "data"
 
 
 def spin_to_multiplicity(spin: float) -> int:
@@ -37,7 +38,6 @@ def multiplicity_to_spin(multiplicity: int) -> float:
     return float(multiplicity - 1) / 2.0
 
 
-DATA_DIR = Path(__file__).parent / "data"
 SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
 
@@ -79,36 +79,6 @@ def multiplicity(element: str):
     return SPIN_DATA[element]["multiplicity"]
 
 
-class Constant(float):
-    """Constan class.
-
-    Extends float with the `Constant.details` member.
-    """
-
-    details: SimpleNamespace
-    """Details (e.g. units) of the constant."""
-
-    def __new__(cls, details: dict):  # noqa D102
-        obj = super().__new__(cls, details.pop("value"))
-        obj.details = SimpleNamespace(**details)
-        return obj
-
-    @staticmethod
-    def fromjson(json_file: Path) -> SimpleNamespace:
-        """Read all constants from the JSON file.
-
-        Args:
-            json_file (str)
-
-        Returns:
-            SimpleNamespace: A namespace containing all constants.
-        """
-        with open(json_file, encoding="utf-8") as f:
-            data = json.load(f)
-        return SimpleNamespace(**{k: Constant(v) for k, v in data.items()})
-
-
-# TODO(vata): change `gamma` to `magnetogyric_ratio`
 class Isotope:
     """Class representing an isotope.
 
@@ -544,6 +514,3 @@ class Molecule:
     def num_particles(self) -> int:
         """Return the number of isotopes in the molecule."""
         return len(self.multiplicities)
-
-
-constants = Constant.fromjson(DATA_DIR / "constants.json")

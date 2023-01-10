@@ -8,6 +8,7 @@ from . import (  # noqa: F401 F403
     kinetics,
     plot,
     relaxation,
+    shared,
     simulation,
     utils,
 )

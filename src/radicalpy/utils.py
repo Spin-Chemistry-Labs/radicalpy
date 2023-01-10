@@ -11,7 +11,7 @@ from scipy.fftpack import fft, ifft, ifftshift
 from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
 
-from .data import constants as C
+from .shared import constants as C
 
 
 def Bhalf_fit(
