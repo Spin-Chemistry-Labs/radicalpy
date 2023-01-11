@@ -104,25 +104,6 @@ class HilbertTests(unittest.TestCase):
         if MEASURE_TIME:
             print(f"Time: {time.time() - self.start_time}")
 
-    @unittest.skip("Maybe bad test")
-    def test_molecule_properties(self):
-        molecule = rp.simulation.Molecule("adenine_cation", ["N6-H1", "C8-H"])
-        for prop in ["hfc", "element"]:
-            for i, h in enumerate(molecule._get_properties(prop)):
-                assert h == molecule._get_property(i, prop)
-
-    @unittest.skip("Maybe bad test")
-    def test_molecule_name(self):
-        molecule = rp.simulation.Molecule("adenine_cation", ["N6-H1", "C8-H"])
-        for i, h in enumerate(molecule.hfcs):
-            assert h == self.data[molecule.nuclei[i]]["hfc"]
-        for i, g in enumerate(molecule.gammas_mT):
-            elem = self.data[molecule.nuclei[i]]["element"]
-            assert g == rp.data.gamma_mT(elem)
-        for i, m in enumerate(molecule.multiplicities):
-            elem = self.data[molecule.nuclei[i]]["element"]
-            assert m == rp.data.multiplicity(elem)
-
     def test_molecule_raw(self):
         hfcs = [0.1, 0.2]
         multiplicities = [2, 3]
@@ -299,10 +280,6 @@ class HilbertTests(unittest.TestCase):
         print(f"\nError: {np.linalg.norm(Htrue - H)}")
         # plt.imshow(np.real(H))
         # plt.show()
-
-    @unittest.skip("Doesn't check anything")
-    def test_3d(self):
-        H = self.sim.zeeman_hamiltonian_3d(1, 10, 20)
 
     def test_dipolar_interaction_1d(self):
         approx = estimations.dipolar_interaction_isotropic(1)
