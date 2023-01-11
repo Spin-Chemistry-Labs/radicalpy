@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from src import radicalpy as rp
 from src.radicalpy import estimations, kinetics, relaxation
-from src.radicalpy.data import isotropic
 from src.radicalpy.simulation import Basis
 
 from . import radpy
