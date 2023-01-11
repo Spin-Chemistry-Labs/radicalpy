@@ -426,6 +426,11 @@ class Molecule:
 
     """
 
+    radical: Optional[str]
+    info: Optional[dict]
+    data: Optional[dict]
+    nuclei: list[Nucleus]
+
     def __repr__(self) -> str:  # noqa D105
         return (
             f"Molecule: {self.radical}"
