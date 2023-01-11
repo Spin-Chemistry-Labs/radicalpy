@@ -253,7 +253,7 @@ class Hfc:
         """Constructor for anisotropic `Hfc`."""
         self._anisotropic = np.array(hfc)
         if self._anisotropic.shape != (3, 3):
-            raise ValueError("Anisotropic HFCs should be a 3x3 matrix or a float!")
+            raise ValueError("Anisotropic HFCs should be a float or a 3x3 matrix!")
         self.isotropic = self._anisotropic.trace() / 3
 
     @__init__.register
@@ -304,7 +304,7 @@ class Molecule:
     >>> Molecule(radical="adenine_cation",
     ...          nuclei=["N6-H1", "N6-H2"])
     Molecule: adenine_cation
-      HFCs: [-0.63, -0.66]
+      HFCs: [-0.63 <anisotropic not available>, -0.66 <anisotropic not available>]
       Multiplicities: [3, 3]
       Magnetogyric ratios (mT): [19337.792, 19337.792]
       Number of particles: 2
@@ -356,7 +356,7 @@ class Molecule:
 
     >>> Molecule(nuclei=["1H", "14N"], hfcs=[0.41, 1.82])
     Molecule: N/A
-      HFCs: [0.41, 1.82]
+      HFCs: [0.41 <anisotropic not available>, 1.82 <anisotropic not available>]
       Multiplicities: [2, 3]
       Magnetogyric ratios (mT): [267522.18744, 19337.792]
       Number of particles: 2
@@ -366,7 +366,7 @@ class Molecule:
 
     >>> Molecule("isotopes", nuclei=["15N", "15N"], hfcs=[0.3, 1.7])
     Molecule: isotopes
-      HFCs: [0.3, 1.7]
+      HFCs: [0.3 <anisotropic not available>, 1.7 <anisotropic not available>]
       Multiplicities: [2, 2]
       Magnetogyric ratios (mT): [-27126.180399999997, -27126.180399999997]
       Number of particles: 2
@@ -393,7 +393,7 @@ class Molecule:
     ...          gammas_mT=[267522.18744, 267522.18744, 19337.792],
     ...          hfcs=[0.42, 1.01, 1.33])
     Molecule: N/A
-      HFCs: [0.42, 1.01, 1.33]
+      HFCs: [0.42 <anisotropic not available>, 1.01 <anisotropic not available>, 1.33 <anisotropic not available>]
       Multiplicities: [2, 2, 3]
       Magnetogyric ratios (mT): [267522.18744, 267522.18744, 19337.792]
       Number of particles: 3
@@ -402,7 +402,7 @@ class Molecule:
 
     >>> Molecule("my_flavin", multiplicities=[2], gammas_mT=[267522.18744], hfcs=[0.5])
     Molecule: my_flavin
-      HFCs: [0.5]
+      HFCs: [0.5 <anisotropic not available>]
       Multiplicities: [2]
       Magnetogyric ratios (mT): [267522.18744]
       Number of particles: 1
@@ -445,9 +445,7 @@ class Molecule:
             else:
                 self.multiplicities = multiplicities
                 self.gammas_mT = gammas_mT
-                self.hfcs = hfcs
-        if self.hfcs and isinstance(self.hfcs[0], list):
-            self.hfcs = [np.array(h) for h in self.hfcs]
+                self.hfcs = [Hfc(h) for h in hfcs]
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) == self.num_particles
@@ -485,13 +483,13 @@ class Molecule:
         self.radical = radical
         self.gammas_mT = [gamma_mT(e) for e in elem]
         self.multiplicities = [multiplicity(e) for e in elem]
-        self.hfcs = [data[n]["hfc"] for n in nuclei]
+        self.hfcs = [Hfc(data[n]["hfc"]) for n in nuclei]
         self.custom_molecule = False
 
     def _init_from_spin_db(self, nuclei: list[str], hfcs: list[float]) -> None:
         self.multiplicities = [multiplicity(e) for e in nuclei]
         self.gammas_mT = [gamma_mT(e) for e in nuclei]
-        self.hfcs = hfcs
+        self.hfcs = [Hfc(h) for h in hfcs]
 
     @classmethod
     def available(cls):
@@ -522,13 +520,12 @@ class Molecule:
             nuclei = list(data.keys())
             elem = [data[n]["element"] for n in nuclei]
             multiplicities = [multiplicity(e) for e in elem]
-            hfcs = [data[n]["hfc"] for n in nuclei]
+            hfcs = [Hfc(data[n]["hfc"]) for n in nuclei]
 
         # spin quantum number
-        s = np.array(list(map(multiplicity_to_spin, multiplicities)))
-        hfcs = [isotropic(h) if isinstance(h, list) else h for h in hfcs]
-        hfcs = np.array(hfcs)
-        return np.sqrt((4 / 3) * sum((hfcs**2 * s) * (s + 1)))
+        spns_np = np.array(list(map(multiplicity_to_spin, multiplicities)))
+        hfcs_np = np.array([h.isotropic for h in hfcs])
+        return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
 
     @property
     def num_particles(self) -> int:

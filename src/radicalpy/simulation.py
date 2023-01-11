@@ -73,13 +73,7 @@ class HilbertSimulation:
     Magnetogyric ratios (mT): [-176085963.023, -176085963.023, 19337.792, 267522.18744, 267522.18744]
     Nuclei: ['N5', 'Hbeta1', 'H1']
     Couplings: [0, 1, 1]
-    HFCs (mT): [array([[-0.06819637,  0.01570029,  0.08701531],
-           [ 0.01570029, -0.03652102,  0.27142597],
-           [ 0.08701531,  0.27142597,  1.64713923]]), array([[ 1.5808, -0.0453, -0.0506],
-           [-0.0453,  1.5575,  0.0988],
-           [-0.0506,  0.0988,  1.6752]]), array([[-0.992 , -0.2091, -0.2003],
-           [-0.2091, -0.2631,  0.2803],
-           [-0.2003,  0.2803, -0.5398]])]
+    HFCs (mT): [0.5141 <anisotropic available>, 1.605 <anisotropic available>, -0.5983 <anisotropic available>]
     """
 
     def __init__(
@@ -357,17 +351,17 @@ class HilbertSimulation:
         """
         if hfc_anisotropy:
             for h in self.hfcs:
-                if not isinstance(h, np.ndarray) and h.shape == (3, 3):
+                if h.anisotropic is None:
                     raise ValueError(
-                        "Not all molecules have 3x3 HFC tensors! Please use `hfc_anisotropy=False`"
+                        "Not all molecules have anisotropic HFCs! Please use `hfc_anisotropy=False`"
                     )
 
         if hfc_anisotropy:
             prodop = self.product_operator_3d
-            hfcs = self.hfcs
+            hfcs = [h.anisotropic for h in self.hfcs]
         else:
             prodop = self.product_operator
-            hfcs = [isotropic(h) if isinstance(h, np.ndarray) else h for h in self.hfcs]
+            hfcs = [h.isotropic for h in self.hfcs]
         return sum(
             [
                 self.gammas_mT[ei] * prodop(ei, self.num_electrons + ni, hfcs[ni])
