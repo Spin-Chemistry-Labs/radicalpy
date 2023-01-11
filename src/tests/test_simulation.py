@@ -36,10 +36,10 @@ RADICAL_PAIR_RAW = [
     rp.simulation.Molecule(
         multiplicities=[2, 2],
         gammas_mT=[rp.data.gamma_mT("E"), rp.data.gamma_mT("E")],
-        hfcs=[0, 0],
+        hfcs=[0.0, 0.0],
     ),
     rp.simulation.Molecule(
-        multiplicities=[2], gammas_mT=[rp.data.gamma_mT("E")], hfcs=[0]
+        multiplicities=[2], gammas_mT=[rp.data.gamma_mT("E")], hfcs=[0.0]
     ),
 ]
 
@@ -133,9 +133,9 @@ class HilbertTests(unittest.TestCase):
             hfcs=hfcs, multiplicities=multiplicities, gammas_mT=gammas_mT
         )
         for i in range(2):
-            assert hfcs[i] == molecule.hfcs[i]
-            assert multiplicities[i] == molecule.multiplicities[i]
-            assert gammas_mT[i] == molecule.gammas_mT[i]
+            self.assertEqual(hfcs[i], molecule.hfcs[i].isotropic)
+            self.assertEqual(multiplicities[i], molecule.multiplicities[i])
+            self.assertEqual(gammas_mT[i], molecule.gammas_mT[i])
 
     def test_molecule_empty(self):
         """Test empty molecule.
@@ -208,7 +208,7 @@ class HilbertTests(unittest.TestCase):
                     self.sim.num_particles,
                     ei,
                     2 + ni,
-                    isotropic(hfcs[ni]),
+                    hfcs[ni].isotropic,
                     self.gamma_mT,
                 )
                 for ni, ei in enumerate(couplings)
