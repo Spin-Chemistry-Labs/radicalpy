@@ -37,18 +37,6 @@ def multiplicity_to_spin(multiplicity: int) -> float:
     return float(multiplicity - 1) / 2.0
 
 
-def isotropic(anisotropic: np.ndarray | list) -> float:
-    """Anisotropic tensor to isotropic value.
-
-    Args:
-            anisotropic (np.ndarray or list): The 3x3 interaction tensor matrix.
-
-    Returns:
-            float: isotropic value.
-    """
-    return np.trace(anisotropic) / 3
-
-
 DATA_DIR = Path(__file__).parent / "data"
 SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
 MOLECULES_DIR = DATA_DIR / "molecules"
@@ -468,9 +456,7 @@ class Molecule:
             if nucleus not in molecule_data:
                 keys = molecule_data.keys()
                 hfcs = [molecule_data[k]["hfc"] for k in keys]
-                hfcs = [
-                    isotropic(np.array(h)) if isinstance(h, list) else h for h in hfcs
-                ]
+                hfcs = [Hfc(h).isotropic for h in hfcs]
                 pairs = sorted(
                     zip(keys, hfcs), key=lambda t: np.abs(t[1]), reverse=True
                 )
