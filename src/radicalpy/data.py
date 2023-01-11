@@ -124,8 +124,7 @@ class Isotope:
     {'name': 'Electron', 'source': 'CODATA 2018'}
     """
 
-    def __repr__(self):
-        """Isotope representation."""
+    def __repr__(self) -> str:  # noqa D105
         lines = [
             f"Symbol: {self.symbol}",
             f"Multiplicity: {self.multiplicity}",
@@ -140,8 +139,7 @@ class Isotope:
         with open(DATA_DIR / "spin_data.json", encoding="utf-8") as f:
             return json.load(f)
 
-    def __init__(self, symbol: str):
-        """Isotope constructor."""
+    def __init__(self, symbol: str):  # noqa D105
         isotopes_data = self._load_data()
         isotope = dict(isotopes_data[symbol])
         self.symbol = symbol
@@ -232,21 +230,19 @@ class Hfc:
     isotropic: float
     """Isotropic HFC value."""
 
-    def __repr__(self):  # noqa D105
+    def __repr__(self) -> str:  # noqa D105
         available = "not " if self._anisotropic is None else ""
         return f"{self.isotropic:.4} <anisotropic {available}available>"
 
     @singledispatchmethod
-    def __init__(self, hfc: list[list[float]]):
-        """Constructor for anisotropic `Hfc`."""
+    def __init__(self, hfc: list[list[float]]):  # noqa D105
         self._anisotropic = np.array(hfc)
         if self._anisotropic.shape != (3, 3):
             raise ValueError("Anisotropic HFCs should be a float or a 3x3 matrix!")
         self.isotropic = self._anisotropic.trace() / 3
 
     @__init__.register
-    def _(self, hfc: float):
-        """Constructor for isotropic only `Hfc`."""
+    def _(self, hfc: float):  # noqa D105
         self._anisotropic = None
         self.isotropic = hfc
 
@@ -275,18 +271,19 @@ class Nucleus:
     multiplicity: int
     hfc: Hfc
 
-    def __repr__(self):
+    def __repr__(self) -> str:  # noqa D105
         return f"Nucleus({self.gamma}, {self.multiplicity}, {self.hfc})"
 
-    @classmethod
-    def fromisotope(cls, isotope: str, hfc: Hfc):
-        iso = Isotope(isotope)
-        return cls(iso.gamma, iso.multiplicity, hfc)
-
-    def __init__(self, gamma, multiplicity, hfc):
+    def __init__(self, gamma, multiplicity, hfc):  # noqa D105
         self.gamma = gamma
         self.multiplicity = multiplicity
         self.hfc = hfc
+
+    @classmethod
+    def fromisotope(cls, isotope: str, hfc: Hfc):
+        """Construct a `Nucleus` from an `Isotope`."""
+        iso = Isotope(isotope)
+        return cls(iso.gamma, iso.multiplicity, hfc)
 
     @property
     def gamma_mT(self):
@@ -429,12 +426,7 @@ class Molecule:
 
     """
 
-    def __repr__(self) -> str:
-        """Pretty print the molecule.
-
-        Returns:
-            str: Representation of a molecule.
-        """
+    def __repr__(self) -> str:  # noqa D105
         return (
             f"Molecule: {self.radical}"
             # f"\n  Nuclei: {self.nuclei}"
@@ -445,7 +437,7 @@ class Molecule:
             # f"\n  elements: {self.elements}"
         )
 
-    def __init__(
+    def __init__(  # noqa D105
         self,
         radical: str = "",
         nuclei: list[str] = [],
@@ -453,7 +445,6 @@ class Molecule:
         gammas_mT: list[float] = [],
         hfcs: list[float] = [],
     ):
-        """Molecule constructor."""
         self.radical = radical if radical else "N/A"
         self.nuclei = nuclei
         self.custom_molecule = True  # todo(vatai): use info instead of this
