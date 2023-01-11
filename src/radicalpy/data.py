@@ -449,14 +449,13 @@ class Molecule:
         self.nuclei = nuclei
         self.custom_molecule = True  # todo(vatai): use info instead of this
         if self._check_molecule_or_spin_db(radical, nuclei):
-            self._init_from_molecule_db(radical, nuclei)
+            return
+        if nuclei:
+            self._init_from_spin_db(nuclei, hfcs)
         else:
-            if nuclei:
-                self._init_from_spin_db(nuclei, hfcs)
-            else:
-                self.multiplicities = multiplicities
-                self.gammas_mT = gammas_mT
-                self.hfcs = [Hfc(h) for h in hfcs]
+            self.multiplicities = multiplicities
+            self.gammas_mT = gammas_mT
+            self.hfcs = [Hfc(h) for h in hfcs]
         assert len(self.multiplicities) == self.num_particles
         assert len(self.gammas_mT) == self.num_particles
         assert len(self.hfcs) == self.num_particles
@@ -464,6 +463,13 @@ class Molecule:
     def _check_molecule_or_spin_db(self, radical, nuclei):
         if radical in self.available():
             self._check_nuclei(nuclei)
+            data = MOLECULE_DATA[radical]["data"]
+            elem = [data[n]["element"] for n in nuclei]
+            self.radical = radical
+            self.gammas_mT = [gamma_mT(e) for e in elem]
+            self.multiplicities = [multiplicity(e) for e in elem]
+            self.hfcs = [Hfc(data[n]["hfc"]) for n in nuclei]
+            self.custom_molecule = False
             return True
         # To error on creating an empty (no nuclei) molecule with
         # a custom name, modify the line below to include the
@@ -485,15 +491,6 @@ class Molecule:
                 )
                 available = "\n".join([f"{k} (hfc = {h})" for k, h in pairs])
                 raise ValueError(f"Available nuclei below.\n{available}")
-
-    def _init_from_molecule_db(self, radical: str, nuclei: list[str]) -> None:
-        data = MOLECULE_DATA[radical]["data"]
-        elem = [data[n]["element"] for n in nuclei]
-        self.radical = radical
-        self.gammas_mT = [gamma_mT(e) for e in elem]
-        self.multiplicities = [multiplicity(e) for e in elem]
-        self.hfcs = [Hfc(data[n]["hfc"]) for n in nuclei]
-        self.custom_molecule = False
 
     def _init_from_spin_db(self, nuclei: list[str], hfcs: list[float]) -> None:
         self.multiplicities = [multiplicity(e) for e in nuclei]
