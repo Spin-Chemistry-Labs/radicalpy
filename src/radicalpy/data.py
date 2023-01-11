@@ -262,6 +262,38 @@ class Hfc:
         return self._anisotropic
 
 
+class Nucleus:
+    """A nucleus in a molecue.
+
+    >>> Nucleus.fromisotope("1H", Hfc(1.1))
+    Nucleus(267522187.44, 2, 1.1 <anisotropic not available>)
+    >>> Nucleus(1.0, 2, Hfc(3.0))
+    Nucleus(1.0, 2, 3.0 <anisotropic not available>)
+    """
+
+    gamma: float
+    multiplicity: int
+    hfc: Hfc
+
+    def __repr__(self):
+        return f"Nucleus({self.gamma}, {self.multiplicity}, {self.hfc})"
+
+    @classmethod
+    def fromisotope(cls, isotope: str, hfc: Hfc):
+        iso = Isotope(isotope)
+        return cls(iso.gamma, iso.multiplicity, hfc)
+
+    def __init__(self, gamma, multiplicity, hfc):
+        self.gamma = gamma
+        self.multiplicity = multiplicity
+        self.hfc = hfc
+
+    @property
+    def gamma_mT(self):
+        """Return gamma value in mT."""
+        return self.gamma * 0.001
+
+
 class Molecule:
     """Representation of a molecule for the simulation.
 
