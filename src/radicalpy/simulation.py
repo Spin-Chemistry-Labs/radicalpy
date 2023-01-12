@@ -8,7 +8,7 @@ import numpy as np
 import scipy as sp
 
 from . import utils
-from .data import Molecule, gamma_mT, multiplicity
+from .data import Molecule, constants, gamma_mT, multiplicity
 
 
 class State(enum.Enum):
@@ -124,7 +124,7 @@ class HilbertSimulation:
 
     @property
     def electron_gammas_mT(self):
-        g = 2.0023  # free electron g-factor
+        g = -constants.g_e  #  2.0023  # free electron g-factor
         gfactor = [g] * self.num_electrons
         if self.custom_gfactors:
             # overwrite gfactor list TODO
