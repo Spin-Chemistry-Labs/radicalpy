@@ -108,6 +108,7 @@ class Constant(float):
         return SimpleNamespace(**{k: Constant(v) for k, v in data.items()})
 
 
+# TODO(vata): change `gamma` to `magnetogyric_ratio`
 class Isotope:
     """Class representing an isotope.
 
