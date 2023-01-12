@@ -34,6 +34,14 @@ class EstimationsTests(unittest.TestCase):
         viscosity = rp.estimations.aqueous_glycerol_viscosity(0.2, 5)
         self.assertAlmostEqual(gold, viscosity)
 
+    def test_diffusion_coefficient(self):
+        gold = 6.236355316540426e-10
+        radius = 3.5e-10
+        temperature = 298
+        eta = 1e-3
+        diff = rp.estimations.diffusion_coefficient(radius, temperature, eta)
+        self.assertAlmostEqual(gold, diff)
+
     def test_g_tensor_relaxation_rate(self):
         gold = 2138022072021.6843
         tau_c = 5e-12
@@ -41,6 +49,20 @@ class EstimationsTests(unittest.TestCase):
         g2 = [2.00429, 2.00389, 2.00216]
         k_g = rp.estimations.g_tensor_relaxation_rate(tau_c, g1, g2)
         self.assertAlmostEqual(gold, k_g)
+
+    def test_k_STD_microreactor(self):
+        gold = 21131271.24997083
+        D = 5e-11
+        V = 2e-26
+        k_std = rp.estimations.k_STD_microreactor(D, V)
+        self.assertAlmostEqual(gold, k_std)
+
+    def test_k_ST_mixing(self):
+        gold = 7.277263377794495e07
+        Bhalf = 2.5967338498081585
+        k_ST = rp.estimations.k_ST_mixing(Bhalf=Bhalf)
+        scale = 1e-7
+        self.assertAlmostEqual(gold * scale, k_ST * scale, places=3)
 
     def test_k_electron_transfer(self):
         gold = 15135612.484362071
@@ -65,19 +87,12 @@ class EstimationsTests(unittest.TestCase):
         k_rec = rp.estimations.k_recombination(MFE, k_escape)
         self.assertAlmostEqual(gold, k_rec)
 
-    def test_k_STD_microreactor(self):
-        gold = 21131271.24997083
-        D = 5e-11
-        V = 2e-26
-        k_std = rp.estimations.k_STD_microreactor(D, V)
-        self.assertAlmostEqual(gold, k_std)
-
-    def test_k_ST_mixing(self):
-        gold = 7.277263377794495e07
-        Bhalf = 2.5967338498081585
-        k_ST = rp.estimations.k_ST_mixing(Bhalf=Bhalf)
-        scale = 1e-7
-        self.assertAlmostEqual(gold * scale, k_ST * scale, places=3)
+    def test_k_reencounter(self):
+        gold = 623635531.6540426
+        encounter_dist = 10e-10
+        diff_coeff = 6.236355316540426e-10
+        k_reen = rp.estimations.k_reencounter(encounter_dist, diff_coeff)
+        self.assertAlmostEqual(gold, k_reen)
 
     def test_k_triplet_relaxation(self):
         gold = 187966399.9469546
