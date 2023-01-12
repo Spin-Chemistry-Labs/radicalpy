@@ -421,17 +421,21 @@ def k_ST_mixing(Bhalf: float) -> float:
     return -C.g_e * (C.mu_B * 1e-3) * Bhalf / C.h
 
 
-def k_electron_transfer(R: float, deltaG: float = -1, lambd: float = 1) -> float:
+def k_electron_transfer(
+    separation: float, driving_force: float = -1, reorganisation_energy: float = 1
+) -> float:
     """Electron transfer rate.
 
-    The default values return the maximum electron transfer rate (lambd = -deltaG).
+    The default values (when `-driving_force ==
+    reorganisation_energy`) return the maximum electron transfer rate.
 
     Source: `Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010)`_.
 
     Args:
-            R (float): The edge-to-edge separation (Å).
-            deltaG (float): The driving force (eV).
-            lambd (float): The reorganisation energy (eV).
+            separation (float): The edge-to-edge separation, R (Å).
+            driving_force (float): The driving force, :math:`\Delta G` (eV).
+            reorganisation_energy (float): The reorganisation energy,
+                :math:`\lambda` (eV).
 
     Returns:
             float: The electron transfer rate (1/s).
@@ -440,7 +444,11 @@ def k_electron_transfer(R: float, deltaG: float = -1, lambd: float = 1) -> float
        https://doi.org/10.1016/j.bbabio.2010.04.441
 
     """
-    return 10 ** (13 - 0.6 * (R - 3.6) - 3.1 * ((deltaG + lambd) ** 2 / lambd))
+    return 10 ** (
+        13
+        - 0.6 * (separation - 3.6)
+        - 3.1 * ((driving_force + reorganisation_energy) ** 2 / reorganisation_energy)
+    )
 
 
 def k_excitation(
@@ -488,14 +496,16 @@ def k_reencounter(encounter_dist: float, diff_coeff: float) -> float:
     Source: `Salikhov, J. Magn. Reson., 63, 271-279 (1985)`_.
 
     Args:
-            encounter_dist (float): The effective re-encounter distance (R*) (m).
-            diff_coeff (float): The diffusion coefficient (m^2/s).
+            encounter_dist (float): The effective re-encounter
+                distance, R* (m).
+            diff_coeff (float): The diffusion coefficient, D (m^2/s).
 
     Returns:
             float: The re-encounter rate (1/s).
 
     .. _Salikhov, J. Magn. Reson., 63, 271-279 (1985):
        https://doi.org/10.1016/0022-2364(85)90316-6
+
     """
     return (encounter_dist**2 / diff_coeff) ** -1
 
