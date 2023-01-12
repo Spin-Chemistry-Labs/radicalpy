@@ -351,6 +351,7 @@ class HilbertSimulation:
         """
         if hfc_anisotropy:
             for h in self.hfcs:
+                # TODO(vatai) try except not is None
                 if h.anisotropic is None:
                     raise ValueError(
                         "Not all molecules have anisotropic HFCs! Please use `hfc_anisotropy=False`"
