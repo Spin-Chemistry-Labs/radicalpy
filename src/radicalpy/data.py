@@ -197,6 +197,7 @@ class Hfc:
             are stored.
 
     Examples:
+
     >>> with open(DATA_DIR/"molecules/flavin_anion.json") as f:
     ...      flavin_dict = json.load(f)
     >>> hfc_3d_data = flavin_dict["data"]["N5"]["hfc"]
@@ -221,7 +222,7 @@ class Hfc:
     >>> hfc_1d_obj.anisotropic
     Traceback (most recent call last):
     ...
-    ValueError: The molecule doesn't support anisotropic HFCs
+    ValueError: No anisotropic HFC data available.
     """
 
     _anisotropic: Optional[NDArray]
