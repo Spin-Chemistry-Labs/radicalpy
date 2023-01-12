@@ -256,7 +256,7 @@ class Hfc:
             NDarray: The anisotropic HFC values.
         """
         if self._anisotropic is None:
-            raise ValueError("The molecule doesn't support anisotropic HFCs")
+            raise ValueError("No anisotropic HFC data available.")
         return self._anisotropic
 
 
