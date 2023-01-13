@@ -3,6 +3,8 @@
 import doctest
 import unittest
 
+import numpy as np
+import numpy.testing
 from src.radicalpy import data
 
 
@@ -15,15 +17,54 @@ class IsotopeTestCase(unittest.TestCase):
     """Test case for the `Isotope` class."""
 
     def test_number_of_isotopes(self):
+        """Number of isotopes.
+
+        Changes when isotope is added or removed from the database.
+        """
         previous_number = 293
         current_number = len(data.Isotope.available())
         self.assertEqual(current_number, previous_number)
 
     def test_all_isotope_jsons(self):
-        """Test loading of all isotopes."""
+        """Load all isotopes."""
         for isotope in data.Isotope.available():
             with self.subTest(isotope):
                 data.Isotope(isotope)
+
+
+class HfcTestCase(unittest.TestCase):
+    """Test case for the `Hfc` class."""
+
+    def setUp(self):
+        """Setup for each test."""
+        self.isotropic = 42.0
+        self.anisotropic = [[float(i * 3 + j + 1) for j in range(3)] for i in range(3)]
+
+    def test_1d_isotropic(self):
+        """Query isotropic when constructed from float."""
+        h = data.Hfc(self.isotropic)
+        self.assertEqual(h.isotropic, self.isotropic)
+
+    def test_1d_anisotropic(self):
+        """Query anisotropic when constructed from float."""
+        h = data.Hfc(self.isotropic)
+        self.assertRaises(ValueError, lambda: h.anisotropic)
+
+    def test_3d_isotropic(self):
+        """Query isotropic when constructed from matrix."""
+        h = data.Hfc(self.anisotropic)
+        expected = np.trace(self.anisotropic) / 3
+        self.assertEqual(h.isotropic, expected)
+
+    def test_3d_anisotropic(self):
+        """Query anisotropic when constructed from matrix."""
+        h = data.Hfc(self.anisotropic)
+        np.testing.assert_almost_equal(h.anisotropic, self.anisotropic)
+
+    def test_3d_bad_constructor(self):
+        """Bad ways to create HFCs."""
+        self.assertRaises(ValueError, data.Hfc, [[1.0, 2.0], [3.0, 4.0]])
+        self.assertRaises(ValueError, data.Hfc, 42)
 
 
 class MoleculeTestCase(unittest.TestCase):
