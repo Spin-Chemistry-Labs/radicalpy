@@ -19,10 +19,15 @@ class IsotopeTestCase(unittest.TestCase):
     def test_number_of_isotopes(self):
         """Number of isotopes.
 
-        Changes when isotope is added or removed from the database.
+        Changes when:
+
+        - multiplicity and gyromagnetic ratio change;
+        - isotopes are added or removed from the database.
         """
         previous_number = 293
-        current_number = len(data.Isotope.available())
+        available = data.Isotope.available()
+        self.assertEqual(available[:3], ["100Ru", "101Ru", "102Pd"])
+        current_number = len(available)
         self.assertEqual(current_number, previous_number)
 
     def test_all_isotope_jsons(self):
@@ -30,6 +35,20 @@ class IsotopeTestCase(unittest.TestCase):
         for isotope in data.Isotope.available():
             with self.subTest(isotope):
                 data.Isotope(isotope)
+
+    def test_members(self):
+        """Test isotope members and methods."""
+        iso = data.Isotope("14N")
+        self.assertEqual(iso.details, {"source": "NMR Enc. 1996"})
+        self.assertEqual(iso.gamma, 19337792.0)
+        self.assertEqual(iso.gamma, 1000 * iso.gamma_mT)
+        self.assertEqual(iso.multiplicity, 3)
+        self.assertEqual(iso.spin_quantum_number, 1)
+
+    def test_constructors(self):
+        """Test construction of existing and non-existing Isotope."""
+        self.assertIsInstance(data.Isotope("15N"), data.Isotope)
+        self.assertRaises(ValueError, data.Isotope, "Kryp")
 
 
 class HfcTestCase(unittest.TestCase):

@@ -95,7 +95,10 @@ class Isotope:
     {'name': 'Electron', 'source': 'CODATA 2018'}
     """
 
+    _isotope_data: dict = None
+
     def __repr__(self) -> str:  # noqa D105
+        """Isotope representation."""
         lines = [
             f"Symbol: {self.symbol}",
             f"Multiplicity: {self.multiplicity}",
@@ -104,15 +107,20 @@ class Isotope:
         ]
         return "\n".join(lines)
 
-    @staticmethod
-    @cache
-    def _load_data() -> dict:
-        with open(DATA_DIR / "spin_data.json", encoding="utf-8") as f:
-            return json.load(f)
+    @classmethod
+    def _ensure_isotope_data(cls) -> dict:
+        if cls._isotope_data is None:
+            with open(DATA_DIR / "spin_data.json", encoding="utf-8") as f:
+                cls._isotope_data = json.load(f)
 
     def __init__(self, symbol: str):  # noqa D105
-        isotopes_data = self._load_data()
-        isotope = dict(isotopes_data[symbol])
+        """Isotope constructor."""
+        self._ensure_isotope_data()
+        if symbol not in self._isotope_data:
+            raise ValueError(
+                f"Isotpoe {symbol} not in database. " "See `Isotope.available()`"
+            )
+        isotope = dict(self._isotope_data[symbol])
         self.symbol = symbol
         self.multiplicity = isotope.pop("multiplicity")
         self.gamma = isotope.pop("gamma")
@@ -149,7 +157,8 @@ class Isotope:
         Details: {'name': 'Neutron', 'source': 'CODATA 2018'}
 
         """
-        items = cls._load_data().items()
+        cls._ensure_isotope_data()
+        items = cls._isotope_data.items()
         return sorted([k for k, v in items if "multiplicity" in v and "gamma" in v])
 
     @property
