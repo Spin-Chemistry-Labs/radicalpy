@@ -117,12 +117,6 @@ class Isotope:
         ]
         return "\n".join(lines)
 
-    @classmethod
-    def _ensure_isotope_data(cls) -> dict:
-        if cls._isotope_data is None:
-            with open(DATA_DIR / "spin_data.json", encoding="utf-8") as f:
-                cls._isotope_data = json.load(f)
-
     def __init__(self, symbol: str):  # noqa D105
         """Isotope constructor."""
         self._ensure_isotope_data()
@@ -136,10 +130,11 @@ class Isotope:
         self.gamma = isotope.pop("gamma")
         self.details = isotope
 
-    @property
-    def gamma_mT(self):
-        """Return gamma value in mT."""
-        return self.gamma * 0.001
+    @classmethod
+    def _ensure_isotope_data(cls) -> dict:
+        if cls._isotope_data is None:
+            with open(DATA_DIR / "spin_data.json", encoding="utf-8") as f:
+                cls._isotope_data = json.load(f)
 
     @classmethod
     def available(cls) -> list[str]:
@@ -170,6 +165,11 @@ class Isotope:
         cls._ensure_isotope_data()
         items = cls._isotope_data.items()
         return sorted([k for k, v in items if "multiplicity" in v and "gamma" in v])
+
+    @property
+    def gamma_mT(self):
+        """Return gamma value in mT."""
+        return self.gamma * 0.001
 
     @property
     def spin_quantum_number(self) -> float:
