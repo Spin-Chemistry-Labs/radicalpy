@@ -40,8 +40,8 @@ class IsotopeTestCase(unittest.TestCase):
         """Test isotope members and methods."""
         iso = data.Isotope("14N")
         self.assertEqual(iso.details, {"source": "NMR Enc. 1996"})
-        self.assertEqual(iso.gamma, 19337792.0)
-        self.assertEqual(iso.gamma, 1000 * iso.gamma_mT)
+        self.assertEqual(iso.magnetogyric_ratio, 19337792.0)
+        self.assertEqual(iso.magnetogyric_ratio, 1000 * iso.gamma_mT)
         self.assertEqual(iso.multiplicity, 3)
         self.assertEqual(iso.spin_quantum_number, 1)
 

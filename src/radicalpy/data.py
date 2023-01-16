@@ -85,13 +85,13 @@ class Isotope:
 
     Examples:
 
-    Create an isotop using the database.
+    Create an isotope using the database.
 
     >>> E = Isotope("E")
     >>> E
     Symbol: E
     Multiplicity: 2
-    Gamma: -176085963023.0
+    Magnetogyric ratio: -176085963023.0
     Details: {'name': 'Electron', 'source': 'CODATA 2018'}
 
     Query the multiplicity:
@@ -112,7 +112,7 @@ class Isotope:
         lines = [
             f"Symbol: {self.symbol}",
             f"Multiplicity: {self.multiplicity}",
-            f"Gamma: {self.gamma}",
+            f"Magnetogyric ratio: {self.magnetogyric_ratio}",
             f"Details: {self.details}",
         ]
         return "\n".join(lines)
@@ -127,7 +127,7 @@ class Isotope:
         isotope = dict(self._isotope_data[symbol])
         self.symbol = symbol
         self.multiplicity = isotope.pop("multiplicity")
-        self.gamma = isotope.pop("gamma")
+        self.magnetogyric_ratio = isotope.pop("gamma")
         self.details = isotope
 
     @classmethod
@@ -152,13 +152,13 @@ class Isotope:
         >>> Isotope(available[-5])
         Symbol: E
         Multiplicity: 2
-        Gamma: -176085963023.0
+        Magnetogyric ratio: -176085963023.0
         Details: {'name': 'Electron', 'source': 'CODATA 2018'}
 
         >>> Isotope(available[-2])
         Symbol: N
         Multiplicity: 2
-        Gamma: -183247171.0
+        Magnetogyric ratio: -183247171.0
         Details: {'name': 'Neutron', 'source': 'CODATA 2018'}
 
         """
@@ -169,7 +169,7 @@ class Isotope:
     @property
     def gamma_mT(self):
         """Return gamma value in mT."""
-        return self.gamma * 0.001
+        return self.magnetogyric_ratio * 0.001
 
     @property
     def spin_quantum_number(self) -> float:
@@ -326,7 +326,7 @@ class Nucleus:
                 value.
         """
         iso = Isotope(isotope)
-        nucleus = cls(iso.gamma, iso.multiplicity, hfc)
+        nucleus = cls(iso.magnetogyric_ratio, iso.multiplicity, hfc)
         nucleus.name = isotope
         return nucleus
 
