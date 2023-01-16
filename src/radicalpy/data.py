@@ -298,6 +298,7 @@ class Nucleus:
     magnetogyric_ratio: float
     multiplicity: int
     hfc: Hfc
+    name: str
 
     def __repr__(self) -> str:  # noqa D105
         name = self.name if self.name else "Nucleus"
@@ -353,7 +354,6 @@ class MoleculeNew:
 
     - `MoleculeNew.fromdb`
     - `MoleculeNew.fromisotopes`
-    - `MoleculeNew.fromcustom`
 
     Args:
         name (str): The name of the `Molecule`.
@@ -367,12 +367,27 @@ class MoleculeNew:
     The default constructor takes an arbitrary name and a list of
     molecules to construct a molecule.
 
-    >>> MoleculeNew("kryptonite", [Nucleus(267522187.0, 2, Hfc(1.0)),
-    ...                            Nucleus(19337792.0, 3, Hfc(-0.5))])
+    >>> gamma_1H = 267522187.0
+    >>> gamma_14N = 19337792.0
+    >>> MoleculeNew("kryptonite", [Nucleus(gamma_1H, 2, Hfc(1.0), "Hydrogen"),
+    ...                            Nucleus(gamma_14N, 3, Hfc(-0.5), "Nitrogen")])
     Molecule: kryptonite
     Nuclei:
-      Nucleus(267522187.0, 2, 1.0 <anisotropic not available>)
-      Nucleus(19337792.0, 3, -0.5 <anisotropic not available>)
+      Hydrogen(267522187.0, 2, 1.0 <anisotropic not available>)
+      Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
+
+    Or alternatively:
+
+    >>> gammas = [267522187.0, 19337792.0]
+    >>> multis = [2, 3]
+    >>> hfcs = [1.0, -0.5]
+    >>> names = ["Hydrogen", "Nitrogen"]
+    >>> params = zip(gammas, multis, map(Hfc, hfcs), names)
+    >>> MoleculeNew("kryptonite", [Nucleus(*param) for param in params])
+    Molecule: kryptonite
+    Nuclei:
+      Hydrogen(267522187.0, 2, 1.0 <anisotropic not available>)
+      Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
     """
 
     name: str
@@ -401,7 +416,7 @@ class MoleculeNew:
         self.name = name
         self.nuclei = nuclei  # list[gamma, multi, hfc]
         self.info = info
-        self.radical = Isotope("E")
+        self.radical = Isotope("E").magnetogyric_ratio
 
     @classmethod
     def load_molecule_json(cls, molecule: str) -> dict:
@@ -471,7 +486,7 @@ class MoleculeNew:
         return cls(name, nuclei_list, info)
 
     @classmethod
-    def fromisotopes(cls, isotopes: list[str], hfcs: list[Hfc], name: str = ""):
+    def fromisotopes(cls, isotopes: list[str], hfcs: list, name: str = ""):
         """Construct molecule from isotopes.
 
         Args:
@@ -499,12 +514,6 @@ class MoleculeNew:
             isos.append(iso)
         nuclei = [Nucleus.fromisotope(i, h) for i, h in zip(isos, hfcs)]
         return cls(name, nuclei)
-
-    @classmethod
-    def fromcustom(cls, radical: str):
-        """Construct custom molecule."""
-        molecule = None
-        return molecule
 
 
 class Molecule:
