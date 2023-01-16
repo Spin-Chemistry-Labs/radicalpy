@@ -189,7 +189,7 @@ class HilbertTests(unittest.TestCase):
 
     def test_HH(self):
         couplings = self.sim.coupling
-        hfcs = self.sim.hfcs
+        hfcs = [n.hfc for n in self.sim.nuclei]
         HH_true = sum(
             [
                 radpy.HamiltonianHyperfine(

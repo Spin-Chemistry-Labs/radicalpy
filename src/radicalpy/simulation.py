@@ -104,10 +104,6 @@ class HilbertSimulation:
         return self.radicals + self.nuclei
 
     @property
-    def hfcs(self):
-        return sum([[n.hfc for n in m.nuclei] for m in self.molecules], [])
-
-    @property
     def electron_multiplicities(self):
         return [r.multiplicity for r in self.radicals]
 
@@ -148,7 +144,7 @@ class HilbertSimulation:
                 f"Magnetogyric ratios (mT): {self.gammas_mT}",
                 f"Nuclei: {sum([m.nuclei for m in self.molecules], [])}",
                 f"Couplings: {self.coupling}",
-                f"HFCs (mT): {self.hfcs}",
+                f"HFCs (mT): {[n.hfc for n in self.nuclei]}",
                 # "",
                 # f"Simulated molecules:\n{molecules}",
             ]
@@ -347,7 +343,7 @@ class HilbertSimulation:
             system described by the `Quantum` simulation object.
         """
         if hfc_anisotropy:
-            for h in self.hfcs:
+            for h in [n.hfc for n in self.nuclei]:
                 # TODO(vatai) try except not is None
                 if h.anisotropic is None:
                     raise ValueError(
@@ -356,10 +352,10 @@ class HilbertSimulation:
 
         if hfc_anisotropy:
             prodop = self.product_operator_3d
-            hfcs = [h.anisotropic for h in self.hfcs]
+            hfcs = [n.hfc.anisotropic for n in self.nuclei]
         else:
             prodop = self.product_operator
-            hfcs = [h.isotropic for h in self.hfcs]
+            hfcs = [n.hfc.isotropic for n in self.nuclei]
         return sum(
             [
                 self.gammas_mT[ei] * prodop(ei, len(self.radicals) + ni, hfcs[ni])
