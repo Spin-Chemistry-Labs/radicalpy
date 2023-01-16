@@ -35,14 +35,14 @@ RADICAL_PAIR_RAW = [
     rp.simulation.Molecule(
         "",
         nuclei=[
-            rp.data.Nucleus(rp.data.gamma_mT("E"), 2, 0.0),
-            rp.data.Nucleus(rp.data.gamma_mT("E"), 2, 0.0),
+            rp.data.Nucleus(rp.data.Isotope("E").gamma_mT, 2, 0.0),
+            rp.data.Nucleus(rp.data.Isotope("E").gamma_mT, 2, 0.0),
         ],
     ),
     rp.simulation.Molecule(
         "",
         nuclei=[
-            rp.data.Nucleus(rp.data.gamma_mT("E"), 2, 0.0),
+            rp.data.Nucleus(rp.data.Isotope("E").gamma_mT, 2, 0.0),
         ],
     ),
 ]
@@ -101,7 +101,7 @@ class HilbertTests(unittest.TestCase):
             self.start_time = time.time()
         self.data = rp.data.MOLECULE_DATA["adenine_cation"]["data"]
         self.sim = rp.simulation.HilbertSimulation(RADICAL_PAIR, basis=Basis.ZEEMAN)
-        self.gamma_mT = rp.data.gamma_mT("E")
+        self.gamma_mT = rp.data.Isotope("E").gamma_mT
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
