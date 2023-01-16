@@ -71,7 +71,7 @@ def gamma_T(element: str):
 
 
 def gamma_mT(element: str):
-    """Return the `gamma` value of an element in milli-Tesla."""
+    """Return the `gamma` value of an element in rad/s/mT."""
     return SPIN_DATA[element]["gamma"] * 0.001
 
 
@@ -168,7 +168,7 @@ class Isotope:
 
     @property
     def gamma_mT(self):
-        """Return gamma value in mT."""
+        """Return gamma value in rad/s/mT."""
         return self.magnetogyric_ratio * 0.001
 
     @property
@@ -332,7 +332,7 @@ class Nucleus:
 
     @property
     def gamma_mT(self):
-        """Return magnetogyric ratio, :math:`\gamma` (mT)."""
+        """Return magnetogyric ratio, :math:`\gamma` (rad/s/mT)."""
         return self.magnetogyric_ratio * 0.001
 
 
@@ -377,9 +377,9 @@ class MoleculeNew:
             database), defaults to `[]`
 
     A molecule is represented by hyperfine coupling constants, spin
-    multiplicities and magnetogyric ratios (gammas, specified in mT)
-    of its nuclei.  When using the database, one needs to specify the
-    name of the molecule and the list of its nuclei.
+    multiplicities and magnetogyric ratios (gammas, specified in
+    rad/s/mT) of its nuclei.  When using the database, one needs to
+    specify the name of the molecule and the list of its nuclei.
 
     Examples:
     >> Molecule(radical="adenine_cation",
@@ -578,9 +578,9 @@ class Molecule:
             database), defaults to `[]`
 
     A molecule is represented by hyperfine coupling constants, spin
-    multiplicities and magnetogyric ratios (gammas, specified in mT)
-    of its nuclei.  When using the database, one needs to specify the
-    name of the molecule and the list of its nuclei.
+    multiplicities and magnetogyric ratios (gammas, specified in
+    rad/s/mT) of its nuclei.  When using the database, one needs to
+    specify the name of the molecule and the list of its nuclei.
 
     Examples:
     >>> Molecule(radical="adenine_cation",
