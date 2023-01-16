@@ -151,13 +151,13 @@ class HilbertTests(unittest.TestCase):
         # Assume this is correct!
         omega_e = PARAMS["B"][0] * self.gamma_mT
         electrons = sum(
-            [radpy.np_spinop(radpy.np_Sz, i, sim.num_particles) for i in range(2)]
+            [radpy.np_spinop(radpy.np_Sz, i, len(sim.particles)) for i in range(2)]
         )
         omega_n = PARAMS["B"][0] * rp.data.gamma_mT("E")
         nuclei = sum(
             [
-                radpy.np_spinop(radpy.np_Sz, i, sim.num_particles)
-                for i in range(2, sim.num_particles)
+                radpy.np_spinop(radpy.np_Sz, i, len(sim.particles))
+                for i in range(2, len(sim.particles))
             ]
         )
         HZ_true = -omega_e * electrons - omega_n * nuclei
@@ -172,13 +172,13 @@ class HilbertTests(unittest.TestCase):
         # Assume this is correct!
         omega_e = PARAMS["B"][0] * self.gamma_mT
         electrons = sum(
-            [radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles) for i in range(2)]
+            [radpy.np_spinop(radpy.np_Sz, i, len(self.sim.particles)) for i in range(2)]
         )
         omega_n = PARAMS["B"][0] * rp.data.gamma_mT("1H")
         nuclei = sum(
             [
-                radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles)
-                for i in range(2, self.sim.num_particles)
+                radpy.np_spinop(radpy.np_Sz, i, len(self.sim.particles))
+                for i in range(2, len(self.sim.particles))
             ]
         )
         HZ_true = -omega_e * electrons - omega_n * nuclei
@@ -193,7 +193,7 @@ class HilbertTests(unittest.TestCase):
         HH_true = sum(
             [
                 radpy.HamiltonianHyperfine(
-                    self.sim.num_particles,
+                    len(self.sim.particles),
                     ei,
                     2 + ni,
                     hfcs[ni].isotropic,
@@ -208,14 +208,14 @@ class HilbertTests(unittest.TestCase):
 
     def test_HE(self):
         HE_true = radpy.HamiltonianExchange(
-            self.sim.num_particles, PARAMS["J"], gamma=self.gamma_mT
+            len(self.sim.particles), PARAMS["J"], gamma=self.gamma_mT
         )
         HE = self.sim.exchange_hamiltonian(PARAMS["J"])
         np.testing.assert_almost_equal(HE, HE_true)
 
     def test_HD(self):
         HD_true = radpy.HamiltonianDipolar(
-            self.sim.num_particles, PARAMS["D"], self.gamma_mT
+            len(self.sim.particles), PARAMS["D"], self.gamma_mT
         )
         HD = self.sim.dipolar_hamiltonian(PARAMS["D"])
         np.testing.assert_almost_equal(HD, HD_true)
@@ -299,7 +299,7 @@ class HilbertTests(unittest.TestCase):
         for state in rp.simulation.State:
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
-            rho0_true = radpy.Hilbert_initial(rpstate, self.sim.num_particles, H)
+            rho0_true = radpy.Hilbert_initial(rpstate, len(self.sim.particles), H)
             np.testing.assert_almost_equal(rho0, rho0_true)
 
     def test_unitary_propagator(self):
@@ -318,7 +318,7 @@ class HilbertTests(unittest.TestCase):
                 if obs_state == rp.simulation.State.EQUILIBRIUM:
                     continue
                 evol_true = radpy.TimeEvolution(
-                    self.sim.num_particles,
+                    len(self.sim.particles),
                     state2radpy(init_state),
                     state2radpy(obs_state),
                     self.t_max,
@@ -499,7 +499,7 @@ class LiouvilleTests(unittest.TestCase):
         for state in rp.simulation.State:
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
-            rho0_true = radpy.Liouville_initial(rpstate, self.sim.num_particles, H)
+            rho0_true = radpy.Liouville_initial(rpstate, len(self.sim.particles), H)
             np.testing.assert_almost_equal(rho0, rho0_true)
 
     def test_unitary_propagator(self):
