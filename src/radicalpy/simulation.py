@@ -65,14 +65,14 @@ class HilbertSimulation:
         custom_gfactor (bool): Flag to use g-factors instead of the
             default gyromagnetic ratio gamma.
 
-    >>> HilbertSimulation([Molecule("flavin_anion", ["N5"]),
-    ...                    Molecule("tryptophan_cation", ["Hbeta1", "H1"])])
+    >>> HilbertSimulation([Molecule.fromdb("flavin_anion", ["N5"]),
+    ...                    Molecule.fromdb("tryptophan_cation", ["Hbeta1", "H1"])])
     Number of electrons: 2
     Number of nuclei: 3
     Number of particles: 5
     Multiplicities: [2, 2, 3, 2, 2]
     Magnetogyric ratios (mT): [-176085963.023, -176085963.023, 19337.792, 267522.18744, 267522.18744]
-    Nuclei: ['N5', 'Hbeta1', 'H1']
+    Nuclei: [14N(19337792.0, 3, 0.5141 <anisotropic available>), 1H(267522187.44, 2, 1.605 <anisotropic available>), 1H(267522187.44, 2, -0.5983 <anisotropic available>)]
     Couplings: [0, 1, 1]
     HFCs (mT): [0.5141 <anisotropic available>, 1.605 <anisotropic available>, -0.5983 <anisotropic available>]
     """
@@ -97,7 +97,7 @@ class HilbertSimulation:
 
     @property
     def hfcs(self):
-        return sum([m.hfcs for m in self.molecules], [])
+        return sum([[n.hfc for n in m.nuclei] for m in self.molecules], [])
 
     @property
     def num_electrons(self):
@@ -117,7 +117,7 @@ class HilbertSimulation:
 
     @property
     def nuclei_multiplicities(self):
-        return sum([m.multiplicities for m in self.molecules], [])
+        return sum([[n.multiplicity for n in m.nuclei] for m in self.molecules], [])
 
     @property
     def multiplicities(self):
@@ -135,7 +135,7 @@ class HilbertSimulation:
 
     @property
     def nuclei_gammas_mT(self):
-        return sum([m.gammas_mT for m in self.molecules], [])
+        return sum([[n.gamma_mT for n in m.nuclei] for m in self.molecules], [])
 
     @property
     def gammas_mT(self):
