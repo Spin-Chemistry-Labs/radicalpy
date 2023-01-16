@@ -103,24 +103,6 @@ class HilbertSimulation:
     def particles(self):
         return self.radicals + self.nuclei
 
-    @property
-    def electron_gammas_mT(self):
-        g = -constants.g_e  #  2.0023  # free electron g-factor
-        gfactor = [g] * len(self.radicals)
-        if self.custom_gfactors:
-            # overwrite gfactor list TODO
-            pass
-        # return [gfactor[i] * C.muB / C.hbar / 1000 for i in range(self.num_electrons)]
-        return [r.gamma_mT * gfactor[i] / g for i, r in enumerate(self.radicals)]
-
-    @property
-    def nuclei_gammas_mT(self):
-        return sum([[n.gamma_mT for n in m.nuclei] for m in self.molecules], [])
-
-    @property
-    def gammas_mT(self):
-        return self.electron_gammas_mT + self.nuclei_gammas_mT
-
     def __repr__(self) -> str:
         return "\n".join(
             [
@@ -129,7 +111,7 @@ class HilbertSimulation:
                 f"Number of nuclei: {len(self.nuclei)}",
                 f"Number of particles: {len(self.particles)}",
                 f"Multiplicities: {[p.multiplicity for p in self.particles]}",
-                f"Magnetogyric ratios (mT): {self.gammas_mT}",
+                f"Magnetogyric ratios (mT): {[p.gamma_mT for p in self.particles]}",
                 f"Nuclei: {sum([m.nuclei for m in self.molecules], [])}",
                 f"Couplings: {self.coupling}",
                 f"HFCs (mT): {[n.hfc for n in self.nuclei]}",
@@ -304,7 +286,7 @@ class HilbertSimulation:
 
     def zeeman_hamiltonian_1d(self, B0: float) -> np.ndarray:
         axis = "z"
-        gammas = enumerate(self.gammas_mT)
+        gammas = enumerate(p.gamma_mT for p in self.particles)
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
 
     def zeeman_hamiltonian_3d(
@@ -317,7 +299,7 @@ class HilbertSimulation:
             ]
         )
         rotation = utils.spherical_to_cartesian(theta, phi)
-        omega = B0 * self.gammas_mT[0]
+        omega = B0 * self.radicals[0].gamma_mT
         return omega * np.einsum("j,ijkl->kl", rotation, particles)
 
     def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> np.ndarray:
@@ -346,7 +328,8 @@ class HilbertSimulation:
             hfcs = [n.hfc.isotropic for n in self.nuclei]
         return sum(
             [
-                self.gammas_mT[ei] * prodop(ei, len(self.radicals) + ni, hfcs[ni])
+                self.particles[ei].gamma_mT
+                * prodop(ei, len(self.radicals) + ni, hfcs[ni])
                 for ni, ei in enumerate(self.coupling)
             ]
         )
@@ -366,7 +349,7 @@ class HilbertSimulation:
             corresponding to the system described by the `Quantum`
             simulation object and the coupling constant `J`.
         """
-        Jcoupling = self.gammas_mT[0] * J
+        Jcoupling = self.radicals[0].gamma_mT * J
         SASB = self.product_operator(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
@@ -393,14 +376,14 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         SAz = self.spin_operator(0, "z")
         SBz = self.spin_operator(1, "z")
-        omega = (2 / 3) * self.gammas_mT[0] * D
+        omega = (2 / 3) * self.radicals[0].gamma_mT * D
         return omega * (3 * SAz * SBz - SASB)
 
     def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
         ne = len(self.radicals)
         return -sum(
             [
-                -self.gammas_mT[0]
+                -self.radicals[0].gamma_mT
                 * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
                 for ni, ei in enumerate(self.coupling)
             ]
