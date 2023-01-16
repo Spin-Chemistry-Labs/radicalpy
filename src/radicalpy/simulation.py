@@ -104,18 +104,6 @@ class HilbertSimulation:
         return self.radicals + self.nuclei
 
     @property
-    def electron_multiplicities(self):
-        return [r.multiplicity for r in self.radicals]
-
-    @property
-    def nuclei_multiplicities(self):
-        return sum([[n.multiplicity for n in m.nuclei] for m in self.molecules], [])
-
-    @property
-    def multiplicities(self):
-        return self.electron_multiplicities + self.nuclei_multiplicities
-
-    @property
     def electron_gammas_mT(self):
         g = -constants.g_e  #  2.0023  # free electron g-factor
         gfactor = [g] * len(self.radicals)
@@ -140,7 +128,7 @@ class HilbertSimulation:
                 f"Number of electrons: {len(self.radicals)}",
                 f"Number of nuclei: {len(self.nuclei)}",
                 f"Number of particles: {len(self.particles)}",
-                f"Multiplicities: {self.multiplicities}",
+                f"Multiplicities: {[p.multiplicity for p in self.particles]}",
                 f"Magnetogyric ratios (mT): {self.gammas_mT}",
                 f"Nuclei: {sum([m.nuclei for m in self.molecules], [])}",
                 f"Couplings: {self.coupling}",
@@ -161,7 +149,7 @@ class HilbertSimulation:
             ]
         )
 
-        C = np.kron(ST, np.eye(prod(self.nuclei_multiplicities)))
+        C = np.kron(ST, np.eye(prod([n.multiplicity for n in self.nuclei])))
         return C @ M @ C.T
 
     @staticmethod
@@ -224,12 +212,12 @@ class HilbertSimulation:
         Construct the spin operator for the particle with index
         `idx` in the `HilbertSimulation`.
         """
-        assert 0 <= idx and idx < len(self.multiplicities)
+        assert 0 <= idx and idx < len(self.particles)
         assert axis in "xyz"
 
-        sigma = self.pauli(self.multiplicities[idx])[axis]
-        eye_before = np.eye(prod(m for m in self.multiplicities[:idx]))
-        eye_after = np.eye(prod(m for m in self.multiplicities[idx + 1 :]))
+        sigma = self.pauli(self.particles[idx].multiplicity)[axis]
+        eye_before = np.eye(prod(p.multiplicity for p in self.particles[:idx]))
+        eye_after = np.eye(prod(p.multiplicity for p in self.particles[idx + 1 :]))
 
         spinop = np.kron(np.kron(eye_before, sigma), eye_after)
         if self.basis == Basis.ST:
