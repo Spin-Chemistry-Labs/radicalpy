@@ -99,7 +99,7 @@ class HilbertTests(unittest.TestCase):
     def setUp(self):
         if MEASURE_TIME:
             self.start_time = time.time()
-        self.data = rp.data.MOLECULE_DATA["adenine_cation"]["data"]
+        self.data = rp.data.Molecule.load_molecule_json("adenine_cation")["data"]
         self.sim = rp.simulation.HilbertSimulation(RADICAL_PAIR, basis=Basis.ZEEMAN)
         self.gamma_mT = rp.data.Isotope("E").gamma_mT
         self.dt = 0.01
