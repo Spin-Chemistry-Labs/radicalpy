@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import json
-from functools import cache, singledispatchmethod
+from functools import singledispatchmethod
+from importlib.resources import files
 from pathlib import Path
 from typing import Optional
 
@@ -83,14 +84,23 @@ class Isotope:
     """Class representing an isotope.
 
     Examples:
+
+    Create an isotop using the database.
+
     >>> E = Isotope("E")
     >>> E
     Symbol: E
     Multiplicity: 2
     Gamma: -176085963023.0
     Details: {'name': 'Electron', 'source': 'CODATA 2018'}
+
+    Query the multiplicity:
+
     >>> E.multiplicity
     2
+
+    Query other details:
+
     >>> E.details
     {'name': 'Electron', 'source': 'CODATA 2018'}
     """
@@ -171,12 +181,14 @@ class Hfc:
     """The Hfc class represents isotropic and anisotropic HFC values.
 
     Args:
-        hfc (float or list[list[float]]): The HFC value.  In case of a
+        hfc (float | list[list[float]]): The HFC value.  In case of a
             single `float`, only the isotropic value is set.  In case
             of a 3x3 matrix both the isotropic and anisotropic values
             are stored.
 
     Examples:
+
+    Initialising the HFC with a 3-by-3 matrix (list of lists):
 
     >>> with open(DATA_DIR/"molecules/flavin_anion.json") as f:
     ...      flavin_dict = json.load(f)
@@ -184,12 +196,20 @@ class Hfc:
     >>> hfc_3d_obj = Hfc(hfc_3d_data)
     >>> hfc_3d_obj
     0.5141 <anisotropic available>
+
+    we can obtain both the isotropic value:
+
     >>> hfc_3d_obj.isotropic
     0.5141406139911681
+
+    and the anisotropic tensor:
+
     >>> hfc_3d_obj.anisotropic
     array([[-0.06819637,  0.01570029,  0.08701531],
            [ 0.01570029, -0.03652102,  0.27142597],
            [ 0.08701531,  0.27142597,  1.64713923]])
+
+    Initialising the HFC with a single float:
 
     >>> with open(DATA_DIR/"molecules/adenine_cation.json") as f:
     ...      adenine_dict = json.load(f)
@@ -197,8 +217,14 @@ class Hfc:
     >>> hfc_1d_obj = Hfc(hfc_1d_data)
     >>> hfc_1d_obj
     -0.63 <anisotropic not available>
+
+    we can obtain both the isotropic value:
+
     >>> hfc_1d_obj.isotropic
     -0.63
+
+    but not the anisotropic tensor:
+
     >>> hfc_1d_obj.anisotropic
     Traceback (most recent call last):
     ...
@@ -206,10 +232,7 @@ class Hfc:
     """
 
     _anisotropic: Optional[NDArray]
-    """Optional anisotropic HFC value."""
-
-    isotropic: float
-    """Isotropic HFC value."""
+    _isotropic: float
 
     def __repr__(self) -> str:  # noqa D105
         available = "not " if self._anisotropic is None else ""
@@ -220,12 +243,12 @@ class Hfc:
         self._anisotropic = np.array(hfc)
         if self._anisotropic.shape != (3, 3):
             raise ValueError("Anisotropic HFCs should be a float or a 3x3 matrix!")
-        self.isotropic = self._anisotropic.trace() / 3
+        self._isotropic = self._anisotropic.trace() / 3
 
     @__init__.register
     def _(self, hfc: float):  # noqa D105
         self._anisotropic = None
-        self.isotropic = hfc
+        self._isotropic = hfc
 
     @property
     def anisotropic(self) -> NDArray:
@@ -238,14 +261,25 @@ class Hfc:
             raise ValueError("No anisotropic HFC data available.")
         return self._anisotropic
 
+    @property
+    def isotropic(self) -> NDArray:
+        """Isotropic value.
+
+        Returns:
+            float: The isotropic HFC value.
+        """
+        return self._isotropic
+
 
 class Nucleus:
     """A nucleus in a molecue.
 
     >>> Nucleus.fromisotope("1H", Hfc(1.1))
-    Nucleus(267522187.44, 2, 1.1 <anisotropic not available>)
+    1H(267522187.44, 2, 1.1 <anisotropic not available>)
     >>> Nucleus(1.0, 2, Hfc(3.0))
     Nucleus(1.0, 2, 3.0 <anisotropic not available>)
+    >>> Nucleus(1.0, 2, Hfc(3.0), "Adamantium")
+    Adamantium(1.0, 2, 3.0 <anisotropic not available>)
     """
 
     gamma: float
@@ -253,38 +287,68 @@ class Nucleus:
     hfc: Hfc
 
     def __repr__(self) -> str:  # noqa D105
-        return f"Nucleus({self.magnetogyric_ratio}, {self.multiplicity}, {self.hfc})"
+        name = self.name if self.name else "Nucleus"
+        return f"{name}({self.magnetogyric_ratio}, {self.multiplicity}, {self.hfc})"
 
-    def __init__(self, magnetogyric_ratio: float, multiplicity: int, hfc: Hfc):
+    def __init__(
+        self,
+        magnetogyric_ratio: float,
+        multiplicity: int,
+        hfc: Hfc,
+        name: Optional[str] = None,
+    ):
         """Nucleus constructor."""
         self.magnetogyric_ratio = magnetogyric_ratio
         self.multiplicity = multiplicity
         self.hfc = hfc
+        self.name = name
 
     @classmethod
     def fromisotope(cls, isotope: str, hfc: Hfc):
-        """Construct a `Nucleus` from an `Isotope`."""
+        """Construct a `Nucleus` from an `Isotope`.
+
+        Args:
+            isotope (str): Name/symbol of the `Isotope`.
+            hfc (Hfc): The HFC valeu (see `Hfc` class).
+
+        Returns:
+            Nucleus: A nucleus with magnetogyric ratio, multiplicity
+                and name determined by the `isotope` and the `hfc`
+                value.
+        """
         iso = Isotope(isotope)
-        return cls(iso.gamma, iso.multiplicity, hfc)
+        nucleus = cls(iso.gamma, iso.multiplicity, hfc)
+        nucleus.name = isotope
+        return nucleus
 
     @property
     def gamma_mT(self):
-        """Return gamma value in mT."""
+        """Return magnetogyric ratio, :math:`\gamma` (mT)."""
         return self.magnetogyric_ratio * 0.001
 
 
 class MoleculeNew:
     """Representation of a molecule for the simulation.
 
-    | 1 | fromdb       |
-    | 2 | __init__     |
-    | 3 | fromisotopes |
+    A molecule molecule is described by a name and a list of nuclei
+    (see `Nucleus`).
 
     Examples:
-    ### 1. fromdb
-    >>> Molecule.fromdb(radical="adenine_cation",
-    ...                 nuclei=["N6-H1", "N6-H2"])
+
+    The default constructor takes an arbitrary name and a list of
+    molecules to construct a molecule.
+
+    >>> MoleculeNew("kryptonite", [Nucleus(0.1, 2, Hfc(3.0)),
+    ...                            Nucleus(0.09, 8, Hfc(-5.5))])
+    Molecule: kryptonite
+    Nuclei:
+      Nucleus(0.1, 2, 3.0 <anisotropic not available>)
+      Nucleus(0.09, 8, -5.5 <anisotropic not available>)
+
     #### DONE TILL HERE ####
+    >> Molecule.fromdb(radical="adenine_cation",
+    ...                 nuclei=["N6-H1", "N6-H2"])
+
     Args:
         radical (str): the name of the `Molecule`, defaults to `""`
 
@@ -309,7 +373,7 @@ class MoleculeNew:
     name of the molecule and the list of its nuclei.
 
     Examples:
-    >>> Molecule(radical="adenine_cation",
+    >> Molecule(radical="adenine_cation",
     ...          nuclei=["N6-H1", "N6-H2"])
     Molecule: adenine_cation
       HFCs: [-0.63, -0.66]
@@ -321,7 +385,7 @@ class MoleculeNew:
     If the wrong molecule name is given, the error helps you find the
     valid options (the second argument `nuclei` must not be empty).
 
-    >>> Molecule("foobar", ["H1"])
+    >> Molecule("foobar", ["H1"])
     Traceback (most recent call last):
     ...
     ValueError: Available molecules below:
@@ -335,7 +399,7 @@ class MoleculeNew:
     Similarly, giving a list of incorrect atom names will also result
     in a helpful error message listing the available atoms.
 
-    >>> Molecule("tryptophan_cation", ["buz"])
+    >> Molecule("tryptophan_cation", ["buz"])
     Traceback (most recent call last):
     ...
     ValueError: Available nuclei below.
@@ -362,7 +426,7 @@ class MoleculeNew:
     One can also specify a list of custom hyperfine coupling constants
     along with a list of their respective isotope names.
 
-    >>> Molecule(nuclei=["1H", "14N"], hfcs=[0.41, 1.82])
+    >> Molecule(nuclei=["1H", "14N"], hfcs=[0.41, 1.82])
     Molecule: N/A
       HFCs: [0.41, 1.82]
       Multiplicities: [2, 3]
@@ -372,7 +436,7 @@ class MoleculeNew:
     Same as above, but with an informative molecule name (doesn't
     affect behaviour):
 
-    >>> Molecule("isotopes", nuclei=["15N", "15N"], hfcs=[0.3, 1.7])
+    >> Molecule("isotopes", nuclei=["15N", "15N"], hfcs=[0.3, 1.7])
     Molecule: isotopes
       HFCs: [0.3, 1.7]
       Multiplicities: [2, 2]
@@ -383,7 +447,7 @@ class MoleculeNew:
     (for simple simulations -- often with *fantastic* low-field
     effects):
 
-    >>> Molecule("kryptonite")
+    >> Molecule("kryptonite")
     Molecule: kryptonite
       HFCs: []
       Multiplicities: []
@@ -397,7 +461,7 @@ class MoleculeNew:
     Manual input for all relevant values (multiplicities, gammas,
     HFCs):
 
-    >>> Molecule(multiplicities=[2, 2, 3],
+    >> Molecule(multiplicities=[2, 2, 3],
     ...          gammas_mT=[267522.18744, 267522.18744, 19337.792],
     ...          hfcs=[0.42, 1.01, 1.33])
     Molecule: N/A
@@ -408,7 +472,7 @@ class MoleculeNew:
 
     Same as above with an informative molecule name:
 
-    >>> Molecule("my_flavin", multiplicities=[2], gammas_mT=[267522.18744], hfcs=[0.5])
+    >> Molecule("my_flavin", multiplicities=[2], gammas_mT=[267522.18744], hfcs=[0.5])
     Molecule: my_flavin
       HFCs: [0.5]
       Multiplicities: [2]
@@ -423,14 +487,11 @@ class MoleculeNew:
         Returns:
             str: Representation of a molecule.
         """
+        nuclei = "\n".join([f"  {n}" for n in self.nuclei])
         return (
             f"Molecule: {self.radical}"
-            # f"\n  Nuclei: {self.nuclei}"
-            # f"\n  HFCs: {self.hfcs}"
-            # f"\n  Multiplicities: {self.multiplicities}"
-            # f"\n  Magnetogyric ratios (mT): {self.gammas_mT}"
+            f"\nNuclei:\n{nuclei}"
             # f"\n  Number of particles: {self.num_particles}"
-            # f"\n  elements: {self.elements}"
         )
 
     def __init__(self, radical: str, nuclei: list[Nucleus]):
@@ -439,15 +500,20 @@ class MoleculeNew:
 
     @classmethod
     def _molecule_data(cls, molecule: str) -> dict:
-        with open(DATA_DIR / f"molecule/{molecule}") as f:
+        json_path = files(__package__) / f"data/molecules/{molecule}.json"
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
         return data
 
     @classmethod
     def fromdb(cls, radical: str, nuclei: list[str]):
+        """Construct a molecule from the database."""
         available = cls.available()
         if radical not in available:
-            hfcs = [Hfc(cls._molecule_data(m)["hfc"]).isotropic for m in available]
+            hfcs = [
+                Hfc(cls._molecule_data(molecule)["data"]["hfc"]).isotropic
+                for molecule in available
+            ]
             zipped = zip(available, hfcs)
             pairs = sorted(zipped, key=lambda t: np.abs(t[1]), reverse=True)
             lines = "\n".join([f"{k} (hfc = {h})" for k, h in pairs])
