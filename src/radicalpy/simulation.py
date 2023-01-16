@@ -96,16 +96,16 @@ class HilbertSimulation:
         return [m.radical for m in self.molecules]
 
     @property
+    def nuclei(self):
+        return sum([[n for n in m.nuclei] for m in self.molecules], [])
+
+    @property
+    def particles(self):
+        return self.radicals + self.nuclei
+
+    @property
     def hfcs(self):
         return sum([[n.hfc for n in m.nuclei] for m in self.molecules], [])
-
-    @property
-    def num_nuclei(self):
-        return sum([m.num_particles for m in self.molecules])
-
-    @property
-    def num_particles(self):
-        return len(self.radicals) + self.num_nuclei
 
     @property
     def electron_multiplicities(self):
@@ -142,8 +142,8 @@ class HilbertSimulation:
             [
                 # "Simulation summary:",
                 f"Number of electrons: {len(self.radicals)}",
-                f"Number of nuclei: {len(self.hfcs)}",
-                f"Number of particles: {self.num_particles}",
+                f"Number of nuclei: {len(self.nuclei)}",
+                f"Number of particles: {len(self.particles)}",
                 f"Multiplicities: {self.multiplicities}",
                 f"Magnetogyric ratios (mT): {self.gammas_mT}",
                 f"Nuclei: {sum([m.nuclei for m in self.molecules], [])}",
@@ -329,7 +329,7 @@ class HilbertSimulation:
         particles = np.array(
             [
                 [self.spin_operator(idx, axis) for axis in "xyz"]
-                for idx in range(self.num_particles)
+                for idx in range(len(self.particles))
             ]
         )
         rotation = utils.spherical_to_cartesian(theta, phi)
