@@ -340,7 +340,20 @@ class MoleculeNew:
     """Representation of a molecule for the simulation.
 
     A molecule molecule is described by a name and a list of nuclei
-    (see `Nucleus`).
+    (see `Nucleus`).  Using the default constructor is **cumbersome
+    and not recommended**.  The preffered way is to use the following
+    convenience (class) methods (click on the method name to see its
+    documentation):
+
+    - `MoleculeNew.fromdb`
+    - `MoleculeNew.fromisotopes`
+    - `MoleculeNew.fromcustom`
+
+    Args:
+        name (str): the name of the `Molecule`.
+
+        nuclei (list[Nucleus]): list of nuclei/atoms which should be
+            simulated (see `Nucleus`).
 
     Examples:
 
@@ -355,6 +368,7 @@ class MoleculeNew:
       Nucleus(0.09, 8, -5.5 <anisotropic not available>)
 
     #### DONE TILL HERE ####
+
     >> Molecule.fromdb(radical="adenine_cation",
     ...                 nuclei=["N6-H1", "N6-H2"])
 
@@ -498,13 +512,14 @@ class MoleculeNew:
         """
         nuclei = "\n".join([f"  {n}" for n in self.nuclei])
         return (
-            f"Molecule: {self.radical}"
+            f"Molecule: {self.name}"
             f"\nNuclei:\n{nuclei}"
             # f"\n  Number of particles: {self.num_particles}"
         )
 
-    def __init__(self, radical: str, nuclei: list[Nucleus]):
-        self.radical = radical
+    def __init__(self, name: str, nuclei: list[Nucleus]):
+        """Default constructor."""
+        self.name = name
         self.nuclei = nuclei
 
     @classmethod
@@ -530,11 +545,13 @@ class MoleculeNew:
 
     @classmethod
     def fromisotopes(cls, radical: str, isotopes: list[str], hfcs: list[Hfc]):
+        """Construct molecule from istopoes."""
         molecule = None
         return molecule
 
     @classmethod
     def fromcustom(cls, radical: str):
+        """Construct custom molecule."""
         molecule = None
         return molecule
 
