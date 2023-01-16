@@ -39,16 +39,6 @@ def multiplicity_to_spin(multiplicity: int) -> float:
     return float(multiplicity - 1) / 2.0
 
 
-SPIN_DATA_JSON = DATA_DIR / "spin_data.json"
-MOLECULES_DIR = DATA_DIR / "molecules"
-
-with open(SPIN_DATA_JSON, encoding="utf-8") as file:
-    SPIN_DATA = json.load(file)
-    """Dictionary containing spin data for elements.
-
-    :meta hide-value:"""
-
-
 class Isotope:
     """Class representing an isotope.
 
