@@ -26,7 +26,7 @@ class IsotopeTestCase(unittest.TestCase):
         """
         previous_number = 293
         available = data.Isotope.available()
-        self.assertEqual(available[:3], ["100Ru", "101Ru", "102Pd"])
+        self.assertEqual(available[:3], ["G", "E", "N"])
         current_number = len(available)
         self.assertEqual(current_number, previous_number)
 
