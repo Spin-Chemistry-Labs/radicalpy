@@ -83,6 +83,10 @@ def multiplicity(element: str):
 class Isotope:
     """Class representing an isotope.
 
+    Args:
+        symbol (str): The symbol/identifier of the isotope in the
+            database.
+
     Examples:
 
     Create an isotope using the database.
@@ -103,6 +107,7 @@ class Isotope:
 
     >>> E.details
     {'name': 'Electron', 'source': 'CODATA 2018'}
+
     """
 
     _isotope_data: Optional[dict] = None
@@ -146,16 +151,16 @@ class Isotope:
         Example:
 
         >>> available = Isotope.available()
-        >>> available[-5:]
-        ['E', 'G', 'M', 'N', 'P']
+        >>> available[:5]
+        ['G', 'E', 'N', 'M', 'P']
 
-        >>> Isotope(available[-5])
+        >>> Isotope(available[1])
         Symbol: E
         Multiplicity: 2
         Magnetogyric ratio: -176085963023.0
         Details: {'name': 'Electron', 'source': 'CODATA 2018'}
 
-        >>> Isotope(available[-2])
+        >>> Isotope(available[2])
         Symbol: N
         Multiplicity: 2
         Magnetogyric ratio: -183247171.0
@@ -164,7 +169,7 @@ class Isotope:
         """
         cls._ensure_isotope_data()
         items = cls._isotope_data.items()
-        return sorted([k for k, v in items if "multiplicity" in v and "gamma" in v])
+        return [k for k, v in items if "multiplicity" in v and "gamma" in v]
 
     @property
     def gamma_mT(self):
