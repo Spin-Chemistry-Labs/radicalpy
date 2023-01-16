@@ -95,17 +95,9 @@ class HilbertSimulation:
     def radicals(self):
         return [m.radical for m in self.molecules]
 
-    # @property
-    # def electrons(self):
-    #     return ["E"] * self.num_electrons
-
     @property
     def hfcs(self):
         return sum([[n.hfc for n in m.nuclei] for m in self.molecules], [])
-
-    @property
-    def num_electrons(self):
-        return len(self.molecules)
 
     @property
     def num_nuclei(self):
@@ -113,7 +105,7 @@ class HilbertSimulation:
 
     @property
     def num_particles(self):
-        return self.num_electrons + self.num_nuclei
+        return len(self.radicals) + self.num_nuclei
 
     @property
     def electron_multiplicities(self):
@@ -130,7 +122,7 @@ class HilbertSimulation:
     @property
     def electron_gammas_mT(self):
         g = -constants.g_e  #  2.0023  # free electron g-factor
-        gfactor = [g] * self.num_electrons
+        gfactor = [g] * len(self.radicals)
         if self.custom_gfactors:
             # overwrite gfactor list TODO
             pass
@@ -149,7 +141,7 @@ class HilbertSimulation:
         return "\n".join(
             [
                 # "Simulation summary:",
-                f"Number of electrons: {self.num_electrons}",
+                f"Number of electrons: {len(self.radicals)}",
                 f"Number of nuclei: {len(self.hfcs)}",
                 f"Number of particles: {self.num_particles}",
                 f"Multiplicities: {self.multiplicities}",
@@ -370,7 +362,7 @@ class HilbertSimulation:
             hfcs = [h.isotropic for h in self.hfcs]
         return sum(
             [
-                self.gammas_mT[ei] * prodop(ei, self.num_electrons + ni, hfcs[ni])
+                self.gammas_mT[ei] * prodop(ei, len(self.radicals) + ni, hfcs[ni])
                 for ni, ei in enumerate(self.coupling)
             ]
         )
@@ -421,7 +413,7 @@ class HilbertSimulation:
         return omega * (3 * SAz * SBz - SASB)
 
     def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
-        ne = self.num_electrons
+        ne = len(self.radicals)
         return -sum(
             [
                 -self.gammas_mT[0]
