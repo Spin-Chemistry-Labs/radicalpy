@@ -26,19 +26,24 @@ PARAMS = dict(
 )
 
 RADICAL_PAIR = [
-    rp.simulation.Molecule("flavin_anion", ["H29"]),
-    rp.simulation.Molecule("adenine_cation"),
+    rp.simulation.Molecule.fromdb("flavin_anion", ["H29"]),
+    rp.simulation.Molecule.fromdb("adenine_cation"),
     # rp.simulation.Molecule("adenine_cation", ["C8-H"]),
 ]
 
 RADICAL_PAIR_RAW = [
     rp.simulation.Molecule(
-        multiplicities=[2, 2],
-        gammas_mT=[rp.data.gamma_mT("E"), rp.data.gamma_mT("E")],
-        hfcs=[0.0, 0.0],
+        "",
+        nuclei=[
+            rp.data.Nucleus(rp.data.gamma_mT("E"), 2, 0.0),
+            rp.data.Nucleus(rp.data.gamma_mT("E"), 2, 0.0),
+        ],
     ),
     rp.simulation.Molecule(
-        multiplicities=[2], gammas_mT=[rp.data.gamma_mT("E")], hfcs=[0.0]
+        "",
+        nuclei=[
+            rp.data.Nucleus(rp.data.gamma_mT("E"), 2, 0.0),
+        ],
     ),
 ]
 
@@ -62,11 +67,11 @@ def state2radpy(state: rp.simulation.State) -> str:
 
 class MoleculeTests(unittest.TestCase):
     def test_effective_hyperfine(self):
-        flavin = rp.simulation.Molecule("flavin_anion", ["N5"])
+        flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["N5"])
         self.assertAlmostEqual(flavin.effective_hyperfine, 1.4239723207027404)
 
     def test_manual_effective_hyperfine(self):
-        nuclei = ["14N"] * 4 + ["1H"] * 12
+        isotopes = ["14N"] * 4 + ["1H"] * 12
         hfcs = [
             0.5233,
             0.1887,
@@ -85,7 +90,8 @@ class MoleculeTests(unittest.TestCase):
             0.407,
             -0.0189,
         ]
-        flavin = rp.simulation.Molecule(nuclei=nuclei, hfcs=hfcs)
+
+        flavin = rp.simulation.Molecule.fromisotopes(isotopes, hfcs)
         self.assertAlmostEqual(flavin.effective_hyperfine, 1.3981069)
 
 
@@ -109,13 +115,15 @@ class HilbertTests(unittest.TestCase):
         multiplicities = [2, 3]
         gammas_mT = [3.14, 2.71]
 
-        molecule = rp.simulation.Molecule(
-            hfcs=hfcs, multiplicities=multiplicities, gammas_mT=gammas_mT
-        )
-        for i in range(2):
-            self.assertEqual(hfcs[i], molecule.hfcs[i].isotropic)
-            self.assertEqual(multiplicities[i], molecule.multiplicities[i])
-            self.assertEqual(gammas_mT[i], molecule.gammas_mT[i])
+        nuclei = [
+            rp.data.Nucleus(gammas_mT[0], multiplicities[0], rp.data.Hfc(hfcs[0])),
+            rp.data.Nucleus(gammas_mT[1], multiplicities[1], rp.data.Hfc(hfcs[1])),
+        ]
+        molecule = rp.simulation.Molecule(nuclei=nuclei)
+        for i, n in enumerate(molecule.nuclei):
+            self.assertEqual(hfcs[i], n.hfc.isotropic)
+            self.assertEqual(multiplicities[i], n.multiplicity)
+            self.assertEqual(gammas_mT[i], n.gamma_mT)
 
     def test_molecule_empty(self):
         """Test empty molecule.
@@ -437,7 +445,7 @@ class HilbertTests(unittest.TestCase):
         )
 
         molecules = [
-            rp.simulation.Molecule("flavin3d", nuclei=["14N"], hfcs=[N5]),
+            rp.simulation.Molecule.fromisotopes(["14N"], [N5], "flavin3d"),
             rp.simulation.Molecule(),
         ]
         B0 = 0.05

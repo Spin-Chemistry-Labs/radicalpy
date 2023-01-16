@@ -291,12 +291,12 @@ class Nucleus:
     The default constructor needs the magnetogyric ratio, the
     multiplicity and the HFC values.
 
-    >>> Nucleus(1.0, 2, Hfc(3.0))
+    >>> Nucleus(0.001, 2, Hfc(3.0))
     Nucleus(1.0, 2, 3.0 <anisotropic not available>)
 
     Additionally a name can also be added.
 
-    >>> Nucleus(1.0, 2, Hfc(3.0), "Adamantium")
+    >>> Nucleus(0.001, 2, Hfc(3.0), "Adamantium")
     Adamantium(1.0, 2, 3.0 <anisotropic not available>)
     """
 
@@ -317,7 +317,7 @@ class Nucleus:
         name: Optional[str] = None,
     ):
         """Nucleus constructor."""
-        self.magnetogyric_ratio = magnetogyric_ratio
+        self.magnetogyric_ratio = 1000 * magnetogyric_ratio  # gamma_mT
         self.multiplicity = multiplicity
         self.hfc = hfc
         self.name = name
@@ -338,7 +338,9 @@ class Nucleus:
 
         """
         iso = Isotope(isotope)
-        nucleus = cls(iso.magnetogyric_ratio, iso.multiplicity, Hfc(hfc))
+        nucleus = cls(
+            iso.magnetogyric_ratio / 1000, iso.multiplicity, Hfc(hfc)
+        )  # gamma_mT
         nucleus.name = isotope
         return nucleus
 
@@ -348,7 +350,7 @@ class Nucleus:
         return self.magnetogyric_ratio * 0.001
 
 
-class MoleculeNew:
+class Molecule:
     """Representation of a molecule for the simulation.
 
     A molecule is described by a name and a list of nuclei (see
@@ -357,8 +359,8 @@ class MoleculeNew:
     convenience methods (click on the method name to see its
     documentation):
 
-    - `MoleculeNew.fromdb`
-    - `MoleculeNew.fromisotopes`
+    - `Molecule.fromdb`
+    - `Molecule.fromisotopes`
 
     Args:
         name (str): The name of the `Molecule`.
@@ -372,32 +374,33 @@ class MoleculeNew:
     The default constructor takes an arbitrary name and a list of
     molecules to construct a molecule.
 
-    >>> gamma_1H = 267522187.0
-    >>> gamma_14N = 19337792.0
-    >>> MoleculeNew("kryptonite", [Nucleus(gamma_1H, 2, Hfc(1.0), "Hydrogen"),
+    >>> gamma_1H = 267522.187
+    >>> gamma_14N = 19337.792
+    >>> Molecule("kryptonite", [Nucleus(gamma_1H, 2, Hfc(1.0), "Hydrogen"),
     ...                            Nucleus(gamma_14N, 3, Hfc(-0.5), "Nitrogen")])
     Molecule: kryptonite
     Nuclei:
-      Hydrogen(267522187.0, 2, 1.0 <anisotropic not available>)
+      Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
       Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
 
     Or alternatively:
 
-    >>> gammas = [267522187.0, 19337792.0]
+    >>> gammas = [267522.187, 19337.792]
     >>> multis = [2, 3]
     >>> hfcs = [1.0, -0.5]
     >>> names = ["Hydrogen", "Nitrogen"]
     >>> params = zip(gammas, multis, map(Hfc, hfcs), names)
-    >>> MoleculeNew("kryptonite", [Nucleus(*param) for param in params])
+    >>> Molecule("kryptonite", [Nucleus(*param) for param in params])
     Molecule: kryptonite
     Nuclei:
-      Hydrogen(267522187.0, 2, 1.0 <anisotropic not available>)
+      Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
       Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
     """
 
     name: str
     nuclei: list[Nucleus]
     info: dict[str, str]
+    custom: bool
 
     def __repr__(self) -> str:
         """Pretty print the molecule.
@@ -415,13 +418,16 @@ class MoleculeNew:
             lines.append(f"Info: {self.info}")
         return "\n".join(lines)
 
-    def __init__(self, name: str, nuclei: list[Nucleus], info: dict[str, str] = {}):
+    def __init__(
+        self, name: str = "", nuclei: list[Nucleus] = [], info: dict[str, str] = {}
+    ):
         """Default constructor."""
         # todo(vatai): check types?
         self.name = name
         self.nuclei = nuclei  # list[gamma, multi, hfc]
         self.info = info
         self.radical = Isotope("E").magnetogyric_ratio
+        self.custom = True
 
     @classmethod
     def load_molecule_json(cls, molecule: str) -> dict:
@@ -448,18 +454,18 @@ class MoleculeNew:
         return sorted([path.with_suffix("").name for path in paths])
 
     @classmethod
-    def fromdb(cls, name: str, nuclei: list[str]):
+    def fromdb(cls, name: str, nuclei: list[str] = []):
         """Construct a molecule from the database.
 
         Args:
             name (str): A name of the molecule available in the
-                database (see `MoleculeNew.available()`).
+                database (see `Molecule.available()`).
             nuclei (list[str]): A list of nuclei names found in the
                 molecule specified by `name`.
 
         Examples:
 
-        >>> MoleculeNew.fromdb("flavin_anion", nuclei=["N14"])
+        >>> Molecule.fromdb("flavin_anion", nuclei=["N14"])
         Molecule: flavin_anion
         Nuclei:
           14N(19337792.0, 3, -0.001275 <anisotropic available>)
@@ -488,7 +494,9 @@ class MoleculeNew:
             isotope = data[nucleus]["element"]
             hfc = data[nucleus]["hfc"]
             nuclei_list.append(Nucleus.fromisotope(isotope, hfc))
-        return cls(name, nuclei_list, info)
+        molecule = cls(name, nuclei_list, info)
+        molecule.custom = False
+        return molecule
 
     @classmethod
     def fromisotopes(cls, isotopes: list[str], hfcs: list, name: str = ""):
@@ -502,7 +510,7 @@ class MoleculeNew:
 
         Examples:
 
-        >>> MoleculeNew.fromisotopes(isotopes=["1H", "14N"],
+        >>> Molecule.fromisotopes(isotopes=["1H", "14N"],
         ...                          hfcs=[1.5, 0.9],
         ...                          name="kryptonite")
         Molecule: kryptonite
@@ -520,244 +528,15 @@ class MoleculeNew:
         nuclei = [Nucleus.fromisotope(i, h) for i, h in zip(isos, hfcs)]
         return cls(name, nuclei)
 
-
-class Molecule:
-    """Representation of a molecule for the simulation.
-
-    Args:
-        radical (str): the name of the `Molecule`, defaults to `""`
-
-        nuclei (list[str]): list of atoms from the molecule (or from
-            the database), defaults to `[]`
-
-        multiplicities (list[int]): list of multiplicities of the
-            atoms and their isotopes (when not using the database),
-            defaults to `[]`
-
-        gammas_mT (list[float]): list of magnetogyric ratios of the
-            atoms and their isotopes (when not using the database),
-            defaults to `[]`
-
-        hfcs (list[float]): list of hyperfine coupling constants of
-            the atoms and their isotopes (when not using the
-            database), defaults to `[]`
-
-    A molecule is represented by hyperfine coupling constants, spin
-    multiplicities and magnetogyric ratios (gammas, specified in
-    rad/s/mT) of its nuclei.  When using the database, one needs to
-    specify the name of the molecule and the list of its nuclei.
-
-    Examples:
-    >>> Molecule(radical="adenine_cation",
-    ...          nuclei=["N6-H1", "N6-H2"])
-    Molecule: adenine_cation
-      HFCs: [-0.63 <anisotropic not available>, -0.66 <anisotropic not available>]
-      Multiplicities: [3, 3]
-      Magnetogyric ratios (mT): [19337.792, 19337.792]
-      Number of particles: 2
-
-
-    If the wrong molecule name is given, the error helps you find the
-    valid options (the second argument `nuclei` must not be empty).
-
-    >>> Molecule("foobar", ["H1"])
-    Traceback (most recent call last):
-    ...
-    ValueError: Available molecules below:
-    2_6_aqds
-    adenine_cation
-    flavin_anion
-    flavin_neutral
-    tryptophan_cation
-    tyrosine_neutral
-
-    Similarly, giving a list of incorrect atom names will also result
-    in a helpful error message listing the available atoms.
-
-    >>> Molecule("tryptophan_cation", ["buz"])
-    Traceback (most recent call last):
-    ...
-    ValueError: Available nuclei below.
-    Hbeta1 (hfc = 1.6045)
-    H1 (hfc = -0.5983)
-    H4 (hfc = -0.4879)
-    H7 (hfc = -0.3634)
-    N1 (hfc = 0.32156666666666667)
-    H2 (hfc = -0.278)
-    N* (hfc = 0.1465)
-    Halpha (hfc = -0.09306666666666667)
-    Hbeta2 (hfc = 0.04566666666666666)
-    H5 (hfc = -0.04)
-    H6 (hfc = -0.032133333333333326)
-
-    >>> Molecule("adenine_cation", ["buz"])
-    Traceback (most recent call last):
-    ...
-    ValueError: Available nuclei below.
-    N6-H2 (hfc = -0.66)
-    N6-H1 (hfc = -0.63)
-    C8-H (hfc = -0.55)
-
-    One can also specify a list of custom hyperfine coupling constants
-    along with a list of their respective isotope names.
-
-    >>> Molecule(nuclei=["1H", "14N"], hfcs=[0.41, 1.82])
-    Molecule: N/A
-      HFCs: [0.41 <anisotropic not available>, 1.82 <anisotropic not available>]
-      Multiplicities: [2, 3]
-      Magnetogyric ratios (mT): [267522.18744, 19337.792]
-      Number of particles: 2
-
-    Same as above, but with an informative molecule name (doesn't
-    affect behaviour):
-
-    >>> Molecule("isotopes", nuclei=["15N", "15N"], hfcs=[0.3, 1.7])
-    Molecule: isotopes
-      HFCs: [0.3 <anisotropic not available>, 1.7 <anisotropic not available>]
-      Multiplicities: [2, 2]
-      Magnetogyric ratios (mT): [-27126.180399999997, -27126.180399999997]
-      Number of particles: 2
-
-    A molecule with no HFCs, for one proton radical pair simulations
-    (for simple simulations -- often with *fantastic* low-field
-    effects):
-
-    >>> Molecule("kryptonite")
-    Molecule: kryptonite
-      HFCs: []
-      Multiplicities: []
-      Magnetogyric ratios (mT): []
-      Number of particles: 0
-
-    Note: If the second argument (`nuclei`) is empty, no error is
-    triggered, you can get the look up the available molecules
-    with `Molecule.available`.
-
-    Manual input for all relevant values (multiplicities, gammas,
-    HFCs):
-
-    >>> Molecule(multiplicities=[2, 2, 3],
-    ...          gammas_mT=[267522.18744, 267522.18744, 19337.792],
-    ...          hfcs=[0.42, 1.01, 1.33])
-    Molecule: N/A
-      HFCs: [0.42 <anisotropic not available>, 1.01 <anisotropic not available>, 1.33 <anisotropic not available>]
-      Multiplicities: [2, 2, 3]
-      Magnetogyric ratios (mT): [267522.18744, 267522.18744, 19337.792]
-      Number of particles: 3
-
-    Same as above with an informative molecule name:
-
-    >>> Molecule("my_flavin", multiplicities=[2], gammas_mT=[267522.18744], hfcs=[0.5])
-    Molecule: my_flavin
-      HFCs: [0.5 <anisotropic not available>]
-      Multiplicities: [2]
-      Magnetogyric ratios (mT): [267522.18744]
-      Number of particles: 1
-
-    """
-
-    radical: Optional[str]
-    info: Optional[dict]
-    data: Optional[dict]
-    nuclei: list[Nucleus]
-
-    def __repr__(self) -> str:  # noqa D105
-        return (
-            f"Molecule: {self.radical}"
-            # f"\n  Nuclei: {self.nuclei}"
-            f"\n  HFCs: {self.hfcs}"
-            f"\n  Multiplicities: {self.multiplicities}"
-            f"\n  Magnetogyric ratios (mT): {self.gammas_mT}"
-            f"\n  Number of particles: {self.num_particles}"
-            # f"\n  elements: {self.elements}"
-        )
-
-    def __init__(  # noqa D105
-        self,
-        radical: str = "",
-        nuclei: list[str] = [],
-        multiplicities: list[int] = [],
-        gammas_mT: list[float] = [],
-        hfcs: list[float] = [],
-    ):
-        self.radical = radical if radical else "N/A"
-        self.nuclei = nuclei
-        self.custom_molecule = True  # todo(vatai): use info instead of this
-        if self._check_molecule_or_spin_db(radical, nuclei):
-            return
-        if nuclei:
-            self._init_from_spin_db(nuclei, hfcs)
-        else:
-            self.multiplicities = multiplicities
-            self.gammas_mT = gammas_mT
-            self.hfcs = [Hfc(h) for h in hfcs]
-        assert len(self.multiplicities) == self.num_particles
-        assert len(self.gammas_mT) == self.num_particles
-        assert len(self.hfcs) == self.num_particles
-
-    def _check_molecule_or_spin_db(self, radical, nuclei):
-        if radical in self.available():
-            self._check_nuclei(nuclei)
-            data = MOLECULE_DATA[radical]["data"]
-            elem = [data[n]["element"] for n in nuclei]
-            self.radical = radical
-            self.gammas_mT = [gamma_mT(e) for e in elem]
-            self.multiplicities = [multiplicity(e) for e in elem]
-            self.hfcs = [Hfc(data[n]["hfc"]) for n in nuclei]
-            self.custom_molecule = False
-            return True
-        # To error on creating an empty (no nuclei) molecule with
-        # a custom name, modify the line below to include the
-        # comment. Lewis said it's okay like this.
-        if all(n in Isotope.available() for n in nuclei):  # and nuclei != []:
-            return False
-        available = "\n".join(Molecule.available())
-        raise ValueError(f"Available molecules below:\n{available}")
-
-    def _check_nuclei(self, nuclei: list[str]) -> None:  # raises ValueError()
-        molecule_data = MOLECULE_DATA[self.radical]["data"]
-        for nucleus in nuclei:
-            if nucleus not in molecule_data:
-                keys = molecule_data.keys()
-                hfcs = [molecule_data[k]["hfc"] for k in keys]
-                hfcs = [Hfc(h).isotropic for h in hfcs]
-                pairs = sorted(
-                    zip(keys, hfcs), key=lambda t: np.abs(t[1]), reverse=True
-                )
-                available = "\n".join([f"{k} (hfc = {h})" for k, h in pairs])
-                raise ValueError(f"Available nuclei below.\n{available}")
-
-    def _init_from_spin_db(self, nuclei: list[str], hfcs: list[float]) -> None:
-        self.multiplicities = [multiplicity(e) for e in nuclei]
-        self.gammas_mT = [gamma_mT(e) for e in nuclei]
-        self.hfcs = [Hfc(h) for h in hfcs]
-
-    @classmethod
-    def available(cls):
-        """List molecules available in the database.
-
-        Returns:
-            list[str]: List of available molecules (names).
-
-        Example:
-
-        >>> available = Molecule.available()
-        >>> available[:10]
-        ['2_6_aqds', 'adenine_cation', 'flavin_anion', 'flavin_neutral', 'tryptophan_cation', 'tyrosine_neutral']
-
-        """
-        paths = (DATA_DIR / "molecules").glob("*.json")
-        return sorted([path.with_suffix("").name for path in paths])
-
     @property
     def effective_hyperfine(self) -> float:
         """Effective hyperfine for the entire molecule."""
-        if self.custom_molecule:
-            multiplicities = self.multiplicities
-            hfcs = self.hfcs
+        if self.custom:
+            multiplicities = [n.multiplicity for n in self.nuclei]
+            hfcs = [n.hfc for n in self.nuclei]
         else:
             # TODO: this can fail with wrong molecule name
-            data = MOLECULE_DATA[self.radical]["data"]
+            data = self.load_molecule_json(self.name)["data"]
             nuclei = list(data.keys())
             elem = [data[n]["element"] for n in nuclei]
             multiplicities = [multiplicity(e) for e in elem]
@@ -771,4 +550,4 @@ class Molecule:
     @property
     def num_particles(self) -> int:
         """Return the number of isotopes in the molecule."""
-        return len(self.multiplicities)
+        return len(self.nuclei)
