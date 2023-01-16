@@ -2,13 +2,11 @@
 import json
 from functools import singledispatchmethod
 from importlib.resources import files
-from pathlib import Path
+from pathlib import PosixPath
 from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
-
-DATA_DIR = Path(__file__).parent / "data"
 
 
 def spin_to_multiplicity(spin: float) -> int:
@@ -37,6 +35,11 @@ def multiplicity_to_spin(multiplicity: int) -> float:
 
     """
     return float(multiplicity - 1) / 2.0
+
+
+def get_data(suffix: str = "") -> PosixPath:
+    """Get the directory containing data files."""
+    return files(__package__) / "data" / suffix
 
 
 class Isotope:
@@ -97,7 +100,7 @@ class Isotope:
     @classmethod
     def _ensure_isotope_data(cls) -> dict:
         if cls._isotope_data is None:
-            with open(DATA_DIR / "spin_data.json", encoding="utf-8") as f:
+            with open(get_data() / "spin_data.json", encoding="utf-8") as f:
                 cls._isotope_data = json.load(f)
 
     @classmethod
@@ -154,7 +157,7 @@ class Hfc:
 
     Initialising the HFC with a 3-by-3 matrix (list of lists):
 
-    >>> with open(DATA_DIR/"molecules/flavin_anion.json") as f:
+    >>> with open(get_data("molecules/flavin_anion.json"), encoding="utf-8") as f:
     ...      flavin_dict = json.load(f)
     >>> hfc_3d_data = flavin_dict["data"]["N5"]["hfc"]
     >>> hfc_3d_obj = Hfc(hfc_3d_data)
@@ -175,7 +178,7 @@ class Hfc:
 
     Initialising the HFC with a single float:
 
-    >>> with open(DATA_DIR/"molecules/adenine_cation.json") as f:
+    >>> with open(get_data("molecules/adenine_cation.json"), encoding="utf-8") as f:
     ...      adenine_dict = json.load(f)
     >>> hfc_1d_data = adenine_dict["data"]["N6-H1"]["hfc"]
     >>> hfc_1d_obj = Hfc(hfc_1d_data)
@@ -390,8 +393,8 @@ class Molecule:
 
     @classmethod
     def load_molecule_json(cls, molecule: str) -> dict:
-        json_path = files(__package__) / f"data/molecules/{molecule}.json"
-        with json_path.open() as f:
+        json_path = get_data(f"molecules/{molecule}.json")
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
         return data
 
@@ -409,7 +412,7 @@ class Molecule:
         ['2_6_aqds', 'adenine_cation', 'flavin_anion', 'flavin_neutral']
 
         """
-        paths = (DATA_DIR / "molecules").glob("*.json")
+        paths = get_data("molecules").glob("*.json")
         return sorted([path.with_suffix("").name for path in paths])
 
     @classmethod
