@@ -49,22 +49,6 @@ with open(SPIN_DATA_JSON, encoding="utf-8") as file:
     :meta hide-value:"""
 
 
-def get_molecules(molecules_dir=MOLECULES_DIR):
-    """Delete this."""
-    molecules = {}
-    for json_path in sorted(molecules_dir.glob("*.json")):
-        molecule_name = json_path.with_suffix("").name
-        with open(json_path, encoding="utf-8") as f:
-            molecules[molecule_name] = json.load(f)
-    return molecules
-
-
-MOLECULE_DATA = get_molecules()
-"""Dictionary containing data for each molecule.
-
-:meta hide-value: """
-
-
 class Isotope:
     """Class representing an isotope.
 
