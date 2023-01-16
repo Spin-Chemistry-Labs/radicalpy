@@ -272,17 +272,26 @@ class Hfc:
 
 
 class Nucleus:
-    """A nucleus in a molecue.
+    """A nucleus in a molecule.
+
+    Construct a nucleus from an `Isotope` and an `Hfc`.
 
     >>> Nucleus.fromisotope("1H", Hfc(1.1))
     1H(267522187.44, 2, 1.1 <anisotropic not available>)
+
+    The default constructor needs the magnetogyric ratio, the
+    multiplicity and the HFC values.
+
     >>> Nucleus(1.0, 2, Hfc(3.0))
     Nucleus(1.0, 2, 3.0 <anisotropic not available>)
+
+    Additionally a name can also be added.
+
     >>> Nucleus(1.0, 2, Hfc(3.0), "Adamantium")
     Adamantium(1.0, 2, 3.0 <anisotropic not available>)
     """
 
-    gamma: float
+    magnetogyric_ratio: float
     multiplicity: int
     hfc: Hfc
 
@@ -359,7 +368,7 @@ class MoleculeNew:
             atoms and their isotopes (when not using the database),
             defaults to `[]`
 
-        gammas_mT (list[float]): list of gyromagnetic ratios of the
+        gammas_mT (list[float]): list of magnetogyric ratios of the
             atoms and their isotopes (when not using the database),
             defaults to `[]`
 
@@ -368,7 +377,7 @@ class MoleculeNew:
             database), defaults to `[]`
 
     A molecule is represented by hyperfine coupling constants, spin
-    multiplicities and gyromagnetic ratios (gammas, specified in mT)
+    multiplicities and magnetogyric ratios (gammas, specified in mT)
     of its nuclei.  When using the database, one needs to specify the
     name of the molecule and the list of its nuclei.
 
@@ -560,7 +569,7 @@ class Molecule:
             atoms and their isotopes (when not using the database),
             defaults to `[]`
 
-        gammas_mT (list[float]): list of gyromagnetic ratios of the
+        gammas_mT (list[float]): list of magnetogyric ratios of the
             atoms and their isotopes (when not using the database),
             defaults to `[]`
 
@@ -569,7 +578,7 @@ class Molecule:
             database), defaults to `[]`
 
     A molecule is represented by hyperfine coupling constants, spin
-    multiplicities and gyromagnetic ratios (gammas, specified in mT)
+    multiplicities and magnetogyric ratios (gammas, specified in mT)
     of its nuclei.  When using the database, one needs to specify the
     name of the molecule and the list of its nuclei.
 
