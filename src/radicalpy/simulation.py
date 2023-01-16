@@ -92,8 +92,12 @@ class HilbertSimulation:
         return sum([[i] * m.num_particles for i, m in enumerate(self.molecules)], [])
 
     @property
-    def electrons(self):
-        return ["E"] * self.num_electrons
+    def radicals(self):
+        return [m.radical for m in self.molecules]
+
+    # @property
+    # def electrons(self):
+    #     return ["E"] * self.num_electrons
 
     @property
     def hfcs(self):
@@ -113,7 +117,7 @@ class HilbertSimulation:
 
     @property
     def electron_multiplicities(self):
-        return list(map(multiplicity, self.electrons))
+        return [r.multiplicity for r in self.radicals]
 
     @property
     def nuclei_multiplicities(self):
@@ -131,7 +135,7 @@ class HilbertSimulation:
             # overwrite gfactor list TODO
             pass
         # return [gfactor[i] * C.muB / C.hbar / 1000 for i in range(self.num_electrons)]
-        return [gamma_mT(e) * gfactor[i] / g for i, e in enumerate(self.electrons)]
+        return [r.gamma_mT * gfactor[i] / g for i, r in enumerate(self.radicals)]
 
     @property
     def nuclei_gammas_mT(self):

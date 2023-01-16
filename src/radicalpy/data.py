@@ -426,7 +426,7 @@ class Molecule:
         self.name = name
         self.nuclei = nuclei  # list[gamma, multi, hfc]
         self.info = info
-        self.radical = Isotope("E").magnetogyric_ratio
+        self.radical = Nucleus.fromisotope("E", 0.0)
         self.custom = True
 
     @classmethod
