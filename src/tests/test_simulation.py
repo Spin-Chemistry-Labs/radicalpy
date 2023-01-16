@@ -153,7 +153,7 @@ class HilbertTests(unittest.TestCase):
         electrons = sum(
             [radpy.np_spinop(radpy.np_Sz, i, len(sim.particles)) for i in range(2)]
         )
-        omega_n = PARAMS["B"][0] * rp.data.gamma_mT("E")
+        omega_n = PARAMS["B"][0] * rp.data.Isotope("E").gamma_mT
         nuclei = sum(
             [
                 radpy.np_spinop(radpy.np_Sz, i, len(sim.particles))
@@ -174,7 +174,7 @@ class HilbertTests(unittest.TestCase):
         electrons = sum(
             [radpy.np_spinop(radpy.np_Sz, i, len(self.sim.particles)) for i in range(2)]
         )
-        omega_n = PARAMS["B"][0] * rp.data.gamma_mT("1H")
+        omega_n = PARAMS["B"][0] * rp.data.Isotope("1H").gamma_mT
         nuclei = sum(
             [
                 radpy.np_spinop(radpy.np_Sz, i, len(self.sim.particles))

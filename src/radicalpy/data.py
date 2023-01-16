@@ -65,21 +65,6 @@ MOLECULE_DATA = get_molecules()
 :meta hide-value: """
 
 
-def gamma_T(element: str):
-    """Return the `gamma` value of an element in Tesla."""
-    return SPIN_DATA[element]["gamma"]
-
-
-def gamma_mT(element: str):
-    """Return the `gamma` value of an element in rad/s/mT."""
-    return SPIN_DATA[element]["gamma"] * 0.001
-
-
-def multiplicity(element: str):
-    """Return the `multiplicity` value of an element."""
-    return SPIN_DATA[element]["multiplicity"]
-
-
 class Isotope:
     """Class representing an isotope.
 
@@ -539,7 +524,7 @@ class Molecule:
             data = self.load_molecule_json(self.name)["data"]
             nuclei = list(data.keys())
             elem = [data[n]["element"] for n in nuclei]
-            multiplicities = [multiplicity(e) for e in elem]
+            multiplicities = [Isotope(e).multiplicity for e in elem]
             hfcs = [Hfc(data[n]["hfc"]) for n in nuclei]
 
         # spin quantum number
