@@ -12,6 +12,8 @@ The package is still under development.  Basic functionality is
 implemented, [documentation](https://radicalpy.readthedocs.io/) is
 sparse, testing partial.
 
+If you would like to contact us, please visit the Spin Chemistry Community [Discord server](https://discord.io/spin-chemistry-community/).
+
 ## Installation
 
 Install simply using `pip`:
