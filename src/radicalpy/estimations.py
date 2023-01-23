@@ -352,9 +352,11 @@ def k_excitation(
     Args:
             power (float): The excitation laser power (W).
             wavelength (float): The excitation wavelength (m).
-            volume (float): The excitation beam volume (L).
-            pathlength (float): The path length of the sample cell (m).
-            epsilon (float): The extinction coefficient of the molecule (1/M/s).
+            volume (float): The excitation beam volume (m^3).
+            pathlength (float): The path length of the sample cell
+                (m).
+            epsilon (float): The extinction coefficient of the
+                molecule (m^2/mol).
 
     Returns:
             float: The excitation rate (1/s).
