@@ -88,7 +88,7 @@ class HilbertSimulation:
 
     @property
     def coupling(self):
-        return sum([[i] * m.num_particles for i, m in enumerate(self.molecules)], [])
+        return sum([[i] * len(m.nuclei) for i, m in enumerate(self.molecules)], [])
 
     @property
     def radicals(self):

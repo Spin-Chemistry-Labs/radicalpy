@@ -508,8 +508,3 @@ class Molecule:
         spns_np = np.array(list(map(multiplicity_to_spin, multiplicities)))
         hfcs_np = np.array([h.isotropic for h in hfcs])
         return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
-
-    @property
-    def num_particles(self) -> int:
-        """Return the number of isotopes in the molecule."""
-        return len(self.nuclei)
