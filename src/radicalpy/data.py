@@ -50,26 +50,24 @@ class Isotope:
             database.
 
     Examples:
+        Create an isotope using the database.
 
-    Create an isotope using the database.
+        >>> E = Isotope("E")
+        >>> E
+        Symbol: E
+        Multiplicity: 2
+        Magnetogyric ratio: -176085963023.0
+        Details: {'name': 'Electron', 'source': 'CODATA 2018'}
 
-    >>> E = Isotope("E")
-    >>> E
-    Symbol: E
-    Multiplicity: 2
-    Magnetogyric ratio: -176085963023.0
-    Details: {'name': 'Electron', 'source': 'CODATA 2018'}
+        Query the multiplicity:
 
-    Query the multiplicity:
+        >>> E.multiplicity
+        2
 
-    >>> E.multiplicity
-    2
+        Query other details:
 
-    Query other details:
-
-    >>> E.details
-    {'name': 'Electron', 'source': 'CODATA 2018'}
-
+        >>> E.details
+        {'name': 'Electron', 'source': 'CODATA 2018'}
     """
 
     _isotope_data: Optional[dict] = None
