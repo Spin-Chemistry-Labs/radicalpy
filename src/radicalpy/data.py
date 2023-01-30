@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 import json
 from functools import singledispatchmethod
-from importlib.resources import files
-from pathlib import PosixPath
+from importlib.resources import Path, files
 from typing import Optional
 
 import numpy as np
@@ -13,10 +12,10 @@ def spin_to_multiplicity(spin: float) -> int:
     """Spin quantum number to multiplicity.
 
     Args:
-            spin (float): Spin quantum number.
+        spin (float): Spin quantum number.
 
     Returns:
-            int: Spin multiplicity.
+        int: Spin multiplicity.
 
     """
     if int(2 * spin) != 2 * spin:
@@ -28,16 +27,16 @@ def multiplicity_to_spin(multiplicity: int) -> float:
     """Spin multiplicity to spin quantum number.
 
     Args:
-            multiplicity (int): Spin multiplicity.
+        multiplicity (int): Spin multiplicity.
 
     Returns:
-            float: Spin quantum number.
+        float: Spin quantum number.
 
     """
     return float(multiplicity - 1) / 2.0
 
 
-def get_data(suffix: str = "") -> PosixPath:
+def get_data(suffix: str = "") -> Path:
     """Get the directory containing data files."""
     return files(__package__) / "data" / suffix
 
@@ -96,7 +95,7 @@ class Isotope:
         self.details = isotope
 
     @classmethod
-    def _ensure_isotope_data(cls) -> dict:
+    def _ensure_isotope_data(cls):
         if cls._isotope_data is None:
             with open(get_data() / "spin_data.json", encoding="utf-8") as f:
                 cls._isotope_data = json.load(f)
@@ -108,24 +107,22 @@ class Isotope:
         Returns:
             list[str]: List of available isotopes (symbols).
 
-        Example:
+        Examples:
+            >>> available = Isotope.available()
+            >>> available[:5]
+            ['G', 'E', 'N', 'M', 'P']
 
-        >>> available = Isotope.available()
-        >>> available[:5]
-        ['G', 'E', 'N', 'M', 'P']
+            >>> Isotope(available[1])
+            Symbol: E
+            Multiplicity: 2
+            Magnetogyric ratio: -176085963023.0
+            Details: {'name': 'Electron', 'source': 'CODATA 2018'}
 
-        >>> Isotope(available[1])
-        Symbol: E
-        Multiplicity: 2
-        Magnetogyric ratio: -176085963023.0
-        Details: {'name': 'Electron', 'source': 'CODATA 2018'}
-
-        >>> Isotope(available[2])
-        Symbol: N
-        Multiplicity: 2
-        Magnetogyric ratio: -183247171.0
-        Details: {'name': 'Neutron', 'source': 'CODATA 2018'}
-
+            >>> Isotope(available[2])
+            Symbol: N
+            Multiplicity: 2
+            Magnetogyric ratio: -183247171.0
+            Details: {'name': 'Neutron', 'source': 'CODATA 2018'}
         """
         cls._ensure_isotope_data()
         items = cls._isotope_data.items()
@@ -152,48 +149,47 @@ class Hfc:
             are stored.
 
     Examples:
+        Initialising the HFC with a 3-by-3 matrix (list of lists):
 
-    Initialising the HFC with a 3-by-3 matrix (list of lists):
+        >>> with open(get_data("molecules/flavin_anion.json"), encoding="utf-8") as f:
+        ...      flavin_dict = json.load(f)
+        >>> hfc_3d_data = flavin_dict["data"]["N5"]["hfc"]
+        >>> hfc_3d_obj = Hfc(hfc_3d_data)
+        >>> hfc_3d_obj
+        0.5141 <anisotropic available>
 
-    >>> with open(get_data("molecules/flavin_anion.json"), encoding="utf-8") as f:
-    ...      flavin_dict = json.load(f)
-    >>> hfc_3d_data = flavin_dict["data"]["N5"]["hfc"]
-    >>> hfc_3d_obj = Hfc(hfc_3d_data)
-    >>> hfc_3d_obj
-    0.5141 <anisotropic available>
+        we can obtain both the isotropic value:
 
-    we can obtain both the isotropic value:
+        >>> hfc_3d_obj.isotropic
+        0.5141406139911681
 
-    >>> hfc_3d_obj.isotropic
-    0.5141406139911681
+        and the anisotropic tensor:
 
-    and the anisotropic tensor:
+        >>> hfc_3d_obj.anisotropic
+        array([[-0.06819637,  0.01570029,  0.08701531],
+               [ 0.01570029, -0.03652102,  0.27142597],
+               [ 0.08701531,  0.27142597,  1.64713923]])
 
-    >>> hfc_3d_obj.anisotropic
-    array([[-0.06819637,  0.01570029,  0.08701531],
-           [ 0.01570029, -0.03652102,  0.27142597],
-           [ 0.08701531,  0.27142597,  1.64713923]])
+        Initialising the HFC with a single float:
 
-    Initialising the HFC with a single float:
+        >>> with open(get_data("molecules/adenine_cation.json"), encoding="utf-8") as f:
+        ...      adenine_dict = json.load(f)
+        >>> hfc_1d_data = adenine_dict["data"]["N6-H1"]["hfc"]
+        >>> hfc_1d_obj = Hfc(hfc_1d_data)
+        >>> hfc_1d_obj
+        -0.63 <anisotropic not available>
 
-    >>> with open(get_data("molecules/adenine_cation.json"), encoding="utf-8") as f:
-    ...      adenine_dict = json.load(f)
-    >>> hfc_1d_data = adenine_dict["data"]["N6-H1"]["hfc"]
-    >>> hfc_1d_obj = Hfc(hfc_1d_data)
-    >>> hfc_1d_obj
-    -0.63 <anisotropic not available>
+        we can obtain both the isotropic value:
 
-    we can obtain both the isotropic value:
+        >>> hfc_1d_obj.isotropic
+        -0.63
 
-    >>> hfc_1d_obj.isotropic
-    -0.63
+        but not the anisotropic tensor:
 
-    but not the anisotropic tensor:
-
-    >>> hfc_1d_obj.anisotropic
-    Traceback (most recent call last):
-    ...
-    ValueError: No anisotropic HFC data available.
+        >>> hfc_1d_obj.anisotropic
+        Traceback (most recent call last):
+        ...
+        ValueError: No anisotropic HFC data available.
     """
 
     _anisotropic: Optional[NDArray]
@@ -330,31 +326,30 @@ class Molecule:
             about the molecule.
 
     Examples:
+        The default constructor takes an arbitrary name and a list of
+        molecules to construct a molecule.
 
-    The default constructor takes an arbitrary name and a list of
-    molecules to construct a molecule.
+        >>> gamma_1H = 267522.187
+        >>> gamma_14N = 19337.792
+        >>> Molecule("kryptonite", [Nucleus(gamma_1H, 2, Hfc(1.0), "Hydrogen"),
+        ...                            Nucleus(gamma_14N, 3, Hfc(-0.5), "Nitrogen")])
+        Molecule: kryptonite
+        Nuclei:
+          Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
+          Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
 
-    >>> gamma_1H = 267522.187
-    >>> gamma_14N = 19337.792
-    >>> Molecule("kryptonite", [Nucleus(gamma_1H, 2, Hfc(1.0), "Hydrogen"),
-    ...                            Nucleus(gamma_14N, 3, Hfc(-0.5), "Nitrogen")])
-    Molecule: kryptonite
-    Nuclei:
-      Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
-      Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
+        Or alternatively:
 
-    Or alternatively:
-
-    >>> gammas = [267522.187, 19337.792]
-    >>> multis = [2, 3]
-    >>> hfcs = [1.0, -0.5]
-    >>> names = ["Hydrogen", "Nitrogen"]
-    >>> params = zip(gammas, multis, map(Hfc, hfcs), names)
-    >>> Molecule("kryptonite", [Nucleus(*param) for param in params])
-    Molecule: kryptonite
-    Nuclei:
-      Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
-      Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
+        >>> gammas = [267522.187, 19337.792]
+        >>> multis = [2, 3]
+        >>> hfcs = [1.0, -0.5]
+        >>> names = ["Hydrogen", "Nitrogen"]
+        >>> params = zip(gammas, multis, map(Hfc, hfcs), names)
+        >>> Molecule("kryptonite", [Nucleus(*param) for param in params])
+        Molecule: kryptonite
+        Nuclei:
+          Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
+          Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
     """
 
     name: str
@@ -403,12 +398,10 @@ class Molecule:
         Returns:
             list[str]: List of available molecules (names).
 
-        Example:
-
-        >>> available = Molecule.available()
-        >>> available[:4]
-        ['2_6_aqds', 'adenine_cation', 'flavin_anion', 'flavin_neutral']
-
+        Examples:
+            >>> available = Molecule.available()
+            >>> available[:4]
+            ['2_6_aqds', 'adenine_cation', 'flavin_anion', 'flavin_neutral']
         """
         paths = get_data("molecules").glob("*.json")
         return sorted([path.with_suffix("").name for path in paths])
@@ -424,12 +417,11 @@ class Molecule:
                 molecule specified by `name`.
 
         Examples:
-
-        >>> Molecule.fromdb("flavin_anion", nuclei=["N14"])
-        Molecule: flavin_anion
-        Nuclei:
-          14N(19337792.0, 3, -0.001275 <anisotropic available>)
-        Info: {'units': 'mT', 'name': 'Flavin radical anion'}
+            >>> Molecule.fromdb("flavin_anion", nuclei=["N14"])
+            Molecule: flavin_anion
+            Nuclei:
+              14N(19337792.0, 3, -0.001275 <anisotropic available>)
+            Info: {'units': 'mT', 'name': 'Flavin radical anion'}
         """
         if name not in cls.available():
             lines = [f"Molecule `{name}` not found in database."]
@@ -469,14 +461,13 @@ class Molecule:
             name (str): An optional name for the molecule.
 
         Examples:
-
-        >>> Molecule.fromisotopes(isotopes=["1H", "14N"],
-        ...                          hfcs=[1.5, 0.9],
-        ...                          name="kryptonite")
-        Molecule: kryptonite
-        Nuclei:
-          1H(267522187.44, 2, 1.5 <anisotropic not available>)
-          14N(19337792.0, 3, 0.9 <anisotropic not available>)
+            >>> Molecule.fromisotopes(isotopes=["1H", "14N"],
+            ...                          hfcs=[1.5, 0.9],
+            ...                          name="kryptonite")
+            Molecule: kryptonite
+            Nuclei:
+              1H(267522187.44, 2, 1.5 <anisotropic not available>)
+              14N(19337792.0, 3, 0.9 <anisotropic not available>)
         """
         isos = []
         for iso in isotopes:
