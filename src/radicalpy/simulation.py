@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
 import enum
+import logging
+import os
 from math import prod
 from typing import Iterable, Optional
 
 import numpy as np
-import scipy as sp
+from scipy.sparse import csc_array, kron, spdiags
+from scipy.sparse.linalg import expm
+from tqdm import tqdm
 
 from . import utils
 from .data import Molecule
@@ -85,6 +89,10 @@ class HilbertSimulation:
         self.molecules = molecules
         self.custom_gfactors = custom_gfactors
         self.basis = basis
+        LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
+        logging.basicConfig(level=LOGLEVEL)
+        self.logger = logging.getLogger("RadicalPy")
+        self.logger.debug(f"{__class__} object created created")
 
     @property
     def coupling(self):
@@ -121,16 +129,13 @@ class HilbertSimulation:
 
     def ST_basis(self, M):
         # T+  T0  S  T-
-        ST = np.array(
-            [
-                [1, 0, 0, 0],
-                [0, 1 / np.sqrt(2), 1 / np.sqrt(2), 0],
-                [0, -1 / np.sqrt(2), 1 / np.sqrt(2), 0],
-                [0, 0, 0, 1],
-            ]
+        is2 = 1 / np.sqrt(2)
+        ST = csc_array(
+            [[1, 0, 0, 0], [0, is2, is2, 0], [0, -is2, is2, 0], [0, 0, 0, 1]]
         )
 
-        C = np.kron(ST, np.eye(prod([n.multiplicity for n in self.nuclei])))
+        size = prod([n.multiplicity for n in self.nuclei])
+        C = kron(ST, csc_array(np.eye(size)))
         return C @ M @ C.T
 
     @staticmethod
@@ -156,9 +161,9 @@ class HilbertSimulation:
         assert mult > 1
         result = {}
         if mult == 2:
-            result["u"] = np.array([[1, 0], [0, 1]])
-            result["p"] = np.array([[0, 1], [0, 0]])
-            result["m"] = np.array([[0, 0], [1, 0]])
+            result["u"] = csc_array([[1, 0], [0, 1]])
+            result["p"] = csc_array([[0, 1], [0, 0]])
+            result["m"] = csc_array([[0, 0], [1, 0]])
             result["x"] = 0.5 * np.array([[0.0, 1.0], [1.0, 0.0]])
             result["y"] = 0.5 * np.array([[0.0, -1.0j], [1.0j, 0.0]])
             result["z"] = 0.5 * np.array([[1.0, 0.0], [0.0, -1.0]])
@@ -169,12 +174,12 @@ class HilbertSimulation:
             p_data = np.sqrt(spin * (spin + 1) - prjs * (prjs + 1))
             m_data = np.sqrt(spin * (spin + 1) - prjs * (prjs - 1))
 
-            result["u"] = np.eye(mult)
-            result["p"] = sp.sparse.spdiags(p_data, [1], mult, mult).toarray()
-            result["m"] = sp.sparse.spdiags(m_data, [-1], mult, mult).toarray()
+            result["u"] = csc_array(np.eye(mult))
+            result["p"] = spdiags(p_data, [1], mult, mult).tocsc()
+            result["m"] = spdiags(m_data, [-1], mult, mult).toarray()
             result["x"] = 0.5 * (result["p"] + result["m"])
             result["y"] = -0.5 * 1j * (result["p"] - result["m"])
-            result["z"] = sp.sparse.spdiags(prjs, 0, mult, mult).toarray()
+            result["z"] = spdiags(prjs, 0, mult, mult).toarray()
         return result
 
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
@@ -201,10 +206,10 @@ class HilbertSimulation:
         eye_after = np.eye(prod(p.multiplicity for p in self.particles[idx + 1 :]))
 
         spinop = np.kron(np.kron(eye_before, sigma), eye_after)
-        if self.basis == Basis.ST:
-            return self.ST_basis(spinop)
-        else:
-            return spinop
+
+        t = self.ST_basis(spinop) if self.basis == Basis.ST else spinop
+        sparse = csc_array(t)
+        return sparse
 
     def product_operator(self, idx1: int, idx2: int, h: float = 1) -> np.ndarray:
         """Projection operator."""
@@ -238,7 +243,7 @@ class HilbertSimulation:
         # Product operators
         SASB = self.product_operator(0, 1)
 
-        eye = np.eye(len(SASB))
+        eye = csc_array(np.eye(*SASB.shape))
 
         # Projection operators
         # todo change p/m to +/-
@@ -291,15 +296,15 @@ class HilbertSimulation:
     def zeeman_hamiltonian_3d(
         self, B0: float, theta: float = 0, phi: float = 0
     ) -> np.ndarray:
-        particles = np.array(
+        rot = utils.spherical_to_cartesian(theta, phi)
+        omega = B0 * self.radicals[0].gamma_mT
+        return omega * sum(
             [
-                [self.spin_operator(idx, axis) for axis in "xyz"]
+                r * self.spin_operator(idx, ax)
+                for ax, r in zip("xyz", rot)
                 for idx in range(len(self.particles))
             ]
         )
-        rotation = utils.spherical_to_cartesian(theta, phi)
-        omega = B0 * self.radicals[0].gamma_mT
-        return omega * np.einsum("j,ijkl->kl", rotation, particles)
 
     def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> np.ndarray:
         """Construct the Hyperfine Hamiltonian.
@@ -350,7 +355,7 @@ class HilbertSimulation:
         """
         Jcoupling = self.radicals[0].gamma_mT * J
         SASB = self.product_operator(0, 1)
-        return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
+        return Jcoupling * (2 * SASB + 0.5 * csc_array(np.eye(*SASB.shape)))
 
     def dipolar_hamiltonian(self, D: float or np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
@@ -404,13 +409,11 @@ class HilbertSimulation:
         .. todo::
             Write proper docs.
         """
-        H = (
-            self.zeeman_hamiltonian(B, theta, phi)
-            + self.hyperfine_hamiltonian(hfc_anisotropy)
-            + self.exchange_hamiltonian(J)
-            + self.dipolar_hamiltonian(D)
-        )
-        return self.convert(H)
+        HZ = self.zeeman_hamiltonian(B, theta, phi)
+        HH = self.hyperfine_hamiltonian(hfc_anisotropy)
+        HJ = self.exchange_hamiltonian(J)
+        HD = self.dipolar_hamiltonian(D)
+        return self.convert(HZ + HH + HJ + HD)
 
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
@@ -431,7 +434,7 @@ class HilbertSimulation:
         propagator = self.unitary_propagator(H, dt)
 
         rho0 = self.initial_density_matrix(init_state, H)
-        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        rhos = [csc_array(rho0.shape, dtype=complex) for t in time]
         rhos[0] = rho0
         for t in range(1, len(time)):
             rhos[t] = self.propagate(propagator, rhos[t - 1])
@@ -487,10 +490,9 @@ class HilbertSimulation:
         if shape != H_zee.shape:
             shape = [shape[0] * shape[0], 1]
         rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
-        for i, B0 in enumerate(B):
+        for i, B0 in tqdm(enumerate(B)):
             H = H_base + B0 * H_zee
-            H_sparse = sp.sparse.csc_matrix(H)
-            rhos[i] = self.time_evolution(init_state, time, H_sparse)
+            rhos[i] = self.time_evolution(init_state, time, H)
         return rhos
 
     @staticmethod
@@ -564,21 +566,26 @@ class HilbertSimulation:
         time: np.ndarray,
         B: float,
         H_base: np.ndarray,
-        theta: Iterable[float],
-        phi: Iterable[float],
+        theta: list[float],
+        phi: list[float],
     ):
+        logger = self.logger.getChild("anisotropy_loop")
         shape = H_base.shape
         H_base = self.convert(H_base)
         if shape != H_base.shape:
             shape = [shape[0] * shape[0], 1]
 
-        rhos = np.zeros([len(theta), len(phi), len(time), *shape], dtype=complex)
+        rhos = {}
 
-        for i, th in enumerate(theta):
+        self.logger.debug(f"{len(theta)}")
+        for i, th in tqdm(enumerate(theta), desc="Anisotropy theta"):
             for j, ph in enumerate(phi):
                 H_zee = self.zeeman_hamiltonian(B, th, ph)
                 H = H_base + H_zee
                 rhos[i, j] = self.time_evolution(init_state, time, H)
+                tmp = rhos[i, j][0]
+                logger.debug(f"{tmp.nnz=} {tmp.shape=} {type(tmp)=}")
+        self.logger.debug("Anisotropy loop done")
         return rhos
 
     def anisotropy(
@@ -640,10 +647,10 @@ class HilbertSimulation:
         Pi = self.projection_operator(state)
 
         if state == State.EQUILIBRIUM:
-            rho0eq = sp.sparse.linalg.expm(-1j * sp.sparse.csc_matrix(H) * Pi).toarray()
+            rho0eq = expm(-1j * csc_array(H) * Pi).toarray()
             rho0 = rho0eq / rho0eq.trace()
         else:
-            rho0 = Pi / np.trace(Pi)
+            rho0 = Pi / Pi.trace()
         return rho0
 
     @staticmethod
@@ -669,8 +676,8 @@ class HilbertSimulation:
             >> Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
             >> UL = UnitaryPropagator(HL, 3e-9, "Liouville")
         """
-        Up = sp.sparse.linalg.expm(1j * H * dt)
-        Um = sp.sparse.linalg.expm(-1j * H * dt)
+        Up = expm(1j * H * dt)
+        Um = expm(-1j * H * dt)
         return Up, Um
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
@@ -715,7 +722,7 @@ class LiouvilleSimulation(HilbertSimulation):
         """
         Pi = self.liouville_projection_operator(state)
         if state == State.EQUILIBRIUM:
-            rho0eq = sp.sparse.linalg.expm(-1j * H * Pi)
+            rho0eq = expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
             rho0 = np.reshape(rho0, (len(H) ** 2, 1))
         else:
@@ -735,7 +742,7 @@ class LiouvilleSimulation(HilbertSimulation):
             dt (float): Time evolution timestep.
             space (str): Select the spin space.
         """
-        return sp.sparse.linalg.expm(H * dt)
+        return expm(H * dt)
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         return propagator @ rho
