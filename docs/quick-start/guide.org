@@ -3,7 +3,7 @@
 #+begin_src python :results silent
   import sys
 
-  from radicalpy.simulation import Molecule
+  from radicalpy.data import Molecule, Nucleus, Hfc
 
   sys.stderr = sys.stdout
 #+end_src
@@ -12,67 +12,56 @@
 * Using the molecule database
 
 #+begin_src python :exports both
-  flavin = Molecule(radical="flavin_anion",
-                    nuclei=["H25"])
+  flavin = Molecule.fromdb(name="flavin_anion",
+                           nuclei=["H25"])
   print(flavin)
 #+end_src
 
 #+RESULTS:
 : Molecule: flavin_anion
-:   HFCs: [array([[ 0.47570582,  0.04192216, -0.00921916],
-:        [ 0.04192216,  0.4626044 , -0.00827001],
-:        [-0.00921916, -0.00827001,  0.42560999]])]
-:   Multiplicities: [2]
-:   Magnetogyric ratios (mT): [267522.18744]
-:   Number of particles: 1
-
+: Nuclei:
+:   1H(267522187.44, 2, 0.4546 <anisotropic available>)
+: Info: {'units': 'mT', 'name': 'Flavin radical anion'}
 
 * Helpful error messages
 
 #+begin_src python :exports both
   try:
-      Molecule("adenine_cation", ["buz"])
+      Molecule.fromdb("adenine_cation", ["buz"])
   except ValueError as e:
       print(e)
 #+end_src
 
 #+RESULTS:
-: Available nuclei below.
+: Available nuclei:
 : N6-H2 (hfc = -0.66)
 : N6-H1 (hfc = -0.63)
 : C8-H (hfc = -0.55)
 
-
 * Using the isotope database
 
 #+begin_src python :exports both
-  print(Molecule(nuclei=["1H", "14N"],
-                 hfcs=[0.41, 1.82]))
+  print(Molecule.fromisotopes(isotopes=["1H", "14N"],
+                              hfcs=[0.41, 1.82]))
 #+end_src
 
 #+RESULTS:
-: Molecule: N/A
-:   HFCs: [0.41, 1.82]
-:   Multiplicities: [2, 3]
-:   Magnetogyric ratios (mT): [267522.18744, 19337.792]
-:   Number of particles: 2
-
+: Molecule: 
+: Nuclei:
+:   1H(267522187.44, 2, 0.41 <anisotropic not available>)
+:   14N(19337792.0, 3, 1.82 <anisotropic not available>)
 
 * Custom molecules
 
 #+begin_src python :exports both
-  print(Molecule("my_flavin",
-                 multiplicities=[2],
-                 gammas_mT=[267522.18744],
-                 hfcs=[0.5]))
+  hydrogen = Nucleus(267522.18744, 2, Hfc(0.5))
+  print(Molecule("my_flavin", nuclei=[hydrogen]))
 #+end_src
 
 #+RESULTS:
 : Molecule: my_flavin
-:   HFCs: [0.5]
-:   Multiplicities: [2]
-:   Magnetogyric ratios (mT): [267522.18744]
-:   Number of particles: 1
+: Nuclei:
+:   Nucleus(267522187.44, 2, 0.5 <anisotropic not available>)
 
 #+begin_src python :exports both
   Z = Molecule("kryptonite")
@@ -81,10 +70,7 @@
 
 #+RESULTS:
 : Molecule: kryptonite
-:   HFCs: []
-:   Multiplicities: []
-:   Magnetogyric ratios (mT): []
-:   Number of particles: 0
+: No nuclei specified.
 
 * Building a simulation object
 
@@ -97,18 +83,14 @@
 #+end_src
 
 #+RESULTS:
-#+begin_example
-Number of electrons: 2
-Number of nuclei: 1
-Number of particles: 3
-Multiplicities: [2, 2, 2]
-Magnetogyric ratios (mT): [-176085963.023, -176085963.023, 267522.18744]
-Nuclei: ['H25']
-Couplings: [0]
-HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
-       [ 0.04192216,  0.4626044 , -0.00827001],
-       [-0.00921916, -0.00827001,  0.42560999]])]
-#+end_example
+: Number of electrons: 2
+: Number of nuclei: 1
+: Number of particles: 3
+: Multiplicities: [2, 2, 2]
+: Magnetogyric ratios (mT): [-176085963.023, -176085963.023, 267522.18744]
+: Nuclei: [1H(267522187.44, 2, 0.4546 <anisotropic available>)]
+: Couplings: [0]
+: HFCs (mT): [0.4546 <anisotropic available>]
 
 #+begin_src python :exports both :results output file
   H = sim.total_hamiltonian(B=0, D=0, J=0)
@@ -121,7 +103,6 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
 
 #+RESULTS:
 [[file:img/hamiltonian.png]]
-
 
 * Time evolution
 
@@ -158,21 +139,21 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
 #+RESULTS:
 [[file:img/time_evolution.png]]
 
-
 * Monte Carlo random walk
 
 #+begin_src python :exports both :results output file
   from radicalpy import classical, plot
 
-  n_steps = 2000
+  t = np.arange(0, 50e-9, 40e-12)
   r_min = 0.5e-9 / 2
   r_max = 2e-9 / 2
+  r_max = 1.5e-9
   r = (r_min) + np.random.sample() * ((r_max) - (r_min))
   x0, y0, z0 = r, 0, 0
   mut_D = 1e-6 / 10000
   del_T = 40e-12
   delta_r = classical.get_delta_r(mut_D, del_T)
-  pos, dist, ang = classical.randomwalk_3d(n_steps, x0, y0, z0, delta_r, r_max)
+  pos, dist, ang = classical.randomwalk_3d(len(t), x0, y0, z0, delta_r, r_min, r_max)
   plot.monte_carlo_caged(pos, r_max)
 
   fname = "img/monte_carlo.png"
@@ -183,32 +164,101 @@ HFCs (mT): [array([[ 0.47570582,  0.04192216, -0.00921916],
 #+RESULTS:
 [[file:img/monte_carlo.png]]
 
-
-* Correlation time estimation
+** Correlation time estimation
 
 #+begin_src python :exports both :results output file
-  t, r, J, D = classical.monte_carlo_exchange_dipolar(n_steps -1, r_min, del_T, pos[:,0], dist[0:-1], ang)
-
   t_convert = 1e3
 
   plt.clf()
-  plt.rc('axes',edgecolor='k')
   plt.grid(False)
-  plt.axis('on')
-  plt.plot(t / t_convert, r * 1e9, 'r')
+  plt.axis("on")
+  plt.rc("axes", edgecolor="k")
+  plt.plot(t / t_convert, dist * 1e9, "r")
   plt.title("Time evolution of radical pair separation", size=16)
-  plt.xlabel('$t$ ($\mu s$)', size=14)
-  plt.ylabel('$r$ (nm)', size=14)
+  plt.xlabel("$t$ ($\mu s$)", size=14)
+  plt.ylabel("$r$ (nm)", size=14)
   plt.tick_params(labelsize=14)
 
-  fname = "img/correlation_time_estimation_J.png"
+  fname = "img/monte_carlo_dist.png"
   plt.savefig(fname)
   print(fname)
 #+end_src
 
 #+RESULTS:
-[[file:img/correlation_time_estimation_J.png]]
+[[file:img/monte_carlo_dist.png]]
 
+** Correlation time estimation
+
+#+begin_src python :exports both :results output file
+  J = rp.estimations.exchange_interaction_in_solution_MC(dist)
+
+  # plt.set_facecolor("none")
+  plt.clf()
+  plt.grid(False)
+  plt.axis("on")
+  plt.rc("axes", edgecolor="k")
+  plt.plot(t / t_convert, J)
+  plt.title("Time evolution of the exchange interaction", size=16)
+  plt.xlabel("$t$ ($\mu s$)", size=14)
+  plt.ylabel("$J$ (mT)", size=14)
+  plt.tick_params(labelsize=14)
+  fname = "img/monte_carlo_J.png"
+  plt.savefig(fname)
+  print(fname)
+#+end_src
+
+#+RESULTS:
+[[file:img/monte_carlo_J.png]]
+
+** Correlation time estimation
+
+#+begin_src python :exports both :results output file
+  # NOTE: D should average out to 0, since we're in solution.
+  D = rp.estimations.dipolar_interaction_MC(dist, ang)
+
+  # plt.facecolor("none")
+  plt.clf()
+  plt.grid(False)
+  plt.axis("on")
+  plt.rc("axes", edgecolor="k")
+  plt.plot(t / t_convert, D, "g")
+  plt.title("Time evolution of the dipolar interaction", size=16)
+  plt.xlabel("$t$ ($\mu s$)", size=14)
+  plt.ylabel("$D$ (mT)", size=14)
+  plt.tick_params(labelsize=14)
+  fname = "img/monte_carlo_D.png"
+  plt.savefig(fname)
+  print(fname)
+#+end_src
+
+#+RESULTS:
+[[file:img/monte_carlo_D.png]]
+
+** Correlation time estimation
+
+#+begin_src python :exports both :results output file
+  acf_j = rp.utils.autocorrelation(J, factor=2)
+
+  t = np.linspace(0, t[-1], len(acf_j))
+
+  # ax.set_facecolor("none")
+  plt.clf()
+  plt.grid(False)
+  plt.axis("on")
+  plt.xscale("log")
+  plt.rc("axes", edgecolor="k")
+  plt.plot(t, acf_j, "b", label="J")
+  plt.xlabel(r"$\tau$ (s)", size=14)
+  plt.ylabel(r"$g_J(\tau)$", size=14)
+  plt.title("Autocorrelation: exchange interaction", size=16)
+  plt.tick_params(labelsize=14)
+  fname = "img/monte_carlo_ac.png"
+  plt.savefig(fname)
+  print(fname)
+#+end_src
+
+#+RESULTS:
+[[file:img/monte_carlo_ac.png]]
 
 * Document still not finished! Sorry!
 
