@@ -7,12 +7,12 @@ from radicalpy.simulation import State
 
 
 def main():
-    flavin = rp.simulation.Molecule("flavin_anion", ["H25"])
+    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["H25"])
     Z = rp.simulation.Molecule("Z")
     # sim = rp.simulation.HilbertSimulation([flavin, Z])
     sim = rp.simulation.LiouvilleSimulation([flavin, Z])
     time = np.arange(0, 15e-6, 5e-9)
-    Bs = np.arange(0, 3, 1)
+    Bs = np.arange(0, 10, 1)
     k = 1e6
 
     MARY = sim.MARY(
@@ -30,13 +30,18 @@ def main():
     )
     rhos = MARY["rhos"]
 
-    Bi = 1
+    Bi = 9
+    ti = 10
     B = Bs[Bi]
-    plt.imshow(np.abs(rhos[Bi, 0]))
+    plt.imshow(np.abs(rhos[Bi, ti]))
     plt.title(f"B={B} mT")
+    plt.tick_params(bottom=False, left=False)
+    plt.colorbar()
+
+    ax = plt.gca()
     labels = rp.plot.spin_state_labels(sim)
-    print(labels)
-    # plt.xlabel(labels)
+    ax.set_xticklabels(labels, rotation=90)
+    ax.set_yticklabels(labels, rotation=0)
     plt.show()
 
 
