@@ -61,7 +61,7 @@
 #+RESULTS:
 : Molecule: my_hydrogen
 : Nuclei:
-:   Nucleus(267522187.44, 2, 50.7 <anisotropic not available>)
+:   Nucleus(267522187440.0, 2, 50.7 <anisotropic not available>)
 
 #+begin_src python :exports both
   Z = Molecule("kryptonite")
