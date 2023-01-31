@@ -54,14 +54,14 @@
 * Custom molecules
 
 #+begin_src python :exports both
-  hydrogen = Nucleus(267522.18744, 2, Hfc(0.5))
-  print(Molecule("my_flavin", nuclei=[hydrogen]))
+  hydrogen = Nucleus(267522187.44, 2, Hfc(50.7))
+  print(Molecule("my_hydrogen", nuclei=[hydrogen]))
 #+end_src
 
 #+RESULTS:
-: Molecule: my_flavin
+: Molecule: my_hydrogen
 : Nuclei:
-:   Nucleus(267522187.44, 2, 0.5 <anisotropic not available>)
+:   Nucleus(267522187.44, 2, 50.7 <anisotropic not available>)
 
 #+begin_src python :exports both
   Z = Molecule("kryptonite")
@@ -146,7 +146,6 @@
 
   t = np.arange(0, 50e-9, 40e-12)
   r_min = 0.5e-9 / 2
-  r_max = 2e-9 / 2
   r_max = 1.5e-9
   r = (r_min) + np.random.sample() * ((r_max) - (r_min))
   x0, y0, z0 = r, 0, 0
@@ -164,7 +163,7 @@
 #+RESULTS:
 [[file:img/monte_carlo.png]]
 
-** Correlation time estimation
+** Time evolution of radical pair separation
 
 #+begin_src python :exports both :results output file
   t_convert = 1e3
@@ -187,7 +186,7 @@
 #+RESULTS:
 [[file:img/monte_carlo_dist.png]]
 
-** Correlation time estimation
+** Time evolution of exchange interaction
 
 #+begin_src python :exports both :results output file
   J = rp.estimations.exchange_interaction_in_solution_MC(dist)
@@ -210,7 +209,7 @@
 #+RESULTS:
 [[file:img/monte_carlo_J.png]]
 
-** Correlation time estimation
+** Time evolution of dipolar interaction
 
 #+begin_src python :exports both :results output file
   # NOTE: D should average out to 0, since we're in solution.
@@ -234,7 +233,7 @@
 #+RESULTS:
 [[file:img/monte_carlo_D.png]]
 
-** Correlation time estimation
+** Autocorrelation of exchange interaction
 
 #+begin_src python :exports both :results output file
   acf_j = rp.utils.autocorrelation(J, factor=2)
