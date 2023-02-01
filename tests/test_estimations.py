@@ -2,7 +2,7 @@
 
 import unittest
 
-from src import radicalpy as rp
+import radicalpy as rp
 
 
 class EstimationsTests(unittest.TestCase):

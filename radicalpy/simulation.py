@@ -6,6 +6,7 @@ from typing import Iterable, Optional
 
 import numpy as np
 import scipy as sp
+from tqdm import tqdm
 
 from . import utils
 from .data import Molecule
@@ -487,7 +488,7 @@ class HilbertSimulation:
         if shape != H_zee.shape:
             shape = [shape[0] * shape[0], 1]
         rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
-        for i, B0 in enumerate(B):
+        for i, B0 in enumerate(tqdm(B)):
             H = H_base + B0 * H_zee
             H_sparse = sp.sparse.csc_matrix(H)
             rhos[i] = self.time_evolution(init_state, time, H_sparse)

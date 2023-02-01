@@ -3,7 +3,7 @@
 import doctest
 import unittest
 
-from src.radicalpy import shared
+from radicalpy import shared
 
 
 def load_tests(loader, tests, ignore):
