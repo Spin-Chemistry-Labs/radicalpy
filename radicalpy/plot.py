@@ -166,11 +166,12 @@ def monte_carlo_caged(pos, r_max):
 
 
 def spin_state_labels(sim: HilbertSimulation):
-    if sim.num_electrons != 2:
+    if len(sim.radicals) != 2:
         raise ValueError(
             "Density matrix plotting make little sense for non-radical pairs!"
         )
-    multiplicities = sim.multiplicities[sim.num_electrons :]
+    # multiplicities = sim.multiplicities[len(sim.radicals) :]
+    multiplicities = [r.multiplicity for r in sim.radicals]
     old_labels = [
         State.TRIPLET_PLUS.value,
         State.TRIPLET_ZERO.value,

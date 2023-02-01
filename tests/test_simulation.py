@@ -7,12 +7,11 @@ import unittest
 
 import matplotlib.pyplot as plt
 import numpy as np
-from src import radicalpy as rp
-from src.radicalpy import estimations, kinetics, relaxation
-from src.radicalpy.data import isotropic
-from src.radicalpy.simulation import Basis
+import radicalpy as rp
+from radicalpy import estimations, kinetics, relaxation
+from radicalpy.simulation import Basis
 
-import tests.radpy as radpy
+from . import radpy
 
 # np.seterr(divide="raise", invalid="raise")
 
@@ -27,19 +26,24 @@ PARAMS = dict(
 )
 
 RADICAL_PAIR = [
-    rp.simulation.Molecule("flavin_anion", ["H29"]),
-    rp.simulation.Molecule("adenine_cation"),
+    rp.simulation.Molecule.fromdb("flavin_anion", ["H29"]),
+    rp.simulation.Molecule.fromdb("adenine_cation"),
     # rp.simulation.Molecule("adenine_cation", ["C8-H"]),
 ]
 
 RADICAL_PAIR_RAW = [
     rp.simulation.Molecule(
-        multiplicities=[2, 2],
-        gammas_mT=[rp.data.gamma_mT("E"), rp.data.gamma_mT("E")],
-        hfcs=[0, 0],
+        "",
+        nuclei=[
+            rp.data.Nucleus(rp.data.Isotope("E").gamma_mT, 2, 0.0),
+            rp.data.Nucleus(rp.data.Isotope("E").gamma_mT, 2, 0.0),
+        ],
     ),
     rp.simulation.Molecule(
-        multiplicities=[2], gammas_mT=[rp.data.gamma_mT("E")], hfcs=[0]
+        "",
+        nuclei=[
+            rp.data.Nucleus(rp.data.Isotope("E").gamma_mT, 2, 0.0),
+        ],
     ),
 ]
 
@@ -63,11 +67,11 @@ def state2radpy(state: rp.simulation.State) -> str:
 
 class MoleculeTests(unittest.TestCase):
     def test_effective_hyperfine(self):
-        flavin = rp.simulation.Molecule("flavin_anion", ["N5"])
+        flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["N5"])
         self.assertAlmostEqual(flavin.effective_hyperfine, 1.4239723207027404)
 
     def test_manual_effective_hyperfine(self):
-        nuclei = ["14N"] * 4 + ["1H"] * 12
+        isotopes = ["14N"] * 4 + ["1H"] * 12
         hfcs = [
             0.5233,
             0.1887,
@@ -86,7 +90,8 @@ class MoleculeTests(unittest.TestCase):
             0.407,
             -0.0189,
         ]
-        flavin = rp.simulation.Molecule(nuclei=nuclei, hfcs=hfcs)
+
+        flavin = rp.simulation.Molecule.fromisotopes(isotopes, hfcs)
         self.assertAlmostEqual(flavin.effective_hyperfine, 1.3981069)
 
 
@@ -94,9 +99,9 @@ class HilbertTests(unittest.TestCase):
     def setUp(self):
         if MEASURE_TIME:
             self.start_time = time.time()
-        self.data = rp.data.MOLECULE_DATA["adenine_cation"]["data"]
+        self.data = rp.data.Molecule.load_molecule_json("adenine_cation")["data"]
         self.sim = rp.simulation.HilbertSimulation(RADICAL_PAIR, basis=Basis.ZEEMAN)
-        self.gamma_mT = rp.data.gamma_mT("E")
+        self.gamma_mT = rp.data.Isotope("E").gamma_mT
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
@@ -105,37 +110,20 @@ class HilbertTests(unittest.TestCase):
         if MEASURE_TIME:
             print(f"Time: {time.time() - self.start_time}")
 
-    @unittest.skip("Maybe bad test")
-    def test_molecule_properties(self):
-        molecule = rp.simulation.Molecule("adenine_cation", ["N6-H1", "C8-H"])
-        for prop in ["hfc", "element"]:
-            for i, h in enumerate(molecule._get_properties(prop)):
-                assert h == molecule._get_property(i, prop)
-
-    @unittest.skip("Maybe bad test")
-    def test_molecule_name(self):
-        molecule = rp.simulation.Molecule("adenine_cation", ["N6-H1", "C8-H"])
-        for i, h in enumerate(molecule.hfcs):
-            assert h == self.data[molecule.nuclei[i]]["hfc"]
-        for i, g in enumerate(molecule.gammas_mT):
-            elem = self.data[molecule.nuclei[i]]["element"]
-            assert g == rp.data.gamma_mT(elem)
-        for i, m in enumerate(molecule.multiplicities):
-            elem = self.data[molecule.nuclei[i]]["element"]
-            assert m == rp.data.multiplicity(elem)
-
     def test_molecule_raw(self):
         hfcs = [0.1, 0.2]
         multiplicities = [2, 3]
         gammas_mT = [3.14, 2.71]
 
-        molecule = rp.simulation.Molecule(
-            hfcs=hfcs, multiplicities=multiplicities, gammas_mT=gammas_mT
-        )
-        for i in range(2):
-            assert hfcs[i] == molecule.hfcs[i]
-            assert multiplicities[i] == molecule.multiplicities[i]
-            assert gammas_mT[i] == molecule.gammas_mT[i]
+        nuclei = [
+            rp.data.Nucleus(gammas_mT[0], multiplicities[0], rp.data.Hfc(hfcs[0])),
+            rp.data.Nucleus(gammas_mT[1], multiplicities[1], rp.data.Hfc(hfcs[1])),
+        ]
+        molecule = rp.simulation.Molecule(nuclei=nuclei)
+        for i, n in enumerate(molecule.nuclei):
+            self.assertEqual(hfcs[i], n.hfc.isotropic)
+            self.assertEqual(multiplicities[i], n.multiplicity)
+            self.assertEqual(gammas_mT[i], n.gamma_mT)
 
     def test_molecule_empty(self):
         """Test empty molecule.
@@ -163,13 +151,13 @@ class HilbertTests(unittest.TestCase):
         # Assume this is correct!
         omega_e = PARAMS["B"][0] * self.gamma_mT
         electrons = sum(
-            [radpy.np_spinop(radpy.np_Sz, i, sim.num_particles) for i in range(2)]
+            [radpy.np_spinop(radpy.np_Sz, i, len(sim.particles)) for i in range(2)]
         )
-        omega_n = PARAMS["B"][0] * rp.data.gamma_mT("E")
+        omega_n = PARAMS["B"][0] * rp.data.Isotope("E").gamma_mT
         nuclei = sum(
             [
-                radpy.np_spinop(radpy.np_Sz, i, sim.num_particles)
-                for i in range(2, sim.num_particles)
+                radpy.np_spinop(radpy.np_Sz, i, len(sim.particles))
+                for i in range(2, len(sim.particles))
             ]
         )
         HZ_true = -omega_e * electrons - omega_n * nuclei
@@ -184,13 +172,13 @@ class HilbertTests(unittest.TestCase):
         # Assume this is correct!
         omega_e = PARAMS["B"][0] * self.gamma_mT
         electrons = sum(
-            [radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles) for i in range(2)]
+            [radpy.np_spinop(radpy.np_Sz, i, len(self.sim.particles)) for i in range(2)]
         )
-        omega_n = PARAMS["B"][0] * rp.data.gamma_mT("1H")
+        omega_n = PARAMS["B"][0] * rp.data.Isotope("1H").gamma_mT
         nuclei = sum(
             [
-                radpy.np_spinop(radpy.np_Sz, i, self.sim.num_particles)
-                for i in range(2, self.sim.num_particles)
+                radpy.np_spinop(radpy.np_Sz, i, len(self.sim.particles))
+                for i in range(2, len(self.sim.particles))
             ]
         )
         HZ_true = -omega_e * electrons - omega_n * nuclei
@@ -201,14 +189,14 @@ class HilbertTests(unittest.TestCase):
 
     def test_HH(self):
         couplings = self.sim.coupling
-        hfcs = self.sim.hfcs
+        hfcs = [n.hfc for n in self.sim.nuclei]
         HH_true = sum(
             [
                 radpy.HamiltonianHyperfine(
-                    self.sim.num_particles,
+                    len(self.sim.particles),
                     ei,
                     2 + ni,
-                    isotropic(hfcs[ni]),
+                    hfcs[ni].isotropic,
                     self.gamma_mT,
                 )
                 for ni, ei in enumerate(couplings)
@@ -220,14 +208,14 @@ class HilbertTests(unittest.TestCase):
 
     def test_HE(self):
         HE_true = radpy.HamiltonianExchange(
-            self.sim.num_particles, PARAMS["J"], gamma=self.gamma_mT
+            len(self.sim.particles), PARAMS["J"], gamma=self.gamma_mT
         )
         HE = self.sim.exchange_hamiltonian(PARAMS["J"])
         np.testing.assert_almost_equal(HE, HE_true)
 
     def test_HD(self):
         HD_true = radpy.HamiltonianDipolar(
-            self.sim.num_particles, PARAMS["D"], self.gamma_mT
+            len(self.sim.particles), PARAMS["D"], self.gamma_mT
         )
         HD = self.sim.dipolar_hamiltonian(PARAMS["D"])
         np.testing.assert_almost_equal(HD, HD_true)
@@ -301,10 +289,6 @@ class HilbertTests(unittest.TestCase):
         # plt.imshow(np.real(H))
         # plt.show()
 
-    @unittest.skip("Doesn't check anything")
-    def test_3d(self):
-        H = self.sim.zeeman_hamiltonian_3d(1, 10, 20)
-
     def test_dipolar_interaction_1d(self):
         approx = estimations.dipolar_interaction_isotropic(1)
         gold = approx
@@ -315,7 +299,7 @@ class HilbertTests(unittest.TestCase):
         for state in rp.simulation.State:
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
-            rho0_true = radpy.Hilbert_initial(rpstate, self.sim.num_particles, H)
+            rho0_true = radpy.Hilbert_initial(rpstate, len(self.sim.particles), H)
             np.testing.assert_almost_equal(rho0, rho0_true)
 
     def test_unitary_propagator(self):
@@ -334,7 +318,7 @@ class HilbertTests(unittest.TestCase):
                 if obs_state == rp.simulation.State.EQUILIBRIUM:
                     continue
                 evol_true = radpy.TimeEvolution(
-                    self.sim.num_particles,
+                    len(self.sim.particles),
                     state2radpy(init_state),
                     state2radpy(obs_state),
                     self.t_max,
@@ -461,7 +445,7 @@ class HilbertTests(unittest.TestCase):
         )
 
         molecules = [
-            rp.simulation.Molecule("flavin3d", nuclei=["14N"], hfcs=[N5]),
+            rp.simulation.Molecule.fromisotopes(["14N"], [N5], "flavin3d"),
             rp.simulation.Molecule(),
         ]
         B0 = 0.05
@@ -515,7 +499,7 @@ class LiouvilleTests(unittest.TestCase):
         for state in rp.simulation.State:
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
-            rho0_true = radpy.Liouville_initial(rpstate, self.sim.num_particles, H)
+            rho0_true = radpy.Liouville_initial(rpstate, len(self.sim.particles), H)
             np.testing.assert_almost_equal(rho0, rho0_true)
 
     def test_unitary_propagator(self):

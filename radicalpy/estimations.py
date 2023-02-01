@@ -3,8 +3,8 @@
 import numpy as np
 
 from . import utils
-from .data import constants as C
-from .data import gamma_mT
+from .data import Isotope
+from .shared import constants as C
 from .simulation import HilbertSimulation
 
 
@@ -57,7 +57,7 @@ def T1_relaxation_rate(
        https://doi.org/10.1142/9789812562654_0015
 
     """
-    omega = gamma_mT("E") * B
+    omega = Isotope("E").gamma_mT * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 5)
@@ -85,7 +85,7 @@ def T2_relaxation_rate(
     Returns:
             float or np.ndarray: The T2 relaxation rate (1/s).
     """
-    omega = gamma_mT("E") * B
+    omega = Isotope("E").gamma_mT * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
     return (
         (1 / 30)
@@ -215,7 +215,7 @@ def dipolar_interaction_MC(
 
 
 def dipolar_interaction_anisotropic(
-    r: float | np.ndarray, gamma: float = gamma_mT("E")
+    r: float | np.ndarray, gamma: float = Isotope("E").gamma_mT
 ) -> np.ndarray:
     """Anisotropic dipolar coupling.
 
@@ -293,7 +293,7 @@ def exchange_interaction_in_solution(
     .. _McLauchlan et al. Mol. Phys. 73:2, 241-263 (1991):
        https://doi.org/10.1080/00268979100101181
     """
-    J0 = J0rad / gamma_mT("E")
+    J0 = J0rad / Isotope("E").gamma_mT
     return J0 * np.exp(-r / beta)
 
 
@@ -459,9 +459,11 @@ def k_excitation(
     Args:
             power (float): The excitation laser power (W).
             wavelength (float): The excitation wavelength (m).
-            volume (float): The excitation beam volume (L).
-            pathlength (float): The path length of the sample cell (m).
-            epsilon (float): The extinction coefficient of the molecule (1/M/s).
+            volume (float): The excitation beam volume (m^3).
+            pathlength (float): The path length of the sample cell
+                (m).
+            epsilon (float): The extinction coefficient of the
+                molecule (m^2/mol).
 
     Returns:
             float: The excitation rate (1/s).
@@ -534,24 +536,6 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
         + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )
     return (D**2 + 3 * E**2) * jnu0tc
-
-
-def number_of_photons(
-    k_excitation: float, concentration: float, volume: float
-) -> float:
-    """Number of photons.
-
-    The number of photons produced via groundstate excitation.
-
-    Args:
-            k_excitation (float): The excitation rate (1/s).
-            concentration (float): The sample concentration (M).
-            volume (float): The excitation beam volume (L).
-
-    Returns:
-            float: The number of photons.
-    """
-    return k_excitation * concentration * volume * C.N_A
 
 
 def rotational_correlation_time_for_molecule(

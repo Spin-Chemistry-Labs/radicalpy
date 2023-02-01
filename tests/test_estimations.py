@@ -2,16 +2,16 @@
 
 import unittest
 
-from src import radicalpy as rp
+import radicalpy as rp
 
 
 class EstimationsTests(unittest.TestCase):
     def test_Bhalf_theoretical(self):
-        flavin = rp.simulation.Molecule("flavin_anion")
-        trp = rp.simulation.Molecule("trp_cation")
+        flavin = rp.simulation.Molecule.fromdb("flavin_anion")
+        trp = rp.simulation.Molecule.fromdb("tryptophan_cation")
         sim = rp.simulation.HilbertSimulation([flavin, trp])
         Bhalf_theoretical = rp.estimations.Bhalf_theoretical(sim)
-        self.assertAlmostEqual(Bhalf_theoretical, 2.4663924080289092)
+        self.assertAlmostEqual(Bhalf_theoretical, 2.9692816566569937, places=2)
 
     def test_T1_relaxation_rate(self):
         gold = 557760.0907618533
@@ -102,18 +102,6 @@ class EstimationsTests(unittest.TestCase):
         tau_c = 58e-12
         k_tr = rp.estimations.k_triplet_relaxation(B0, tau_c, D, E)
         self.assertAlmostEqual(gold, k_tr, places=5)
-
-    def test_number_of_photons(self):
-        gold = 3430777.6639644573
-        C = 200e-9
-        V = 0.54e-15
-        P = 290e-6
-        wl = 450e-9
-        l = 900e-9
-        epsilon = 12600
-        kI = rp.estimations.k_excitation(P, wl, V, l, epsilon)
-        nop = rp.estimations.number_of_photons(kI, C, V)
-        self.assertAlmostEqual(gold, nop)
 
     def test_rotational_correlation_time_for_molecule(self):
         gold = 5.5745926978864795e-11

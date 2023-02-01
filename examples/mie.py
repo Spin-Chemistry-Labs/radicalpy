@@ -7,11 +7,11 @@ from radicalpy.simulation import State
 
 
 def main():
-    Py_h = rp.simulation.Molecule(nuclei=["1H"], hfcs=[0.073])
-    DMA_h = rp.simulation.Molecule(nuclei=["1H"], hfcs=[0.181])
+    Py_h = rp.simulation.Molecule.fromisotopes(isotopes=["1H"], hfcs=[0.073])
+    DMA_h = rp.simulation.Molecule.fromisotopes(isotopes=["1H"], hfcs=[0.181])
 
-    Py_d = rp.simulation.Molecule(nuclei=["2H"], hfcs=[0.481])
-    DMA_d = rp.simulation.Molecule(nuclei=["2H"], hfcs=[1.18])
+    Py_d = rp.simulation.Molecule.fromisotopes(isotopes=["2H"], hfcs=[0.481])
+    DMA_d = rp.simulation.Molecule.fromisotopes(isotopes=["2H"], hfcs=[1.18])
 
     sim = rp.simulation.HilbertSimulation([Py_h, DMA_h])
     sim2 = rp.simulation.HilbertSimulation([Py_d, DMA_d])
@@ -28,7 +28,7 @@ def main():
         D=0,
         J=0,
         kinetics=[
-        rp.kinetics.Exponential(k),
+            rp.kinetics.Exponential(k),
         ],
     )
     MARY = results["MARY"]
@@ -43,7 +43,7 @@ def main():
         D=0,
         J=0,
         kinetics=[
-        rp.kinetics.Exponential(k),
+            rp.kinetics.Exponential(k),
         ],
     )
     MARY2 = results2["MARY"]

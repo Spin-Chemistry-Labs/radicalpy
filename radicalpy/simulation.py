@@ -6,9 +6,10 @@ from typing import Iterable, Optional
 
 import numpy as np
 import scipy as sp
+from tqdm import tqdm
 
 from . import utils
-from .data import Molecule, gamma_mT, isotropic, multiplicity, pauli
+from .data import Molecule
 
 
 class State(enum.Enum):
@@ -64,22 +65,16 @@ class HilbertSimulation:
         custom_gfactor (bool): Flag to use g-factors instead of the
             default gyromagnetic ratio gamma.
 
-    >>> HilbertSimulation([Molecule("flavin_anion", ["N5"]),
-    ...                    Molecule("tryptophan_cation", ["Hbeta1", "H1"])])
+    >>> HilbertSimulation([Molecule.fromdb("flavin_anion", ["N5"]),
+    ...                    Molecule.fromdb("tryptophan_cation", ["Hbeta1", "H1"])])
     Number of electrons: 2
     Number of nuclei: 3
     Number of particles: 5
     Multiplicities: [2, 2, 3, 2, 2]
     Magnetogyric ratios (mT): [-176085963.023, -176085963.023, 19337.792, 267522.18744, 267522.18744]
-    Nuclei: ['N5', 'Hbeta1', 'H1']
+    Nuclei: [14N(19337792.0, 3, 0.5141 <anisotropic available>), 1H(267522187.44, 2, 1.605 <anisotropic available>), 1H(267522187.44, 2, -0.5983 <anisotropic available>)]
     Couplings: [0, 1, 1]
-    HFCs (mT): [array([[-0.06819637,  0.01570029,  0.08701531],
-           [ 0.01570029, -0.03652102,  0.27142597],
-           [ 0.08701531,  0.27142597,  1.64713923]]), array([[ 1.5808, -0.0453, -0.0506],
-           [-0.0453,  1.5575,  0.0988],
-           [-0.0506,  0.0988,  1.6752]]), array([[-0.992 , -0.2091, -0.2003],
-           [-0.2091, -0.2631,  0.2803],
-           [-0.2003,  0.2803, -0.5398]])]
+    HFCs (mT): [0.5141 <anisotropic available>, 1.605 <anisotropic available>, -0.5983 <anisotropic available>]
     """
 
     def __init__(
@@ -94,72 +89,32 @@ class HilbertSimulation:
 
     @property
     def coupling(self):
-        return sum([[i] * m.num_particles for i, m in enumerate(self.molecules)], [])
+        return sum([[i] * len(m.nuclei) for i, m in enumerate(self.molecules)], [])
 
     @property
-    def electrons(self):
-        return ["E"] * self.num_electrons
+    def radicals(self):
+        return [m.radical for m in self.molecules]
 
     @property
-    def hfcs(self):
-        return sum([m.hfcs for m in self.molecules], [])
+    def nuclei(self):
+        return sum([[n for n in m.nuclei] for m in self.molecules], [])
 
     @property
-    def num_electrons(self):
-        return len(self.molecules)
-
-    @property
-    def num_nuclei(self):
-        return sum([m.num_particles for m in self.molecules])
-
-    @property
-    def num_particles(self):
-        return self.num_electrons + self.num_nuclei
-
-    @property
-    def electron_multiplicities(self):
-        return list(map(multiplicity, self.electrons))
-
-    @property
-    def nuclei_multiplicities(self):
-        return sum([m.multiplicities for m in self.molecules], [])
-
-    @property
-    def multiplicities(self):
-        return self.electron_multiplicities + self.nuclei_multiplicities
-
-    @property
-    def electron_gammas_mT(self):
-        g = 2.0023  # free electron g-factor
-        gfactor = [g, g]
-        if self.custom_gfactors:
-            # overwrite gfactor list TODO
-            pass
-        # muB = 9.274e-24
-        # hbar = 1.05459e-34
-        # return [gfactor[i] * muB / hbar / 1000 for i in range(self.num_electrons)]
-        return [gamma_mT(e) * gfactor[i] / g for i, e in enumerate(self.electrons)]
-
-    @property
-    def nuclei_gammas_mT(self):
-        return sum([m.gammas_mT for m in self.molecules], [])
-
-    @property
-    def gammas_mT(self):
-        return self.electron_gammas_mT + self.nuclei_gammas_mT
+    def particles(self):
+        return self.radicals + self.nuclei
 
     def __repr__(self) -> str:
         return "\n".join(
             [
                 # "Simulation summary:",
-                f"Number of electrons: {self.num_electrons}",
-                f"Number of nuclei: {len(self.hfcs)}",
-                f"Number of particles: {self.num_particles}",
-                f"Multiplicities: {self.multiplicities}",
-                f"Magnetogyric ratios (mT): {self.gammas_mT}",
+                f"Number of electrons: {len(self.radicals)}",
+                f"Number of nuclei: {len(self.nuclei)}",
+                f"Number of particles: {len(self.particles)}",
+                f"Multiplicities: {[p.multiplicity for p in self.particles]}",
+                f"Magnetogyric ratios (mT): {[p.gamma_mT for p in self.particles]}",
                 f"Nuclei: {sum([m.nuclei for m in self.molecules], [])}",
                 f"Couplings: {self.coupling}",
-                f"HFCs (mT): {self.hfcs}",
+                f"HFCs (mT): {[n.hfc for n in self.nuclei]}",
                 # "",
                 # f"Simulated molecules:\n{molecules}",
             ]
@@ -176,8 +131,52 @@ class HilbertSimulation:
             ]
         )
 
-        C = np.kron(ST, np.eye(prod(self.nuclei_multiplicities)))
+        C = np.kron(ST, np.eye(prod([n.multiplicity for n in self.nuclei])))
         return C @ M @ C.T
+
+    @staticmethod
+    def pauli(mult: int):
+        """Generate Pauli matrices.
+
+        Generates the Pauli matrices corresponding to a given multiplicity.
+
+        Args:
+            mult (int): The multiplicity of the element.
+
+        Return:
+            dict: A dictionary containing 6 `np.array` matrices of
+            shape `(mult, mult)`:
+
+            - the unit operator `result["u"]`,
+            - raising operator `result["p"]`,
+            - lowering operator `result["m"]`,
+            - Pauli matrix for x axis `result["x"]`,
+            - Pauli matrix for y axis `result["y"]`,
+            - Pauli matrix for z axis `result["z"]`.
+        """
+        assert mult > 1
+        result = {}
+        if mult == 2:
+            result["u"] = np.array([[1, 0], [0, 1]])
+            result["p"] = np.array([[0, 1], [0, 0]])
+            result["m"] = np.array([[0, 0], [1, 0]])
+            result["x"] = 0.5 * np.array([[0.0, 1.0], [1.0, 0.0]])
+            result["y"] = 0.5 * np.array([[0.0, -1.0j], [1.0j, 0.0]])
+            result["z"] = 0.5 * np.array([[1.0, 0.0], [0.0, -1.0]])
+        else:
+            spin = (mult - 1) / 2
+            prjs = np.arange(mult - 1, -1, -1) - spin
+
+            p_data = np.sqrt(spin * (spin + 1) - prjs * (prjs + 1))
+            m_data = np.sqrt(spin * (spin + 1) - prjs * (prjs - 1))
+
+            result["u"] = np.eye(mult)
+            result["p"] = sp.sparse.spdiags(p_data, [1], mult, mult).toarray()
+            result["m"] = sp.sparse.spdiags(m_data, [-1], mult, mult).toarray()
+            result["x"] = 0.5 * (result["p"] + result["m"])
+            result["y"] = -0.5 * 1j * (result["p"] - result["m"])
+            result["z"] = sp.sparse.spdiags(prjs, 0, mult, mult).toarray()
+        return result
 
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator for a particle.
@@ -195,12 +194,12 @@ class HilbertSimulation:
         Construct the spin operator for the particle with index
         `idx` in the `HilbertSimulation`.
         """
-        assert 0 <= idx and idx < len(self.multiplicities)
+        assert 0 <= idx and idx < len(self.particles)
         assert axis in "xyz"
 
-        sigma = pauli(self.multiplicities[idx])[axis]
-        eye_before = np.eye(prod(m for m in self.multiplicities[:idx]))
-        eye_after = np.eye(prod(m for m in self.multiplicities[idx + 1 :]))
+        sigma = self.pauli(self.particles[idx].multiplicity)[axis]
+        eye_before = np.eye(prod(p.multiplicity for p in self.particles[:idx]))
+        eye_after = np.eye(prod(p.multiplicity for p in self.particles[idx + 1 :]))
 
         spinop = np.kron(np.kron(eye_before, sigma), eye_after)
         if self.basis == Basis.ST:
@@ -287,7 +286,7 @@ class HilbertSimulation:
 
     def zeeman_hamiltonian_1d(self, B0: float) -> np.ndarray:
         axis = "z"
-        gammas = enumerate(self.gammas_mT)
+        gammas = enumerate(p.gamma_mT for p in self.particles)
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
 
     def zeeman_hamiltonian_3d(
@@ -296,11 +295,11 @@ class HilbertSimulation:
         particles = np.array(
             [
                 [self.spin_operator(idx, axis) for axis in "xyz"]
-                for idx in range(self.num_particles)
+                for idx in range(len(self.particles))
             ]
         )
         rotation = utils.spherical_to_cartesian(theta, phi)
-        omega = B0 * self.gammas_mT[0]
+        omega = B0 * self.radicals[0].gamma_mT
         return omega * np.einsum("j,ijkl->kl", rotation, particles)
 
     def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> np.ndarray:
@@ -314,21 +313,23 @@ class HilbertSimulation:
             system described by the `Quantum` simulation object.
         """
         if hfc_anisotropy:
-            for h in self.hfcs:
-                if not isinstance(h, np.ndarray) and h.shape == (3, 3):
+            for h in [n.hfc for n in self.nuclei]:
+                # TODO(vatai) try except not is None
+                if h.anisotropic is None:
                     raise ValueError(
-                        "Not all molecules have 3x3 HFC tensors! Please use `hfc_anisotropy=False`"
+                        "Not all molecules have anisotropic HFCs! Please use `hfc_anisotropy=False`"
                     )
 
         if hfc_anisotropy:
             prodop = self.product_operator_3d
-            hfcs = self.hfcs
+            hfcs = [n.hfc.anisotropic for n in self.nuclei]
         else:
             prodop = self.product_operator
-            hfcs = [isotropic(h) if isinstance(h, np.ndarray) else h for h in self.hfcs]
+            hfcs = [n.hfc.isotropic for n in self.nuclei]
         return sum(
             [
-                self.gammas_mT[ei] * prodop(ei, self.num_electrons + ni, hfcs[ni])
+                self.particles[ei].gamma_mT
+                * prodop(ei, len(self.radicals) + ni, hfcs[ni])
                 for ni, ei in enumerate(self.coupling)
             ]
         )
@@ -348,7 +349,7 @@ class HilbertSimulation:
             corresponding to the system described by the `Quantum`
             simulation object and the coupling constant `J`.
         """
-        Jcoupling = self.gammas_mT[0] * J
+        Jcoupling = self.radicals[0].gamma_mT * J
         SASB = self.product_operator(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
@@ -375,14 +376,14 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         SAz = self.spin_operator(0, "z")
         SBz = self.spin_operator(1, "z")
-        omega = (2 / 3) * self.gammas_mT[0] * D
+        omega = (2 / 3) * self.radicals[0].gamma_mT * D
         return omega * (3 * SAz * SBz - SASB)
 
     def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
-        ne = self.num_electrons
+        ne = len(self.radicals)
         return -sum(
             [
-                -self.gammas_mT[0]
+                -self.radicals[0].gamma_mT
                 * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
                 for ni, ei in enumerate(self.coupling)
             ]
@@ -487,7 +488,7 @@ class HilbertSimulation:
         if shape != H_zee.shape:
             shape = [shape[0] * shape[0], 1]
         rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
-        for i, B0 in enumerate(B):
+        for i, B0 in enumerate(tqdm(B)):
             H = H_base + B0 * H_zee
             H_sparse = sp.sparse.csc_matrix(H)
             rhos[i] = self.time_evolution(init_state, time, H_sparse)
