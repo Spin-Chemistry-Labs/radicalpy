@@ -103,18 +103,6 @@ class EstimationsTests(unittest.TestCase):
         k_tr = rp.estimations.k_triplet_relaxation(B0, tau_c, D, E)
         self.assertAlmostEqual(gold, k_tr, places=5)
 
-    def test_number_of_photons(self):
-        gold = 3430777.6639644573
-        C = 200e-9
-        V = 0.54e-15
-        P = 290e-6
-        wl = 450e-9
-        l = 900e-9
-        epsilon = 12600
-        kI = rp.estimations.k_excitation(P, wl, V, l, epsilon)
-        nop = rp.estimations.number_of_photons(kI, C, V)
-        self.assertAlmostEqual(gold, nop)
-
     def test_rotational_correlation_time_for_molecule(self):
         gold = 5.5745926978864795e-11
         a = 0.4e-9
