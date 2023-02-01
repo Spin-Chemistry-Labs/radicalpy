@@ -7,9 +7,9 @@ import unittest
 
 import matplotlib.pyplot as plt
 import numpy as np
-from src import radicalpy as rp
-from src.radicalpy import estimations, kinetics, relaxation
-from src.radicalpy.simulation import Basis
+import radicalpy as rp
+from radicalpy import estimations, kinetics, relaxation
+from radicalpy.simulation import Basis
 
 from . import radpy
 

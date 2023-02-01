@@ -2,7 +2,7 @@
 
 import doctest
 
-from src.radicalpy import relaxation
+from radicalpy import relaxation
 
 
 def load_tests(loader, tests, ignore):

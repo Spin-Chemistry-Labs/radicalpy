@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 import numpy.testing
-from src.radicalpy import data
+from radicalpy import data
 
 
 def load_tests(loader, tests, ignore):
