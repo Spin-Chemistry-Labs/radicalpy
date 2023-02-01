@@ -19,6 +19,38 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
 
+def kinetics(
+    time: np.ndarray, initial_populations: list, states: list, rate_equations: dict
+) -> np.ndarray:
+    """Kinetic rate equation solver.
+
+    Constructs the matrix propagator and performs a time evolution simulation.
+
+    Args:
+            time (np.ndarray): The timescale of the reaction kinetics (s).
+            initial_populations (list): The initial populations of all states.
+            states (list): The states involved in the chemical reaction.
+            rate_equations (dict): The rate equations for all states.
+
+    Returns:
+            np.ndarray: The time evolution of all states.
+    """
+    shape = (len(states), len(states))
+    arrange = [
+        rate_equations[i][j] if (i in rate_equations and j in rate_equations[i]) else 0
+        for i in states
+        for j in states
+    ]
+    rates = np.reshape(arrange, shape)
+    dt = time[1] - time[0]
+    result = np.zeros([len(time), *rates[0].shape], dtype=float)
+    propagator = sp.sparse.linalg.expm(sp.sparse.csc_matrix(rates) * dt)
+    result[0] = initial_populations
+    for t in range(1, len(time)):
+        result[t] = propagator @ result[t - 1]
+    return result
+
+
 def _random_theta_phi():
     """Random sampling of theta and phi.
 
