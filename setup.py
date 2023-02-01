@@ -10,7 +10,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="radicalpy",
-    version="0.5.4",
+    version="0.5.5",
     license="MIT",
     author="Lewis M. Antill",
     author_email="lewismantill@gmail.com",
