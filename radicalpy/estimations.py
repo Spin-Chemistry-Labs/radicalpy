@@ -157,12 +157,34 @@ def correlation_time(*args: np.ndarray) -> float:
 
     Returns:
             float: The correlation time (s).
+    .. todo:: Change to different approach.
     """
     n = len(args) // 2
     As, taus = list(args)[:n], list(args)[n:]
     As_norm = As / np.array(As).sum()
     y = As_norm / taus
     return np.trapz(y, dx=1)
+
+
+def diffusion_coefficient(radius: float, temperature: float, eta: float):
+    """Diffusion coefficient.
+
+    The Stokes-Einstein relation.
+
+    Source: `Einstein, Ann. der Physik, 17, 549-560 (1905)`_.
+
+    Args:
+            radius (float): The radius of the molecule (m).
+            temperature (float): The temperature of the solution (K).
+            eta (float): The viscosity of the solution (kg/m/s).
+
+    Returns:
+            float: The diffusion coefficient (m^2/s).
+
+    .. _Einstein, Ann. der Physik, 17, 549-560 (1905):
+       https://doi.org/10.1002/andp.19053220806
+    """
+    return (C.k_B * temperature) / (6 * np.pi * eta * radius)
 
 
 def dipolar_interaction_MC(
@@ -322,50 +344,6 @@ def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     return (g1sum + g2sum) / (9 * tau_c)
 
 
-def k_electron_transfer(R: float, deltaG: float = -1, lambd: float = 1) -> float:
-    """Electron transfer rate.
-
-    The default values return the maximum electron transfer rate (lambd = -deltaG).
-
-    Source: `Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010)`_.
-
-    Args:
-            R (float): The edge-to-edge separation (Å).
-            deltaG (float): The driving force (eV).
-            lambd (float): The reorganisation energy (eV).
-
-    Returns:
-            float: The electron transfer rate (1/s).
-
-    .. _Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010):
-       https://doi.org/10.1016/j.bbabio.2010.04.441
-
-    """
-    return 10 ** (13 - 0.6 * (R - 3.6) - 3.1 * ((deltaG + lambd) ** 2 / lambd))
-
-
-def k_excitation(
-    power: float, wavelength: float, volume: float, pathlength: float, epsilon: float
-) -> float:
-    """Groundstate excitation rate.
-
-    Args:
-            power (float): The excitation laser power (W).
-            wavelength (float): The excitation wavelength (m).
-            volume (float): The excitation beam volume (m^3).
-            pathlength (float): The path length of the sample cell
-                (m).
-            epsilon (float): The extinction coefficient of the
-                molecule (m^2/mol).
-
-    Returns:
-            float: The excitation rate (1/s).
-    """
-    nu = C.c / wavelength  # Frequency of excitation beam (1/s)
-    I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
-    return I0 * np.log(10) * epsilon * pathlength
-
-
 def k_D(D: np.ndarray, tau_c: float) -> float:
     """D (dipolar)-dephasing rate for trajectories.
 
@@ -380,25 +358,6 @@ def k_D(D: np.ndarray, tau_c: float) -> float:
     """
     D_var_MHz = np.var(utils.mT_to_MHz(D))
     return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12
-
-
-def k_recombination(MFE: float, k_escape: float) -> float:
-    """Singlet recombination rate.
-
-    Source: `Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019)`_.
-
-    Args:
-            MFE (float): The magnetic field effect (0.00-1.00).
-            k_escape (float): The free radical formation rate constant (1/s).
-
-    Returns:
-            float: The singlet recombination rate (1/s).
-
-    .. _Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019):
-       https://doi.org/10.1080/00268976.2019.1580779
-    """
-    b = (1 - 6 * MFE) * k_escape
-    return 0.5 * (-b + np.sqrt(b**2 + 48 * k_escape**2 * MFE))
 
 
 def k_STD(J: np.ndarray, tau_c: float) -> float:
@@ -462,6 +421,97 @@ def k_ST_mixing(Bhalf: float) -> float:
     return -C.g_e * (C.mu_B * 1e-3) * Bhalf / C.h
 
 
+def k_electron_transfer(
+    separation: float, driving_force: float = -1, reorganisation_energy: float = 1
+) -> float:
+    """Electron transfer rate.
+
+    The default values (when `-driving_force ==
+    reorganisation_energy`) return the maximum electron transfer rate.
+
+    Source: `Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010)`_.
+
+    Args:
+            separation (float): The edge-to-edge separation, R (Å).
+            driving_force (float): The driving force, :math:`\Delta G` (eV).
+            reorganisation_energy (float): The reorganisation energy,
+                :math:`\lambda` (eV).
+
+    Returns:
+            float: The electron transfer rate (1/s).
+
+    .. _Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010):
+       https://doi.org/10.1016/j.bbabio.2010.04.441
+
+    """
+    return 10 ** (
+        13
+        - 0.6 * (separation - 3.6)
+        - 3.1 * ((driving_force + reorganisation_energy) ** 2 / reorganisation_energy)
+    )
+
+
+def k_excitation(
+    power: float, wavelength: float, volume: float, pathlength: float, epsilon: float
+) -> float:
+    """Groundstate excitation rate.
+
+    Args:
+            power (float): The excitation laser power (W).
+            wavelength (float): The excitation wavelength (m).
+            volume (float): The excitation beam volume (m^3).
+            pathlength (float): The path length of the sample cell
+                (m).
+            epsilon (float): The extinction coefficient of the
+                molecule (m^2/mol).
+
+    Returns:
+            float: The excitation rate (1/s).
+    """
+    nu = C.c / wavelength  # Frequency of excitation beam (1/s)
+    I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
+    return I0 * np.log(10) * epsilon * pathlength
+
+
+def k_recombination(MFE: float, k_escape: float) -> float:
+    """Singlet recombination rate.
+
+    Source: `Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019)`_.
+
+    Args:
+            MFE (float): The magnetic field effect (0.00-1.00).
+            k_escape (float): The free radical formation rate constant (1/s).
+
+    Returns:
+            float: The singlet recombination rate (1/s).
+
+    .. _Maeda et al. Mol. Phys., 117:19, 2709-2718 (2019):
+       https://doi.org/10.1080/00268976.2019.1580779
+    """
+    b = (1 - 6 * MFE) * k_escape
+    return 0.5 * (-b + np.sqrt(b**2 + 48 * k_escape**2 * MFE))
+
+
+def k_reencounter(encounter_dist: float, diff_coeff: float) -> float:
+    """Re-encounter rate.
+
+    Source: `Salikhov, J. Magn. Reson., 63, 271-279 (1985)`_.
+
+    Args:
+            encounter_dist (float): The effective re-encounter
+                distance, R* (m).
+            diff_coeff (float): The diffusion coefficient, D (m^2/s).
+
+    Returns:
+            float: The re-encounter rate (1/s).
+
+    .. _Salikhov, J. Magn. Reson., 63, 271-279 (1985):
+       https://doi.org/10.1016/0022-2364(85)90316-6
+
+    """
+    return (encounter_dist**2 / diff_coeff) ** -1
+
+
 def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     """Excited triplet state relaxation rate.
 
@@ -486,24 +536,6 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
         + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )
     return (D**2 + 3 * E**2) * jnu0tc
-
-
-def number_of_photons(
-    k_excitation: float, concentration: float, volume: float
-) -> float:
-    """Number of photons.
-
-    The number of photons produced via groundstate excitation.
-
-    Args:
-            k_excitation (float): The excitation rate (1/s).
-            concentration (float): The sample concentration (M).
-            volume (float): The excitation beam volume (L).
-
-    Returns:
-            float: The number of photons.
-    """
-    return k_excitation * concentration * volume * C.N_A
 
 
 def rotational_correlation_time_for_molecule(
