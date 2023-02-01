@@ -5,3 +5,4 @@ matplotlib
 seaborn
 sympy
 pint
+tqdm

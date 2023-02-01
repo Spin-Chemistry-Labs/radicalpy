@@ -8,8 +8,8 @@ from radicalpy.simulation import State
 
 
 def main():
-    flavin = rp.simulation.Molecule("flavin_anion", ["H25", "N5"])
-    trp = rp.simulation.Molecule("tryptophan_cation", ["N1"])
+    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["H25", "N5"])
+    trp = rp.simulation.Molecule.fromdb("tryptophan_cation", ["N1"])
     sim = rp.simulation.LiouvilleSimulation([flavin, trp])
     time = np.arange(0, 5e-6, 5e-9)
     Bs = np.arange(0, 30, 0.1)
@@ -52,6 +52,7 @@ def main():
 
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
+
 
 if __name__ == "__main__":
     main()

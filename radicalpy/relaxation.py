@@ -132,9 +132,8 @@ class RandomFields(LiouvilleRelaxationBase):
         """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         super().init(sim)
         QS = sim.projection_operator(State.SINGLET)
-        self.SABxyz = [
-            sim.spin_operator(e, a) for e in range(sim.num_electrons) for a in "xyz"
-        ]
+        idxs = range(len(sim.radicals))
+        self.SABxyz = [sim.spin_operator(e, a) for e in idxs for a in "xyz"]
 
         term0 = np.kron(np.eye(len(QS)), np.eye(len(QS)))
         term1 = sum([np.kron(S, S.T) for S in self.SABxyz])
