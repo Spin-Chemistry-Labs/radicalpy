@@ -16,7 +16,7 @@ setup(
     author_email="lewismantill@gmail.com",
     maintainer="Emil Vatai",
     maintainer_email="emil.vatai@gmail.com",
-    # packages=find_packages("."),
+    packages=["radicalpy"],
     # package_dir={"": "."},
     url="https://github.com/Spin-Chemistry-Labs/radicalpy",
     keywords="simulation spin-dynamics radical-pair",
