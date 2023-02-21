@@ -45,11 +45,8 @@ def main():
     relaxations = []
 
     # Create the CIDNP observables --> see Eq. 6
-    SASB = sim.product_operator(0, 1)
-    eye = np.eye(len(SASB))
-    singlet = (1 / 4) * eye - SASB
-    triplet = (3 / 4) * eye + SASB
-    Iz = sim.spin_operator(2, "z")
+    singlet = sim.projection_operator(State.SINGLET)
+    triplet = sim.projection_operator(State.TRIPLET)
 
     obs_state1 = np.reshape(singlet.dot(Iz), (-1, 1)).T
     obs_state2 = np.reshape(triplet.dot(Iz), (-1, 1)).T
