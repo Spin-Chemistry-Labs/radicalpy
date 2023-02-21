@@ -198,7 +198,7 @@ class HilbertSimulation:
 
         """
         assert 0 <= idx and idx < len(self.particles)
-        assert axis in "xyz"
+        assert axis in "xyzpmu"
 
         sigma = self.pauli(self.particles[idx].multiplicity)[axis]
         eye_before = np.eye(prod(p.multiplicity for p in self.particles[:idx]))
