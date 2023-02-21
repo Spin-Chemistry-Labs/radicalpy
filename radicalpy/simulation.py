@@ -179,7 +179,7 @@ class HilbertSimulation:
         return result
 
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
-        """Construct the spin operator for a particle.
+        """Construct the spin operator.
 
         Args:
 
@@ -188,14 +188,17 @@ class HilbertSimulation:
             axis (str): Axis, i.e. ``"x"``, ``"y"`` or ``"z"``.
 
         Returns:
+
             np.ndarray: Spin operator for a particle in the
-            `HilbertSimulation` system simulated.
+            `HilbertSimulation` system with indexing `idx` and axis
+            `axis`.
 
         Construct the spin operator for the particle with index
         `idx` in the `HilbertSimulation`.
+
         """
         assert 0 <= idx and idx < len(self.particles)
-        assert axis in "xyz"
+        assert axis in "xyzpmu"
 
         sigma = self.pauli(self.particles[idx].multiplicity)[axis]
         eye_before = np.eye(prod(p.multiplicity for p in self.particles[:idx]))
