@@ -6,10 +6,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import radicalpy as rp
-from radicalpy.simulation import State
-from radicalpy.simulation import LiouvilleSimulation as Liouv
 from radicalpy import kinetics, relaxation
 from radicalpy.shared import constants as C
+from radicalpy.simulation import LiouvilleSimulation as Liouv
+from radicalpy.simulation import State
 
 
 def main():
@@ -48,14 +48,15 @@ def main():
     singlet = sim.projection_operator(State.SINGLET)
     triplet = sim.projection_operator(State.TRIPLET)
 
+    Iz = sim.spin_operator(2, "z")
     obs_state1 = np.reshape(singlet.dot(Iz), (-1, 1)).T
     obs_state2 = np.reshape(triplet.dot(Iz), (-1, 1)).T
 
     # Create the spin operators for the electron-electron coupling Hamiltonian --> see Eq. 5
-    S1p = sim.spin_operator(0, "x") + 1j * sim.spin_operator(0, "y")
-    S1m = sim.spin_operator(0, "x") - 1j * sim.spin_operator(0, "y")
-    S2p = sim.spin_operator(1, "x") + 1j * sim.spin_operator(1, "y")
-    S2m = sim.spin_operator(1, "x") - 1j * sim.spin_operator(1, "y")
+    S1p = sim.spin_operator(0, "p")
+    S1m = sim.spin_operator(0, "m")
+    S2p = sim.spin_operator(1, "p")
+    S2m = sim.spin_operator(1, "m")
 
     # Create the spin operators for the hyperfine Hamiltonian --> see Eq. 5
     S1z = sim.spin_operator(0, "z")
@@ -78,7 +79,9 @@ def main():
 
     sim.apply_hilbert_kinetics(time, product_probabilities, kinetic)
     k = kinetic[0].rate_constant if kinetic else 1.0
-    product_yields, product_yield_sums = sim.product_yield(product_probabilities, time, k)
+    product_yields, product_yield_sums = sim.product_yield(
+        product_probabilities, time, k
+    )
 
     dt = time[1] - time[0]
     CIDNP, LFE, HFE = sim.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
