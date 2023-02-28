@@ -1,3 +1,22 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "radicalpy"
+version = "0.5.6"
+dynamic = ["dependencies", "readme"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+readme = {file = ["README.md"]}
+
+[tool.setuptools.packages.find]
+include = ["radicalpy"]  # ["*"] by default
+
+[tool.setuptools.package-data]
+radicalpy = ["*.json"]
+
 [tool.black]
 line-length = 88
 
