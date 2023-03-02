@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "radicalpy"
+description = "RadicalPy: a toolbox for radical pair spin dynamics"
 readme = "README.md"
 dynamic = ["dependencies", "version"]
 authors = [
