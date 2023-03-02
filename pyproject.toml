@@ -12,6 +12,11 @@ authors = [
 keywords = ["simulation", "spin-dynamics", "radical pairs"]
 license = {text = "MIT"}
 
+[project.urls]
+homepage = "https://github.com/Spin-Chemistry-Labs/radicalpy"
+documentation = "https://radicalpy.readthedocs.io/en/latest/"
+source = "https://github.com/Spin-Chemistry-Labs/radicalpy"
+
 [tool.setuptools-git-versioning]
 enabled = true
 
