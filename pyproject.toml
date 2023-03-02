@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "radicalpy"
-dynamic = ["dependencies", "readme", "version"]
+readme = "README.md"
+dynamic = ["dependencies", "version"]
 authors = [
   {name = "Emil Vatai",      email = "emil.vatai@gmail.com"},
   {name = "Lewis M. Antill", email = "lmantill@gmail.com"  }
@@ -22,7 +23,6 @@ enabled = true
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
-readme = {file = ["README.md"]}
 
 # [tool.setuptools.packages.find]
 # include = ["radicalpy"]  # ["*"] by default
