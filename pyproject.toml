@@ -7,12 +7,12 @@ name = "radicalpy"
 readme = "README.md"
 dynamic = ["dependencies", "version"]
 authors = [
-  {name = "Lewis M. Antill", email = "lmantill@gmail.com"  },
+  {name = "Lewis M. Antill", email = "lewismantill@gmail.com"  },
   {name = "Emil Vatai",      email = "emil.vatai@gmail.com"}
 ]
 maintainers = [
   {name = "Emil Vatai",      email = "emil.vatai@gmail.com"},
-  {name = "Lewis M. Antill", email = "lmantill@gmail.com"  }
+  {name = "Lewis M. Antill", email = "lewismantill@gmail.com"  }
 ]
 keywords = ["simulation", "spin-dynamics", "radical pairs"]
 license = {text = "MIT"}
