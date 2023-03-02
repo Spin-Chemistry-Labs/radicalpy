@@ -1,2 +1,0 @@
-recursive-include radicalpy/data *
-include requirements.txt
