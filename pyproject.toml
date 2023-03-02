@@ -7,6 +7,10 @@ name = "radicalpy"
 readme = "README.md"
 dynamic = ["dependencies", "version"]
 authors = [
+  {name = "Lewis M. Antill", email = "lmantill@gmail.com"  },
+  {name = "Emil Vatai",      email = "emil.vatai@gmail.com"}
+]
+maintainers = [
   {name = "Emil Vatai",      email = "emil.vatai@gmail.com"},
   {name = "Lewis M. Antill", email = "lmantill@gmail.com"  }
 ]
