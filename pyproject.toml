@@ -1,18 +1,27 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel", "setuptools-git-versioning"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "radicalpy"
-version = "0.5.6"
-dynamic = ["dependencies", "readme"]
+# version = "0.5.6"
+dynamic = ["dependencies", "readme", "version"]
+authors = [
+  {name = "Emil Vatai",      email = "emil.vatai@gmail.com"},
+  {name = "Lewis M. Antill", email = "lmantill@gmail.com"  }
+]
+keywords = ["simulation", "spin-dynamics", "radical pairs"]
+license = {text = "MIT"}
+
+[tool.setuptools-git-versioning]
+enabled = true
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 readme = {file = ["README.md"]}
 
-[tool.setuptools.packages.find]
-include = ["radicalpy"]  # ["*"] by default
+# [tool.setuptools.packages.find]
+# include = ["radicalpy"]  # ["*"] by default
 
 [tool.setuptools.package-data]
 radicalpy = ["*.json"]
