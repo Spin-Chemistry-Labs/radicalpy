@@ -1,3 +1,40 @@
+[build-system]
+requires = ["setuptools", "wheel", "setuptools-git-versioning"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "radicalpy"
+description = "RadicalPy: a toolbox for radical pair spin dynamics"
+readme = "README.md"
+dynamic = ["dependencies", "version"]
+authors = [
+  {name = "Lewis M. Antill", email = "lewismantill@gmail.com"  },
+  {name = "Emil Vatai",      email = "emil.vatai@gmail.com"}
+]
+maintainers = [
+  {name = "Emil Vatai",      email = "emil.vatai@gmail.com"},
+  {name = "Lewis M. Antill", email = "lewismantill@gmail.com"  }
+]
+keywords = ["simulation", "spin-dynamics", "radical pairs"]
+license = {text = "MIT"}
+
+[project.urls]
+Homepage = "https://github.com/Spin-Chemistry-Labs/radicalpy"
+Documentation = "https://radicalpy.readthedocs.io/en/latest/"
+Source = "https://github.com/Spin-Chemistry-Labs/radicalpy"
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+# [tool.setuptools.packages.find]
+# include = ["radicalpy"]  # ["*"] by default
+
+[tool.setuptools.package-data]
+radicalpy = ["*.json"]
+
 [tool.black]
 line-length = 88
 
