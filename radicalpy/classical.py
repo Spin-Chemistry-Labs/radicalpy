@@ -107,6 +107,8 @@ def randomwalk_3d(
 
     pos[0] = np.array([x_0, y_0, z_0])
     dist[0] = np.linalg.norm(pos[0])
+    if np.linalg.norm(pos[0]) <= r_min:
+        raise ValueError("Molecule starting distance is needs to be > r_min.")
 
     for i in range(1, n_steps):
         theta, phi = _random_theta_phi()
