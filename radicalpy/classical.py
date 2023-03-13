@@ -20,9 +20,51 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
 
+class EquationRates:
+    """Results for `kinetics_solver`"""
+
+    def __init__(self, rate_equations: dict):
+        self.rate_equations = rate_equations
+        inner_keys = [list(v.keys()) for v in rate_equations.values()]
+        outer_keys = list(rate_equations.keys())
+        all_keys = list(set(sum(inner_keys, outer_keys)))
+        self.indices = {k: i for i, k in enumerate(all_keys)}
+
+    @property
+    def all_keys(self) -> list:
+        return list(self.indices.keys())
+
+    def are_valid_keys(self, keys: dict) -> bool:
+        return set(keys).issubset(self.all_keys)
+
+    def __call__(self, time, initial_states):
+        if not self.are_valid_keys(initial_states.keys()):
+            raise ValueError("Unknown keys specified in `initial_states`")
+        if sum(initial_states.values()) != 1:
+            raise ValueError("Initial state values don't sum up to 1")
+        shape = (len(self.all_keys), len(self.all_keys))
+        arrange = [
+            self.rate_equations[i][j]
+            if (i in self.rate_equations and j in self.rate_equations[i])
+            else 0
+            for i in self.all_keys
+            for j in self.all_keys
+        ]
+        rates = np.reshape(arrange, shape)
+        self.result = np.zeros([len(time), *rates[0].shape], dtype=float)
+        dt = time[1] - time[0]
+        propagator = sp.sparse.linalg.expm(sp.sparse.csc_matrix(rates) * dt)
+        self.result[0] = [initial_states.get(k, 0) for k in self.all_keys]
+        for t in range(1, len(time)):
+            self.result[t] = propagator @ self.result[t - 1]
+
+    def select(self, keys: list) -> np.ndarray:
+        return np.sum([self.result[:, self.indices[k]] for k in keys], axis=0)
+
+
 def kinetics(
     time: np.ndarray, initial_states: dict, rate_equations: dict
-) -> np.ndarray:
+) -> EquationRates:
     """Kinetic rate equation solver.
 
     Constructs the matrix propagator and performs a time evolution simulation.
@@ -33,22 +75,12 @@ def kinetics(
             rate_equations (dict): The rate equations for all states.
 
     Returns:
-            np.ndarray: The time evolution of all states.
+            EquationRates: The time evolution of all states.
     """
-    shape = (len(initial_states), len(initial_states))
-    arrange = [
-        rate_equations[i][j] if (i in rate_equations and j in rate_equations[i]) else 0
-        for i in initial_states
-        for j in initial_states
-    ]
-    rates = np.reshape(arrange, shape)
-    dt = time[1] - time[0]
-    result = np.zeros([len(time), *rates[0].shape], dtype=float)
-    propagator = sp.sparse.linalg.expm(sp.sparse.csc_matrix(rates) * dt)
-    result[0] = list(initial_states.values())
-    for t in range(1, len(time)):
-        result[t] = propagator @ result[t - 1]
-    return result
+
+    results = EquationRates(rate_equations)
+    results.proc(time, initial_states)
+    return results
 
 
 def _random_theta_phi():
