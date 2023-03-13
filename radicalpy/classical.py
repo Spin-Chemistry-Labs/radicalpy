@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import matplotlib.pyplot as plt
 import numpy as np
+import scipy as sp
 
-from . import estimations, utils
+from . import utils
 
 
 def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
