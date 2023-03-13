@@ -37,23 +37,25 @@ class EquationRates:
     def are_valid_keys(self, keys: dict) -> bool:
         return set(keys).issubset(self.all_keys)
 
-    def __call__(self, time, initial_states):
+    def check_initial_states(self, initial_states):
         if not self.are_valid_keys(initial_states.keys()):
             raise ValueError("Unknown keys specified in `initial_states`")
         if sum(initial_states.values()) != 1:
             raise ValueError("Initial state values don't sum up to 1")
-        shape = (len(self.all_keys), len(self.all_keys))
-        arrange = [
-            self.rate_equations[i][j]
-            if (i in self.rate_equations and j in self.rate_equations[i])
-            else 0
-            for i in self.all_keys
-            for j in self.all_keys
+
+    def __call__(self, time, initial_states):
+        self.check_initial_states(initial_states)
+        tmp = [
+            (v, self.indices[i], self.indices[j])
+            for i, d in self.rate_equations.items()
+            for j, v in d.items()
         ]
-        rates = np.reshape(arrange, shape)
-        self.result = np.zeros([len(time), *rates[0].shape], dtype=float)
         dt = time[1] - time[0]
-        propagator = sp.sparse.linalg.expm(sp.sparse.csc_matrix(rates) * dt)
+        data, row_ind, col_ind = zip(*tmp)
+        propagator = sp.sparse.linalg.expm(
+            sp.sparse.csc_matrix((data, (row_ind, col_ind))) * dt
+        )
+        self.result = np.zeros([len(time), len(self.all_keys)], dtype=float)
         self.result[0] = [initial_states.get(k, 0) for k in self.all_keys]
         for t in range(1, len(time)):
             self.result[t] = propagator @ self.result[t - 1]
