@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+
 import numpy as np
 import scipy as sp
 
@@ -20,7 +21,7 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
 
 
 def kinetics(
-    time: np.ndarray, initial_populations: list, states: list, rate_equations: dict
+    time: np.ndarray, initial_states: dict, rate_equations: dict
 ) -> np.ndarray:
     """Kinetic rate equation solver.
 
@@ -28,24 +29,23 @@ def kinetics(
 
     Args:
             time (np.ndarray): The timescale of the reaction kinetics (s).
-            initial_populations (list): The initial populations of all states.
-            states (list): The states involved in the chemical reaction.
+            initial_states (dict): The initial populations of all states.
             rate_equations (dict): The rate equations for all states.
 
     Returns:
             np.ndarray: The time evolution of all states.
     """
-    shape = (len(states), len(states))
+    shape = (len(initial_states), len(initial_states))
     arrange = [
         rate_equations[i][j] if (i in rate_equations and j in rate_equations[i]) else 0
-        for i in states
-        for j in states
+        for i in initial_states
+        for j in initial_states
     ]
     rates = np.reshape(arrange, shape)
     dt = time[1] - time[0]
     result = np.zeros([len(time), *rates[0].shape], dtype=float)
     propagator = sp.sparse.linalg.expm(sp.sparse.csc_matrix(rates) * dt)
-    result[0] = initial_populations
+    result[0] = list(initial_states.values())
     for t in range(1, len(time)):
         result[t] = propagator @ result[t - 1]
     return result
