@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import matplotlib.pyplot as plt
-import scipy as sp
 import numpy as np
 import radicalpy as rp
 
@@ -22,7 +21,7 @@ def main():
     krt = 1e9  # triplet state relaxation rate
     kbet = 1.3e7  # singlet recombination rate
     kr = 1.7e6  # RP relaxation rate
-    pH = 2.3 # pH of the solution
+    pH = 2.3  # pH of the solution
     Hp = 10 ** (-1 * pH)  # concentration of hydrogen ions
 
     # Quenching kinetic parameters
@@ -101,14 +100,22 @@ def main():
         "T*0": k1,
     }
 
-    my_states = ["S0", "S*", "T*+/-", "T*0", "S", "T+/-", "T0", "Quencher"]
-    initial = [0, 0, 0, 0, 0, 2 / 3, 1 / 3, 0]
+    initial_states = {
+        "S0": 0,
+        "S*": 0,
+        "T*+/-": 0,
+        "T*0": 0,
+        "S": 0,
+        "T+/-": 2 / 3,
+        "T0": 1 / 3,
+        "Quencher": 0,
+    }
     time = np.linspace(0, 6e-6, 200)
 
     rates_off = {**base, **off}
     rates_on = {**base, **on}
-    result_off = rp.classical.kinetics(time, initial, my_states, rates_off)
-    result_on = rp.classical.kinetics(time, initial, my_states, rates_on)
+    result_off = rp.classical.kinetics(time, initial_states, rates_off)
+    result_on = rp.classical.kinetics(time, initial_states, rates_on)
     fac = 0.07
 
     triplet_off = result_off[:, 2] + result_off[:, 3]
@@ -165,6 +172,7 @@ def main():
     fig.set_size_inches(10, 5)
     path = __file__[:-3] + f"_{1}.png"
     plt.savefig(path)
+
 
 if __name__ == "__main__":
     main()

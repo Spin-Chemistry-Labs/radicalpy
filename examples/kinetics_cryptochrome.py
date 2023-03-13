@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import matplotlib.pyplot as plt
-import scipy as sp
 import numpy as np
 import radicalpy as rp
 
@@ -102,14 +101,23 @@ def main():
         "T0": kr,
     }
 
-    my_states = ["A-D", "A*-D", "RP2", "AR-D", "A-DR", "S", "T+", "T0", "T-"]
-    initial = [0, 0, 0, 0, 0, 1, 0, 0, 0]
+    initial_states = {
+        "A-D": 0,
+        "A*-D": 0,
+        "RP2": 0,
+        "AR-D": 0,
+        "A-DR": 0,
+        "S": 1,
+        "T+": 0,
+        "T0": 0,
+        "T-": 0,
+    }
     time = np.linspace(0, 100e-6, 500)
 
     rates_off = {**base, **off}
     rates_on = {**base, **on}
-    result_off = rp.classical.kinetics(time, initial, my_states, rates_off)
-    result_on = rp.classical.kinetics(time, initial, my_states, rates_on)
+    result_off = rp.classical.kinetics(time, initial_states, rates_off)
+    result_on = rp.classical.kinetics(time, initial_states, rates_on)
 
     fluor_field_off = result_off[:, 0]
     fluor_field_on = result_on[:, 0]
@@ -157,6 +165,7 @@ def main():
     fig.set_size_inches(10, 5)
     path = __file__[:-3] + f"_{1}.png"
     plt.savefig(path)
+
 
 if __name__ == "__main__":
     main()

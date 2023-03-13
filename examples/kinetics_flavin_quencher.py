@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import matplotlib.pyplot as plt
-import scipy as sp
 import numpy as np
 import radicalpy as rp
 
@@ -125,19 +124,31 @@ def main():
         "D": 1 / 3 * ket,
     }
 
-    my_states = ["A", "A*", "AT*", "AFR", "D", "DFR", "S", "T+", "T0", "T-"]
-    initial = [0, 0, 0, 0, 0, 0, 0, 1 / 3, 1 / 3, 1 / 3]
+    initial_states = {
+        "A": 0,
+        "A*": 0,
+        "AT*": 0,
+        "AFR": 0,
+        "D": 0,
+        "DFR": 0,
+        "S": 0,
+        "T+": 1 / 3,
+        "T0": 1 / 3,
+        "T-": 1 / 3,
+    }
     time = np.linspace(0, 1e-3, 2000000)
 
     rates_off = {**base, **off}
     rates_on = {**base, **on}
-    result_off = rp.classical.kinetics(time, initial, my_states, rates_off)
-    result_on = rp.classical.kinetics(time, initial, my_states, rates_on)
+    result_off = rp.classical.kinetics(time, initial_states, rates_off)
+    result_on = rp.classical.kinetics(time, initial_states, rates_on)
 
     fluor_field_off = result_off[:, 0]
     fluor_field_on = result_on[:, 0]
     fluor_delta_A = fluor_field_on - fluor_field_off
-    rp_field_off = result_off[:, 6] + result_off[:, 7] + result_off[:, 8] + result_off[:, 9]
+    rp_field_off = (
+        result_off[:, 6] + result_off[:, 7] + result_off[:, 8] + result_off[:, 9]
+    )
     rp_field_on = result_on[:, 6] + result_on[:, 7] + result_on[:, 8] + result_on[:, 9]
     rp_delta_delta_A = rp_field_on - rp_field_off
 
@@ -181,6 +192,7 @@ def main():
     fig.set_size_inches(10, 5)
     path = __file__[:-3] + f"_{1}.png"
     plt.savefig(path)
+
 
 if __name__ == "__main__":
     main()
