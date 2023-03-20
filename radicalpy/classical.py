@@ -61,8 +61,9 @@ class RateEquations:
         for t in range(1, len(time)):
             self.result[t] = propagator @ self.result[t - 1]
 
-    def select(self, keys: list) -> np.ndarray:
-        return np.sum([self.result[:, self.indices[k]] for k in keys], axis=0)
+    def __getitem__(self, keys: list) -> np.ndarray:
+        ks = [keys] if isinstance(keys, str) else keys
+        return np.sum([self.result[:, self.indices[k]] for k in ks], axis=0)
 
 
 def _random_theta_phi():

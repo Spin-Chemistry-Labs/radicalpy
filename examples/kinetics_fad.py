@@ -111,12 +111,12 @@ def main():
     fac = 0.07
 
     keys = ["S", "T+/-", "T0", "Quencher"] + 2 * ["T*+/-", "T*0"]
-    field_off = fac * result_off.select(keys)
-    field_on = fac * result_on.select(keys)
+    field_off = fac * result_off[keys]
+    field_on = fac * result_on[keys]
     delta_delta_A = field_on - field_off
 
-    fluor_off = result_off.select(["S0"])
-    fluor_on = result_on.select(["S0"])
+    fluor_off = result_off["S0"]
+    fluor_on = result_on["S0"]
     fluor_del_A = fluor_on - fluor_off
 
     plt.clf()

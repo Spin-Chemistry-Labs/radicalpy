@@ -109,11 +109,11 @@ def main():
     result_off = RateEquations({**base, **off}, time, initial_states)
     result_on = RateEquations({**base, **on}, time, initial_states)
 
-    fluor_field_off = result_off.select(["A-D"])
-    fluor_field_on = result_on.select(["A-D"])
+    fluor_field_off = result_off["A-D"]
+    fluor_field_on = result_on["A-D"]
     fluor_delta_A = fluor_field_on - fluor_field_off
-    rp_field_off = result_off.select(["RP2", "AR-D"])
-    rp_field_on = result_on.select(["RP2", "AR-D"])
+    rp_field_off = result_off["RP2", "AR-D"]
+    rp_field_on = result_on["RP2", "AR-D"]
     rp_delta_delta_A = rp_field_on - rp_field_off
 
     plt.clf()
