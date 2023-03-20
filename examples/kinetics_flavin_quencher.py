@@ -134,12 +134,12 @@ def main():
     result_off = RateEquations({**base, **off}, time, initial_states)
     result_on = RateEquations({**base, **on}, time, initial_states)
 
-    fluor_field_off = result_off.select(["A"])
-    fluor_field_on = result_on.select(["A"])
+    fluor_field_off = result_off["A"]
+    fluor_field_on = result_on["A"]
     fluor_delta_A = fluor_field_on - fluor_field_off
     keys = ["S", "T+", "T0", "T-"]
-    rp_field_off = result_off.select(keys)
-    rp_field_on = result_on.select(keys)
+    rp_field_off = result_off[keys]
+    rp_field_on = result_on[keys]
     rp_delta_delta_A = rp_field_on - rp_field_off
 
     plt.clf()
