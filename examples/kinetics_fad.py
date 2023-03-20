@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import radicalpy as rp
+from radicalpy.classical import RateEquations
 
 
 def main():
@@ -101,36 +101,22 @@ def main():
     }
 
     initial_states = {
-        "S0": 0,
-        "S*": 0,
-        "T*+/-": 0,
-        "T*0": 0,
-        "S": 0,
         "T+/-": 2 / 3,
         "T0": 1 / 3,
-        "Quencher": 0,
     }
     time = np.linspace(0, 6e-6, 200)
 
-    rates_off = {**base, **off}
-    rates_on = {**base, **on}
-    result_off = rp.classical.kinetics(time, initial_states, rates_off)
-    result_on = rp.classical.kinetics(time, initial_states, rates_on)
+    result_off = RateEquations({**base, **off}, time, initial_states)
+    result_on = RateEquations({**base, **on}, time, initial_states)
     fac = 0.07
 
-    triplet_off = result_off[:, 2] + result_off[:, 3]
-    radical_pair_off = result_off[:, 4] + result_off[:, 5] + result_off[:, 6]
-    free_radical_off = result_off[:, 7]
-    field_off = fac * (radical_pair_off + 2 * triplet_off + free_radical_off)
-
-    triplet_on = result_on[:, 2] + result_on[:, 3]
-    radical_pair_on = result_on[:, 4] + result_on[:, 5] + result_on[:, 6]
-    free_radical_on = result_on[:, 7]
-    field_on = fac * (radical_pair_on + 2 * triplet_on + free_radical_on)
+    keys = ["S", "T+/-", "T0", "Quencher"] + 2 * ["T*+/-", "T*0"]
+    field_off = fac * result_off[keys]
+    field_on = fac * result_on[keys]
     delta_delta_A = field_on - field_off
 
-    fluor_off = result_off[:, 0]
-    fluor_on = result_on[:, 0]
+    fluor_off = result_off["S0"]
+    fluor_on = result_on["S0"]
     fluor_del_A = fluor_on - fluor_off
 
     plt.clf()
