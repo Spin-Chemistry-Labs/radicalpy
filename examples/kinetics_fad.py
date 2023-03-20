@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import radicalpy as rp
+from radicalpy.classical import RateEquations
 
 
 def main():
@@ -106,10 +106,8 @@ def main():
     }
     time = np.linspace(0, 6e-6, 200)
 
-    result_off = rp.classical.EquationRates({**base, **off})
-    result_on = rp.classical.EquationRates({**base, **on})
-    result_off(time, initial_states)
-    result_on(time, initial_states)
+    result_off = RateEquations({**base, **off}, time, initial_states)
+    result_on = RateEquations({**base, **on}, time, initial_states)
     fac = 0.07
 
     keys = ["S", "T+/-", "T0", "Quencher"] + 2 * ["T*+/-", "T*0"]
