@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import radicalpy as rp
+from radicalpy.classical import RateEquations
 
 
 def main():
@@ -102,28 +102,18 @@ def main():
     }
 
     initial_states = {
-        "A-D": 0,
-        "A*-D": 0,
-        "RP2": 0,
-        "AR-D": 0,
-        "A-DR": 0,
         "S": 1,
-        "T+": 0,
-        "T0": 0,
-        "T-": 0,
     }
     time = np.linspace(0, 100e-6, 500)
 
-    rates_off = {**base, **off}
-    rates_on = {**base, **on}
-    result_off = rp.classical.kinetics(time, initial_states, rates_off)
-    result_on = rp.classical.kinetics(time, initial_states, rates_on)
+    result_off = RateEquations({**base, **off}, time, initial_states)
+    result_on = RateEquations({**base, **on}, time, initial_states)
 
-    fluor_field_off = result_off[:, 0]
-    fluor_field_on = result_on[:, 0]
+    fluor_field_off = result_off["A-D"]
+    fluor_field_on = result_on["A-D"]
     fluor_delta_A = fluor_field_on - fluor_field_off
-    rp_field_off = result_off[:, 2] + result_off[:, 3]
-    rp_field_on = result_on[:, 2] + result_on[:, 3]
+    rp_field_off = result_off["RP2", "AR-D"]
+    rp_field_on = result_on["RP2", "AR-D"]
     rp_delta_delta_A = rp_field_on - rp_field_off
 
     plt.clf()
