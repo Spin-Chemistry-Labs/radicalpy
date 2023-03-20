@@ -20,15 +20,16 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
 
-class EquationRates:
+class RateEquations:
     """Results for `kinetics_solver`"""
 
-    def __init__(self, rate_equations: dict):
+    def __init__(self, rate_equations: dict, time: np.ndarray, initial_states: dict):
         self.rate_equations = rate_equations
         inner_keys = [list(v.keys()) for v in rate_equations.values()]
         outer_keys = list(rate_equations.keys())
         all_keys = list(set(sum(inner_keys, outer_keys)))
         self.indices = {k: i for i, k in enumerate(all_keys)}
+        self._calc_(time, initial_states)
 
     @property
     def all_keys(self) -> list:
@@ -43,7 +44,7 @@ class EquationRates:
         if sum(initial_states.values()) != 1:
             raise ValueError("Initial state values don't sum up to 1")
 
-    def __call__(self, time, initial_states):
+    def _calc_(self, time: np.ndarray, initial_states: dict):
         self.check_initial_states(initial_states)
         tmp = [
             (v, self.indices[i], self.indices[j])
@@ -62,27 +63,6 @@ class EquationRates:
 
     def select(self, keys: list) -> np.ndarray:
         return np.sum([self.result[:, self.indices[k]] for k in keys], axis=0)
-
-
-def kinetics(
-    time: np.ndarray, initial_states: dict, rate_equations: dict
-) -> EquationRates:
-    """Kinetic rate equation solver.
-
-    Constructs the matrix propagator and performs a time evolution simulation.
-
-    Args:
-            time (np.ndarray): The timescale of the reaction kinetics (s).
-            initial_states (dict): The initial populations of all states.
-            rate_equations (dict): The rate equations for all states.
-
-    Returns:
-            EquationRates: The time evolution of all states.
-    """
-
-    results = EquationRates(rate_equations)
-    results.proc(time, initial_states)
-    return results
 
 
 def _random_theta_phi():
