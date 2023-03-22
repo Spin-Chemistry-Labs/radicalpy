@@ -1,64 +1,8 @@
 #! /usr/bin/env python
-import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-print(f"cwd: os.getcwd()")
-sys.path.append(".")
-from radicalpy.classical import RateEquations
-
-
-class Rate:
-    """Rate class.
-
-    Extends float with the `Rate.label` which is the LaTeX
-    representation of the rate.
-
-    """
-
-    value: float
-    label: str
-    """LaTeX representation of the rate constant."""
-
-    def __repr__(self):
-        return f"{self.label} = {self.value}"
-
-    def __init__(self, value: float, label: str):  # noqa D102
-        self.value = value
-        self.label = label
-
-    def __rmul__(self, v):
-        return Rate(self.value * v, f"{v} {self.label}")
-
-    def __mul__(self, v):
-        return self.__rmul__(v)
-
-    @staticmethod
-    def _get_value_lable(v):
-        return (v.value, v.label) if isinstance(v, Rate) else (v, v)
-
-    def __radd__(self, v):
-        value, label = self._get_value_lable(v)
-        return Rate(self.value + value, f"{label} + {self.label}")
-
-    def __add__(self, v):
-        value, label = self._get_value_lable(v)
-        return Rate(self.value + value, f"{self.label} + {label}")
-
-    def __neg__(self):
-        return Rate(-self.value, f"-({self.label})")
-
-
-def latexify(rate_equations: dict):
-    print(rate_equations)
-    result = []
-    for k, v in rate_equations.items():
-        lhs = f"\\frac{{d[{k}]}}{{dt}} "
-        rhs = " + ".join([f"{edge.label} [{vertex}]" for vertex, edge in v.items()])
-        result.append(f"${lhs} = {rhs}$")
-    return result
+from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 
 
 def main():
@@ -83,10 +27,6 @@ def main():
     on[Tp] = {Tp: -(2 * krlx + ke), S: krlx, T0: krlx}
     on[T0] = {T0: -(kst + 2 * krlx + ke), S: kst, Tp: krlx, Tm: krlx}
     on[Tm] = {Tm: -(2 * krlx + ke), S: krlx, T0: krlx}
-
-    for eq in latexify(off):
-        print(eq)
-    exit()
 
     initial_states = {Tp: 1 / 3, T0: 1 / 3, Tm: 1 / 3}
     time = np.linspace(0, 1e-6, 10000)
@@ -119,9 +59,7 @@ def main():
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
 
-    latex = latexify(off)
-    print("--------- space -----------")
-    print(latex)
+    print(latex_eqlist_to_align(latexify(off)))
 
 
 if __name__ == "__main__":
