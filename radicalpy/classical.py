@@ -20,6 +20,62 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
 
+def latexify(rate_equations: dict):
+    result = []
+    for lhs_data, rhs_data in rate_equations.items():
+        lhs = f"\\frac{{d[{lhs_data}]}}{{dt}} "
+        rhs_list = [f"{edge.label} [{vertex}]" for vertex, edge in rhs_data.items()]
+        rhs = " + ".join(rhs_list)
+        result.append(f"{lhs} = {rhs}")
+    return result
+
+
+def latex_eqlist_to_align(eqs: list):
+    body = " \\\\\n".join(map(lambda t: t.replace("=", "&="), eqs))
+    return f"\\begin{{align*}}\n{body}\n\\end{{align*}}"
+
+
+class Rate:
+    """Rate class.
+
+    Extends float with the `Rate.label` which is the LaTeX
+    representation of the rate.
+
+    """
+
+    value: float
+    label: str
+    """LaTeX representation of the rate constant."""
+
+    def __repr__(self):
+        return f"{self.label} = {self.value}"
+
+    def __init__(self, value: float, label: str):  # noqa D102
+        self.value = value
+        self.label = label
+
+    def __rmul__(self, v):
+        return Rate(self.value * v, f"{v} {self.label}")
+
+    def __mul__(self, v):
+        return self.__rmul__(v)
+
+    @staticmethod
+    def _get_value_lable(v):
+        return (v.value, v.label) if isinstance(v, Rate) else (v, v)
+
+    def __radd__(self, v):
+        value, label = self._get_value_lable(v)
+        return Rate(self.value + value, f"{label} + {self.label}")
+
+    def __add__(self, v):
+        value, label = self._get_value_lable(v)
+        return Rate(self.value + value, f"{self.label} + {label}")
+
+    def __neg__(self):
+        return Rate(-self.value, f"-({self.label})")
+
+
 class RateEquations:
     """Results for `kinetics_solver`"""
 
@@ -47,7 +103,7 @@ class RateEquations:
     def _calc_(self, time: np.ndarray, initial_states: dict):
         self.check_initial_states(initial_states)
         tmp = [
-            (v, self.indices[i], self.indices[j])
+            (v.value, self.indices[i], self.indices[j])
             for i, d in self.rate_equations.items()
             for j, v in d.items()
         ]
