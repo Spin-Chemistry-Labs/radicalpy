@@ -1,48 +1,30 @@
 #! /usr/bin/env python
 
+from pathlib import Path
+
+import dot2tex
+import graphviz
 import matplotlib.pyplot as plt
-import networkx as nx
 import numpy as np
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 
 
 def graph(rate_equations: dict):
     data = [
-        (f"${v1}$", f"${v2}$", f"${edge.label}$")
+        (v1, v2, edge.label)
         for v1, rhs_data in rate_equations.items()
         for v2, edge in rhs_data.items()
     ]
-    for t in [e for _, _, e in data]:
-        print(t)
-    G = nx.DiGraph([(v1, v2) for v1, v2, e in data])
-    pos = nx.spring_layout(G, seed=42)
-    options = {
-        "font_size": 36,
-        "node_size": 5000,
-        # "node_color": "white",
-        "edgecolors": "black",
-        "linewidths": 2,
-        "width": 3,
-    }
+    G = graphviz.Digraph("G")
+    for v1, v2, edge in data:
+        G.node(v1, texlbl=f"${v1}$")
+        G.node(v2, texlbl=f"${v2}$")
+        G.edge(v1, v2, "x", texlbl=f"${edge}$")
 
-    plt.clf()
-    nx.draw_networkx(G, pos, with_labels=True, **options)
-    # nx.draw_networkx_edges(
-    #     G,
-    #     pos,
-    #     connectionstyle="arc3, rad=0.1",
-    # )
-    nx.draw_networkx_edge_labels(
-        G,
-        pos,
-        edge_labels={(v1, v2): e for v1, v2, e in data},
-        verticalalignment="top",
-    )
-    ax = plt.gca()
-    ax.margins(0.20)
-    plt.axis("off")
-    path = f"{__file__[:-3]}_graph.png"
-    plt.savefig(path)
+    path = Path(f"{__file__[:-3]}_graph.tex")
+    texcode = dot2tex.dot2tex(G.source)
+    print(texcode)
+    path.write_text(texcode)
 
 
 def main():
