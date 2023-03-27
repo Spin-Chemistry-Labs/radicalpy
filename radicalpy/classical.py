@@ -38,8 +38,7 @@ def latex_eqlist_to_align(eqs: list):
 class Rate:
     """Rate class.
 
-    Extends float with the `Rate.label` which is the LaTeX
-    representation of the rate.
+    Stores the rate value and (LaTeX) label of the rate (expression).
 
     """
 
@@ -54,22 +53,23 @@ class Rate:
         self.value = value
         self.label = label
 
+    @staticmethod
+    def _get_value_label(v):
+        return (v.value, v.label) if isinstance(v, Rate) else (v, v)
+
     def __rmul__(self, v):
-        return Rate(self.value * v, f"{v} {self.label}")
+        value, label = self._get_value_label(v)
+        return Rate(self.value * value, f"{label} {self.label}")
 
     def __mul__(self, v):
         return self.__rmul__(v)
 
-    @staticmethod
-    def _get_value_lable(v):
-        return (v.value, v.label) if isinstance(v, Rate) else (v, v)
-
     def __radd__(self, v):
-        value, label = self._get_value_lable(v)
+        value, label = self._get_value_label(v)
         return Rate(self.value + value, f"{label} + {self.label}")
 
     def __add__(self, v):
-        value, label = self._get_value_lable(v)
+        value, label = self._get_value_label(v)
         return Rate(self.value + value, f"{self.label} + {label}")
 
     def __neg__(self):
@@ -109,8 +109,9 @@ class RateEquations:
         ]
         dt = time[1] - time[0]
         data, row_ind, col_ind = zip(*tmp)
+        N = len(self.all_keys)
         propagator = sp.sparse.linalg.expm(
-            sp.sparse.csc_matrix((data, (row_ind, col_ind))) * dt
+            sp.sparse.csc_matrix((data, (row_ind, col_ind)), (N, N)) * dt
         )
         self.result = np.zeros([len(time), len(self.all_keys)], dtype=float)
         self.result[0] = [initial_states.get(k, 0) for k in self.all_keys]
@@ -120,6 +121,25 @@ class RateEquations:
     def __getitem__(self, keys: list) -> np.ndarray:
         ks = [keys] if isinstance(keys, str) else keys
         return np.sum([self.result[:, self.indices[k]] for k in ks], axis=0)
+
+
+def reaction_scheme(rate_equations: dict):
+    data = [
+        (v1, v2, edge.label)
+        for v1, rhs_data in rate_equations.items()
+        for v2, edge in rhs_data.items()
+    ]
+    G = graphviz.Digraph("G")
+    for v1, v2, edge in data:
+        if not edge.startswith("-"):
+            # add only if not present already
+            G.node(v1, texlbl=f"${v1}$")
+            G.node(v2, texlbl=f"${v2}$")
+            G.edge(v2, v1, edge, texlbl=f"${edge}$")
+
+    path = Path(f"{__file__[:-3]}_graph.tex")
+    texcode = dot2tex.dot2tex(G.source)
+    path.write_text(texcode)
 
 
 def _random_theta_phi():
