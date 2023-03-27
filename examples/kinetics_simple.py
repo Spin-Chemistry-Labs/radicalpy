@@ -9,24 +9,6 @@ import numpy as np
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 
 
-def graph(rate_equations: dict):
-    data = [
-        (v1, v2, edge.label)
-        for v1, rhs_data in rate_equations.items()
-        for v2, edge in rhs_data.items()
-    ]
-    G = graphviz.Digraph("G")
-    for v1, v2, edge in data:
-        G.node(v1, texlbl=f"${v1}$")
-        G.node(v2, texlbl=f"${v2}$")
-        G.edge(v1, v2, "x", texlbl=f"${edge}$")
-
-    path = Path(f"{__file__[:-3]}_graph.tex")
-    texcode = dot2tex.dot2tex(G.source)
-    print(texcode)
-    path.write_text(texcode)
-
-
 def main():
     # Simple example of a RP for the paper.
 
@@ -37,18 +19,22 @@ def main():
     kr = Rate(1e8, "k_{R}")  # reverse electron transfer of RP to groundstate
 
     # Rate equations
-    S, Tp, T0, Tm = "S", "T_+", "T_0", "T_-"
+    S, Tp, T0, Tm, GS, FR = "S", "T_+", "T_0", "T_-", "GS", "FR"
     off = {}
     off[S] = {S: -(3 * kst + kr + ke), Tp: kst, T0: kst, Tm: kst}
     off[Tp] = {Tp: -(2 * kst + ke), S: kst, T0: kst}
     off[T0] = {T0: -(3 * kst + ke), S: kst, Tp: kst, Tm: kst}
     off[Tm] = {Tm: -(2 * kst + ke), S: kst, T0: kst}
+    off[GS] = {S: kr}
+    off[FR] = {S: ke, Tp: ke, T0: ke, Tm: ke}
 
     on = {}
     on[S] = {S: -(kst + 2 * krlx + kr + ke), Tp: krlx, T0: kst, Tm: krlx}
     on[Tp] = {Tp: -(2 * krlx + ke), S: krlx, T0: krlx}
     on[T0] = {T0: -(kst + 2 * krlx + ke), S: kst, Tp: krlx, Tm: krlx}
     on[Tm] = {Tm: -(2 * krlx + ke), S: krlx, T0: krlx}
+    on[GS] = {S: kr}
+    on[FR] = {S: ke, Tp: ke, T0: ke, Tm: ke}
 
     initial_states = {Tp: 1 / 3, T0: 1 / 3, Tm: 1 / 3}
     time = np.linspace(0, 1e-6, 10000)
@@ -81,8 +67,10 @@ def main():
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
 
-    print(latex_eqlist_to_align(latexify(off)))
-    graph(off)
+    # for eq in latexify(off):
+    #     print(eq)
+    # print(latex_eqlist_to_align(latexify(off)))
+    reaction_scheme(on)
 
 
 if __name__ == "__main__":
