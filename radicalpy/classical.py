@@ -134,6 +134,7 @@ def reaction_scheme(rate_equations: dict):
         if not edge.startswith("-"):
             # TODO: add only if not present already
             # TODO: check position
+            # TODO: use sympy (how to check negative)
             G.node(v1, texlbl=f"${v1}$")
             G.node(v2, texlbl=f"${v2}$")
             G.edge(v2, v1, edge, texlbl=f"${edge}$")
