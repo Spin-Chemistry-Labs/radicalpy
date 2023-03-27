@@ -132,7 +132,8 @@ def reaction_scheme(rate_equations: dict):
     G = graphviz.Digraph("G")
     for v1, v2, edge in data:
         if not edge.startswith("-"):
-            # add only if not present already
+            # TODO: add only if not present already
+            # TODO: check position
             G.node(v1, texlbl=f"${v1}$")
             G.node(v2, texlbl=f"${v2}$")
             G.edge(v2, v1, edge, texlbl=f"${edge}$")
