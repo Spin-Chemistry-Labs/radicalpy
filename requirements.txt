@@ -1,8 +1,9 @@
-numpy
-scipy
-scikit-learn
+importlib_resources
 matplotlib
+numpy
+pint
+scikit-learn
+scipy
 seaborn
 sympy
-pint
 tqdm
