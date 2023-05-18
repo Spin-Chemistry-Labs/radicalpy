@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 import json
 from functools import singledispatchmethod
-from importlib.resources import Path, files
+from importlib.resources import files
+from importlib.resources.abc import Traversable
 from typing import Optional
 
 import numpy as np
@@ -36,7 +37,7 @@ def multiplicity_to_spin(multiplicity: int) -> float:
     return float(multiplicity - 1) / 2.0
 
 
-def get_data(suffix: str = "") -> Path:
+def get_data(suffix: str = "") -> Traversable:
     """Get the directory containing data files."""
     return files(__package__) / "data" / suffix
 
