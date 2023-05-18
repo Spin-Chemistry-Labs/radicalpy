@@ -3,14 +3,18 @@ name: Run tests
 on: push
 jobs:
   run-radicalpy-tests:
+    strategy:
+      matrix:
+        python: ["3.10", "3.11"]
+        os: [ubuntu-latest, windows-latest]
     name: Run test for RadicalPy
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@master
-    - name: Set up Python 3.11 🐍
+    - name: Set up Python ${{ matrix.python }} 🐍
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python }}
         cache: 'pip'
     - name: Install packages 📦
       run: >-

@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 import json
 from functools import singledispatchmethod
-from importlib.resources import files
-from importlib.resources.abc import Traversable
 from typing import Optional
 
 import numpy as np
+from importlib_resources import files
+from importlib_resources.abc import Traversable
 from numpy.typing import NDArray
 
 
