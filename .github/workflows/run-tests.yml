@@ -5,7 +5,7 @@ jobs:
   run-radicalpy-tests:
     strategy:
       matrix:
-        pyversion: ["3.8", "3.9", "3.10", "3.11"]
+        pyversion: ["3.10", "3.11"]
     name: Run test for RadicalPy
     runs-on: ubuntu-20.04
     steps:
