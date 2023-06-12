@@ -29,11 +29,11 @@ enabled = true
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
-# [tool.setuptools.packages.find]
-# include = ["radicalpy"]  # ["*"] by default
+[tool.setuptools.packages.find]
+include = ["radicalpy"]  # ["*"] by default
 
 [tool.setuptools.package-data]
-radicalpy = ["data/*.json"]
+radicalpy = ["*.json"]
 
 [tool.black]
 line-length = 88
