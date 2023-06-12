@@ -33,7 +33,7 @@ dependencies = {file = ["requirements.txt"]}
 # include = ["radicalpy"]  # ["*"] by default
 
 [tool.setuptools.package-data]
-radicalpy = ["*.json"]
+radicalpy = ["data/*.json"]
 
 [tool.black]
 line-length = 88
