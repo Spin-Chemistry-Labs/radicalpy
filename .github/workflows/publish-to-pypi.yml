@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@master
+    - name: List files
+      run: ls radicalpy/data
     - name: Set up Python 3.11 🐍
       uses: actions/setup-python@v4
       with:
