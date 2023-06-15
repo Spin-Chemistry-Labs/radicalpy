@@ -182,7 +182,7 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     return ang_freq / (C.mu_B / C.hbar * -C.g_e / 1e9)
 
 
-def autocorrelation(data: np.ndarray, factor: int = 2) -> np.ndarray:
+def autocorrelation(data: np.ndarray, factor: int = 1) -> np.ndarray:
     """Calculate the autocorrelation of a trajectory.
 
     An FFT-based implementation of the autocorrelation for Monte Carlo
@@ -262,21 +262,6 @@ def mT_to_angular_frequency(mT: float) -> float:
             float: The magnetic flux density converted to angular frequency (rad/s/T).
     """
     return mT * (C.mu_B / C.hbar * -C.g_e / 1e9)
-
-
-def multiexponential(x, *args):
-    """Multiexponential function for autocorrelation fitting.
-
-    Args:
-            x (np.ndarray): The time lags.
-            args (np.ndarray): The amplitudes (A) and taus for fitting.
-
-    Returns:
-            np.ndarray: Multiexponential fit for autocorrelations.
-    """
-    n = len(args) // 2
-    A, tau = list(args)[:n], list(args)[n:]
-    return sum(a * np.exp(-t * x) for a, t in zip(A, tau))
 
 
 def spectral_density(omega: float, tau_c: float) -> float:
