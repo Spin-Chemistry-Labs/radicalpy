@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 import numpy as np
+from scipy.optimize import curve_fit
 
 from . import utils
 from .data import Isotope
 from .shared import constants as C
 from .simulation import HilbertSimulation
+from .utils import autocorrelation, mT_to_MHz
 
 
 def Bhalf_theoretical(sim: HilbertSimulation) -> float:
@@ -143,27 +145,49 @@ def aqueous_glycerol_viscosity(
     return viscosity_glyc * np.exp(A * alpha)
 
 
-def correlation_time(*args: np.ndarray) -> float:
-    """Estimate correlation time.
-
-    The optimal parameters (amplitudes and taus) obtained from the
-    multiexponential fit of the autocorrelation curve are used to
-    estimate the correlation time.  See
-    `radicalpy.utils.multiexponential_fit`.
+def autocorrelation_fit(
+    ts: np.ndarray,
+    trajectory: np.ndarray,
+    tau_begin: float,
+    tau_end: float,
+    num_exp: int = 100,
+) -> dict:
+    """Fit multiexponential to autocorrelation plot and calculate the
+    effective rotational correlation time.
 
     Args:
-        args (np.ndarray): The amplitudes and taus from the
-            multiexponential fit.
+        ts (np.ndarray): Time interval (x-axis of the `trajectory`)
+            (s).
+        trajectory (np.ndarray): The raw data which will be fit and
+            used to calculate `tau_c`.
+        tau_begin (float): Initial lag time (s).
+        tau_end (float): Final lag time (s).
+        num_exp (int): Number of exponential terms in the
+            multiexponential fit (default=100).
 
     Returns:
-            float: The correlation time (s).
-    .. todo:: Change to different approach.
+            dict:
+                - `fit` is the multiexponential fit to the autocorrelation.
+                - `tau_c` is the effective rotational correlation time.
+
     """
-    n = len(args) // 2
-    As, taus = list(args)[:n], list(args)[n:]
-    As_norm = As / np.array(As).sum()
-    y = As_norm / taus
-    return np.trapz(y, dx=1)
+    acf = autocorrelation(trajectory)
+    acf /= acf[0]
+    taus = np.geomspace(tau_begin, tau_end, num=num_exp)
+
+    def multiexponential(x, *params):
+        return sum(a * np.exp(-x / t) for a, t in zip(params, taus))
+
+    acf_popt, acf_pcov = curve_fit(
+        multiexponential,
+        ts,
+        acf,
+        bounds=(0, float("inf")),
+        p0=np.zeros(num_exp),
+    )
+    fit = multiexponential(ts, *acf_popt)
+    tau_c = sum(acf_popt * taus) * np.var(mT_to_MHz(trajectory)) / 1e6
+    return {"fit": fit, "tau_c": tau_c}
 
 
 def diffusion_coefficient(radius: float, temperature: float, eta: float):
