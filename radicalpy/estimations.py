@@ -172,6 +172,8 @@ def autocorrelation_fit(
 
     """
     acf = autocorrelation(trajectory)
+    zero_point_crossing = np.where(np.diff(np.sign(acf)))[0][0]
+    acf = acf[0:zero_point_crossing]
     acf /= acf[0]
     taus = np.geomspace(tau_begin, tau_end, num=num_exp)
 
