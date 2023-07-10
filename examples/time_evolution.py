@@ -11,7 +11,7 @@ def main():
     Z = rp.simulation.Molecule("Z")
     sim = rp.simulation.HilbertSimulation([flavin, Z])
     print(sim)
-    H = sim.total_hamiltonian(B=0, D=0, J=0)
+    H = sim.total_hamiltonian(B0=0, D=0, J=0)
     plt.spy(H)
     plt.show()
 
