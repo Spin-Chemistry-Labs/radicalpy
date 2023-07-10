@@ -274,8 +274,8 @@ class HilbertSimulation:
 
         Args:
 
-            B0 (float): External magnetic field intensity (milli
-            Tesla).
+            B0: External magnetic field intensity (milli
+                Tesla).
 
         Returns:
             np.ndarray: The Zeeman Hamiltonian corresponding to the
@@ -356,7 +356,7 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
 
-    def dipolar_hamiltonian(self, D: float or np.ndarray) -> np.ndarray:
+    def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
