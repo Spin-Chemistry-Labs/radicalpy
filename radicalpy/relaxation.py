@@ -243,13 +243,13 @@ class TripletTripletDephasing(LiouvilleRelaxationBase):
 class TripletTripletRelaxation(LiouvilleRelaxationBase):
     """Triplet-triplet relaxation superoperator.
 
-    Source: `Miura et al. J. Phys. Chem. A 119, 5534−5544 (2015)`_.
+    Source: `Miura et al. J. Phys. Chem. A 119, 5534-5544 (2015)`_.
 
     >>> TripletTripletRelaxation(rate_constant=1e6)
     Relaxation: TripletTripletRelaxation
     Rate constant: 1000000.0
 
-    .. _Miura et al. J. Phys. Chem. A 119, 5534−5544 (2015):
+    .. _Miura et al. J. Phys. Chem. A 119, 5534-5544 (2015):
        https://doi.org/10.1021/acs.jpca.5b02183
     """
 
