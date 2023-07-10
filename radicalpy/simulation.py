@@ -394,22 +394,35 @@ class HilbertSimulation:
 
     def total_hamiltonian(
         self,
-        B: float,
+        B0: float,
         J: float,
         D: float,
         theta: Optional[float] = None,
         phi: Optional[float] = None,
         hfc_anisotropy: bool = False,
     ) -> np.ndarray:
-        """Construct the final (total) Hamiltonian.
+        """Construct the total Hamiltonian.
 
-        Construct the final (total)
+        The total Hamiltonian is the sum of Zeeman, Hyperfine,
+        Exchange and Dipolar Hamiltonian.
 
-        .. todo::
-            Write proper docs.
+        Args:
+
+            B (float): See `zeeman_hamiltonian`.
+
+            J (float): See `exchange_hamiltonian`.
+
+            D (float): See `dipolar_hamiltonian`.
+
+            theta (Optional[float]): See `zeeman_hamiltonian`.
+
+            phi (Optional[float]): See `zeeman_hamiltonian`.
+
+            hfc_anisotropy (bool): See `hyperfine_hamiltonian`.
+
         """
         H = (
-            self.zeeman_hamiltonian(B, theta, phi)
+            self.zeeman_hamiltonian(B0, theta, phi)
             + self.hyperfine_hamiltonian(hfc_anisotropy)
             + self.exchange_hamiltonian(J)
             + self.dipolar_hamiltonian(D)
@@ -532,7 +545,7 @@ class HilbertSimulation:
         phi: Optional[float] = None,
         hfc_anisotropy: bool = False,
     ) -> dict:
-        H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
+        H = self.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
 
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
         rhos = self.mary_loop(init_state, time, B, H, theta=theta, phi=phi)
@@ -598,7 +611,7 @@ class HilbertSimulation:
         kinetics: list[HilbertIncoherentProcessBase] = [],
         relaxations: list[HilbertIncoherentProcessBase] = [],
     ) -> dict:
-        H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=True)
+        H = self.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=True)
 
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
         theta, phi = utils._anisotropy_check(theta, phi)
