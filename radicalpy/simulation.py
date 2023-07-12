@@ -572,7 +572,6 @@ class HilbertSimulation:
         phi: Iterable[float],
     ):
         shape = H_base.shape
-        H_base = self.convert(H_base)
         if shape != H_base.shape:
             shape = [shape[0] * shape[0], 1]
 
@@ -581,7 +580,7 @@ class HilbertSimulation:
         for i, th in enumerate(theta):
             for j, ph in enumerate(phi):
                 H_zee = self.zeeman_hamiltonian(B, th, ph)
-                H = H_base + H_zee
+                H = H_base + self.convert(H_zee)
                 rhos[i, j] = self.time_evolution(init_state, time, H)
         return rhos
 
