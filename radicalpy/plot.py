@@ -89,6 +89,9 @@ def linear_energy_levels(H, B, linecolour, title):
 def energy_levels(sim: HilbertSimulation, B: np.ndarray, J=0, D=0):
     # TODO(VATAI): DO THIS PROPERLY
     # TODO(VATAI): use tick labels
+    assert (
+        type(sim) == HilbertSimulation
+    ), "plot.energy_levels assumes Hilbert space simulation"
     H_base = sim.total_hamiltonian(0, J, D)
     H_zee = sim.zeeman_hamiltonian(1)
 
