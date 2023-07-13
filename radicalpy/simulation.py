@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import enum
+import itertools
 from math import prod
-from typing import Iterable, Optional
+from typing import Optional
 
 import numpy as np
 import scipy as sp
@@ -575,11 +576,11 @@ class HilbertSimulation:
         shape = self._get_rho_shape(H_base.shape[0])
         rhos = np.zeros((len(theta), len(phi), len(time), *shape), dtype=complex)
 
-        for i, th in enumerate(theta):
-            for j, ph in enumerate(phi):
-                H_zee = self.zeeman_hamiltonian(B, th, ph)
-                H = H_base + self.convert(H_zee)
-                rhos[i, j] = self.time_evolution(init_state, time, H)
+        iters = itertools.product(enumerate(theta), enumerate(phi))
+        for (i, th), (j, ph) in tqdm(list(iters)):
+            H_zee = self.zeeman_hamiltonian(B, th, ph)
+            H = H_base + self.convert(H_zee)
+            rhos[i, j] = self.time_evolution(init_state, time, H)
         return rhos
 
     def anisotropy(
