@@ -489,7 +489,7 @@ class HilbertSimulation:
         shape = H_zee.shape
         H_zee = self.convert(H_zee)
         if shape != H_zee.shape:
-            shape = [shape[0] * shape[0], 1]
+            shape = (shape[0] * shape[0], 1)
         rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
         for i, B0 in enumerate(tqdm(B)):
             H = H_base + B0 * H_zee
@@ -568,8 +568,8 @@ class HilbertSimulation:
         time: np.ndarray,
         B: float,
         H_base: np.ndarray,
-        theta: Iterable[float],
-        phi: Iterable[float],
+        theta: list[float],
+        phi: list[float],
     ):
         shape = H_base.shape
         if shape != H_base.shape:
@@ -589,8 +589,8 @@ class HilbertSimulation:
         init_state: State,
         obs_state: State,
         time: np.ndarray,
-        theta: Iterable or float,
-        phi: Iterable or float,
+        theta: list[float] | float,
+        phi: list[float] | float,
         B: float,
         D: np.ndarray,
         J: float,
