@@ -141,18 +141,21 @@ class HilbertSimulation:
         Generates the Pauli matrices corresponding to a given multiplicity.
 
         Args:
+
             mult (int): The multiplicity of the element.
 
-        Return:
-            dict: A dictionary containing 6 `np.array` matrices of
-            shape `(mult, mult)`:
+        Returns:
+            dict:
 
-            - the unit operator `result["u"]`,
-            - raising operator `result["p"]`,
-            - lowering operator `result["m"]`,
-            - Pauli matrix for x axis `result["x"]`,
-            - Pauli matrix for y axis `result["y"]`,
-            - Pauli matrix for z axis `result["z"]`.
+                A dictionary containing 6 `np.array` matrices of
+                shape `(mult, mult)`:
+
+                - the unit operator `result["u"]`,
+                - raising operator `result["p"]`,
+                - lowering operator `result["m"]`,
+                - Pauli matrix for x axis `result["x"]`,
+                - Pauli matrix for y axis `result["y"]`,
+                - Pauli matrix for z axis `result["z"]`.
         """
         assert mult > 1
         result = {}
@@ -181,6 +184,9 @@ class HilbertSimulation:
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator.
 
+        Construct the spin operator for the particle with index `idx`
+        in the `HilbertSimulation`.
+
         Args:
 
             idx (int): Index of the particle.
@@ -188,13 +194,11 @@ class HilbertSimulation:
             axis (str): Axis, i.e. ``"x"``, ``"y"`` or ``"z"``.
 
         Returns:
+            np.ndarray:
 
-            np.ndarray: Spin operator for a particle in the
-            `HilbertSimulation` system with indexing `idx` and axis
-            `axis`.
-
-        Construct the spin operator for the particle with index
-        `idx` in the `HilbertSimulation`.
+                Spin operator for a particle in the
+                `HilbertSimulation` system with indexing `idx` and
+                axis `axis`.
 
         """
         assert 0 <= idx and idx < len(self.particles)
@@ -210,10 +214,22 @@ class HilbertSimulation:
         else:
             return spinop
 
-    def product_operator(
-        self, idx1: int, idx2: int, h: float | np.ndarray = 1.0
-    ) -> np.ndarray:
-        """Projection operator."""
+    def product_operator(self, idx1: int, idx2: int, h: float = 1.0) -> np.ndarray:
+        """Construct the (1D) product operator.
+
+        Args:
+
+            idx1 (int): TODO.
+
+            idx2 (int): TODO.
+
+            h (float): TODO.
+
+        Returns:
+            np.ndarray:
+
+                Product operator for particles TODO.
+        """
         return h * sum(
             [
                 self.spin_operator(idx1, axis).dot(self.spin_operator(idx2, axis))
@@ -221,23 +237,46 @@ class HilbertSimulation:
             ]
         )
 
-    def product_operator_3d(
-        self, idx1: int, idx2: int, h: float | np.ndarray
-    ) -> np.ndarray:
-        """Projection operator."""
+    def product_operator_3d(self, idx1: int, idx2: int, h: np.ndarray) -> np.ndarray:
+        """Construct the 3D product operator.
+
+        Args:
+
+            idx1 (int): TODO.
+
+            idx2 (int): TODO.
+
+            h (np.ndarray): TODO.
+
+        Returns:
+            np.ndarray:
+
+                Product operator for particles TODO.
+        """
         return sum(
-            [
+            (
                 h[i, j]
                 * self.spin_operator(idx1, ax1).dot(self.spin_operator(idx2, ax2))
                 for i, ax1 in enumerate("xyz")
                 for j, ax2 in enumerate("xyz")
-            ]
+            )
         )
 
     def projection_operator(self, state: State):
-        """Construct.
+        """Construct the projection operator corresponding to a `state`.
 
-        .. todo::     Write proper docs.
+        Args:
+
+            state (State): TODO
+
+        Returns:
+            np.ndarray:
+
+                Projection operator corresponding to the `State`
+                `state`.
+
+        .. todo:: Write proper docs.
+
         """
         # Spin operators
         SAx, SAy, SAz = [self.spin_operator(0, ax) for ax in "xyz"]
@@ -245,28 +284,19 @@ class HilbertSimulation:
 
         # Product operators
         SASB = self.product_operator(0, 1)
-
         eye = np.eye(len(SASB))
 
-        # Projection operators
-        # todo change p/m to +/-
-        match state:
-            case State.SINGLET:
-                return (1 / 4) * eye - SASB
-            case State.TRIPLET:
-                return (3 / 4) * eye + SASB
-            case State.TRIPLET_PLUS:
-                return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
-            case State.TRIPLET_MINUS:
-                return (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz)
-            case State.TRIPLET_ZERO:
-                return (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz
-            case State.TRIPLET_PLUS_MINUS:
-                return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz) + (
-                    2 * SAz**2 - SAz
-                ) * (2 * SBz**2 - SBz)
-            case State.EQUILIBRIUM:
-                return 1.05459e-34 / (1.38e-23 * 298)
+        result = {
+            State.SINGLET: (1 / 4) * eye - SASB,
+            State.TRIPLET: (3 / 4) * eye + SASB,
+            State.TRIPLET_PLUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz),
+            State.TRIPLET_MINUS: (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
+            State.TRIPLET_ZERO: (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz,
+            State.TRIPLET_PLUS_MINUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
+            + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
+            State.EQUILIBRIUM: 1.05459e-34 / (1.38e-23 * 298),
+        }
+        return result[state]
 
     def zeeman_hamiltonian(
         self, B0: float, theta: Optional[float] = None, phi: Optional[float] = None
@@ -290,11 +320,12 @@ class HilbertSimulation:
             phi (Optional[float]): angle
 
         Returns:
+            np.ndarray:
 
-            np.ndarray: The Zeeman Hamiltonian corresponding to the
-                system described by the `Quantum` simulation object
-                and the external magnetic field intensity `B0` and
-                angles `theta` and `phi`.
+                The Zeeman Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and the
+                external magnetic field intensity `B0` and angles
+                `theta` and `phi`.
 
         """
         if theta is None and phi is None:
@@ -314,10 +345,12 @@ class HilbertSimulation:
                 Tesla).
 
         Returns:
+            np.ndarray:
 
-            np.ndarray: The Zeeman Hamiltonian corresponding to the
-                system described by the `Quantum` simulation object
-                and the external magnetic field intensity `B`.
+                The Zeeman Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and the
+                external magnetic field intensity `B`.
+
         """
         axis = "z"
         gammas = enumerate(p.gamma_mT for p in self.particles)
@@ -341,10 +374,12 @@ class HilbertSimulation:
             phi (float): angle
 
         Returns:
-            np.ndarray: The Zeeman Hamiltonian corresponding to the
-                system described by the `Quantum` simulation object
-                and the external magnetic field intensity `B0` and
-                angles `theta` and `phi`.
+            np.ndarray:
+
+                The Zeeman Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and the
+                external magnetic field intensity `B0` and angles
+                `theta` and `phi`.
 
         """
         particles = np.array(
@@ -368,8 +403,10 @@ class HilbertSimulation:
             hfc_anisotropy (bool): TODO?
 
         Returns:
-            np.ndarray: The Hyperfine Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object.
+            np.ndarray:
+
+                The Hyperfine Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object.
 
         """
         if hfc_anisotropy:
@@ -398,20 +435,31 @@ class HilbertSimulation:
         """Construct the Exchange Hamiltonian.
 
         Construct the Exchange (J-coupling) Hamiltonian based on the
-        coupling constant J between two electrons, which can be obtain
-        from the radical pair separation `r` using `TODO` method.
+        coupling constant J between two electrons.
+
+        The `TODO` function can be used
+
+        Args:
+
+            J (float): Exchange coupling constant.
+
+        which can be obtain from the radical pair separation `r` using `TODO` method.
 
         .. todo::
             Write proper docs.
 
         Returns:
-            np.ndarray: The Exchange (J-coupling) Hamiltonian
-            corresponding to the system described by the `Quantum`
-            simulation object and the coupling constant `J`.
+            np.ndarray:
+
+                The Exchange (J-coupling) Hamiltonian
+                corresponding to the system described by the
+                `HilbertSimulation` object and the coupling constant
+                `J`.
+
         """
-        Jcoupling = self.radicals[0].gamma_mT * J
+        Jcoupling = J * self.radicals[0].gamma_mT
         SASB = self.product_operator(0, 1)
-        return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
+        return Jcoupling * (2 * SASB + 0.5 * np.eye(SASB.shape[0]))
 
     def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
@@ -419,13 +467,17 @@ class HilbertSimulation:
         Construct the Dipolar Hamiltonian based on dipolar coupling
         constant `D` between two electrons.
 
+        dipolar interaction tensor
+
         .. todo::
             Write proper docs.
 
         Returns:
-            np.ndarray: The Dipolar Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object and
-            dipolar coupling constant `D`.
+            np.ndarray:
+
+                The Dipolar Hamiltonian corresponding to the
+                system described by the `Quantum` simulation object and
+                dipolar coupling constant `D`.
         """
         if isinstance(D, np.ndarray):
             return self.dipolar_hamiltonian_3d(D)
@@ -477,6 +529,11 @@ class HilbertSimulation:
 
             hfc_anisotropy (bool): See `hyperfine_hamiltonian`.
 
+        Returns:
+            np.ndarray:
+
+                The total Hamiltonian.
+
         """
         H = (
             self.zeeman_hamiltonian(B0, theta, phi)
@@ -499,7 +556,9 @@ class HilbertSimulation:
                 H (np.ndarray): blah blah
 
         Returns:
-                np.ndarray: blah blah
+                np.ndarray:
+
+                    TODO
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
