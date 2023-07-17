@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import enum
+import itertools
 from math import prod
-from typing import Iterable, Optional
+from typing import Optional
 
 import numpy as np
 import scipy as sp
@@ -656,11 +657,8 @@ class HilbertSimulation:
 
         .. todo:: Write proper docs.
         """
-        H_zee = self.zeeman_hamiltonian(1, theta, phi)
-        shape = H_zee.shape
-        H_zee = self.convert(H_zee)
-        if shape != H_zee.shape:
-            shape = [shape[0] * shape[0], 1]
+        H_zee = self.convert(self.zeeman_hamiltonian(1, theta, phi))
+        shape = self._get_rho_shape(H_zee.shape[0])
         rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
         for i, B0 in enumerate(tqdm(B)):
             H = H_base + B0 * H_zee
@@ -688,6 +686,10 @@ class HilbertSimulation:
     @staticmethod
     def _square_liouville_rhos(rhos):
         return rhos
+
+    @staticmethod
+    def _get_rho_shape(dim):
+        return dim, dim
 
     def MARY(
         self,
@@ -742,18 +744,14 @@ class HilbertSimulation:
         theta: float | np.ndarray,
         phi: float | np.ndarray,
     ):
-        shape = H_base.shape
-        H_base = self.convert(H_base)
-        if shape != H_base.shape:
-            shape = (shape[0] * shape[0], 1)
+        shape = self._get_rho_shape(H_base.shape[0])
+        rhos = np.zeros((len(theta), len(phi), len(time), *shape), dtype=complex)
 
-        rhos = np.zeros([len(theta), len(phi), len(time), *shape], dtype=complex)
-
-        for i, th in enumerate(theta):
-            for j, ph in enumerate(phi):
-                H_zee = self.zeeman_hamiltonian(B, th, ph)
-                H = H_base + H_zee
-                rhos[i, j] = self.time_evolution(init_state, time, H)
+        iters = itertools.product(enumerate(theta), enumerate(phi))
+        for (i, th), (j, ph) in tqdm(list(iters)):
+            H_zee = self.zeeman_hamiltonian(B, th, ph)
+            H = H_base + self.convert(H_zee)
+            rhos[i, j] = self.time_evolution(init_state, time, H)
         return rhos
 
     def anisotropy(
@@ -879,7 +877,11 @@ class LiouvilleSimulation(HilbertSimulation):
     def _square_liouville_rhos(rhos):
         shape = rhos.shape
         dim = int(np.sqrt(shape[-2]))
-        return rhos.reshape(shape[0], shape[1], dim, dim)
+        return rhos.reshape(*shape[:-2], dim, dim)
+
+    @staticmethod
+    def _get_rho_shape(dim):
+        return (dim, 1)
 
     def liouville_projection_operator(self, state: State) -> np.ndarray:
         return np.reshape(self.projection_operator(state), (-1, 1))

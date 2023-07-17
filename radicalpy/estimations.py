@@ -240,9 +240,7 @@ def dipolar_interaction_MC(
     return dipolar_interaction_isotropic(r) * (3 * np.cos(theta) ** 2 - 1)
 
 
-def dipolar_interaction_anisotropic(
-    r: float | np.ndarray, gamma: float = Isotope("E").gamma_mT
-) -> np.ndarray:
+def dipolar_interaction_anisotropic(r: float | np.ndarray) -> np.ndarray:
     """Anisotropic dipolar coupling.
 
     Point dipole approximation is used.
@@ -255,7 +253,7 @@ def dipolar_interaction_anisotropic(
     .. todo:: np.ndarray not implemented.  `dipolar * diag` fails.
     """
     dipolar1d = dipolar_interaction_isotropic(r)
-    dipolar = gamma * (2 / 3) * dipolar1d
+    dipolar = (2 / 3) * dipolar1d
     return dipolar * np.diag([-1, -1, 2])
 
 
