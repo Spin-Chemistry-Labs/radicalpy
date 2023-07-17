@@ -465,19 +465,23 @@ class HilbertSimulation:
         """Construct the Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
-        constant `D` between two electrons.
+        constant or dipolar interaction tensor `D` between two
+        electrons.  Depending on the `type` of `D`, the 1D or the 3D
+        version is invoked.
 
-        dipolar interaction tensor
+        Args:
 
-        .. todo::
-            Write proper docs.
+            D (float | np.ndarray): dipolar coupling constant or
+                dipolar interaction tensor.
 
         Returns:
             np.ndarray:
 
-                The Dipolar Hamiltonian corresponding to the
-                system described by the `Quantum` simulation object and
-                dipolar coupling constant `D`.
+                The Dipolar Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and
+                dipolar coupling constant or dipolar interaction
+                tensor `D`.
+
         """
         if isinstance(D, np.ndarray):
             return self.dipolar_hamiltonian_3d(D)
@@ -485,6 +489,23 @@ class HilbertSimulation:
             return self.dipolar_hamiltonian_1d(D)
 
     def dipolar_hamiltonian_1d(self, D: float) -> np.ndarray:
+        """Construct the 1D Dipolar Hamiltonian.
+
+        Construct the Dipolar Hamiltonian based on dipolar coupling
+        constant `D` between two electrons.
+
+        Args:
+
+            D (float): dipolar coupling constant.
+
+        Returns:
+            np.ndarray:
+
+                The 1D Dipolar Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and
+                dipolar coupling constant `D`.
+
+        """
         SASB = self.product_operator(0, 1)
         SAz = self.spin_operator(0, "z")
         SBz = self.spin_operator(1, "z")
@@ -492,6 +513,23 @@ class HilbertSimulation:
         return omega * (3 * SAz * SBz - SASB)
 
     def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
+        """Construct the 3D Dipolar Hamiltonian.
+
+        Construct the Dipolar Hamiltonian based on dipolar interaction
+        tensor `D` between two electrons.
+
+        Args:
+
+            D (np.ndarray): dipolar interaction tensor.
+
+        Returns:
+            np.ndarray:
+
+                The 3D Dipolar Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and
+                dipolar interaction tensor `D`.
+
+        """
         ne = len(self.radicals)
         return -sum(
             [
@@ -505,7 +543,7 @@ class HilbertSimulation:
         self,
         B0: float,
         J: float,
-        D: float,
+        D: float | np.ndarray,
         theta: Optional[float] = None,
         phi: Optional[float] = None,
         hfc_anisotropy: bool = False,
@@ -607,9 +645,13 @@ class HilbertSimulation:
         """Generate density matrices (rhos) for MARY.
 
         Args:
+
             init_state (State): initial state.
+
         Returns:
-            List generator.
+            np.ndarray:
+
+                Density matrices.
 
         .. todo::
             Write proper docs.
@@ -697,13 +739,13 @@ class HilbertSimulation:
         time: np.ndarray,
         B: float,
         H_base: np.ndarray,
-        theta: Iterable[float],
-        phi: Iterable[float],
+        theta: float | np.ndarray,
+        phi: float | np.ndarray,
     ):
         shape = H_base.shape
         H_base = self.convert(H_base)
         if shape != H_base.shape:
-            shape = [shape[0] * shape[0], 1]
+            shape = (shape[0] * shape[0], 1)
 
         rhos = np.zeros([len(theta), len(phi), len(time), *shape], dtype=complex)
 
@@ -719,8 +761,8 @@ class HilbertSimulation:
         init_state: State,
         obs_state: State,
         time: np.ndarray,
-        theta: Iterable or float,
-        phi: Iterable or float,
+        theta: np.ndarray | float,
+        phi: np.ndarray | float,
         B: float,
         D: np.ndarray,
         J: float,
@@ -730,7 +772,7 @@ class HilbertSimulation:
         H = self.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=True)
 
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
-        theta, phi = utils._anisotropy_check(theta, phi)
+        theta, phi = utils.anisotropy_check(theta, phi)
         rhos = self.anisotropy_loop(init_state, time, B, H, theta=theta, phi=phi)
         product_probabilities = self.product_probability(obs_state, rhos)
 
@@ -768,7 +810,10 @@ class HilbertSimulation:
             H (np.ndarray): Spin Hamiltonian in Hilbert space.
 
         Returns:
-            np.ndarray: A matrix in Hilbert space representing...
+            np.ndarray:
+
+                A matrix in Hilbert space representing...
+
         """
         Pi = self.projection_operator(state)
 

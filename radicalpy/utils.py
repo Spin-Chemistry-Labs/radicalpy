@@ -277,7 +277,7 @@ def spectral_density(omega: float, tau_c: float) -> float:
     return tau_c / (1 + omega**2 * tau_c**2)
 
 
-def _anisotropy_check(
+def anisotropy_check(
     theta: float | np.ndarray, phi: float | np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     if isinstance(theta, float):
@@ -328,7 +328,7 @@ def spherical_average(
             float: The spherical average of the anisotropic product
                 yields.
     """
-    theta, phi = _anisotropy_check(theta, phi)
+    theta, phi = anisotropy_check(theta, phi)
     nth, nph = _check_full_sphere(theta, phi)
 
     wt = 4 * np.ones(nth)
