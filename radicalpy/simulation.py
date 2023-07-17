@@ -267,20 +267,31 @@ class HilbertSimulation:
     def zeeman_hamiltonian(
         self, B0: float, theta: Optional[float] = None, phi: Optional[float] = None
     ) -> np.ndarray:
-        """Construct the Zeeman Hamiltonian.
+        """Construct the Zeeman Hamiltonian (1D or 3D).
 
         Construct the Zeeman Hamiltonian based on the external
-        magnetic field `B`.
+        magnetic field `B0`.  If the angles `theta` and `phi` are also
+        provided, the 3D Zeeman Hamiltonian is constructed (by
+        invoking the `zeeman_hamiltonian_3d`), otherwise the 1D Zeeman
+        Hamiltonian is constructed (by invoking the
+        `zeeman_hamiltonian_1d`).
 
         Args:
 
-            B0: External magnetic field intensity (milli
+            B0 (float): External magnetic field intensity (milli
                 Tesla).
 
+            theta (Optional[float]): angle.
+
+            phi (Optional[float]): angle
+
         Returns:
+
             np.ndarray: The Zeeman Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object and
-            the external magnetic field intensity `B`.
+                system described by the `Quantum` simulation object
+                and the external magnetic field intensity `B0` and
+                angles `theta` and `phi`.
+
         """
         if theta is None and phi is None:
             return self.zeeman_hamiltonian_1d(B0)
@@ -288,6 +299,22 @@ class HilbertSimulation:
             return self.zeeman_hamiltonian_3d(B0, theta, phi)
 
     def zeeman_hamiltonian_1d(self, B0: float) -> np.ndarray:
+        """Construct the 1D Zeeman Hamiltonian.
+
+        Construct the 1D Zeeman Hamiltonian based on the external
+        magnetic field `B0`.
+
+        Args:
+
+            B0 (float): External magnetic field intensity (milli
+                Tesla).
+
+        Returns:
+
+            np.ndarray: The Zeeman Hamiltonian corresponding to the
+                system described by the `Quantum` simulation object
+                and the external magnetic field intensity `B`.
+        """
         axis = "z"
         gammas = enumerate(p.gamma_mT for p in self.particles)
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
@@ -295,6 +322,27 @@ class HilbertSimulation:
     def zeeman_hamiltonian_3d(
         self, B0: float, theta: float = 0, phi: float = 0
     ) -> np.ndarray:
+        """Construct the 3D Zeeman Hamiltonian.
+
+        Construct the 3D Zeeman Hamiltonian based on the external
+        magnetic field `B` and angles `theta` and `phi`.
+
+        Args:
+
+            B0 (float): External magnetic field intensity (milli
+                Tesla).
+
+            theta (float): angle.
+
+            phi (float): angle
+
+        Returns:
+            np.ndarray: The Zeeman Hamiltonian corresponding to the
+                system described by the `Quantum` simulation object
+                and the external magnetic field intensity `B0` and
+                angles `theta` and `phi`.
+
+        """
         particles = np.array(
             [
                 [self.spin_operator(idx, axis) for axis in "xyz"]
