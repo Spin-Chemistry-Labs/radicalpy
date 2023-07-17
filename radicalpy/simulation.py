@@ -314,11 +314,16 @@ class HilbertSimulation:
         Args:
 
             B0 (float): External magnetic field intensity (milli
-                Tesla).
+                Tesla). See `zeeman_hamiltonian_1d` and
+                `zeeman_hamiltonian_3d`.
 
-            theta (Optional[float]): angle.
+            theta (Optional[float]): rotation (polar) angle between
+                the external magnetic field and the fixed
+                molecule. See `zeeman_hamiltonian_3d`.
 
-            phi (Optional[float]): angle
+            phi (Optional[float]): rotation (azimuth) angle between
+                the external magnetic field and the fixed molecule.
+                See `zeeman_hamiltonian_3d`.
 
         Returns:
             np.ndarray:
@@ -370,9 +375,12 @@ class HilbertSimulation:
             B0 (float): External magnetic field intensity (milli
                 Tesla).
 
-            theta (float): angle.
+            theta (Optional[float]): rotation (polar) angle between
+                the external magnetic field and the fixed
+                molecule.
 
-            phi (float): angle
+            phi (Optional[float]): rotation (azimuth) angle between
+                the external magnetic field and the fixed molecule.
 
         Returns:
             np.ndarray:
