@@ -210,7 +210,9 @@ class HilbertSimulation:
         else:
             return spinop
 
-    def product_operator(self, idx1: int, idx2: int, h: float = 1) -> np.ndarray:
+    def product_operator(
+        self, idx1: int, idx2: int, h: float | np.ndarray = 1.0
+    ) -> np.ndarray:
         """Projection operator."""
         return h * sum(
             [
@@ -219,7 +221,9 @@ class HilbertSimulation:
             ]
         )
 
-    def product_operator_3d(self, idx1: int, idx2: int, h: np.ndarray) -> np.ndarray:
+    def product_operator_3d(
+        self, idx1: int, idx2: int, h: float | np.ndarray
+    ) -> np.ndarray:
         """Projection operator."""
         return sum(
             [
@@ -356,33 +360,38 @@ class HilbertSimulation:
     def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> np.ndarray:
         """Construct the Hyperfine Hamiltonian.
 
-        Construct the Hyperfine Hamiltonian based on the magnetic
-        field.
+        Construct the Hyperfine Hamiltonian.  If `hfc_anisotropy` is TODO
+        `True`,
+
+        Args:
+
+            hfc_anisotropy (bool): TODO?
 
         Returns:
             np.ndarray: The Hyperfine Hamiltonian corresponding to the
             system described by the `Quantum` simulation object.
+
         """
         if hfc_anisotropy:
             for h in [n.hfc for n in self.nuclei]:
                 # TODO(vatai) try except not is None
                 if h.anisotropic is None:
                     raise ValueError(
-                        "Not all molecules have anisotropic HFCs! Please use `hfc_anisotropy=False`"
+                        "Not all molecules have anisotropic HFCs! "
+                        "Please use `hfc_anisotropy=False`"
                     )
 
-        if hfc_anisotropy:
             prodop = self.product_operator_3d
             hfcs = [n.hfc.anisotropic for n in self.nuclei]
         else:
             prodop = self.product_operator
             hfcs = [n.hfc.isotropic for n in self.nuclei]
         return sum(
-            [
+            (
                 self.particles[ei].gamma_mT
                 * prodop(ei, len(self.radicals) + ni, hfcs[ni])
                 for ni, ei in enumerate(self.coupling)
-            ]
+            )
         )
 
     def exchange_hamiltonian(self, J: float) -> np.ndarray:
