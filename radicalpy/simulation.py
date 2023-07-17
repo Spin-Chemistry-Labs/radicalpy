@@ -404,12 +404,18 @@ class HilbertSimulation:
     def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> np.ndarray:
         """Construct the Hyperfine Hamiltonian.
 
-        Construct the Hyperfine Hamiltonian.  If `hfc_anisotropy` is TODO
-        `True`,
+        Construct the Hyperfine Hamiltonian.  If `hfc_anisotropy` is
+        `False`, then the isotropic hyper\-fine coupling constants are
+        used. If `hfc_anisotropy` is `True` then the full hyper\-fine
+        tensors are used (assuming they are available for all the
+        nuclei of the molecule in the database, otherwise an exception
+        is raised).
 
         Args:
 
-            hfc_anisotropy (bool): TODO?
+            hfc_anisotropy (bool): Use isotropic hyper\-fine coupling
+                constants if `False`, use full hyper\-fine tensors if
+                `False`.
 
         Returns:
             np.ndarray:
