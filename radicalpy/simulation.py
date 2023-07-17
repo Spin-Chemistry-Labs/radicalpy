@@ -363,7 +363,7 @@ class HilbertSimulation:
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
 
     def zeeman_hamiltonian_3d(
-        self, B0: float, theta: float = 0, phi: float = 0
+        self, B0: float, theta: Optional[float] = 0, phi: Optional[float] = 0
     ) -> np.ndarray:
         """Construct the 3D Zeeman Hamiltonian.
 
