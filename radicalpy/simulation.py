@@ -586,16 +586,16 @@ class HilbertSimulation:
         """Evolve the system through time.
 
         Args:
-                init_state (State): blah blah
+            init_state (State): blah blah
 
-                time (np.ndarray): blah blah
+            time (np.ndarray): blah blah
 
-                H (np.ndarray): blah blah
+            H (np.ndarray): blah blah
 
         Returns:
-                np.ndarray:
+            np.ndarray:
 
-                    TODO
+                TODO
 
         .. todo:: Write proper docs.
         """
