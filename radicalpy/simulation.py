@@ -445,8 +445,7 @@ class HilbertSimulation:
 
         which can be obtain from the radical pair separation `r` using `TODO` method.
 
-        .. todo::
-            Write proper docs.
+        .. todo:: Write proper docs.
 
         Returns:
             np.ndarray:
@@ -532,11 +531,11 @@ class HilbertSimulation:
         """
         ne = len(self.radicals)
         return -sum(
-            [
+            (
                 -self.radicals[0].gamma_mT
                 * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
                 for ni, ei in enumerate(self.coupling)
-            ]
+            )
         )
 
     def total_hamiltonian(
@@ -597,6 +596,8 @@ class HilbertSimulation:
                 np.ndarray:
 
                     TODO
+
+        .. todo:: Write proper docs.
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
@@ -653,8 +654,7 @@ class HilbertSimulation:
 
                 Density matrices.
 
-        .. todo::
-            Write proper docs.
+        .. todo:: Write proper docs.
         """
         H_zee = self.zeeman_hamiltonian(1, theta, phi)
         shape = H_zee.shape
@@ -838,14 +838,23 @@ class HilbertSimulation:
             dt (float): Time evolution timestep.
 
         Returns:
-            np.ndarray: Two matrices (a tensor) in either Hilbert.
+            np.ndarray:
+
+                Two matrices (a tensor) in either Hilbert.
 
         .. todo::
             https://docs.python.org/3/library/doctest.html
 
-        Example:
-            >> Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
-            >> UL = UnitaryPropagator(HL, 3e-9, "Liouville")
+        Examples:
+
+            >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
+            ...              Molecule("Z")]
+            >>> sim = HilbertSimulation(molecules)
+            >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
+            >>> Up, Um = sim.unitary_propagator(H, 3e-9)
+            >>> Up.shape, Um.shape
+            ((12, 12), (12, 12))
+
         """
         Up = sp.sparse.linalg.expm(1j * H * dt)
         Um = sp.sparse.linalg.expm(-1j * H * dt)
@@ -908,10 +917,22 @@ class LiouvilleSimulation(HilbertSimulation):
         spin Hamiltonian density matrix in both Hilbert and Liouville
         space.
 
+        Examples:
+
+            >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
+            ...              Molecule("Z")]
+            >>> sim = LiouvilleSimulation(molecules)
+            >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
+            >>> sim.unitary_propagator(H, 3e-9).shape
+            (144, 144)
+
         Arguments:
-            H (np.ndarray): Spin Hamiltonian in Hilbert or Liouville space
-            dt (float): Time evolution timestep.
-            space (str): Select the spin space.
+            H (np.ndarray):
+
+                Spin Hamiltonian in Hilbert or Liouville space dt
+                (float): Time evolution timestep.  space (str): Select
+                the spin space.
+
         """
         return sp.sparse.linalg.expm(H * dt)
 
