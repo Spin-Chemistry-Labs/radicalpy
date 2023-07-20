@@ -366,7 +366,7 @@ class HilbertSimulation:
 
                 The Zeeman Hamiltonian corresponding to the system
                 described by the `HilbertSimulation` object and the
-                external magnetic field intensity `B`.
+                external magnetic field intensity `B0`.
 
         """
         axis = "z"
@@ -379,7 +379,7 @@ class HilbertSimulation:
         """Construct the 3D Zeeman Hamiltonian.
 
         Construct the 3D Zeeman Hamiltonian based on the external
-        magnetic field `B` and angles `theta` and `phi`.
+        magnetic field `B0` and angles `theta` and `phi`.
 
         Args:
 
