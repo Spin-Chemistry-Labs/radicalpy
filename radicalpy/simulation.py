@@ -416,16 +416,16 @@ class HilbertSimulation:
         """Construct the Hyperfine Hamiltonian.
 
         Construct the Hyperfine Hamiltonian.  If `hfc_anisotropy` is
-        `False`, then the isotropic hyper\-fine coupling constants are
-        used. If `hfc_anisotropy` is `True` then the full hyper\-fine
+        `False`, then the isotropic hyperfine coupling constants are
+        used. If `hfc_anisotropy` is `True` then the full hyperfine
         tensors are used (assuming they are available for all the
         nuclei of the molecule in the database, otherwise an exception
         is raised).
 
         Args:
 
-            hfc_anisotropy (bool): Use isotropic hyper\-fine coupling
-                constants if `False`, use full hyper\-fine tensors if
+            hfc_anisotropy (bool): Use isotropic hyperfine coupling
+                constants if `False`, use full hyperfine tensors if
                 `False`.
 
         Returns:
@@ -458,28 +458,26 @@ class HilbertSimulation:
         )
 
     def exchange_hamiltonian(self, J: float) -> np.ndarray:
-        """Construct the Exchange Hamiltonian.
+        """Construct the exchange Hamiltonian.
 
-        Construct the Exchange (J-coupling) Hamiltonian based on the
+        Construct the exchange (J-coupling) Hamiltonian based on the
         coupling constant J between two electrons.
 
-        The `TODO` function can be used
+        The J-coupling constant can be obtained using:
+
+        - `radicalpy.estimations.exchange_interaction_in_protein`
+        - `radicalpy.estimations.exchange_interaction_in_solution`
 
         Args:
 
             J (float): Exchange coupling constant.
 
-        which can be obtain from the radical pair separation `r` using `TODO` method.
-
-        .. todo:: Write proper docs.
-
         Returns:
             np.ndarray:
 
-                The Exchange (J-coupling) Hamiltonian
-                corresponding to the system described by the
-                `HilbertSimulation` object and the coupling constant
-                `J`.
+                The exchange (J-coupling) Hamiltonian corresponding to
+                the system described by the `HilbertSimulation` object
+                and the coupling constant `J`.
 
         """
         Jcoupling = J * self.radicals[0].gamma_mT
@@ -493,6 +491,11 @@ class HilbertSimulation:
         constant or dipolar interaction tensor `D` between two
         electrons.  Depending on the `type` of `D`, the 1D or the 3D
         version is invoked.
+
+        See:
+
+        - `dipolar_hamiltonian_1d`
+        - `dipolar_hamiltonian_3d`
 
         Args:
 
@@ -519,6 +522,9 @@ class HilbertSimulation:
         Construct the Dipolar Hamiltonian based on dipolar coupling
         constant `D` between two electrons.
 
+        The dipolar coupling constant can be obtained using
+        `radicalpy.estimations.dipolar_interaction_isotropic`.
+
         Args:
 
             D (float): dipolar coupling constant.
@@ -542,6 +548,9 @@ class HilbertSimulation:
 
         Construct the Dipolar Hamiltonian based on dipolar interaction
         tensor `D` between two electrons.
+
+        The dipolar coupling tensor can be obtained using
+        `radicalpy.estimations.dipolar_interaction_anisotropic`.
 
         Args:
 
@@ -580,7 +589,7 @@ class HilbertSimulation:
 
         Args:
 
-            B (float): See `zeeman_hamiltonian`.
+            B0 (float): See `zeeman_hamiltonian`.
 
             J (float): See `exchange_hamiltonian`.
 
@@ -865,9 +874,6 @@ class HilbertSimulation:
 
                 Two matrices (a tensor) in either Hilbert.
 
-        .. todo::
-            https://docs.python.org/3/library/doctest.html
-
         Examples:
 
             >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
@@ -941,8 +947,7 @@ class LiouvilleSimulation(HilbertSimulation):
         """Create unitary propagator.
 
         Create unitary propagator matrices for time evolution of the
-        spin Hamiltonian density matrix in both Hilbert and Liouville
-        space.
+        spin Hamiltonian density matrix in Liouville space.
 
         Examples:
 
