@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 
+from typing import Tuple
+
 import numpy as np
 import scipy as sp
 
@@ -79,14 +81,14 @@ def _random_theta_phi():
 
 
 def randomwalk_3d(
-    n_steps: float,
+    n_steps: int,
     x_0: float,
     y_0: float,
     z_0: float,
     delta_r: float,
     r_min: float,
     r_max: float = 0,
-) -> (np.ndarray, np.ndarray, np.ndarray):
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Simulate Monte Carlo random walk.
 
     The MC random walk is simulated for radicals pairs in both
@@ -94,18 +96,25 @@ def randomwalk_3d(
     environments.
 
     Args:
+
             n_steps (float): The number of simulation steps.
+
             x_0 (float): The initial position in the x-axis (m).
+
             y_0 (float): The initial position in the x-axis (m).
+
             z_0 (float): The initial position in the x-axis (m).
+
             delta_r (float): The mean path between two radicals (m).
+
             r_min (float): The distance of closest approach (m).
+
             r_max (float): The diameter of the microreactor (m). Set
                 to 0 for solution-based, and to a positive value for
                 microreactor-based simulations.
 
     Returns:
-        (np.ndarray, np.ndarray, np.ndarray):
+        Tuple[np.ndarray, np.ndarray, np.ndarray]:
             - pos: The positions of the moving radical (m).
             - dist: The mutual distances between the radical pairs (m).
             - angle: The angles (theta) of the vector trajectories of
