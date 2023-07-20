@@ -218,18 +218,23 @@ class HilbertSimulation:
     def product_operator(self, idx1: int, idx2: int, h: float = 1.0) -> np.ndarray:
         """Construct the (1D) product operator.
 
+        Construct the 1D (isotropic) product operator of two particles
+        in the spin system.
+
         Args:
 
-            idx1 (int): TODO.
+            idx1 (int): Index of the first particle.
 
-            idx2 (int): TODO.
+            idx2 (int): Index of the second particle.
 
-            h (float): TODO.
+            h (float): Isotopic interaction constant.
 
         Returns:
             np.ndarray:
 
-                Product operator for particles TODO.
+                Product operator for particles corresponding to `idx1`
+                and `idx2` with isotropic interaction constant `h`.
+
         """
         return h * sum(
             [
@@ -241,18 +246,23 @@ class HilbertSimulation:
     def product_operator_3d(self, idx1: int, idx2: int, h: np.ndarray) -> np.ndarray:
         """Construct the 3D product operator.
 
+        Construct the 3D (anisotropic) product operator of two
+        particles in the spin system.
+
         Args:
 
-            idx1 (int): TODO.
+            idx1 (int): Index of the first particle.
 
-            idx2 (int): TODO.
+            idx2 (int): Index of the second particle.
 
-            h (np.ndarray): TODO.
+            h (np.ndarray): Anisotropic interaction tensor.
 
         Returns:
             np.ndarray:
 
-                Product operator for particles TODO.
+                Product operator for particles corresponding to `idx1`
+                and `idx2` with anisotropic interaction tensor `h`.
+
         """
         return sum(
             (
