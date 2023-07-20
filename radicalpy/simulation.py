@@ -142,18 +142,21 @@ class HilbertSimulation:
         Generates the Pauli matrices corresponding to a given multiplicity.
 
         Args:
+
             mult (int): The multiplicity of the element.
 
-        Return:
-            dict: A dictionary containing 6 `np.array` matrices of
-            shape `(mult, mult)`:
+        Returns:
+            dict:
 
-            - the unit operator `result["u"]`,
-            - raising operator `result["p"]`,
-            - lowering operator `result["m"]`,
-            - Pauli matrix for x axis `result["x"]`,
-            - Pauli matrix for y axis `result["y"]`,
-            - Pauli matrix for z axis `result["z"]`.
+                A dictionary containing 6 `np.array` matrices of
+                shape `(mult, mult)`:
+
+                - the unit operator `result["u"]`,
+                - raising operator `result["p"]`,
+                - lowering operator `result["m"]`,
+                - Pauli matrix for x axis `result["x"]`,
+                - Pauli matrix for y axis `result["y"]`,
+                - Pauli matrix for z axis `result["z"]`.
         """
         assert mult > 1
         result = {}
@@ -182,6 +185,9 @@ class HilbertSimulation:
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator.
 
+        Construct the spin operator for the particle with index `idx`
+        in the `HilbertSimulation`.
+
         Args:
 
             idx (int): Index of the particle.
@@ -189,13 +195,11 @@ class HilbertSimulation:
             axis (str): Axis, i.e. ``"x"``, ``"y"`` or ``"z"``.
 
         Returns:
+            np.ndarray:
 
-            np.ndarray: Spin operator for a particle in the
-            `HilbertSimulation` system with indexing `idx` and axis
-            `axis`.
-
-        Construct the spin operator for the particle with index
-        `idx` in the `HilbertSimulation`.
+                Spin operator for a particle in the
+                `HilbertSimulation` system with indexing `idx` and
+                axis `axis`.
 
         """
         assert 0 <= idx and idx < len(self.particles)
@@ -211,8 +215,27 @@ class HilbertSimulation:
         else:
             return spinop
 
-    def product_operator(self, idx1: int, idx2: int, h: float = 1) -> np.ndarray:
-        """Projection operator."""
+    def product_operator(self, idx1: int, idx2: int, h: float = 1.0) -> np.ndarray:
+        """Construct the (1D) product operator.
+
+        Construct the 1D (isotropic) product operator of two particles
+        in the spin system.
+
+        Args:
+
+            idx1 (int): Index of the first particle.
+
+            idx2 (int): Index of the second particle.
+
+            h (float): Isotopic interaction constant.
+
+        Returns:
+            np.ndarray:
+
+                Product operator for particles corresponding to `idx1`
+                and `idx2` with isotropic interaction constant `h`.
+
+        """
         return h * sum(
             [
                 self.spin_operator(idx1, axis).dot(self.spin_operator(idx2, axis))
@@ -221,20 +244,51 @@ class HilbertSimulation:
         )
 
     def product_operator_3d(self, idx1: int, idx2: int, h: np.ndarray) -> np.ndarray:
-        """Projection operator."""
+        """Construct the 3D product operator.
+
+        Construct the 3D (anisotropic) product operator of two
+        particles in the spin system.
+
+        Args:
+
+            idx1 (int): Index of the first particle.
+
+            idx2 (int): Index of the second particle.
+
+            h (np.ndarray): Anisotropic interaction tensor.
+
+        Returns:
+            np.ndarray:
+
+                Product operator for particles corresponding to `idx1`
+                and `idx2` with anisotropic interaction tensor `h`.
+
+        """
         return sum(
-            [
+            (
                 h[i, j]
                 * self.spin_operator(idx1, ax1).dot(self.spin_operator(idx2, ax2))
                 for i, ax1 in enumerate("xyz")
                 for j, ax2 in enumerate("xyz")
-            ]
+            )
         )
 
     def projection_operator(self, state: State):
-        """Construct.
+        """Construct the projection operator corresponding to a `state`.
 
-        .. todo::     Write proper docs.
+        Args:
+
+            state (State): The target state which is projected out of
+                the density matrix.
+
+        Returns:
+            np.ndarray:
+
+                Projection operator corresponding to the `State`
+                `state`.
+
+        .. todo:: Write proper docs.
+
         """
         # Spin operators
         SAx, SAy, SAz = [self.spin_operator(0, ax) for ax in "xyz"]
@@ -242,46 +296,54 @@ class HilbertSimulation:
 
         # Product operators
         SASB = self.product_operator(0, 1)
-
         eye = np.eye(len(SASB))
 
-        # Projection operators
-        # todo change p/m to +/-
-        match state:
-            case State.SINGLET:
-                return (1 / 4) * eye - SASB
-            case State.TRIPLET:
-                return (3 / 4) * eye + SASB
-            case State.TRIPLET_PLUS:
-                return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
-            case State.TRIPLET_MINUS:
-                return (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz)
-            case State.TRIPLET_ZERO:
-                return (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz
-            case State.TRIPLET_PLUS_MINUS:
-                return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz) + (
-                    2 * SAz**2 - SAz
-                ) * (2 * SBz**2 - SBz)
-            case State.EQUILIBRIUM:
-                return 1.05459e-34 / (1.38e-23 * 298)
+        result = {
+            State.SINGLET: (1 / 4) * eye - SASB,
+            State.TRIPLET: (3 / 4) * eye + SASB,
+            State.TRIPLET_PLUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz),
+            State.TRIPLET_MINUS: (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
+            State.TRIPLET_ZERO: (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz,
+            State.TRIPLET_PLUS_MINUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
+            + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
+            State.EQUILIBRIUM: 1.05459e-34 / (1.38e-23 * 298),
+        }
+        return result[state]
 
     def zeeman_hamiltonian(
         self, B0: float, theta: Optional[float] = None, phi: Optional[float] = None
     ) -> np.ndarray:
-        """Construct the Zeeman Hamiltonian.
+        """Construct the Zeeman Hamiltonian (1D or 3D).
 
         Construct the Zeeman Hamiltonian based on the external
-        magnetic field `B`.
+        magnetic field `B0`.  If the angles `theta` and `phi` are also
+        provided, the 3D Zeeman Hamiltonian is constructed (by
+        invoking the `zeeman_hamiltonian_3d`), otherwise the 1D Zeeman
+        Hamiltonian is constructed (by invoking the
+        `zeeman_hamiltonian_1d`).
 
         Args:
 
             B0 (float): External magnetic field intensity (milli
-            Tesla).
+                Tesla). See `zeeman_hamiltonian_1d` and
+                `zeeman_hamiltonian_3d`.
+
+            theta (Optional[float]): rotation (polar) angle between
+                the external magnetic field and the fixed
+                molecule. See `zeeman_hamiltonian_3d`.
+
+            phi (Optional[float]): rotation (azimuth) angle between
+                the external magnetic field and the fixed molecule.
+                See `zeeman_hamiltonian_3d`.
 
         Returns:
-            np.ndarray: The Zeeman Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object and
-            the external magnetic field intensity `B`.
+            np.ndarray:
+
+                The Zeeman Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and the
+                external magnetic field intensity `B0` and angles
+                `theta` and `phi`.
+
         """
         if theta is None and phi is None:
             return self.zeeman_hamiltonian_1d(B0)
@@ -289,13 +351,57 @@ class HilbertSimulation:
             return self.zeeman_hamiltonian_3d(B0, theta, phi)
 
     def zeeman_hamiltonian_1d(self, B0: float) -> np.ndarray:
+        """Construct the 1D Zeeman Hamiltonian.
+
+        Construct the 1D Zeeman Hamiltonian based on the external
+        magnetic field `B0`.
+
+        Args:
+
+            B0 (float): External magnetic field intensity (milli
+                Tesla).
+
+        Returns:
+            np.ndarray:
+
+                The Zeeman Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and the
+                external magnetic field intensity `B0`.
+
+        """
         axis = "z"
         gammas = enumerate(p.gamma_mT for p in self.particles)
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
 
     def zeeman_hamiltonian_3d(
-        self, B0: float, theta: float = 0, phi: float = 0
+        self, B0: float, theta: Optional[float] = 0, phi: Optional[float] = 0
     ) -> np.ndarray:
+        """Construct the 3D Zeeman Hamiltonian.
+
+        Construct the 3D Zeeman Hamiltonian based on the external
+        magnetic field `B0` and angles `theta` and `phi`.
+
+        Args:
+
+            B0 (float): External magnetic field intensity (milli
+                Tesla).
+
+            theta (Optional[float]): rotation (polar) angle between
+                the external magnetic field and the fixed
+                molecule.
+
+            phi (Optional[float]): rotation (azimuth) angle between
+                the external magnetic field and the fixed molecule.
+
+        Returns:
+            np.ndarray:
+
+                The Zeeman Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and the
+                external magnetic field intensity `B0` and angles
+                `theta` and `phi`.
+
+        """
         particles = np.array(
             [
                 [self.spin_operator(idx, axis) for axis in "xyz"]
@@ -309,67 +415,101 @@ class HilbertSimulation:
     def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> np.ndarray:
         """Construct the Hyperfine Hamiltonian.
 
-        Construct the Hyperfine Hamiltonian based on the magnetic
-        field.
+        Construct the Hyperfine Hamiltonian.  If `hfc_anisotropy` is
+        `False`, then the isotropic hyperfine coupling constants are
+        used. If `hfc_anisotropy` is `True` then the full hyperfine
+        tensors are used (assuming they are available for all the
+        nuclei of the molecule in the database, otherwise an exception
+        is raised).
+
+        Args:
+
+            hfc_anisotropy (bool): Use isotropic hyperfine coupling
+                constants if `False`, use full hyperfine tensors if
+                `False`.
 
         Returns:
-            np.ndarray: The Hyperfine Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object.
+            np.ndarray:
+
+                The Hyperfine Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object.
+
         """
         if hfc_anisotropy:
             for h in [n.hfc for n in self.nuclei]:
                 # TODO(vatai) try except not is None
                 if h.anisotropic is None:
                     raise ValueError(
-                        "Not all molecules have anisotropic HFCs! Please use `hfc_anisotropy=False`"
+                        "Not all molecules have anisotropic HFCs! "
+                        "Please use `hfc_anisotropy=False`"
                     )
 
-        if hfc_anisotropy:
             prodop = self.product_operator_3d
             hfcs = [n.hfc.anisotropic for n in self.nuclei]
         else:
             prodop = self.product_operator
             hfcs = [n.hfc.isotropic for n in self.nuclei]
         return sum(
-            [
+            (
                 self.particles[ei].gamma_mT
                 * prodop(ei, len(self.radicals) + ni, hfcs[ni])
                 for ni, ei in enumerate(self.coupling)
-            ]
+            )
         )
 
     def exchange_hamiltonian(self, J: float) -> np.ndarray:
-        """Construct the Exchange Hamiltonian.
+        """Construct the exchange Hamiltonian.
 
-        Construct the Exchange (J-coupling) Hamiltonian based on the
-        coupling constant J between two electrons, which can be obtain
-        from the radical pair separation `r` using `TODO` method.
+        Construct the exchange (J-coupling) Hamiltonian based on the
+        coupling constant J between two electrons.
 
-        .. todo::
-            Write proper docs.
+        The J-coupling constant can be obtained using:
+
+        - `radicalpy.estimations.exchange_interaction_in_protein`
+        - `radicalpy.estimations.exchange_interaction_in_solution`
+
+        Args:
+
+            J (float): Exchange coupling constant.
 
         Returns:
-            np.ndarray: The Exchange (J-coupling) Hamiltonian
-            corresponding to the system described by the `Quantum`
-            simulation object and the coupling constant `J`.
-        """
-        Jcoupling = self.radicals[0].gamma_mT * J
-        SASB = self.product_operator(0, 1)
-        return Jcoupling * (2 * SASB + 0.5 * np.eye(*SASB.shape))
+            np.ndarray:
 
-    def dipolar_hamiltonian(self, D: float or np.ndarray) -> np.ndarray:
+                The exchange (J-coupling) Hamiltonian corresponding to
+                the system described by the `HilbertSimulation` object
+                and the coupling constant `J`.
+
+        """
+        Jcoupling = J * self.radicals[0].gamma_mT
+        SASB = self.product_operator(0, 1)
+        return Jcoupling * (2 * SASB + 0.5 * np.eye(SASB.shape[0]))
+
+    def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
-        constant `D` between two electrons.
+        constant or dipolar interaction tensor `D` between two
+        electrons.  Depending on the `type` of `D`, the 1D or the 3D
+        version is invoked.
 
-        .. todo::
-            Write proper docs.
+        See:
+
+        - `dipolar_hamiltonian_1d`
+        - `dipolar_hamiltonian_3d`
+
+        Args:
+
+            D (float | np.ndarray): dipolar coupling constant or
+                dipolar interaction tensor.
 
         Returns:
-            np.ndarray: The Dipolar Hamiltonian corresponding to the
-            system described by the `Quantum` simulation object and
-            dipolar coupling constant `D`.
+            np.ndarray:
+
+                The Dipolar Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and
+                dipolar coupling constant or dipolar interaction
+                tensor `D`.
+
         """
         if isinstance(D, np.ndarray):
             return self.dipolar_hamiltonian_3d(D)
@@ -377,6 +517,26 @@ class HilbertSimulation:
             return self.dipolar_hamiltonian_1d(D)
 
     def dipolar_hamiltonian_1d(self, D: float) -> np.ndarray:
+        """Construct the 1D Dipolar Hamiltonian.
+
+        Construct the Dipolar Hamiltonian based on dipolar coupling
+        constant `D` between two electrons.
+
+        The dipolar coupling constant can be obtained using
+        `radicalpy.estimations.dipolar_interaction_isotropic`.
+
+        Args:
+
+            D (float): dipolar coupling constant.
+
+        Returns:
+            np.ndarray:
+
+                The 1D Dipolar Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and
+                dipolar coupling constant `D`.
+
+        """
         SASB = self.product_operator(0, 1)
         SAz = self.spin_operator(0, "z")
         SBz = self.spin_operator(1, "z")
@@ -384,33 +544,71 @@ class HilbertSimulation:
         return omega * (3 * SAz * SBz - SASB)
 
     def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
+        """Construct the 3D Dipolar Hamiltonian.
+
+        Construct the Dipolar Hamiltonian based on dipolar interaction
+        tensor `D` between two electrons.
+
+        The dipolar coupling tensor can be obtained using
+        `radicalpy.estimations.dipolar_interaction_anisotropic`.
+
+        Args:
+
+            D (np.ndarray): dipolar interaction tensor.
+
+        Returns:
+            np.ndarray:
+
+                The 3D Dipolar Hamiltonian corresponding to the system
+                described by the `HilbertSimulation` object and
+                dipolar interaction tensor `D`.
+
+        """
         ne = len(self.radicals)
         return -sum(
-            [
+            (
                 -self.radicals[0].gamma_mT
                 * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
                 for ni, ei in enumerate(self.coupling)
-            ]
+            )
         )
 
     def total_hamiltonian(
         self,
-        B: float,
+        B0: float,
         J: float,
-        D: float,
+        D: float | np.ndarray,
         theta: Optional[float] = None,
         phi: Optional[float] = None,
         hfc_anisotropy: bool = False,
     ) -> np.ndarray:
-        """Construct the final (total) Hamiltonian.
+        """Construct the total Hamiltonian.
 
-        Construct the final (total)
+        The total Hamiltonian is the sum of Zeeman, Hyperfine,
+        Exchange and Dipolar Hamiltonian.
 
-        .. todo::
-            Write proper docs.
+        Args:
+
+            B0 (float): See `zeeman_hamiltonian`.
+
+            J (float): See `exchange_hamiltonian`.
+
+            D (float): See `dipolar_hamiltonian`.
+
+            theta (Optional[float]): See `zeeman_hamiltonian`.
+
+            phi (Optional[float]): See `zeeman_hamiltonian`.
+
+            hfc_anisotropy (bool): See `hyperfine_hamiltonian`.
+
+        Returns:
+            np.ndarray:
+
+                The total Hamiltonian.
+
         """
         H = (
-            self.zeeman_hamiltonian(B, theta, phi)
+            self.zeeman_hamiltonian(B0, theta, phi)
             + self.hyperfine_hamiltonian(hfc_anisotropy)
             + self.exchange_hamiltonian(J)
             + self.dipolar_hamiltonian(D)
@@ -423,14 +621,18 @@ class HilbertSimulation:
         """Evolve the system through time.
 
         Args:
-                init_state (State): blah blah
+            init_state (State): blah blah
 
-                time (np.ndarray): blah blah
+            time (np.ndarray): blah blah
 
-                H (np.ndarray): blah blah
+            H (np.ndarray): blah blah
 
         Returns:
-                np.ndarray: blah blah
+            np.ndarray:
+
+                TODO
+
+        .. todo:: Write proper docs.
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
@@ -479,12 +681,15 @@ class HilbertSimulation:
         """Generate density matrices (rhos) for MARY.
 
         Args:
-            init_state (State): initial state.
-        Returns:
-            List generator.
 
-        .. todo::
-            Write proper docs.
+            init_state (State): initial state.
+
+        Returns:
+            np.ndarray:
+
+                Density matrices.
+
+        .. todo:: Write proper docs.
         """
         H_zee = self.convert(self.zeeman_hamiltonian(1, theta, phi))
         shape = self._get_rho_shape(H_zee.shape[0])
@@ -534,7 +739,7 @@ class HilbertSimulation:
         phi: Optional[float] = None,
         hfc_anisotropy: bool = False,
     ) -> dict:
-        H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
+        H = self.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
 
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
         rhos = self.mary_loop(init_state, time, B, H, theta=theta, phi=phi)
@@ -570,8 +775,8 @@ class HilbertSimulation:
         time: np.ndarray,
         B: float,
         H_base: np.ndarray,
-        theta: list[float],
-        phi: list[float],
+        theta: float | np.ndarray,
+        phi: float | np.ndarray,
     ):
         shape = self._get_rho_shape(H_base.shape[0])
         rhos = np.zeros((len(theta), len(phi), len(time), *shape), dtype=complex)
@@ -588,18 +793,18 @@ class HilbertSimulation:
         init_state: State,
         obs_state: State,
         time: np.ndarray,
-        theta: list[float] | float,
-        phi: list[float] | float,
+        theta: np.ndarray | float,
+        phi: np.ndarray | float,
         B: float,
         D: np.ndarray,
         J: float,
         kinetics: list[HilbertIncoherentProcessBase] = [],
         relaxations: list[HilbertIncoherentProcessBase] = [],
     ) -> dict:
-        H = self.total_hamiltonian(B=0, D=D, J=J, hfc_anisotropy=True)
+        H = self.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=True)
 
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
-        theta, phi = utils._anisotropy_check(theta, phi)
+        theta, phi = utils.anisotropy_check(theta, phi)
         rhos = self.anisotropy_loop(init_state, time, B, H, theta=theta, phi=phi)
         product_probabilities = self.product_probability(obs_state, rhos)
 
@@ -637,7 +842,10 @@ class HilbertSimulation:
             H (np.ndarray): Spin Hamiltonian in Hilbert space.
 
         Returns:
-            np.ndarray: A matrix in Hilbert space representing...
+            np.ndarray:
+
+                A matrix in Hilbert space representing...
+
         """
         Pi = self.projection_operator(state)
 
@@ -662,14 +870,20 @@ class HilbertSimulation:
             dt (float): Time evolution timestep.
 
         Returns:
-            np.ndarray: Two matrices (a tensor) in either Hilbert.
+            np.ndarray:
 
-        .. todo::
-            https://docs.python.org/3/library/doctest.html
+                Two matrices (a tensor) in either Hilbert.
 
-        Example:
-            >> Up, Um = UnitaryPropagator(H, 3e-9, "Hilbert")
-            >> UL = UnitaryPropagator(HL, 3e-9, "Liouville")
+        Examples:
+
+            >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
+            ...              Molecule("Z")]
+            >>> sim = HilbertSimulation(molecules)
+            >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
+            >>> Up, Um = sim.unitary_propagator(H, 3e-9)
+            >>> Up.shape, Um.shape
+            ((12, 12), (12, 12))
+
         """
         Up = sp.sparse.linalg.expm(1j * H * dt)
         Um = sp.sparse.linalg.expm(-1j * H * dt)
@@ -733,13 +947,24 @@ class LiouvilleSimulation(HilbertSimulation):
         """Create unitary propagator.
 
         Create unitary propagator matrices for time evolution of the
-        spin Hamiltonian density matrix in both Hilbert and Liouville
-        space.
+        spin Hamiltonian density matrix in Liouville space.
+
+        Examples:
+
+            >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
+            ...              Molecule("Z")]
+            >>> sim = LiouvilleSimulation(molecules)
+            >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
+            >>> sim.unitary_propagator(H, 3e-9).shape
+            (144, 144)
 
         Arguments:
-            H (np.ndarray): Spin Hamiltonian in Hilbert or Liouville space
-            dt (float): Time evolution timestep.
-            space (str): Select the spin space.
+            H (np.ndarray):
+
+                Spin Hamiltonian in Hilbert or Liouville space dt
+                (float): Time evolution timestep.  space (str): Select
+                the spin space.
+
         """
         return sp.sparse.linalg.expm(H * dt)
 
