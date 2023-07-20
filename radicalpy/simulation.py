@@ -268,7 +268,8 @@ class HilbertSimulation:
 
         Args:
 
-            state (State): TODO
+            state (State): The target state which is projected out of
+                the density matrix.
 
         Returns:
             np.ndarray:
