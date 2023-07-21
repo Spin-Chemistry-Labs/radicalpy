@@ -899,6 +899,9 @@ class HilbertSimulation:
         Propagates the density matrix using the propagator obtained
         using the `unitary_propagator` method.
 
+        .. math::
+            \sum_i a_i
+
         See also: `unitary_propagator` and `time_evolution`.
 
         Args:
@@ -911,7 +914,8 @@ class HilbertSimulation:
         Returns:
             np.ndarray:
 
-                Two matrices (a tensor) in either Hilbert.
+                The new density matrix after the unitary operator was
+                applied to it.
 
         Examples:
 
