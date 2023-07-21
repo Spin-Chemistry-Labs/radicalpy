@@ -863,7 +863,9 @@ class HilbertSimulation:
         Create unitary propagator matrices for time evolution of the
         spin Hamiltonian density matrix in Hilbert space.
 
-        Arguments:
+        See also: `propagate` and `time_evolution`.
+
+        Args:
 
             H (np.ndarray): Spin Hamiltonian in Hilbert space.
 
@@ -872,7 +874,9 @@ class HilbertSimulation:
         Returns:
             np.ndarray:
 
-                Two matrices (a tensor) in either Hilbert.
+                Two matrices (a tensor) in Hilbert space which are
+                used by the `propagate` method to perform a single
+                step in the `time_evolution` method.
 
         Examples:
 
@@ -890,6 +894,36 @@ class HilbertSimulation:
         return Up, Um
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
+        """Propagate the density matrix (Hilbert space).
+
+        Propagates the density matrix using the propagator obtained
+        using the `unitary_propagator` method.
+
+        See also: `unitary_propagator` and `time_evolution`.
+
+        Args:
+
+            propagator (np.ndarray): Unitary operator obtained via the
+                `unitary_propagator` method.
+
+            rho (np.ndarray): (Initial) density matrix.
+
+        Returns:
+            np.ndarray:
+
+                Two matrices (a tensor) in either Hilbert.
+
+        Examples:
+
+            >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
+            ...              Molecule("Z")]
+            >>> sim = HilbertSimulation(molecules)
+            >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
+            >>> Up, Um = sim.unitary_propagator(H, 3e-9)
+            >>> Up.shape, Um.shape
+            ((12, 12), (12, 12))
+
+        """
         Up, Um = propagator
         return Um @ rho @ Up
 
