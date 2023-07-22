@@ -904,6 +904,9 @@ class HilbertSimulation:
         Propagates the density matrix using the propagator obtained
         using the `unitary_propagator` method.
 
+        .. math::
+            \\rho (t) = \\mathbf{U} \\rho_0 \\mathbf{U}^*
+
         See also: `unitary_propagator` and `time_evolution`.
 
         Args:
@@ -918,16 +921,6 @@ class HilbertSimulation:
 
                 The new density matrix after the unitary operator was
                 applied to it.
-
-        Examples:
-
-            >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
-            ...              Molecule("Z")]
-            >>> sim = HilbertSimulation(molecules)
-            >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
-            >>> Up, Um = sim.unitary_propagator(H, 3e-9)
-            >>> Up.shape, Um.shape
-            ((12, 12), (12, 12))
 
         """
         Up, Um = propagator
@@ -1021,6 +1014,30 @@ class LiouvilleSimulation(HilbertSimulation):
         return sp.sparse.linalg.expm(H * dt)
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
+        """Propagate the density matrix (Liouville space).
+
+        Propagates the density matrix using the propagator obtained
+        using the `unitary_propagator` method.
+
+        .. math::
+            \\rho (t) = \\mathbf{U} \\rho_0
+
+        See also: `unitary_propagator` and `time_evolution`.
+
+        Args:
+
+            propagator (np.ndarray): Unitary operator obtained via the
+                `unitary_propagator` method.
+
+            rho (np.ndarray): (Initial) density matrix.
+
+        Returns:
+            np.ndarray:
+
+                The new density matrix after the unitary operator was
+                applied to it.
+
+        """
         return propagator @ rho
 
 
