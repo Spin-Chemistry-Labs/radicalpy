@@ -620,19 +620,43 @@ class HilbertSimulation:
     ) -> np.ndarray:
         """Evolve the system through time.
 
+        See also:
+
+        - `HilbertSimulation.unitary_propagator`
+        - `HilbertSimulation.propagate`
+        - `LiouvilleSimulation.unitary_propagator`
+        - `LiouvilleSimulation.propagate`
+
         Args:
-            init_state (State): blah blah
 
-            time (np.ndarray): blah blah
+            init_state (State): Initial `State` of the density matrix
+                (see `projection_operator`).
 
-            H (np.ndarray): blah blah
+            time (np.ndarray): An sequence of (uniform) time points,
+                usually created using `np.arange` or `np.linspace`.
+
+            H (np.ndarray): Hamiltonian operator.
 
         Returns:
             np.ndarray:
 
-                TODO
+                Return a sequence of density matrices evolved through
+                `time`, starting from a given initial `state` using
+                the Hamiltonian `H`.
 
-        .. todo:: Write proper docs.
+        Examples:
+
+            >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
+            ...              Molecule("Z")]
+            >>> sim = HilbertSimulation(molecules)
+            >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
+            >>> time = np.arange(0, 2e-6, 5e-9)
+            >>> time.shape
+            (400,)
+            >>> rhos = sim.time_evolution(State.SINGLET, time, H)
+            >>> rhos.shape
+            (400, 12, 12)
+
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
