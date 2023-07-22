@@ -863,6 +863,10 @@ class HilbertSimulation:
         Create unitary propagator matrices for time evolution of the
         spin Hamiltonian density matrix in Hilbert space.
 
+        .. math::
+            \mathbf{U}   =& \exp( -i \hat{H} t ) \\\\
+            \mathbf{U}^* =& \exp( +i \hat{H} t )
+
         See also: `propagate` and `time_evolution`.
 
         Args:
@@ -898,9 +902,6 @@ class HilbertSimulation:
 
         Propagates the density matrix using the propagator obtained
         using the `unitary_propagator` method.
-
-        .. math::
-            \sum_i a_i
 
         See also: `unitary_propagator` and `time_evolution`.
 
