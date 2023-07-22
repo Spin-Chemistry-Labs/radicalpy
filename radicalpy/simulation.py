@@ -860,8 +860,9 @@ class HilbertSimulation:
     def unitary_propagator(H: np.ndarray, dt: float) -> np.ndarray:
         """Create unitary propagator (Hilbert space).
 
-        Create unitary propagator matrices for time evolution of the
-        spin Hamiltonian density matrix in Hilbert space.
+        Create unitary propagator matrices **U** and **U*** for time
+        evolution of the density matrix in Hilbert space (for the spin
+        Hamiltonian `H`).
 
         .. math::
             \mathbf{U}   =& \exp( -i \hat{H} t ) \\\\
@@ -878,7 +879,7 @@ class HilbertSimulation:
         Returns:
             np.ndarray:
 
-                Two matrices (a tensor) in Hilbert space which are
+                Two matrices (as tensor) in Hilbert space which are
                 used by the `propagate` method to perform a single
                 step in the `time_evolution` method.
 
@@ -983,10 +984,29 @@ class LiouvilleSimulation(HilbertSimulation):
 
     @staticmethod
     def unitary_propagator(H, dt):
-        """Create unitary propagator.
+        """Create unitary propagator (Liouville space).
 
-        Create unitary propagator matrices for time evolution of the
-        spin Hamiltonian density matrix in Liouville space.
+        Create unitary propagator matrix **U** for the time evolution
+        of the density matrix in Liouville space (for the spin
+        Hamiltonian `H`).
+
+        .. math::
+            \mathbf{U} = \exp( \hat{\hat{L}} t )
+
+        See also: `propagate` and `time_evolution`.
+
+        Args:
+
+            H (np.ndarray): Spin Hamiltonian in Liouville space.
+
+            dt (float): Time evolution timestep.
+
+        Returns:
+            np.ndarray:
+
+                The matrix in Liouville space which is used by the
+                `propagate` method to perform a single step in the
+                `time_evolution` method.
 
         Examples:
 
@@ -996,13 +1016,6 @@ class LiouvilleSimulation(HilbertSimulation):
             >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
             >>> sim.unitary_propagator(H, 3e-9).shape
             (144, 144)
-
-        Arguments:
-            H (np.ndarray):
-
-                Spin Hamiltonian in Hilbert or Liouville space dt
-                (float): Time evolution timestep.  space (str): Select
-                the spin space.
 
         """
         return sp.sparse.linalg.expm(H * dt)
