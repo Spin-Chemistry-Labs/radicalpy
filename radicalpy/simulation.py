@@ -620,19 +620,43 @@ class HilbertSimulation:
     ) -> np.ndarray:
         """Evolve the system through time.
 
+        See also:
+
+        - `HilbertSimulation.unitary_propagator`
+        - `HilbertSimulation.propagate`
+        - `LiouvilleSimulation.unitary_propagator`
+        - `LiouvilleSimulation.propagate`
+
         Args:
-            init_state (State): blah blah
 
-            time (np.ndarray): blah blah
+            init_state (State): Initial `State` of the density matrix
+                (see `projection_operator`).
 
-            H (np.ndarray): blah blah
+            time (np.ndarray): An sequence of (uniform) time points,
+                usually created using `np.arange` or `np.linspace`.
+
+            H (np.ndarray): Hamiltonian operator.
 
         Returns:
             np.ndarray:
 
-                TODO
+                Return a sequence of density matrices evolved through
+                `time`, starting from a given initial `state` using
+                the Hamiltonian `H`.
 
-        .. todo:: Write proper docs.
+        Examples:
+
+            >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
+            ...              Molecule("Z")]
+            >>> sim = HilbertSimulation(molecules)
+            >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
+            >>> time = np.arange(0, 2e-6, 5e-9)
+            >>> time.shape
+            (400,)
+            >>> rhos = sim.time_evolution(State.SINGLET, time, H)
+            >>> rhos.shape
+            (400, 12, 12)
+
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
@@ -860,10 +884,17 @@ class HilbertSimulation:
     def unitary_propagator(H: np.ndarray, dt: float) -> np.ndarray:
         """Create unitary propagator (Hilbert space).
 
-        Create unitary propagator matrices for time evolution of the
-        spin Hamiltonian density matrix in Hilbert space.
+        Create unitary propagator matrices **U** and **U*** for time
+        evolution of the density matrix in Hilbert space (for the spin
+        Hamiltonian `H`).
 
-        Arguments:
+        .. math::
+            \mathbf{U}   =& \exp( -i \hat{H} t ) \\\\
+            \mathbf{U}^* =& \exp( +i \hat{H} t )
+
+        See also: `propagate` and `time_evolution`.
+
+        Args:
 
             H (np.ndarray): Spin Hamiltonian in Hilbert space.
 
@@ -872,7 +903,9 @@ class HilbertSimulation:
         Returns:
             np.ndarray:
 
-                Two matrices (a tensor) in either Hilbert.
+                Two matrices (as tensor) in Hilbert space which are
+                used by the `propagate` method to perform a single
+                step in the `time_evolution` method.
 
         Examples:
 
@@ -890,6 +923,30 @@ class HilbertSimulation:
         return Up, Um
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
+        """Propagate the density matrix (Hilbert space).
+
+        Propagates the density matrix using the propagator obtained
+        using the `unitary_propagator` method.
+
+        .. math::
+            \\rho (t) = \\mathbf{U} \\rho_0 \\mathbf{U}^*
+
+        See also: `unitary_propagator` and `time_evolution`.
+
+        Args:
+
+            propagator (np.ndarray): Unitary operator obtained via the
+                `unitary_propagator` method.
+
+            rho (np.ndarray): (Initial) density matrix.
+
+        Returns:
+            np.ndarray:
+
+                The new density matrix after the unitary operator was
+                applied to it.
+
+        """
         Up, Um = propagator
         return Um @ rho @ Up
 
@@ -944,10 +1001,29 @@ class LiouvilleSimulation(HilbertSimulation):
 
     @staticmethod
     def unitary_propagator(H, dt):
-        """Create unitary propagator.
+        """Create unitary propagator (Liouville space).
 
-        Create unitary propagator matrices for time evolution of the
-        spin Hamiltonian density matrix in Liouville space.
+        Create unitary propagator matrix **U** for the time evolution
+        of the density matrix in Liouville space (for the spin
+        Hamiltonian `H`).
+
+        .. math::
+            \mathbf{U} = \exp( \hat{\hat{L}} t )
+
+        See also: `propagate` and `time_evolution`.
+
+        Args:
+
+            H (np.ndarray): Spin Hamiltonian in Liouville space.
+
+            dt (float): Time evolution timestep.
+
+        Returns:
+            np.ndarray:
+
+                The matrix in Liouville space which is used by the
+                `propagate` method to perform a single step in the
+                `time_evolution` method.
 
         Examples:
 
@@ -958,17 +1034,34 @@ class LiouvilleSimulation(HilbertSimulation):
             >>> sim.unitary_propagator(H, 3e-9).shape
             (144, 144)
 
-        Arguments:
-            H (np.ndarray):
-
-                Spin Hamiltonian in Hilbert or Liouville space dt
-                (float): Time evolution timestep.  space (str): Select
-                the spin space.
-
         """
         return sp.sparse.linalg.expm(H * dt)
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
+        """Propagate the density matrix (Liouville space).
+
+        Propagates the density matrix using the propagator obtained
+        using the `unitary_propagator` method.
+
+        .. math::
+            \\rho (t) = \\mathbf{U} \\rho_0
+
+        See also: `unitary_propagator` and `time_evolution`.
+
+        Args:
+
+            propagator (np.ndarray): Unitary operator obtained via the
+                `unitary_propagator` method.
+
+            rho (np.ndarray): (Initial) density matrix.
+
+        Returns:
+            np.ndarray:
+
+                The new density matrix after the unitary operator was
+                applied to it.
+
+        """
         return propagator @ rho
 
 
