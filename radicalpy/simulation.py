@@ -850,7 +850,7 @@ class HilbertSimulation:
         time: np.ndarray,
         theta: np.ndarray | float,
         phi: np.ndarray | float,
-        B: float,
+        B0: float,
         D: np.ndarray,
         J: float,
         kinetics: list[HilbertIncoherentProcessBase] = [],
@@ -860,7 +860,7 @@ class HilbertSimulation:
 
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
         theta, phi = utils.anisotropy_check(theta, phi)
-        rhos = self.anisotropy_loop(init_state, time, B, H, theta=theta, phi=phi)
+        rhos = self.anisotropy_loop(init_state, time, B0, H, theta=theta, phi=phi)
         product_probabilities = self.product_probability(obs_state, rhos)
 
         self.apply_hilbert_kinetics(time, product_probabilities, kinetics)
@@ -872,7 +872,7 @@ class HilbertSimulation:
 
         return dict(
             time=time,
-            B=B,
+            B=B0,
             theta=theta,
             phi=phi,
             rhos=rhos,
