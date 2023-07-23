@@ -287,8 +287,6 @@ class HilbertSimulation:
                 Projection operator corresponding to the `State`
                 `state`.
 
-        .. todo:: Write proper docs.
-
         """
         # Spin operators
         SAx, SAy, SAz = [self.spin_operator(0, ax) for ax in "xyz"]
