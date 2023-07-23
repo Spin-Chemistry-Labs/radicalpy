@@ -795,17 +795,50 @@ class HilbertSimulation:
         self,
         init_state: State,
         time: np.ndarray,
-        B: float,
+        B0: float,
         H_base: np.ndarray,
-        theta: float | np.ndarray,
-        phi: float | np.ndarray,
-    ):
+        theta: np.ndarray,
+        phi: np.ndarray,
+    ) -> np.ndarray:
+        """Inner loop of anisotropy experiment.
+
+        Args:
+
+            init_state (State): Initial `State` of the density matrix.
+
+            time (np.ndarray): An sequence of (uniform) time points,
+                usually created using `np.arange` or `np.linspace`.
+
+            B0 (float): External magnetic field intensity (milli
+                Tesla) (see `zeeman_hamiltonian`).
+
+            H_base (np.ndarray): A "base" Hamiltonian, i.e., the
+                Zeeman Hamiltonian will be added to this this base,
+                usually obtained with `total_hamiltonian` and `B0=0`.
+
+            theta (np.ndarray): rotation (polar) angle between the
+                external magnetic field and the fixed molecule. See
+                `zeeman_hamiltonian_3d`.
+
+            phi (np.ndarray): rotation (azimuth) angle between the
+                external magnetic field and the fixed molecule. See
+                `zeeman_hamiltonian_3d`.
+
+        Returns:
+            np.ndarray:
+
+                A tensor which has a series of density matrices for
+                each angle `theta` and `phi` obtained by running
+                `time_evolution` for each of them (with `time`
+                time\-steps, `B0` magnetic intensity).
+
+        """
         shape = self._get_rho_shape(H_base.shape[0])
         rhos = np.zeros((len(theta), len(phi), len(time), *shape), dtype=complex)
 
         iters = itertools.product(enumerate(theta), enumerate(phi))
         for (i, th), (j, ph) in tqdm(list(iters)):
-            H_zee = self.zeeman_hamiltonian(B, th, ph)
+            H_zee = self.zeeman_hamiltonian(B0, th, ph)
             H = H_base + self.convert(H_zee)
             rhos[i, j] = self.time_evolution(init_state, time, H)
         return rhos
