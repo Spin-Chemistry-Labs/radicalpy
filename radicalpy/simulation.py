@@ -827,10 +827,10 @@ class HilbertSimulation:
         Returns:
             np.ndarray:
 
-                A tensor which has a series of density matrices for
-                each angle `theta` and `phi` obtained by running
-                `time_evolution` for each of them (with `time`
-                time\-steps, `B0` magnetic intensity).
+            A tensor which has a series of density matrices for each
+            angle `theta` and `phi` obtained by running
+            `time_evolution` for each of them (with `time`
+            time\-steps, `B0` magnetic intensity).
 
         """
         shape = self._get_rho_shape(H_base.shape[0])
@@ -856,6 +856,56 @@ class HilbertSimulation:
         kinetics: list[HilbertIncoherentProcessBase] = [],
         relaxations: list[HilbertIncoherentProcessBase] = [],
     ) -> dict:
+        """Anisotropy experiment.
+
+        Args:
+
+            init_state (State): Initial `State` of the density matrix.
+
+            obs_state (State): Observable `State` of the density matrix.
+
+            time (np.ndarray) (An sequence of (uniform) time points,
+                usually created using `np.arange` or `np.linspace`.
+
+            H_base (np.ndarray) (A "base" Hamiltonian, i.e., the
+                Zeeman Hamiltonian will be added to this this base,
+                usually obtained with `total_hamiltonian` and `B0=0`.
+
+            theta (np.ndarray) (rotation (polar) angle between the
+                external magnetic field and the fixed molecule. See
+                `zeeman_hamiltonian_3d`.
+
+            B0 (float) (External magnetic field intensity (milli
+                Tesla) (see `zeeman_hamiltonian`).
+
+            phi (np.ndarray) (rotation (azimuth) angle between the
+                external magnetic field and the fixed molecule. See
+                `zeeman_hamiltonian_3d`.
+
+            D (np.ndarray): dipolar exchange constant (see
+                `dipolar_hamiltonian`).
+
+            J (float): exchange coupling constant (see
+                `exchange_hamiltonian`).
+
+            kinetics (list[HilbertIncoherentProcessBase] = []):
+
+            relaxations (list[HilbertIncoherentProcessBase] = []):
+
+        Returns:
+            dict:
+
+            - time: the original `time` object
+            - B0: `B0` parameter
+            - theta: `theta` parameter
+            - phi: `phi` parameter
+            - rhos: tensor of sequences of time evolution of density
+              matrices
+            - time_evolutions: product probabilities
+            - product_yields: product yields
+            - product_yield_sums: product yield sums
+
+        """
         H = self.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=True)
 
         self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
@@ -872,7 +922,7 @@ class HilbertSimulation:
 
         return dict(
             time=time,
-            B=B0,
+            B0=B0,
             theta=theta,
             phi=phi,
             rhos=rhos,
