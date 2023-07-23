@@ -7,7 +7,6 @@ from radicalpy.simulation import State
 
 
 def main():
-
     theta = np.linspace(0, np.pi, 17)
     phi = np.linspace(0, 2 * np.pi, 32)
 
@@ -25,7 +24,7 @@ def main():
         time=time,
         theta=theta,
         phi=phi,
-        B=B0,
+        B0=B0,
         D=0,
         J=0,
         kinetics=[rp.kinetics.Exponential(k)],
