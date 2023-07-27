@@ -1,39 +1,48 @@
 #! /usr/bin/env python
 
+from pathlib import Path
+
+import dot2tex
+import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
-from radicalpy.classical import RateEquations
+from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 
 
 def main():
     # Simple example of a RP for the paper.
 
     # kinetic parameters
-    ke = 1e6  # geminate RP to free radical separation
-    kst = 8e7  # ST-mixing rate
-    krlx = 2e6  # RP relaxation rate
-    kr = 1e8  # spin selective reverse electron transfer of RP to groundstate
+    ke = Rate(1e6, "k_{E}")  # geminate RP to free radical separation
+    kst = Rate(8e7, "k_{ST}")  # ST-mixing rate
+    krlx = Rate(2e6, "k_{Rlx}")  # RP relaxation rate
+    kr = Rate(1e8, "k_{R}")  # reverse electron transfer of RP to groundstate
 
     # Rate equations
+    S, Tp, T0, Tm, GS, FR = "S", "T_+", "T_0", "T_-", "GS", "FR"
     off = {}
-    off["S"] = {"S": -(3 * kst + kr + ke), "T+": kst, "T0": kst, "T-": kst}
-    off["T+"] = {"T+": -(2 * kst + ke), "S": kst, "T0": kst}
-    off["T0"] = {"T0": -(3 * kst + ke), "S": kst, "T+": kst, "T-": kst}
-    off["T-"] = {"T-": -(2 * kst + ke), "S": kst, "T0": kst}
+    off[S] = {S: -(3 * kst + kr + ke), Tp: kst, T0: kst, Tm: kst}
+    off[Tp] = {Tp: -(2 * kst + ke), S: kst, T0: kst}
+    off[T0] = {T0: -(3 * kst + ke), S: kst, Tp: kst, Tm: kst}
+    off[Tm] = {Tm: -(2 * kst + ke), S: kst, T0: kst}
+    off[GS] = {S: kr}
+    off[FR] = {S: ke, Tp: ke, T0: ke, Tm: ke}
 
     on = {}
-    on["S"] = {"S": -(kst + 2 * krlx + kr + ke), "T+": krlx, "T0": kst, "T-": krlx}
-    on["T+"] = {"T+": -(2 * krlx + ke), "S": krlx, "T0": krlx}
-    on["T0"] = {"T0": -(kst + 2 * krlx + ke), "S": kst, "T+": krlx, "T-": krlx}
-    on["T-"] = {"T-": -(2 * krlx + ke), "S": krlx, "T0": krlx}
+    on[S] = {S: -(kst + 2 * krlx + kr + ke), Tp: krlx, T0: kst, Tm: krlx}
+    on[Tp] = {Tp: -(2 * krlx + ke), S: krlx, T0: krlx}
+    on[T0] = {T0: -(kst + 2 * krlx + ke), S: kst, Tp: krlx, Tm: krlx}
+    on[Tm] = {Tm: -(2 * krlx + ke), S: krlx, T0: krlx}
+    on[GS] = {S: kr}
+    on[FR] = {S: ke, Tp: ke, T0: ke, Tm: ke}
 
-    initial_states = {"T+": 1 / 3, "T0": 1 / 3, "T-": 1 / 3}
+    initial_states = {Tp: 1 / 3, T0: 1 / 3, Tm: 1 / 3}
     time = np.linspace(0, 1e-6, 10000)
 
     result_off = RateEquations(off, time, initial_states)
     result_on = RateEquations(on, time, initial_states)
 
-    keys = ["S", "T+", "T0", "T-"]
+    keys = [S, Tp, T0, Tm]
     rp_field_off = result_off[keys]
     rp_field_on = result_on[keys]
     rp_delta_delta_A = rp_field_on - rp_field_off
@@ -57,6 +66,11 @@ def main():
     fig.set_size_inches(10, 5)
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
+
+    # for eq in latexify(off):
+    #     print(eq)
+    # print(latex_eqlist_to_align(latexify(off)))
+    reaction_scheme(on)
 
 
 if __name__ == "__main__":
