@@ -813,8 +813,8 @@ class HilbertSimulation:
                 Tesla) (see `zeeman_hamiltonian`).
 
             H_base (np.ndarray): A "base" Hamiltonian, i.e., the
-                Zeeman Hamiltonian will be added to this this base,
-                usually obtained with `total_hamiltonian` and `B0=0`.
+                Zeeman Hamiltonian will be added to this base, usually
+                obtained with `total_hamiltonian` and `B0=0`.
 
             theta (np.ndarray): rotation (polar) angle between the
                 external magnetic field and the fixed molecule. See
@@ -864,33 +864,36 @@ class HilbertSimulation:
 
             obs_state (State): Observable `State` of the density matrix.
 
-            time (np.ndarray) (An sequence of (uniform) time points,
+            time (np.ndarray): An sequence of (uniform) time points,
                 usually created using `np.arange` or `np.linspace`.
 
-            H_base (np.ndarray) (A "base" Hamiltonian, i.e., the
-                Zeeman Hamiltonian will be added to this this base,
-                usually obtained with `total_hamiltonian` and `B0=0`.
+            H_base (np.ndarray): A "base" Hamiltonian, i.e., the
+                Zeeman Hamiltonian will be added to this base, usually
+                obtained with `total_hamiltonian` and `B0=0`.
 
-            theta (np.ndarray) (rotation (polar) angle between the
+            theta (np.ndarray): rotation (polar) angle between the
                 external magnetic field and the fixed molecule. See
                 `zeeman_hamiltonian_3d`.
 
-            B0 (float) (External magnetic field intensity (milli
+            B0 (float): External magnetic field intensity (milli
                 Tesla) (see `zeeman_hamiltonian`).
 
-            phi (np.ndarray) (rotation (azimuth) angle between the
+            phi (np.ndarray): rotation (azimuth) angle between the
                 external magnetic field and the fixed molecule. See
                 `zeeman_hamiltonian_3d`.
 
-            D (np.ndarray): dipolar exchange constant (see
+            D (np.ndarray): Dipolar coupling constant (see
                 `dipolar_hamiltonian`).
 
-            J (float): exchange coupling constant (see
+            J (float): Exchange coupling constant (see
                 `exchange_hamiltonian`).
 
-            kinetics (list[HilbertIncoherentProcessBase] = []):
+            kinetics (list): A list of kinetic (super)operators of
+                type `radicalpy.kinetics.HilbertKineticsBase` or
+                `radicalpy.kinetics.LiouvilleKineticsBase`.
 
-            relaxations (list[HilbertIncoherentProcessBase] = []):
+            relaxations (list): A list of relaxation superoperators of
+                type `radicalpy.relaxation.LiouvilleRelaxationBase`.
 
         Returns:
             dict:
