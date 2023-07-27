@@ -22,6 +22,62 @@ def get_delta_r(mutual_diffusion: float, delta_T: float) -> float:
     return np.sqrt(6 * mutual_diffusion * delta_T)
 
 
+def latexify(rate_equations: dict):
+    result = []
+    for lhs_data, rhs_data in rate_equations.items():
+        lhs = f"\\frac{{d[{lhs_data}]}}{{dt}} "
+        rhs_list = [f"{edge.label} [{vertex}]" for vertex, edge in rhs_data.items()]
+        rhs = " + ".join(rhs_list)
+        result.append(f"{lhs} = {rhs}")
+    return result
+
+
+def latex_eqlist_to_align(eqs: list):
+    body = " \\\\\n".join(map(lambda t: t.replace("=", "&="), eqs))
+    return f"\\begin{{align*}}\n{body}\n\\end{{align*}}"
+
+
+class Rate:
+    """Rate class.
+
+    Stores the rate value and (LaTeX) label of the rate (expression).
+
+    """
+
+    value: float
+    label: str
+    """LaTeX representation of the rate constant."""
+
+    def __repr__(self):
+        return f"{self.label} = {self.value}"
+
+    def __init__(self, value: float, label: str):  # noqa D102
+        self.value = value
+        self.label = label
+
+    @staticmethod
+    def _get_value_label(v):
+        return (v.value, v.label) if isinstance(v, Rate) else (v, v)
+
+    def __rmul__(self, v):
+        value, label = self._get_value_label(v)
+        return Rate(self.value * value, f"{label} {self.label}")
+
+    def __mul__(self, v):
+        return self.__rmul__(v)
+
+    def __radd__(self, v):
+        value, label = self._get_value_label(v)
+        return Rate(self.value + value, f"{label} + {self.label}")
+
+    def __add__(self, v):
+        value, label = self._get_value_label(v)
+        return Rate(self.value + value, f"{self.label} + {label}")
+
+    def __neg__(self):
+        return Rate(-self.value, f"-({self.label})")
+
+
 class RateEquations:
     """Results for `kinetics_solver`"""
 
@@ -49,14 +105,15 @@ class RateEquations:
     def _calc_(self, time: np.ndarray, initial_states: dict):
         self.check_initial_states(initial_states)
         tmp = [
-            (v, self.indices[i], self.indices[j])
+            (v.value, self.indices[i], self.indices[j])
             for i, d in self.rate_equations.items()
             for j, v in d.items()
         ]
         dt = time[1] - time[0]
         data, row_ind, col_ind = zip(*tmp)
+        N = len(self.all_keys)
         propagator = sp.sparse.linalg.expm(
-            sp.sparse.csc_matrix((data, (row_ind, col_ind))) * dt
+            sp.sparse.csc_matrix((data, (row_ind, col_ind)), (N, N)) * dt
         )
         self.result = np.zeros([len(time), len(self.all_keys)], dtype=float)
         self.result[0] = [initial_states.get(k, 0) for k in self.all_keys]
@@ -66,6 +123,27 @@ class RateEquations:
     def __getitem__(self, keys: list) -> np.ndarray:
         ks = [keys] if isinstance(keys, str) else keys
         return np.sum([self.result[:, self.indices[k]] for k in ks], axis=0)
+
+
+def reaction_scheme(rate_equations: dict):
+    data = [
+        (v1, v2, edge.label)
+        for v1, rhs_data in rate_equations.items()
+        for v2, edge in rhs_data.items()
+    ]
+    G = graphviz.Digraph("G")
+    for v1, v2, edge in data:
+        if not edge.startswith("-"):
+            # TODO: add only if not present already
+            # TODO: check position
+            # TODO: use sympy (how to check negative)
+            G.node(v1, texlbl=f"${v1}$")
+            G.node(v2, texlbl=f"${v2}$")
+            G.edge(v2, v1, edge, texlbl=f"${edge}$")
+
+    path = Path(f"{__file__[:-3]}_graph.tex")
+    texcode = dot2tex.dot2tex(G.source)
+    path.write_text(texcode)
 
 
 def _random_theta_phi():
