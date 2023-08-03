@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 
+from pathlib import Path
 from typing import Tuple
 
+import dot2tex
 import graphviz
 import numpy as np
 import scipy as sp
