@@ -3,6 +3,7 @@
 
 from typing import Tuple
 
+import graphviz
 import numpy as np
 import scipy as sp
 
