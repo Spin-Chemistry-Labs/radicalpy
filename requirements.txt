@@ -8,3 +8,4 @@ seaborn
 sympy
 tqdm
 graphviz
+dot2tex
