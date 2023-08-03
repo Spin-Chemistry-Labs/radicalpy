@@ -151,30 +151,42 @@ def autocorrelation_fit(
     tau_begin: float,
     tau_end: float,
     num_exp: int = 100,
+    normalise: bool = False,
 ) -> dict:
     """Fit multiexponential to autocorrelation plot and calculate the
     effective rotational correlation time.
 
     Args:
+
         ts (np.ndarray): Time interval (x-axis of the `trajectory`)
             (s).
+
         trajectory (np.ndarray): The raw data which will be fit and
             used to calculate `tau_c`.
+
         tau_begin (float): Initial lag time (s).
+
         tau_end (float): Final lag time (s).
+
         num_exp (int): Number of exponential terms in the
             multiexponential fit (default=100).
 
-    Returns:
-            dict:
-                - `fit` is the multiexponential fit to the autocorrelation.
-                - `tau_c` is the effective rotational correlation time.
+        normalise (bool): When set to true, the autocorrelation is
+            normalised (default=False).
 
+    Returns:
+        dict:
+
+        - `fit` is the multiexponential fit to the autocorrelation.
+        - `tau_c` is the effective rotational correlation time.
+
+    Thank you, Gesa Grüning!
     """
     acf = autocorrelation(trajectory)
     zero_point_crossing = np.where(np.diff(np.sign(acf)))[0][0]
     acf = acf[0:zero_point_crossing]
-    acf /= acf[0]
+    if normalise:
+        acf /= acf[0]
     taus = np.geomspace(tau_begin, tau_end, num=num_exp)
 
     def multiexponential(x, *params):
