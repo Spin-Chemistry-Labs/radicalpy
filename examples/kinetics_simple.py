@@ -6,7 +6,7 @@ import dot2tex
 import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
-from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
+from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify, reaction_scheme
 
 
 def main():
@@ -67,10 +67,9 @@ def main():
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
 
-    # for eq in latexify(off):
-    #     print(eq)
-    # print(latex_eqlist_to_align(latexify(off)))
-    reaction_scheme(on)
+    print(latex_eqlist_to_align(latexify(off)))
+    print(latex_eqlist_to_align(latexify(on)))
+    #reaction_scheme("field_on", on)
 
 
 if __name__ == "__main__":
