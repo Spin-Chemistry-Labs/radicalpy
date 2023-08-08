@@ -7,7 +7,7 @@ from pathlib import Path
 
 def create_equation(Q):
 
-    # FAD kinetic parameters  
+    # FAD kinetic parameters
     kex = Rate(1e4, "k_{ex}")  # groundstate excitation rate
     kfl = Rate(3.55e8, "k_{fl}")  # fluorescence rate
     kic = Rate(1.28e9, "k_{IC}")  # internal conversion rate
@@ -20,22 +20,22 @@ def create_equation(Q):
     kr = Rate(1.3e7, "k_R") # singlet recombination rate
     krlx = Rate(1.7e6, "k_{Rlx}") # RP relaxation
     pH = 2.3
-    
+
     # Quenching kinetic parameters
     kq = Rate(1e9, "k_q") # quenching rate
-    kp = Rate(3.3e3, "k_p") # free radical recombination
+    kfr = Rate(3.3e3, "k_p") # free radical recombination
 
     Hp = Rate(10 ** (-1 * pH), "H^+")  # concentration of hydrogen ions
-    
-    S0, S1, Trpm, Tr0, S, Tpm, T0, Quencher = "S_0", "S_1", "T^*_{+/-}", "T^*_0", "S", "T_{+/-}", "T_0", "Quencher"
+
+    S0, S1, Trpm, Tr0, S, Tpm, T0, FR = "S_0", "S_1", "T^*_{+/-}", "T^*_0", "S", "T_{+/-}", "T_0", "FR"
 
     base = {}
-    base[S0] = {S0: -kex, Trpm: kd, Tr0: kd, S: kr, S1: kfl + kic, Quencher: kp}
+    base[S0] = {S0: -kex, Trpm: kd, Tr0: kd, S: kr, S1: kfl + kic, FR: kfr}
     base[S1] = {S1: -(kfl + kic + 3 * kisc), S0: kex}
     base[Trpm] = {Trpm: -(kd + k1 + krt), Tpm: km1 * Hp, Tr0: 2 * krt, S1: 2 * kisc}
     base[Tr0] = {Tr0: -(kd + k1 + 2 * krt), T0: km1 * Hp, Trpm: krt, S1: kisc}
-    base[Quencher] = {Quencher: -kp, Trpm: kq * Q, Tr0: kq * Q}    
-    #base[Quencher] = {Quencher: -kp, S: kq * Q, Tpm: kq * Q, T0: kq * Q}
+    base[FR] = {FR: -kfr, Trpm: kq * Q, Tr0: kq * Q}
+    #base[FR] = {FR: -kfr, S: kq * Q, Tpm: kq * Q, T0: kq * Q}
 
     off = {}
     off[S] = {S: -(3 * kst + kr), Tpm: kst, T0: kst}
@@ -53,9 +53,9 @@ def main():
     # Kinetic simulation of FAD at pH 2.3 with Trp quencher.
 
     # Rate equations
-    S0, S1, Trpm, Tr0, S, Tpm, T0, Quencher = "S_0", "S_1", "T^*_{+/-}", "T^*_0", "S", "T_{+/-}", "T_0", "Quencher"
-    
-    # quencher concentration    
+    S0, S1, Trpm, Tr0, S, Tpm, T0, FR = "S_0", "S_1", "T^*_{+/-}", "T^*_0", "S", "T_{+/-}", "T_0", "FR"
+
+    # quencher concentration
     Q1 = [0, 0.1e-3, 0.5e-3, 1e-3, 1.5e-3]
     Q = [Rate(t, "[Q]") for t in Q1]
 
@@ -72,7 +72,7 @@ def main():
         result_off = RateEquations({**base, **off}, time, initial_states)
         result_on = RateEquations({**base, **on}, time, initial_states)
 
-        keys = [S, Tpm, T0, Quencher] + 2 * [Trpm, Tr0]
+        keys = [S, Tpm, T0, FR] + 2 * [Trpm, Tr0]
         field_off = fac * result_off[keys]
         field_on = fac * result_on[keys]
         delta_delta_A = field_on - field_off
@@ -86,7 +86,7 @@ def main():
     ax.legend([f"[Trp] = {t*1000} mM" for t in Q1])
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path)
-    
+
     print(latex_eqlist_to_align(latexify(base)))
     print(latex_eqlist_to_align(latexify(off)))
     print(latex_eqlist_to_align(latexify(on)))
@@ -94,4 +94,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+
