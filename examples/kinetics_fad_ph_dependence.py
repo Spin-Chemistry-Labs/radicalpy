@@ -19,20 +19,20 @@ def create_equation(kr, krlx, pH):
 
     # Quenching kinetic parameters
     kq = Rate(0, "k_q")  # 1e9  # quenching rate
-    kp = Rate(0, "k_p")  # 3.3e3  # free radical recombination
+    kfr = Rate(0, "k_{FR}")  # 3.3e3  # free radical recombination
     Q = Rate(0, "[Q]")  # 1e-3  # quencher concentration
 
     Hp = Rate(10 ** (-1 * pH), "H^+")  # concentration of hydrogen ions
     
-    S0, S1, Trpm, Tr0, S, Tpm, T0, Quencher = "S_0", "S_1", "T^*_{+/-}", "T^*_0", "S", "T_{+/-}", "T_0", "Quencher"
+    S0, S1, Trpm, Tr0, S, Tpm, T0, FR = "S_0", "S_1", "T^*_{+/-}", "T^*_0", "S", "T_{+/-}", "T_0", "FR"
 
     base = {}
-    base[S0] = {S0: -kex, Trpm: kd, Tr0: kd, S: kr, S1: kfl + kic, Quencher: kp}
+    base[S0] = {S0: -kex, Trpm: kd, Tr0: kd, S: kr, S1: kfl + kic, FR: kfr}
     base[S1] = {S1: -(kfl + kic + 3 * kisc), S0: kex}
     base[Trpm] = {Trpm: -(kd + k1 + krt), Tpm: km1 * Hp, Tr0: 2 * krt, S1: 2 * kisc}
     base[Tr0] = {Tr0: -(kd + k1 + 2 * krt), T0: km1 * Hp, Trpm: krt, S1: kisc}
-    base[Quencher] = {Quencher: -kp, Trpm: kq * Q, Tr0: kq * Q}
-    #base[Quencher] = {Quencher: -kp, S: kq * Q, Tpm: kq * Q, T0: kq * Q}
+    base[FR] = {FR: -kfr, Trpm: kq * Q, Tr0: kq * Q}
+    #base[FR] = {FR: -kfr, S: kq * Q, Tpm: kq * Q, T0: kq * Q}
 
     off = {}
     off[S] = {S: -(3 * kst + kr), Tpm: kst, T0: kst}
@@ -50,7 +50,7 @@ def main():
     # Kinetic simulation of FAD from pH 1.9 to 3.5.
 
     # Rate equations
-    S0, S1, Trpm, Tr0, S, Tpm, T0, Quencher = "S_0", "S_1", "T^*_{+/-}", "T^*_0", "S", "T_{+/-}", "T_0", "Quencher"
+    S0, S1, Trpm, Tr0, S, Tpm, T0, FR = "S_0", "S_1", "T^*_{+/-}", "T^*_0", "S", "T_{+/-}", "T_0", "FR"
 
     # FAD kinetic parameters
     # singlet recombination rate
@@ -75,7 +75,7 @@ def main():
         result_off = RateEquations({**base, **off}, time, initial_states)
         result_on = RateEquations({**base, **on}, time, initial_states)
 
-        keys = [S, Tpm, T0, Quencher] + 2 * [Trpm, Tr0]
+        keys = [S, Tpm, T0, FR] + 2 * [Trpm, Tr0]
         field_off = fac * result_off[keys]
         field_on = fac * result_on[keys]
         delta_delta_A = field_on - field_off
