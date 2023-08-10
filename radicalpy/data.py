@@ -344,6 +344,7 @@ class Molecule:
         Nuclei:
           Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
           Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
+        Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
 
         Or alternatively:
 
@@ -357,6 +358,7 @@ class Molecule:
         Nuclei:
           Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
           Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
+        Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
 
     """
 
@@ -376,6 +378,7 @@ class Molecule:
         lines = [
             f"Molecule: {self.name}",
             f"Nuclei:\n{nuclei}" if self.nuclei else "No nuclei specified.",
+            f"Radical: {self.radical}",
             # f"\n  Number of particles: {self.num_particles}"
         ]
         if self.info:
@@ -434,6 +437,7 @@ class Molecule:
             Molecule: flavin_anion
             Nuclei:
               14N(19337792.0, 3, -0.001275 <anisotropic available>)
+            Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
             Info: {'units': 'mT', 'name': 'Flavin radical anion'}
         """
         if name not in cls.available():
@@ -481,6 +485,7 @@ class Molecule:
             Nuclei:
               1H(267522187.44, 2, 1.5 <anisotropic not available>)
               14N(19337792.0, 3, 0.9 <anisotropic not available>)
+            Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
         """
         isos = []
         for iso in isotopes:
