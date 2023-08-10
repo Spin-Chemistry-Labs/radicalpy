@@ -320,9 +320,15 @@ class Molecule:
     - `Molecule.fromisotopes`
 
     Args:
+
         name (str): The name of the `Molecule`.
+
         nuclei (list[Nucleus]): List of nuclei/atoms which should be
             simulated (see `Nucleus`).
+
+        radical (Nucleus): The radical of the molecule. (Default
+            `Nucleus.fromisotope("E", 0.0)`).
+
         info (dict[str, str]): Dictionary of miscellaneous information
             about the molecule.
 
@@ -351,6 +357,7 @@ class Molecule:
         Nuclei:
           Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
           Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
+
     """
 
     name: str
