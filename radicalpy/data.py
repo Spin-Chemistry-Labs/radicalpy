@@ -356,6 +356,7 @@ class Molecule:
     name: str
     nuclei: list[Nucleus]
     info: dict[str, str]
+    radical: Nucleus
     custom: bool
 
     def __repr__(self) -> str:
@@ -375,14 +376,18 @@ class Molecule:
         return "\n".join(lines)
 
     def __init__(
-        self, name: str = "", nuclei: list[Nucleus] = [], info: dict[str, str] = {}
+        self,
+        name: str = "",
+        nuclei: list[Nucleus] = [],
+        radical: Nucleus = Nucleus.fromisotope("E", 0.0),
+        info: dict[str, str] = {},
     ):
         """Default constructor."""
         # todo(vatai): check types?
         self.name = name
         self.nuclei = nuclei  # list[gamma, multi, hfc]
         self.info = info
-        self.radical = Nucleus.fromisotope("E", 0.0)
+        self.radical = radical
         self.custom = True
 
     @classmethod
