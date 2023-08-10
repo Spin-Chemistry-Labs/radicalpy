@@ -452,7 +452,7 @@ class Molecule:
             isotope = data[nucleus]["element"]
             hfc = data[nucleus]["hfc"]
             nuclei_list.append(Nucleus.fromisotope(isotope, hfc))
-        molecule = cls(name, nuclei_list, info)
+        molecule = cls(name=name, nuclei=nuclei_list, info=info)
         molecule.custom = False
         return molecule
 
