@@ -13,8 +13,9 @@ from radicalpy.simulation import Basis
 
 # quick test:
 # comment the next line out, and run in repo root:
-# PYTHONPATH=. python tests/test_simulation.py TripletTests.test_time_evolution
-from . import radpy
+# set PYTHONPATH=.
+# python tests/test_simulation.py TripletTests.test_time_evolution
+# from . import radpy
 
 # np.seterr(divide="raise", invalid="raise")
 
@@ -589,8 +590,20 @@ class TripletTests(unittest.TestCase):
 
     def test_time_evolution(self):
         init_state = rp.simulation.State.TRIPLET
-        H = self.sim.total_hamiltonian(B0=0, J=0, D=0)
-        self.sim.time_evolution(init_state, self.time, H)
+        H = self.sim.total_hamiltonian(B0=0, J=0, D=100)
+        rhos = self.sim.time_evolution(init_state, self.time, H)
+        obs = rp.simulation.State.SINGLET
+        k = 0
+        prod_prob = self.sim.product_probability(obs, rhos)
+        result, _ = self.sim.product_yield(prod_prob, self.time, k)
+
+        fig, axs = plt.subplots(2)
+        plt.sca(axs[0])
+        plt.plot(self.time, result)
+
+        plt.sca(axs[1])
+        plt.spy(H)
+        plt.show()
 
 
 if __name__ == "__main__":
