@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 
+from pathlib import Path
 from typing import Tuple
 
+import dot2tex
 import graphviz
 import numpy as np
 import scipy as sp
@@ -126,7 +128,7 @@ class RateEquations:
         return np.sum([self.result[:, self.indices[k]] for k in ks], axis=0)
 
 
-def reaction_scheme(rate_equations: dict):
+def reaction_scheme(path: str, rate_equations: dict):
     data = [
         (v1, v2, edge.label)
         for v1, rhs_data in rate_equations.items()
@@ -142,9 +144,10 @@ def reaction_scheme(rate_equations: dict):
             G.node(v2, texlbl=f"${v2}$")
             G.edge(v2, v1, edge, texlbl=f"${edge}$")
 
-    path = Path(f"{__file__[:-3]}_graph.tex")
+    if not path.endswith("tex"):
+        path += ".tex"
     texcode = dot2tex.dot2tex(G.source)
-    path.write_text(texcode)
+    Path(path).write_text(texcode)
 
 
 def _random_theta_phi():
