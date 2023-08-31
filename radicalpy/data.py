@@ -320,9 +320,15 @@ class Molecule:
     - `Molecule.fromisotopes`
 
     Args:
+
         name (str): The name of the `Molecule`.
+
         nuclei (list[Nucleus]): List of nuclei/atoms which should be
             simulated (see `Nucleus`).
+
+        radical (Nucleus): The radical of the molecule. (Default
+            `Nucleus.fromisotope("E", 0.0)`).
+
         info (dict[str, str]): Dictionary of miscellaneous information
             about the molecule.
 
@@ -338,6 +344,7 @@ class Molecule:
         Nuclei:
           Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
           Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
+        Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
 
         Or alternatively:
 
@@ -351,11 +358,14 @@ class Molecule:
         Nuclei:
           Hydrogen(267522186.99999997, 2, 1.0 <anisotropic not available>)
           Nitrogen(19337792.0, 3, -0.5 <anisotropic not available>)
+        Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
+
     """
 
     name: str
     nuclei: list[Nucleus]
     info: dict[str, str]
+    radical: Nucleus
     custom: bool
 
     def __repr__(self) -> str:
@@ -368,6 +378,7 @@ class Molecule:
         lines = [
             f"Molecule: {self.name}",
             f"Nuclei:\n{nuclei}" if self.nuclei else "No nuclei specified.",
+            f"Radical: {self.radical}",
             # f"\n  Number of particles: {self.num_particles}"
         ]
         if self.info:
@@ -375,14 +386,18 @@ class Molecule:
         return "\n".join(lines)
 
     def __init__(
-        self, name: str = "", nuclei: list[Nucleus] = [], info: dict[str, str] = {}
+        self,
+        name: str = "",
+        nuclei: list[Nucleus] = [],
+        radical: Nucleus = Nucleus.fromisotope("E", 0.0),
+        info: dict[str, str] = {},
     ):
         """Default constructor."""
         # todo(vatai): check types?
         self.name = name
         self.nuclei = nuclei  # list[gamma, multi, hfc]
         self.info = info
-        self.radical = Nucleus.fromisotope("E", 0.0)
+        self.radical = radical
         self.custom = True
 
     @classmethod
@@ -422,6 +437,7 @@ class Molecule:
             Molecule: flavin_anion
             Nuclei:
               14N(19337792.0, 3, -0.001275 <anisotropic available>)
+            Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
             Info: {'units': 'mT', 'name': 'Flavin radical anion'}
         """
         if name not in cls.available():
@@ -447,7 +463,7 @@ class Molecule:
             isotope = data[nucleus]["element"]
             hfc = data[nucleus]["hfc"]
             nuclei_list.append(Nucleus.fromisotope(isotope, hfc))
-        molecule = cls(name, nuclei_list, info)
+        molecule = cls(name=name, nuclei=nuclei_list, info=info)
         molecule.custom = False
         return molecule
 
@@ -469,6 +485,7 @@ class Molecule:
             Nuclei:
               1H(267522187.44, 2, 1.5 <anisotropic not available>)
               14N(19337792.0, 3, 0.9 <anisotropic not available>)
+            Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
         """
         isos = []
         for iso in isotopes:
