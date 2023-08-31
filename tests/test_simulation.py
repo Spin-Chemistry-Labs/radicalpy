@@ -15,7 +15,7 @@ from radicalpy.simulation import Basis
 # comment the next line out, and run in repo root:
 # set PYTHONPATH=.
 # python tests/test_simulation.py TripletTests.test_time_evolution
-# from . import radpy
+from . import radpy
 
 # np.seterr(divide="raise", invalid="raise")
 
