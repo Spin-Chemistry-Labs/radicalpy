@@ -597,13 +597,13 @@ class TripletTests(unittest.TestCase):
         prod_prob = self.sim.product_probability(obs, rhos)
         result, _ = self.sim.product_yield(prod_prob, self.time, k)
 
-        fig, axs = plt.subplots(2)
-        plt.sca(axs[0])
-        plt.plot(self.time, result)
+        # fig, axs = plt.subplots(2)
+        # plt.sca(axs[0])
+        # plt.plot(self.time, result)
 
-        plt.sca(axs[1])
-        plt.spy(H)
-        plt.show()
+        # plt.sca(axs[1])
+        # plt.spy(H)
+        # plt.show()
 
 
 if __name__ == "__main__":
