@@ -206,10 +206,10 @@ class HilbertSimulation:
         assert axis in "xyzpmu"
 
         sigma = self.pauli(self.particles[idx].multiplicity)[axis]
-        eye_before = np.eye(prod(p.multiplicity for p in self.particles[:idx]))
-        eye_after = np.eye(prod(p.multiplicity for p in self.particles[idx + 1 :]))
-
-        spinop = np.kron(np.kron(eye_before, sigma), eye_after)
+        before_size = prod(p.multiplicity for p in self.particles[:idx])
+        after_size = prod(p.multiplicity for p in self.particles[idx + 1 :])
+        spinop = np.kron(np.eye(before_size), sigma)
+        spinop = np.kron(spinop, np.eye(after_size))
         if self.basis == Basis.ST:
             return self.ST_basis(spinop)
         else:
@@ -570,6 +570,12 @@ class HilbertSimulation:
                 for ni, ei in enumerate(self.coupling)
             )
         )
+
+    def zero_field_splitting_hamiltonian(self) -> np.ndarray:
+        """Construct the Zero Field Splitting (ZFS) Hamiltoninan."""
+        Sx, Sy, Sz = spinops(pos, 2, spin=3)
+        Ssquared = Sx @ Sx + Sy @ Sy + Sz @ Sz
+        return D * (Sz @ Sz - (1 / 3) * Ssquared) + E * ((Sx @ Sx) - (Sy @ Sy))
 
     def total_hamiltonian(
         self,
