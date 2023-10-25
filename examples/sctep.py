@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
-import radicalpy as rp
+from radicalpy.data import Molecule
 
 
 def main():
-    print(rp)
+    m = Molecule(nuclei=[])
+    print(m)
 
 
 if __name__ == "__main__":
