@@ -11,6 +11,10 @@ import radicalpy as rp
 from radicalpy import estimations, kinetics, relaxation
 from radicalpy.simulation import Basis
 
+# quick test:
+# comment the next line out, and run in repo root:
+# set PYTHONPATH=.
+# python tests/test_simulation.py TripletTests.test_time_evolution
 from . import radpy
 
 # np.seterr(divide="raise", invalid="raise")
@@ -410,7 +414,6 @@ class HilbertTests(unittest.TestCase):
         plt.show()
 
     def test_hyperfine_3d(self):
-
         results = self.sim.MARY(
             rp.simulation.State.SINGLET,
             rp.simulation.State.TRIPLET,
@@ -570,3 +573,38 @@ class LiouvilleTests(unittest.TestCase):
         # plt.title(f"B={results['B'][idx]}")
         # plt.show()
         # print("DONE")
+
+
+class TripletTests(unittest.TestCase):
+    def setUp(self):
+        dummy_hfc = rp.data.Hfc(0.0)
+        gamma = -176085963.0230
+        radical = rp.data.Nucleus(gamma, 3, dummy_hfc)
+        z1 = rp.data.Molecule("Z", [], radical=radical)
+        z2 = rp.data.Molecule(name="Z", nuclei=[], radical=radical)
+        basis = rp.simulation.Basis.ZEEMAN
+        self.sim = rp.simulation.HilbertSimulation([z1, z2], basis=basis)
+        self.dt = 0.01
+        self.t_max = 1.0
+        self.time = np.arange(0, self.t_max, self.dt)
+
+    def test_time_evolution(self):
+        init_state = rp.simulation.State.TRIPLET
+        H = self.sim.total_hamiltonian(B0=0, J=0, D=100)
+        rhos = self.sim.time_evolution(init_state, self.time, H)
+        obs = rp.simulation.State.SINGLET
+        k = 0
+        prod_prob = self.sim.product_probability(obs, rhos)
+        result, _ = self.sim.product_yield(prod_prob, self.time, k)
+
+        # fig, axs = plt.subplots(2)
+        # plt.sca(axs[0])
+        # plt.plot(self.time, result)
+
+        # plt.sca(axs[1])
+        # plt.spy(H)
+        # plt.show()
+
+
+if __name__ == "__main__":
+    unittest.main()
