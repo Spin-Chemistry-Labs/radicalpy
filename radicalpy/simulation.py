@@ -571,22 +571,25 @@ class HilbertSimulation:
             )
         )
 
-    def zero_field_splitting_hamiltonian(self, E, D) -> np.ndarray:
+    def zero_field_splitting_hamiltonian(self, D, E) -> np.ndarray:
         """Construct the Zero Field Splitting (ZFS) Hamiltoninan."""
-        for idx in range(self.particles):
-            spinops = []
-            coeffs = [E - D / 3, -E - D / 3, 2 * D / 3]
-            sum(
-                coeff * np.linalg.matrix_power(self.spin_operator(idx, ax), 2)
-                for idx, (coeff, ax) in itertools.product(
-                    self.particles, zip(coeffs, "xyz")
-                )
-            )
+        coeffs = [E - D / 3, -E - D / 3, 2 * D / 3]
+        result = complex(0.0)
+        other = complex(0.0)
+        for idx, p in enumerate(self.particles):
+            tmp = complex(0.0)
+            for coeff, ax in zip(coeffs, "xyz"):
+                sqr = self.spin_operator(idx, ax) @ self.spin_operator(idx, ax)
+                result += coeff * sqr
+                tmp += coeff * sqr
             Sx = self.spin_operator(idx, "x") @ self.spin_operator(idx, "x")
-            # Sx, Sy, Sz = spinops(pos, 2, spin=3)
-            # Ssquared = Sx @ Sx + Sy @ Sy + Sz @ Sz
-            # return D * (Sz @ Sz - (1 / 3) * Ssquared) + E * ((Sx @ Sx) - (Sy @ Sy))
-        return 0
+            Sy = self.spin_operator(idx, "y") @ self.spin_operator(idx, "y")
+            Sz = self.spin_operator(idx, "z") @ self.spin_operator(idx, "z")
+            Ssquared = Sx @ Sx + Sy @ Sy + Sz @ Sz
+            other = D * (Sz @ Sz - (1 / 3) * Ssquared) + E * ((Sx @ Sx) - (Sy @ Sy))
+            delta = np.linalg.norm(other - sqr)
+            print(f"{delta=}")
+        return result
 
     def total_hamiltonian(
         self,
