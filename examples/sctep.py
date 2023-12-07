@@ -12,20 +12,17 @@ def main():
     m = Triplet()
     sim = LiouvilleSimulation(molecules=[m, m])
     print(sim)
-    # sim = LiouvilleSimulation(molecules=[m, m], basis=Basis.ZEEMAN)
-    # # print(sim)
-    # steady_state_mary(
-    #     sim,
-    #     obs_state=State.TP_SINGLET,
-    #     B=Bs,
-    #     D=D,
-    #     E=E,
-    #     J=0,
-    #     kinetics=[
-    #         rp.kinetics.Haberkorn(krec, State.TP_SINGLET),
-    #         rp.kinetics.HaberkornFree(kesc),
-    #     ],
-    # )
+    steady_state_mary(
+        sim,
+        obs_state=State.TP_SINGLET,
+        B=Bs,
+        D=D,
+        E=E,
+        kinetics=[
+            rp.kinetics.Haberkorn(krec, State.TP_SINGLET),
+            rp.kinetics.HaberkornFree(kesc),
+        ],
+    )
     # print(H)
 
 
