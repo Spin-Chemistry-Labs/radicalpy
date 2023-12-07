@@ -520,5 +520,5 @@ class Molecule:
 class Triplet(Molecule):
     def __init__(self):
         gamma = Isotope("E").gamma_mT
-        triplet = Nucleus(magnetogyric_ratio=gamma, multiplicity=3, hfc=0)
+        triplet = Nucleus(magnetogyric_ratio=gamma, multiplicity=3, hfc=0.0)
         super().__init__(name="Triplet", nuclei=[], radical=triplet)
