@@ -2,12 +2,9 @@ from math import prod
 
 import numpy as np
 
-from .simulation import (
-    HilbertIncoherentProcessBase,
-    LiouvilleIncoherentProcessBase,
-    LiouvilleSimulation,
-    State,
-)
+from .simulation import (HilbertIncoherentProcessBase,
+                         LiouvilleIncoherentProcessBase, LiouvilleSimulation,
+                         State)
 
 
 class HilbertKineticsBase(HilbertIncoherentProcessBase):
@@ -16,6 +13,10 @@ class HilbertKineticsBase(HilbertIncoherentProcessBase):
     def _name(self):
         name = super()._name()
         return f"Kinetics: {name}"
+
+    @staticmethod
+    def _convert(Q: np.ndarray) -> np.ndarray:
+        return Q
 
 
 class LiouvilleKineticsBase(LiouvilleIncoherentProcessBase):
@@ -79,7 +80,15 @@ class Haberkorn(LiouvilleKineticsBase):
     def __init__(self, rate_constant: float, target: State):
         super().__init__(rate_constant)
         self.target = target
-        if target not in {State.SINGLET, State.TRIPLET}:
+        if target not in {
+            State.SINGLET,
+            State.TP_SINGLET,
+            State.TRIPLET,
+            State.TRIPLET_MINUS,
+            State.TRIPLET_PLUS,
+            State.TRIPLET_PLUS_MINUS,
+            State.TRIPLET_ZERO,
+        }:
             raise ValueError(
                 "Haberkorn kinetics supports only SINGLET and TRIPLET targets"
             )
