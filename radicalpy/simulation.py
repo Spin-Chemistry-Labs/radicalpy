@@ -21,7 +21,7 @@ class State(enum.Enum):
     TRIPLET_PLUS = "T_+"
     TRIPLET_PLUS_MINUS = "T_\\pm"
     TRIPLET_MINUS = "T_-"
-    TP_SINGLET = "RTP_S"
+    TP_SINGLET = "TP_S"
 
 
 class Basis(enum.Enum):
@@ -306,17 +306,21 @@ class HilbertSimulation:
             State.TRIPLET_PLUS_MINUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
             + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
             State.EQUILIBRIUM: 1.05459e-34 / (1.38e-23 * 298),
+            State.TP_SINGLET: self.tp_singlet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
         }
-        # state.TP_SINGLET
-        # (1 / 12) * (Ssquared - (6 * np.eye(len(S1x)))) @ (Ssquared - (2 * np.eye(len(S1x))))
-        #     # For radical triplet pair (RTP)
-        # S1x, S1y, S1z = spinops(0, 2, spin=3)
-        # S2x, S2y, S2z = spinops(1, 2, spin=3)
-        # S1squared = S1x @ S1x + S1y @ S1y + S1z @ S1z
-        # S2squared = S2x @ S2x + S2y @ S2y + S2z @ S2z
-        # Ssquared = S1squared + S2squared + 2 * (S1x @ S2x + S1y @ S2y + S1z @ S2z) #
 
         return result[state]
+
+    def tp_singlet_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        # For radical triplet pair (RTP)
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)  #
+        return (
+            (1 / 12)
+            * (Ssquared - (6 * np.eye(len(SAx))))
+            @ (Ssquared - (2 * np.eye(len(SAx))))
+        )
 
     def zeeman_hamiltonian(
         self, B0: float, theta: Optional[float] = None, phi: Optional[float] = None
