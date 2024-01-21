@@ -1077,7 +1077,8 @@ class LiouvilleSimulation(HilbertSimulation):
     def convert(H: np.ndarray) -> np.ndarray:
         """Convert the Hamiltonian from Hilbert to Liouville space."""
         eye = np.eye(len(H))
-        return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
+        tmp = np.kron(H, eye) - np.kron(eye, H.T)
+        return 1j * tmp
 
     @staticmethod
     def _square_liouville_rhos(rhos):
