@@ -972,6 +972,10 @@ class HilbertSimulation:
     def convert(H: np.ndarray) -> np.ndarray:
         return H
 
+    @staticmethod
+    def _convert(Q: np.ndarray) -> np.ndarray:
+        return Q
+
     def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
         """Create an initial desity matrix.
 
@@ -1079,6 +1083,11 @@ class LiouvilleSimulation(HilbertSimulation):
         eye = np.eye(len(H))
         tmp = np.kron(H, eye) - np.kron(eye, H.T)
         return 1j * tmp
+
+    @staticmethod
+    def _convert(Q: np.ndarray) -> np.ndarray:
+        eye = np.eye(len(Q))
+        return np.kron(Q, eye) + np.kron(eye, Q)
 
     @staticmethod
     def _square_liouville_rhos(rhos):
