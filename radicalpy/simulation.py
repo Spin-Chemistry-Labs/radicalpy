@@ -598,15 +598,16 @@ class HilbertSimulation:
             tmp = complex(0.0)
             for coeff, ax in zip(coeffs, "xyz"):
                 sqr = self.spin_operator(idx, ax) @ self.spin_operator(idx, ax)
-                result += coeff * sqr
+                # result += coeff * sqr
                 tmp += coeff * sqr
             Sx = self.spin_operator(idx, "x") @ self.spin_operator(idx, "x")
             Sy = self.spin_operator(idx, "y") @ self.spin_operator(idx, "y")
             Sz = self.spin_operator(idx, "z") @ self.spin_operator(idx, "z")
             Ssquared = Sx @ Sx + Sy @ Sy + Sz @ Sz
-            other = D * (Sz @ Sz - (1 / 3) * Ssquared) + E * ((Sx @ Sx) - (Sy @ Sy))
-            delta = np.linalg.norm(other - sqr)
-            print(f"{delta=}")
+            # other = D * (Sz @ Sz - (1 / 3) * Ssquared) + E * ((Sx @ Sx) - (Sy @ Sy))
+            # delta = np.linalg.norm(other - sqr)
+            # print(f"{delta=}")
+            result += D * (Sz @ Sz - (1 / 3) * Ssquared) + E * ((Sx @ Sx) - (Sy @ Sy))
         return result
 
     def total_hamiltonian(
