@@ -34,6 +34,9 @@ def steady_state_mary(
         # L = 1j * H + sum(kinetics)
         rho = np.linalg.solve(H, Ps)  # Density operator
 
+        print(f"{type(rho)=} {rho.shape=}")
+        print(f"{type(Ps)=} {Ps.shape=}")
+
         Phi_s[i] = np.matmul(Ps.T, rho)
 
     return rho, Phi_s
