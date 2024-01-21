@@ -3,9 +3,12 @@ from math import prod
 
 import numpy as np
 
-from .simulation import (HilbertIncoherentProcessBase,
-                         LiouvilleIncoherentProcessBase, LiouvilleSimulation,
-                         State)
+from .simulation import (
+    HilbertIncoherentProcessBase,
+    LiouvilleIncoherentProcessBase,
+    LiouvilleSimulation,
+    State,
+)
 
 
 class HilbertKineticsBase(HilbertIncoherentProcessBase):
@@ -15,10 +18,6 @@ class HilbertKineticsBase(HilbertIncoherentProcessBase):
         name = super()._name()
         return f"Kinetics: {name}"
 
-    @staticmethod
-    def _convert(Q: np.ndarray) -> np.ndarray:
-        return Q
-
 
 class LiouvilleKineticsBase(LiouvilleIncoherentProcessBase):
     """Base class for kinetics superoperators (Liouville space)."""
@@ -26,11 +25,6 @@ class LiouvilleKineticsBase(LiouvilleIncoherentProcessBase):
     def _name(self):
         name = super()._name()
         return f"Kinetics: {name}"
-
-    @staticmethod
-    def _convert(Q: np.ndarray) -> np.ndarray:
-        eye = np.eye(len(Q))
-        return np.kron(Q, eye) + np.kron(eye, Q)
 
 
 class Exponential(HilbertKineticsBase):
@@ -98,7 +92,7 @@ class Haberkorn(LiouvilleKineticsBase):
     def init(self, sim: LiouvilleSimulation):
         """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         Q = sim.projection_operator(self.target)
-        self.subH = 0.5 * self.rate * self._convert(Q)
+        self.subH = 0.5 * self.rate * sim._convert(Q)
 
     def __repr__(self):
         lines = [
@@ -154,8 +148,8 @@ class JonesHore(LiouvilleKineticsBase):
         QS = sim.projection_operator(State.SINGLET)
         QT = sim.projection_operator(State.TRIPLET)
         self.subH = (
-            0.5 * self.singlet_rate * self._convert(QS)
-            + 0.5 * self.triplet_rate * self._convert(QT)
+            0.5 * self.singlet_rate * sim._convert(QS)
+            + 0.5 * self.triplet_rate * sim._convert(QT)
             + (0.5 * (self.singlet_rate + self.triplet_rate))
             * (np.kron(QS, QT) + np.kron(QT, QS))
         )
