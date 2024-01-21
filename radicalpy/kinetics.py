@@ -112,8 +112,7 @@ class HaberkornFree(LiouvilleKineticsBase):
 
     def init(self, sim: LiouvilleSimulation):
         """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
-        size = np.prod(p.multiplicity for p in sim.particles) ** 2
-        self.subH = self.rate * np.eye(size)
+        self.subH = self.rate * np.eye(sim.hamiltonian_size)
 
 
 class JonesHore(LiouvilleKineticsBase):

@@ -105,6 +105,10 @@ class HilbertSimulation:
     def particles(self):
         return self.radicals + self.nuclei
 
+    @property
+    def hamiltonian_size(self):
+        return np.prod([p.multiplicity for p in self.particles])
+
     def __repr__(self) -> str:
         return "\n".join(
             [
@@ -1088,6 +1092,10 @@ class LiouvilleSimulation(HilbertSimulation):
     def _convert(Q: np.ndarray) -> np.ndarray:
         eye = np.eye(len(Q))
         return np.kron(Q, eye) + np.kron(eye, Q)
+
+    @property
+    def hamiltonian_size(self):
+        return super().hamiltonian_size ** 2
 
     @staticmethod
     def _square_liouville_rhos(rhos):
