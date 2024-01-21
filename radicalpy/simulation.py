@@ -708,8 +708,8 @@ class HilbertSimulation:
         """Calculate the probability of the observable from the densities."""
         if obs == State.EQUILIBRIUM:
             raise ValueError("Observable state should not be EQUILIBRIUM")
-        obs = self.observable_projection_operator(obs)
-        return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
+        Q = self.observable_projection_operator(obs)
+        return np.real(np.trace(Q @ rhos, axis1=-2, axis2=-1))
 
     @staticmethod
     def product_yield(product_probability, time, k):
