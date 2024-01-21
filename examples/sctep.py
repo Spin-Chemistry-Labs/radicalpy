@@ -6,11 +6,11 @@ import numpy as np
 from radicalpy.data import Isotope, Molecule, Nucleus, Triplet
 from radicalpy.experiments import steady_state_mary
 from radicalpy.kinetics import Haberkorn, HaberkornFree
-from radicalpy.simulation import Basis, HilbertSimulation, State
+from radicalpy.simulation import Basis, LiouvilleSimulation, State
 
 
 def main(
-    Bs=np.arange(0, 2500, 1),
+    Bs=np.arange(0, 2500, 10),
     D=-6.2,
     E=35,
     J=499.55,
@@ -19,13 +19,7 @@ def main(
     kd=2.8e9,
 ):
     m = Triplet()
-    sim = HilbertSimulation(molecules=[m, m], basis=Basis.ZEEMAN)
-    print(sim)
-    H = sim.zero_field_splitting_hamiltonian(
-        D=D,
-        E=E,
-    )
-    print(H)
+    sim = LiouvilleSimulation(molecules=[m, m], basis=Basis.ZEEMAN)
     rhos, Phi_s = steady_state_mary(
         sim,
         obs=State.TP_SINGLET,

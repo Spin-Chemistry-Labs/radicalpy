@@ -8,7 +8,7 @@ from .simulation import (HilbertIncoherentProcessBase, HilbertSimulation,
 
 
 def steady_state_mary(
-    sim: HilbertSimulation,
+    sim: LiouvilleSimulation,
     obs: State,
     Bs: np.ndarray,
     D: float,
@@ -21,13 +21,20 @@ def steady_state_mary(
 ) -> np.ndarray:
     HZFS = sim.zero_field_splitting_hamiltonian(D, E)
     HJ = sim.exchange_hamiltonian(J)
-    rhos = np.zeros(shape=(len(Bs), *HJ.shape))
+    rhos = np.zeros(shape=(len(Bs), sim.hamiltonian_size))
     Q = sim.projection_operator(obs)
     for i, B in enumerate(tqdm(Bs)):
         HZ = sim.zeeman_hamiltonian_3d(B, theta, phi)
         H = HZ + HZFS + HJ
+        H = sim.convert(H)
         sim.apply_liouville_hamiltonian_modifiers(H, kinetics)  # + relaxations)
-        rhos[i] = np.linalg.solve(H, Q)
-    Phi_s = sim.product_probability(obs, rhos)
+        rhos[i] = np.linalg.solve(H, Q.flatten())
+    # Phi_s = sim.product_probability(obs, rhos)
+    print(f"{Q.shape=}")
+    print(f"{rhos.shape=}")
+    # Phi_s = np.sum(Q * rhos, axis=(-1, -2))
+    Phi_s = Q.flatten() @ rhos.T
+    # print(f"{(Q * rhos).shape=}")
+    print(f"{Phi_s.shape=}")
 
     return rhos, Phi_s
