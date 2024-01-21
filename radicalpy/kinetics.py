@@ -1,14 +1,9 @@
 """Kinetics classes."""
-from math import prod
 
 import numpy as np
 
-from .simulation import (
-    HilbertIncoherentProcessBase,
-    LiouvilleIncoherentProcessBase,
-    LiouvilleSimulation,
-    State,
-)
+from .simulation import (HilbertIncoherentProcessBase, LiouvilleIncoherentProcessBase,
+                         LiouvilleSimulation, State)
 
 
 class HilbertKineticsBase(HilbertIncoherentProcessBase):
@@ -117,7 +112,7 @@ class HaberkornFree(LiouvilleKineticsBase):
 
     def init(self, sim: LiouvilleSimulation):
         """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
-        size = prod(p.multiplicity for p in sim.particles) ** 2
+        size = np.prod(p.multiplicity for p in sim.particles) ** 2
         self.subH = self.rate * np.eye(size)
 
 

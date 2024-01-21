@@ -43,7 +43,7 @@ max-line-length = 88
 disable = ["C0103"]
 
 [tool.isort]
-line-length = 88
+line_length = 88
 
 [tool.mypy]
 plugins = ["numpy.typing.mypy_plugin"]
