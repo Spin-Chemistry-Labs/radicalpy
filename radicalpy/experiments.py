@@ -9,34 +9,25 @@ from .simulation import (HilbertIncoherentProcessBase, HilbertSimulation,
 
 def steady_state_mary(
     sim: HilbertSimulation,
-    obs_state: State,
+    obs: State,
     Bs: np.ndarray,
     D: float,
     E: float,
     J: float,
+    theta: float,
+    phi: float,
     kinetics: list[HilbertIncoherentProcessBase] = [],
-    relaxations: list[HilbertIncoherentProcessBase] = [],
+    # relaxations: list[HilbertIncoherentProcessBase] = [],
 ) -> np.ndarray:
-    theta = np.pi / 4
-    phi = 0
     HZFS = sim.zero_field_splitting_hamiltonian(D, E)
     HJ = sim.exchange_hamiltonian(J)
-    Phi_s = np.zeros((len(Bs)), dtype=complex)
-    Ps = sim.projection_operator(State.TP_SINGLET)
+    rhos = np.zeros(shape=(len(Bs), *HJ.shape))
+    Q = sim.projection_operator(obs)
     for i, B in enumerate(tqdm(Bs)):
         HZ = sim.zeeman_hamiltonian_3d(B, theta, phi)
-        print(f"{HZ.shape=}")
-        print(f"{HZFS.shape=}")
-        print(f"{HJ.shape=}")
         H = HZ + HZFS + HJ
-        sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
-        # HL = ry.Hilbert2Liouville(H)
-        # L = 1j * H + sum(kinetics)
-        rho = np.linalg.solve(H, Ps)  # Density operator
+        sim.apply_liouville_hamiltonian_modifiers(H, kinetics)  # + relaxations)
+        rhos[i] = np.linalg.solve(H, Q)
+    Phi_s = sim.product_probability(obs, rhos)
 
-        print(f"{type(rho)=} {rho.shape=}")
-        print(f"{type(Ps)=} {Ps.shape=}")
-
-        Phi_s[i] = np.matmul(Ps.T, rho)
-
-    return rho, Phi_s
+    return rhos, Phi_s
