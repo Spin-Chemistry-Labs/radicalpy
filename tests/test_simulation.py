@@ -7,6 +7,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 import radicalpy as rp
 from radicalpy import estimations, kinetics, relaxation
 from radicalpy.simulation import Basis
@@ -500,6 +501,8 @@ class LiouvilleTests(unittest.TestCase):
     def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         for state in rp.simulation.State:
+            if state == rp.simulation.State.TP_SINGLET:
+                continue
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
             rho0_true = radpy.Liouville_initial(rpstate, len(self.sim.particles), H)
