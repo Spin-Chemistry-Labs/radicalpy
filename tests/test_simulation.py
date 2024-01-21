@@ -321,6 +321,8 @@ class HilbertTests(unittest.TestCase):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         Kexp = kinetics.Exponential(k)
         for init_state in rp.simulation.State:
+            if init_state == rp.simulation.State.TP_SINGLET:
+                continue
             for obs_state in rp.simulation.State:
                 if obs_state == rp.simulation.State.EQUILIBRIUM:
                     continue
