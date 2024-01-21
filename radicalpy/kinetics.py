@@ -1,3 +1,4 @@
+"""Kinetics classes."""
 from math import prod
 
 import numpy as np
@@ -28,7 +29,8 @@ class LiouvilleKineticsBase(LiouvilleIncoherentProcessBase):
 
     @staticmethod
     def _convert(Q: np.ndarray) -> np.ndarray:
-        return np.kron(Q, np.eye(len(Q))) + np.kron(np.eye(len(Q)), Q)
+        eye = np.eye(len(Q))
+        return np.kron(Q, eye) + np.kron(eye, Q)
 
 
 class Exponential(HilbertKineticsBase):
