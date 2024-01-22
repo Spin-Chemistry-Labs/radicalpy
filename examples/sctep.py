@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from radicalpy.data import Isotope, Molecule, Nucleus, Triplet
+from radicalpy.data import Triplet
 from radicalpy.experiments import steady_state_mary
 from radicalpy.kinetics import Haberkorn, HaberkornFree
 from radicalpy.simulation import Basis, LiouvilleSimulation, State
