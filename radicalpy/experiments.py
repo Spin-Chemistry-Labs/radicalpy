@@ -19,8 +19,8 @@ def steady_state_mary(
     kinetics: list[HilbertIncoherentProcessBase] = [],
     # relaxations: list[HilbertIncoherentProcessBase] = [],
 ) -> np.ndarray:
-    HZFS = sim.zero_field_splitting_hamiltonian(D, E)
-    HJ = sim.exchange_hamiltonian(J)
+    HZFS = sim.zero_field_splitting_hamiltonian(-D, -E)
+    HJ = sim.exchange_hamiltonian(-J, prod_coeff=1)
     rhos = np.zeros(shape=(len(Bs), sim.hamiltonian_size))
     Q = sim.projection_operator(obs)
     for i, B in enumerate(tqdm(Bs)):

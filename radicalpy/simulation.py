@@ -473,7 +473,7 @@ class HilbertSimulation:
             )
         )
 
-    def exchange_hamiltonian(self, J: float) -> np.ndarray:
+    def exchange_hamiltonian(self, J: float, prod_coeff: float = 2) -> np.ndarray:
         """Construct the exchange Hamiltonian.
 
         Construct the exchange (J-coupling) Hamiltonian based on the
@@ -488,6 +488,10 @@ class HilbertSimulation:
 
             J (float): Exchange coupling constant.
 
+            prod_coeff (float): Coefficient of the product operator
+                (default, radical-pair convention uses 2.0,
+                spintronics convention uses 1.0).
+
         Returns:
             np.ndarray:
 
@@ -498,7 +502,7 @@ class HilbertSimulation:
         """
         Jcoupling = J * self.radicals[0].gamma_mT
         SASB = self.product_operator(0, 1)
-        return Jcoupling * (2 * SASB + 0.5 * np.eye(SASB.shape[0]))
+        return Jcoupling * (prod_coeff * SASB + 0.5 * np.eye(SASB.shape[0]))
 
     def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
