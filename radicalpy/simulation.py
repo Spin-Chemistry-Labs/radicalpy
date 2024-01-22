@@ -594,7 +594,7 @@ class HilbertSimulation:
         )
 
     def zero_field_splitting_hamiltonian(self, D, E) -> np.ndarray:
-        """Construct the Zero Field Splitting (ZFS) Hamiltoninan."""
+        """Construct the Zero Field Splitting (ZFS) Hamiltonian."""
         result = complex(0.0)
         for idx, p in enumerate(self.particles):
             Sx = self.spin_operator(idx, "x")
