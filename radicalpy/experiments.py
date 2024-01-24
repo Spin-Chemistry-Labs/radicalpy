@@ -3,8 +3,7 @@
 import numpy as np
 from tqdm import tqdm
 
-from .simulation import (HilbertIncoherentProcessBase, HilbertSimulation,
-                         LiouvilleSimulation, State)
+from .simulation import HilbertIncoherentProcessBase, LiouvilleSimulation, State
 
 
 def steady_state_mary(
@@ -19,7 +18,7 @@ def steady_state_mary(
     kinetics: list[HilbertIncoherentProcessBase] = [],
     # relaxations: list[HilbertIncoherentProcessBase] = [],
 ) -> np.ndarray:
-    HZFS = sim.zero_field_splitting_hamiltonian(-D, -E)
+    HZFS = sim.zero_field_splitting_hamiltonian(D, E)
     HJ = sim.exchange_hamiltonian(-J, prod_coeff=1)
     rhos = np.zeros(shape=(len(Bs), sim.hamiltonian_size))
     Q = sim.projection_operator(obs)

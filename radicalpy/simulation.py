@@ -595,8 +595,8 @@ class HilbertSimulation:
 
     def zero_field_splitting_hamiltonian(self, D, E) -> np.ndarray:
         """Construct the Zero Field Splitting (ZFS) Hamiltonian."""
-        Dmod = D * self.radicals[0].gamma_mT
-        Emod = E * self.radicals[0].gamma_mT
+        Dmod = D * -self.radicals[0].gamma_mT
+        Emod = E * -self.radicals[0].gamma_mT
         result = complex(0.0)
         for idx, p in enumerate(self.particles):
             Sx = self.spin_operator(idx, "x")
