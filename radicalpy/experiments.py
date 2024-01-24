@@ -30,13 +30,5 @@ def steady_state_mary(
         sim.apply_liouville_hamiltonian_modifiers(H, kinetics)  # + relaxations)
         rhos[i] = np.linalg.solve(H, Q.flatten())
 
-    # Phi_s = sim.product_probability(obs, rhos)
-    print(f"{Q.shape=}")
-    print(f"{rhos.shape=}")
-    # Phi_s = np.sum(Q * rhos, axis=(-1, -2))
-    print(f"{Q.shape=} {rhos.shape=}")
     Phi_s = rhos @ Q.flatten()
-    # print(f"{(Q * rhos).shape=}")
-    print(f"{Phi_s.shape=}")
-
     return rhos, Phi_s
