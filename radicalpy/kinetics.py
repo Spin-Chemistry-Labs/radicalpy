@@ -1,13 +1,9 @@
-from math import prod
+"""Kinetics classes."""
 
 import numpy as np
 
-from .simulation import (
-    HilbertIncoherentProcessBase,
-    LiouvilleIncoherentProcessBase,
-    LiouvilleSimulation,
-    State,
-)
+from .simulation import (HilbertIncoherentProcessBase, LiouvilleIncoherentProcessBase,
+                         LiouvilleSimulation, State)
 
 
 class HilbertKineticsBase(HilbertIncoherentProcessBase):
@@ -24,10 +20,6 @@ class LiouvilleKineticsBase(LiouvilleIncoherentProcessBase):
     def _name(self):
         name = super()._name()
         return f"Kinetics: {name}"
-
-    @staticmethod
-    def _convert(Q: np.ndarray) -> np.ndarray:
-        return np.kron(Q, np.eye(len(Q))) + np.kron(np.eye(len(Q)), Q)
 
 
 class Exponential(HilbertKineticsBase):
@@ -79,7 +71,15 @@ class Haberkorn(LiouvilleKineticsBase):
     def __init__(self, rate_constant: float, target: State):
         super().__init__(rate_constant)
         self.target = target
-        if target not in {State.SINGLET, State.TRIPLET}:
+        if target not in {
+            State.SINGLET,
+            State.TP_SINGLET,
+            State.TRIPLET,
+            State.TRIPLET_MINUS,
+            State.TRIPLET_PLUS,
+            State.TRIPLET_PLUS_MINUS,
+            State.TRIPLET_ZERO,
+        }:
             raise ValueError(
                 "Haberkorn kinetics supports only SINGLET and TRIPLET targets"
             )
@@ -87,7 +87,7 @@ class Haberkorn(LiouvilleKineticsBase):
     def init(self, sim: LiouvilleSimulation):
         """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
         Q = sim.projection_operator(self.target)
-        self.subH = 0.5 * self.rate * self._convert(Q)
+        self.subH = 0.5 * self.rate * sim._convert(Q)
 
     def __repr__(self):
         lines = [
@@ -112,8 +112,7 @@ class HaberkornFree(LiouvilleKineticsBase):
 
     def init(self, sim: LiouvilleSimulation):
         """See `radicalpy.simulation.HilbertIncoherentProcessBase.init`."""
-        size = prod(p.multiplicity for p in sim.particles) ** 2
-        self.subH = self.rate * np.eye(size)
+        self.subH = self.rate * np.eye(sim.hamiltonian_size)
 
 
 class JonesHore(LiouvilleKineticsBase):
@@ -143,8 +142,8 @@ class JonesHore(LiouvilleKineticsBase):
         QS = sim.projection_operator(State.SINGLET)
         QT = sim.projection_operator(State.TRIPLET)
         self.subH = (
-            0.5 * self.singlet_rate * self._convert(QS)
-            + 0.5 * self.triplet_rate * self._convert(QT)
+            0.5 * self.singlet_rate * sim._convert(QS)
+            + 0.5 * self.triplet_rate * sim._convert(QT)
             + (0.5 * (self.singlet_rate + self.triplet_rate))
             * (np.kron(QS, QT) + np.kron(QT, QS))
         )

@@ -32,15 +32,18 @@ dependencies = {file = ["requirements.txt"]}
 [tool.setuptools.package-data]
 "*" = ["*.json"]
 
-[tool.black]
-line-length = 88
-
 [tool.pydocstyle]
 convention = "google"
+
+[tool.black]
+line-length = 88
 
 [tool.pylint]
 max-line-length = 88
 disable = ["C0103"]
+
+[tool.isort]
+line_length = 88
 
 [tool.mypy]
 plugins = ["numpy.typing.mypy_plugin"]
