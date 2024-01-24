@@ -24,16 +24,18 @@ def steady_state_mary(
     rhos = np.zeros(shape=(len(Bs), sim.hamiltonian_size))
     Q = sim.projection_operator(obs)
     for i, B in enumerate(tqdm(Bs)):
-        HZ = sim.zeeman_hamiltonian_3d(B, theta, phi)
+        HZ = sim.zeeman_hamiltonian(B, theta=theta, phi=phi)
         H = HZ + HZFS + HJ
         H = sim.convert(H)
         sim.apply_liouville_hamiltonian_modifiers(H, kinetics)  # + relaxations)
         rhos[i] = np.linalg.solve(H, Q.flatten())
+
     # Phi_s = sim.product_probability(obs, rhos)
     print(f"{Q.shape=}")
     print(f"{rhos.shape=}")
     # Phi_s = np.sum(Q * rhos, axis=(-1, -2))
-    Phi_s = Q.flatten() @ rhos.T
+    print(f"{Q.shape=} {rhos.shape=}")
+    Phi_s = rhos @ Q.flatten()
     # print(f"{(Q * rhos).shape=}")
     print(f"{Phi_s.shape=}")
 
