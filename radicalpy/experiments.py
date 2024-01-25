@@ -4,6 +4,43 @@ import numpy as np
 from tqdm import tqdm
 
 from .simulation import HilbertIncoherentProcessBase, LiouvilleSimulation, State
+from .utils import mary_lorentzian, modulated_signal, reference_signal
+
+
+def modulated_mary_brute_force(
+    Bs: np.ndarray,
+    modulation_depths: list,
+    modulation_frequency: float,
+    time_constant: float,
+    harmonics: list,
+    lfe_magnitude: float,
+) -> np.ndarray:
+    t = np.linspace(-3 * time_constant, 0, 100)  # Simulate over 10 time constants
+    S = np.zeros([len(harmonics), len(modulation_depths), len(Bs)])
+    sa = 0
+
+    for i, h in enumerate(tqdm(harmonics)):
+        for j, md in enumerate(modulation_depths):
+            for k, B in enumerate(Bs):
+                for l in range(0, 20):  # Randomise phase
+                    theta = 2 * np.pi * np.random.rand()
+
+                    # Calculate the modulated signal
+                    ms = B + md * modulated_signal(t, theta, modulation_frequency)
+                    s = mary_lorentzian(ms, lfe_magnitude)
+                    s = s - np.mean(s)  # Signal (AC coupled)
+
+                    # Calculate the reference signal
+                    envelope = np.exp(t / time_constant) / time_constant  # Envelope
+                    r = (
+                        reference_signal(t, h, theta, modulation_frequency) * envelope
+                    )  # Reference * envelope
+
+                    # Calculate the MARY spectra
+                    sa = sa + np.trapz(t, s * r)  # Integrate
+                sa = sa
+                S[i, j, k] = sa * np.sqrt(2)  # RMS signal
+    return S
 
 
 def steady_state_mary(
