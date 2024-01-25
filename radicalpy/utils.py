@@ -295,7 +295,9 @@ def mT_to_angular_frequency(mT: float) -> float:
     return mT * (C.mu_B / C.hbar * -C.g_e / 1e9)
 
 
-def reference_signal(timeconstant: np.ndarray, harmonic: float, theta: float, frequency: float):
+def reference_signal(
+    timeconstant: np.ndarray, harmonic: float, theta: float, frequency: float
+):
     """Modulated MARY reference signal.
 
     Used for brute force modulated MARY simulations.
