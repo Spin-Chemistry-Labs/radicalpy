@@ -2,8 +2,12 @@
 
 import numpy as np
 
-from .simulation import (HilbertIncoherentProcessBase, LiouvilleIncoherentProcessBase,
-                         LiouvilleSimulation, State)
+from .simulation import (
+    HilbertIncoherentProcessBase,
+    LiouvilleIncoherentProcessBase,
+    LiouvilleSimulation,
+    State,
+)
 
 
 class HilbertKineticsBase(HilbertIncoherentProcessBase):
