@@ -110,6 +110,21 @@ def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
     return (amplitude / Bhalf**2) - (amplitude / (B**2 + Bhalf**2))
 
 
+def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
+    """Lorentzian MARY spectral shape.
+
+    Used for brute force modulated MARY simulations.
+
+    Args:
+            mod_signal (np.ndarray): The modulated signal.
+            lfe_magnitude (float): The magnitude of your low field effect (G).
+
+    Returns:
+            np.ndarray: The modulated MARY signal.
+    """
+    return 1 / (1 + mod_signal**2) - lfe_magnitude / (0.1 + mod_signal**2)
+
+
 def MHz_in_angular_frequency(MHz: float) -> float:
     """Convert MHz into angular frequency.
 
@@ -144,6 +159,22 @@ def MHz_to_mT(MHz: float) -> float:
             float: Megahertz (MHz) converted to millitesla (mT).
     """
     return MHz / (1e-9 * -C.g_e * C.mu_B / C.h)
+
+
+def modulated_signal(timeconstant: np.ndarray, theta: float, frequency: float):
+    """Modulated MARY signal.
+
+    Used for brute force modulated MARY simulations.
+
+    Args:
+            timeconstant (np.ndarray): The modulation time constant (s).
+            theta (float): The modulation phase (rad).
+            frequency (float): The modulation frequency (Hz).
+
+    Returns:
+            np.ndarray: The modulated signal.
+    """
+    return np.cos(frequency * timeconstant * (2 * np.pi) + theta)
 
 
 def angular_frequency_in_MHz(ang_freq: float) -> float:
@@ -262,6 +293,25 @@ def mT_to_angular_frequency(mT: float) -> float:
             float: The magnetic flux density converted to angular frequency (rad/s/T).
     """
     return mT * (C.mu_B / C.hbar * -C.g_e / 1e9)
+
+
+def reference_signal(
+    timeconstant: np.ndarray, harmonic: float, theta: float, frequency: float
+):
+    """Modulated MARY reference signal.
+
+    Used for brute force modulated MARY simulations.
+
+    Args:
+            timeconstant (np.ndarray): The modulation time constant (s).
+            harmonic (float): The harmonic of the modulation.
+            theta (float): The modulation phase (rad).
+            frequency (float): The modulation frequency (Hz).
+
+    Returns:
+            np.ndarray: The modulated reference signal.
+    """
+    return np.cos(harmonic * frequency * timeconstant * (2 * np.pi) + harmonic * theta)
 
 
 def spectral_density(omega: float, tau_c: float) -> float:

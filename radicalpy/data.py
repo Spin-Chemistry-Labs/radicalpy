@@ -515,3 +515,10 @@ class Molecule:
         spns_np = np.array(list(map(multiplicity_to_spin, multiplicities)))
         hfcs_np = np.array([h.isotropic for h in hfcs])
         return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
+
+
+class Triplet(Molecule):
+    def __init__(self):
+        gamma = Isotope("E").gamma_mT
+        triplet = Nucleus(magnetogyric_ratio=gamma, multiplicity=3, hfc=0.0)
+        super().__init__(name="Triplet", nuclei=[], radical=triplet)
