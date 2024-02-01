@@ -21,6 +21,7 @@ class State(enum.Enum):
     TRIPLET_PLUS = "T_+"
     TRIPLET_PLUS_MINUS = "T_\\pm"
     TRIPLET_MINUS = "T_-"
+    TP_SINGLET = "TP_S"
 
 
 class Basis(enum.Enum):
@@ -103,6 +104,10 @@ class HilbertSimulation:
     @property
     def particles(self):
         return self.radicals + self.nuclei
+
+    @property
+    def hamiltonian_size(self):
+        return np.prod([p.multiplicity for p in self.particles])
 
     def __repr__(self) -> str:
         return "\n".join(
@@ -206,10 +211,10 @@ class HilbertSimulation:
         assert axis in "xyzpmu"
 
         sigma = self.pauli(self.particles[idx].multiplicity)[axis]
-        eye_before = np.eye(prod(p.multiplicity for p in self.particles[:idx]))
-        eye_after = np.eye(prod(p.multiplicity for p in self.particles[idx + 1 :]))
-
-        spinop = np.kron(np.kron(eye_before, sigma), eye_after)
+        before_size = prod(p.multiplicity for p in self.particles[:idx])
+        after_size = prod(p.multiplicity for p in self.particles[idx + 1 :])
+        spinop = np.kron(np.eye(before_size), sigma)
+        spinop = np.kron(spinop, np.eye(after_size))
         if self.basis == Basis.ST:
             return self.ST_basis(spinop)
         else:
@@ -305,8 +310,21 @@ class HilbertSimulation:
             State.TRIPLET_PLUS_MINUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
             + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
             State.EQUILIBRIUM: 1.05459e-34 / (1.38e-23 * 298),
+            State.TP_SINGLET: self.tp_singlet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
         }
+
         return result[state]
+
+    def tp_singlet_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        # For radical triplet pair (RTP)
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)  #
+        return (
+            (1 / 12)
+            * (Ssquared - (6 * np.eye(len(SAx))))
+            @ (Ssquared - (2 * np.eye(len(SAx))))
+        )
 
     def zeeman_hamiltonian(
         self, B0: float, theta: Optional[float] = None, phi: Optional[float] = None
@@ -455,7 +473,7 @@ class HilbertSimulation:
             )
         )
 
-    def exchange_hamiltonian(self, J: float) -> np.ndarray:
+    def exchange_hamiltonian(self, J: float, prod_coeff: float = 2) -> np.ndarray:
         """Construct the exchange Hamiltonian.
 
         Construct the exchange (J-coupling) Hamiltonian based on the
@@ -470,6 +488,10 @@ class HilbertSimulation:
 
             J (float): Exchange coupling constant.
 
+            prod_coeff (float): Coefficient of the product operator
+                (default, radical-pair convention uses 2.0,
+                spintronics convention uses 1.0).
+
         Returns:
             np.ndarray:
 
@@ -480,7 +502,7 @@ class HilbertSimulation:
         """
         Jcoupling = J * self.radicals[0].gamma_mT
         SASB = self.product_operator(0, 1)
-        return Jcoupling * (2 * SASB + 0.5 * np.eye(SASB.shape[0]))
+        return Jcoupling * (prod_coeff * SASB + 0.5 * np.eye(SASB.shape[0]))
 
     def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
@@ -570,6 +592,20 @@ class HilbertSimulation:
                 for ni, ei in enumerate(self.coupling)
             )
         )
+
+    def zero_field_splitting_hamiltonian(self, D, E) -> np.ndarray:
+        """Construct the Zero Field Splitting (ZFS) Hamiltonian."""
+        Dmod = D * -self.radicals[0].gamma_mT
+        Emod = E * -self.radicals[0].gamma_mT
+        result = complex(0.0)
+        for idx, p in enumerate(self.particles):
+            Sx = self.spin_operator(idx, "x")
+            Sy = self.spin_operator(idx, "y")
+            Sz = self.spin_operator(idx, "z")
+            Ssquared = Sx @ Sx + Sy @ Sy + Sz @ Sz
+            result += Dmod * (Sz @ Sz - (1 / 3) * Ssquared)
+            result += Emod * ((Sx @ Sx) - (Sy @ Sy))
+        return result
 
     def total_hamiltonian(
         self,
@@ -670,8 +706,8 @@ class HilbertSimulation:
         """Calculate the probability of the observable from the densities."""
         if obs == State.EQUILIBRIUM:
             raise ValueError("Observable state should not be EQUILIBRIUM")
-        obs = self.observable_projection_operator(obs)
-        return np.real(np.trace(obs @ rhos, axis1=-2, axis2=-1))
+        Q = self.observable_projection_operator(obs)
+        return np.real(np.trace(Q @ rhos, axis1=-2, axis2=-1))
 
     @staticmethod
     def product_yield(product_probability, time, k):
@@ -938,6 +974,10 @@ class HilbertSimulation:
     def convert(H: np.ndarray) -> np.ndarray:
         return H
 
+    @staticmethod
+    def _convert(Q: np.ndarray) -> np.ndarray:
+        return Q
+
     def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
         """Create an initial desity matrix.
 
@@ -1043,7 +1083,17 @@ class LiouvilleSimulation(HilbertSimulation):
     def convert(H: np.ndarray) -> np.ndarray:
         """Convert the Hamiltonian from Hilbert to Liouville space."""
         eye = np.eye(len(H))
-        return 1j * (np.kron(H, eye) - np.kron(eye, H.T))
+        tmp = np.kron(H, eye) - np.kron(eye, H.T)
+        return 1j * tmp
+
+    @staticmethod
+    def _convert(Q: np.ndarray) -> np.ndarray:
+        eye = np.eye(len(Q))
+        return np.kron(Q, eye) + np.kron(eye, Q)
+
+    @property
+    def hamiltonian_size(self):
+        return super().hamiltonian_size ** 2
 
     @staticmethod
     def _square_liouville_rhos(rhos):
