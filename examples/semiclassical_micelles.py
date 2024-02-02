@@ -7,7 +7,7 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy.data import Molecule
-from radicalpy.simulation import LiouvilleSimulation, State
+from radicalpy.simulation import HilbertSimulation, State
 
 
 def main(data_path="./examples/data/md_fad_trp_aot"):
@@ -66,9 +66,9 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     krec = 8e6  # recombination rate
     kesc = 5e5  # escape rate
 
-    flavin = rp.simulation.Molecule.semiclassical_schulten_wolynes("flavin_anion")
-    trp = rp.simulation.Molecule.semiclassical_schulten_wolynes("tryptophan_cation")
-    sim = rp.simulation.HilbertSimulation([flavin, trp], basis="Zeeman")
+    flavin = Molecule.semiclassical_schulten_wolynes("flavin_anion")
+    trp = Molecule.semiclassical_schulten_wolynes("tryptophan_cation")
+    sim = HilbertSimulation([flavin, trp], basis="Zeeman")
 
     time = np.arange(0, 10e-6, 10e-9)
     Bs = np.arange(0, 50, 1)
