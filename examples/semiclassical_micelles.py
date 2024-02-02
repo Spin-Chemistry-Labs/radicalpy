@@ -4,18 +4,14 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 import radicalpy as rp
 from radicalpy.data import Molecule
 from radicalpy.simulation import LiouvilleSimulation, State
 
 
-def main():
-
-    # Import MD data and calculate the exchange interaction
-    current_directory = ""
-    file_list = Path(current_directory).glob("CTCD_dist_*.dat")
-    data = [np.genfromtxt(file_path) for file_path in file_list]
-    all_data = np.concatenate(data, axis=0) * 1e-10
+def main(data_path="./examples/data/md_fad_trp_aot"):
+    all_data = rp.utils.read_trajectory_files(data_path)
 
     time = np.linspace(0, len(all_data), len(all_data)) * 5e-12 * 1e9
     j = rp.estimations.exchange_interaction_in_solution_MC(all_data[:, 1], J0=5)
@@ -46,10 +42,10 @@ def main():
     t_j_max = max(time[:zero_point_crossing_j]) * 1e-9
     t_j = np.linspace(5e-12, t_j_max, zero_point_crossing_j)
 
-    acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
+    acf_j_fit = rp.estimations.autocorrelation_fit(t_j, j, 5e-12, t_j_max)
     acf_j_fit["tau_c"]
     kstd = rp.estimations.k_STD(j, acf_j_fit["tau_c"])
-    k_STD = np.mean(kstd) # singlet-triplet dephasing rate
+    k_STD = np.mean(kstd)  # singlet-triplet dephasing rate
 
     fig = plt.figure(2)
     ax = fig.add_axes([0, 0, 1, 1])
@@ -57,7 +53,7 @@ def main():
     ax.grid(False)
     plt.axis("on")
     plt.xscale("log")
-    .rc("axes", edgecolor="black")
+    # .rc("axes", edgecolor="black")
     plt.plot(t_j, acf_j[0:zero_point_crossing_j], color="tab:blue", linewidth=3)
     plt.plot(t_j, acf_j_fit["fit"], color="black", linestyle="dashed", linewidth=2)
     ax.set_xlabel(r"$\tau$ (s)", size=24)
@@ -70,8 +66,8 @@ def main():
     krec = 8e6  # recombination rate
     kesc = 5e5  # escape rate
 
-    flavin = rp.simulation.Molecule.fromdb(name="flavin_anion", nuclei=["semiclassical_schulten-wolynes"])
-    trp = rp.simulation.Molecule.fromdb(name="tryptophan_cation", nuclei=["semiclassical_schulten-wolynes"])
+    flavin = rp.simulation.Molecule.semiclassical_schulten_wolynes("flavin_anion")
+    trp = rp.simulation.Molecule.semiclassical_schulten_wolynes("tryptophan_cation")
     sim = rp.simulation.HilbertSimulation([flavin, trp], basis="Zeeman")
 
     time = np.arange(0, 10e-6, 10e-9)
@@ -113,7 +109,11 @@ def main():
     for i in range(2, len(time), 35):
         plt.plot(time[i] * factor, bhalf_time[i], "ro", linewidth=3)
         plt.errorbar(
-            time[i] * factor, bhalf_time[i], fit_error_time[1, i], color="k", linewidth=2
+            time[i] * factor,
+            bhalf_time[i],
+            fit_error_time[1, i],
+            color="k",
+            linewidth=2,
         )
     plt.xlabel("Time ($\mu s$)", size=18)
     plt.ylabel("$B_{1/2}$ (mT)", size=18)
@@ -128,7 +128,12 @@ def main():
     ax.grid(False)
     X, Y = np.meshgrid(Bs, time)
     ax.plot_surface(
-        X, Y * factor, results["MARY"], facecolors=cmap.to_rgba(mary_2.real), rstride=1, cstride=1
+        X,
+        Y * factor,
+        results["MARY"],
+        facecolors=cmap.to_rgba(mary_2.real),
+        rstride=1,
+        cstride=1,
     )
     ax.set_xlabel("$B_0$ (mT)", size=18)
     ax.set_ylabel("Time ($\mu s$)", size=18)

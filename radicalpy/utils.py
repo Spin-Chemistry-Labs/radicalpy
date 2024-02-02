@@ -4,6 +4,7 @@
 
 .. todo:: Add module docstring.
 """
+from pathlib import Path
 from typing import Tuple
 
 import numpy as np
@@ -441,3 +442,8 @@ def yield_anisotropy(
     yield_av = spherical_average(product_yield, theta, phi)
     gamma = delta_phi / yield_av
     return delta_phi, gamma
+
+
+def read_trajectory_files(path: Path, scale=1e-10):
+    data = [np.genfromtxt(file_path) for file_path in Path(path).glob("*")]
+    return scale * np.concatenate(data, axis=0)
