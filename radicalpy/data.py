@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import json
+import logging
 from functools import singledispatchmethod
 from typing import Optional
 
@@ -7,6 +8,10 @@ import numpy as np
 from importlib_resources import files
 from importlib_resources.abc import Traversable
 from numpy.typing import NDArray
+
+logger = logging.getLogger(__name__)
+print(f"{logger.name=}")
+print(f"{logger.parent.name=}")
 
 
 def spin_to_multiplicity(spin: float) -> int:
