@@ -39,7 +39,7 @@ def multiplicity_to_spin(multiplicity: int) -> float:
 
 def get_data(suffix: str = "") -> Traversable:
     """Get the directory containing data files."""
-    return files(__package__) / "data" / suffix
+    return files(__package__) / "data_files" / suffix
 
 
 class Isotope:
