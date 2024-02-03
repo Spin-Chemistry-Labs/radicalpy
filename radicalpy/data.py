@@ -423,6 +423,58 @@ class Molecule:
         return sorted([path.with_suffix("").name for path in paths])
 
     @classmethod
+    def _check_molecule_available(cls, name):
+        if name not in cls.available():
+            lines = [f"Molecule `{name}` not found in database."]
+            lines += ["Available molecules:"]
+            lines += cls.available()
+            raise ValueError("\n".join(lines))
+
+    @classmethod
+    def all_nuclei(cls, name: str):
+        """Construct a molecule from the database with all nuclei.
+
+        Args:
+            name (str): A name of the molecule available in the
+                database (see `Molecule.available()`).
+
+        Examples:
+            >>> Molecule.all_nuclei("flavin_anion")
+            Molecule: flavin_anion
+            Nuclei:
+              14N(19337792.0, 3, 0.5141 <anisotropic available>)
+              14N(19337792.0, 3, -0.001275 <anisotropic available>)
+              14N(19337792.0, 3, -0.03654 <anisotropic available>)
+              1H(267522187.44, 2, 0.05075 <anisotropic available>)
+              1H(267522187.44, 2, -0.1371 <anisotropic available>)
+              1H(267522187.44, 2, -0.1371 <anisotropic available>)
+              1H(267522187.44, 2, -0.1371 <anisotropic available>)
+              1H(267522187.44, 2, -0.4403 <anisotropic available>)
+              1H(267522187.44, 2, 0.4546 <anisotropic available>)
+              1H(267522187.44, 2, 0.4546 <anisotropic available>)
+              1H(267522187.44, 2, 0.4546 <anisotropic available>)
+              1H(267522187.44, 2, 0.009597 <anisotropic available>)
+              1H(267522187.44, 2, 0.4263 <anisotropic available>)
+              1H(267522187.44, 2, 0.4233 <anisotropic available>)
+              1H(267522187.44, 2, -0.02004 <anisotropic available>)
+              14N(19337792.0, 3, 0.1784 <anisotropic available>)
+            Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
+            Info: {'units': 'mT', 'name': 'Flavin radical anion'}
+        """
+        cls._check_molecule_available(name)
+        molecule_json = cls.load_molecule_json(name)
+        info = molecule_json["info"]
+        data = molecule_json["data"]
+        nuclei_list = []
+        for nucleus in data.keys():
+            isotope = data[nucleus]["element"]
+            hfc = data[nucleus]["hfc"]
+            nuclei_list.append(Nucleus.fromisotope(isotope, hfc))
+        molecule = cls(name=name, nuclei=nuclei_list, info=info)
+        molecule.custom = False
+        return molecule
+
+    @classmethod
     def fromdb(cls, name: str, nuclei: list[str] = []):
         """Construct a molecule from the database.
 
@@ -440,11 +492,7 @@ class Molecule:
             Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
             Info: {'units': 'mT', 'name': 'Flavin radical anion'}
         """
-        if name not in cls.available():
-            lines = [f"Molecule `{name}` not found in database."]
-            lines += ["Available molecules:"]
-            lines += cls.available()
-            raise ValueError("\n".join(lines))
+        cls._check_molecule_available(name)
         molecule_json = cls.load_molecule_json(name)
         info = molecule_json["info"]
         data = molecule_json["data"]
