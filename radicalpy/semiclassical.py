@@ -2,6 +2,7 @@
 import numpy as np
 
 import radicalpy as rp
+from radicalpy.data import Molecule
 
 H, N = 0.5, 1
 FAD_spin = [N, N, N, N, H, H, H, H, H, H, H, H, H, H, H, H, H, H, H, H, H]
@@ -66,11 +67,20 @@ def angle(num_samples):
         yield theta, phi
 
 
+def cmp_hfcs(mol, hfcs):
+    mol_sorted = sorted(FAD.nuclei, key=lambda k: k.hfc.isotropic)
+    hfcs_sorted = sorted(FAD_HFCs)
+    for n1, n2 in zip(mol_sorted, hfcs_sorted):
+        print(f"{n1.hfc.isotropic:10.4}, {n2:10.4}")
+
+
 if __name__ == "__main__":
     sample_number = 10
     np.random.seed(42)
-    theta, phi = semiclassical_theta_phi(sample_number)
-    np.random.seed(42)
-    for i, (t, p, (tt, pp)) in enumerate(zip(theta, phi, angle(sample_number))):
-        print(f"{t-tt=} {p-pp=} {tt=} {pp=}")
-    FAD = rp.data.Molecule.fromdb("FAD")
+    FAD = Molecule.all_nuclei("flavin_anion")
+    Trp = Molecule.all_nuclei("tryptophan_cation")
+    print(f"{len(FAD.nuclei)=}")
+    print(f"{len(FAD_HFCs)=}")
+    print(f"{len(Trp.nuclei)=}")
+    print(f"{len(Trp_HFCs)=}")
+    cmp_hfcs(FAD, FAD_HFCs)
