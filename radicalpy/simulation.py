@@ -1205,4 +1205,6 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):
-    pass
+    @property
+    def nuclei(self):
+        return []
