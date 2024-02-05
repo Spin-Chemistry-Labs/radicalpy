@@ -306,6 +306,11 @@ class Nucleus:
         """Return magnetogyric ratio, :math:`\gamma` (rad/s/mT)."""
         return self.magnetogyric_ratio * 0.001
 
+    @property
+    def spin_quantum_number(self) -> float:
+        """Spin quantum numer of `Isotope`."""
+        return multiplicity_to_spin(self.multiplicity)
+
 
 class Molecule:
     """Representation of a molecule for the simulation.
