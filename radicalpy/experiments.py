@@ -68,3 +68,65 @@ def steady_state_mary(
 
     Phi_s = rhos @ Q.flatten()
     return rhos, Phi_s
+
+
+def semiclassical_mary(
+    sim, num_samples, init_state, obs_state, time, B0, D, J, kinetics, relaxations
+):
+    for i, B0 in enumerate(tqdm(B)):
+        for j in range(0, sample_number):
+            FAD_omegax = (
+                FAD_gamma * FAD_I[j] * np.sin(FAD_theta[j]) * np.cos(FAD_phi[j])
+            )
+            Trp_omegax = (
+                Trp_gamma * Trp_I[j] * np.sin(Trp_theta[j]) * np.cos(Trp_phi[j])
+            )
+            hamiltonian_x = FAD_omegax * FAD_Sx + Trp_omegax * Trp_Sx
+
+            FAD_omegay = (
+                FAD_gamma * FAD_I[j] * np.sin(FAD_theta[j]) * np.sin(FAD_phi[j])
+            )
+            Trp_omegay = (
+                Trp_gamma * Trp_I[j] * np.sin(Trp_theta[j]) * np.sin(Trp_phi[j])
+            )
+            hamiltonian_y = FAD_omegay * FAD_Sy + Trp_omegay * Trp_Sy
+
+            FAD_omegaz = FAD_gamma * (B0 + FAD_I[j] * np.cos(FAD_theta[j]))
+            Trp_omegaz = Trp_gamma * (B0 + Trp_I[j] * np.cos(Trp_theta[j]))
+            hamiltonian_z = FAD_omegaz * FAD_Sz + Trp_omegaz * Trp_Sz
+
+            HZ = hamiltonian_x + hamiltonian_y + hamiltonian_z
+            HZL = rp.simulation.LiouvilleSimulation.convert(HZ)
+            sim.apply_liouville_hamiltonian_modifiers(HZL, kinetics + relaxation)
+            L = HZL
+
+            propagator = sp.sparse.linalg.expm(L * dt)
+
+            FR_initial_population = 0  # free radical
+            triplet_initial_population = 1  # triplet excited state
+
+            initial_temp = np.reshape(initial / 3, (M, 1))
+            initial_density = np.reshape(np.zeros(16), (M, 1))
+            density = initial_density
+
+            for k in range(0, len(time)):
+                FR_density = density
+                population = np.trace(FR_density)
+                free_radical = FR_initial_population + population * kesc * dt
+                rho = population + free_radical
+                trace[j, k] = np.real(rho)
+                density = (
+                    propagator * density
+                    + triplet_initial_population * (1 - np.exp(-kq * dt)) * initial_temp
+                )
+                triplet_initial_population = triplet_initial_population * np.exp(
+                    -kq * dt
+                )
+
+        average = np.ones(sample_number) * 0.01
+        decay = average @ trace
+        if i == 0:
+            decay0 = np.real(decay)
+
+        mary_1[:, i] = np.real(decay)
+        mary_2[:, i] = np.real(decay - decay0)
