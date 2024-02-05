@@ -4,13 +4,19 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy import testing as npt  # ####################################
 
 import radicalpy as rp
 from radicalpy.data import Molecule
-from radicalpy.simulation import HilbertSimulation, State
+from radicalpy.experiments import semiclassical_mary
+from radicalpy.simulation import SemiclassicalSimulation, State
 
 
 def main(data_path="./examples/data/md_fad_trp_aot"):
+    flavin = Molecule.all_nuclei("flavin_anion")
+    trp = Molecule.all_nuclei("tryptophan_cation")
+    sim = SemiclassicalSimulation([flavin, trp], basis="Zeeman")
+
     all_data = rp.utils.read_trajectory_files(data_path)
 
     time = np.linspace(0, len(all_data), len(all_data)) * 5e-12 * 1e9
@@ -66,27 +72,26 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     krec = 8e6  # recombination rate
     kesc = 5e5  # escape rate
 
-    flavin = Molecule.semiclassical_schulten_wolynes("flavin_anion")
-    trp = Molecule.semiclassical_schulten_wolynes("tryptophan_cation")
-    sim = HilbertSimulation([flavin, trp], basis="Zeeman")
-
     time = np.arange(0, 10e-6, 10e-9)
     Bs = np.arange(0, 50, 1)
 
-    results = sim.MARY(
+    kinetics = [
+        rp.kinetics.Haberkorn(krec, State.SINGLET),
+        rp.kinetics.FreeRadical(kesc),
+        rp.kinetics.ElectronTransfer(kq),
+    ]
+    relaxations = [rp.relaxation.SingletTripletDephasing(kstd)]
+    results = semiclassical_mary(
         init_state=State.TRIPLET,
-        obs_state=State.TRIPLET_AND_FREE_RADICAL,
+        obs_state=State.TRIPLET,
         time=time,
         B0=Bs,
         D=0,
         J=0,
-        kinetics=[
-            rp.kinetics.Haberkorn(krec, State.SINGLET),
-            rp.kinetics.FreeRadical(kesc),
-            rp.kinetics.ElectronTransfer(kq),
-        ],
-        relaxations=[rp.relaxation.SingletTripletDephasing(kstd)],
+        kinetics=kinetics,
+        relaxations=relaxations,
     )
+    results = sim.MARY()
 
     # Calculate time evolution of the B1/2
     bhalf_time = np.zeros((len(results)))
