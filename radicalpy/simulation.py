@@ -1202,3 +1202,7 @@ class LiouvilleSimulation(HilbertSimulation):
 class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
     def adjust_hamiltonian(self, H: np.ndarray):
         H -= self.subH
+
+
+class SemiclassicalSimulation(LiouvilleSimulation):
+    pass
