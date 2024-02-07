@@ -466,7 +466,7 @@ class HilbertTests(unittest.TestCase):
         HZtp = sim.zeeman_hamiltonian_3d(B0=B0, theta=np.pi / 2, phi=np.pi)
         HZp = sim.zeeman_hamiltonian_3d(B0=B0, theta=np.pi, phi=0)
         HH = sim.hyperfine_hamiltonian()
-        HD = sim.dipolar_hamiltonian_3d(dipolar_tensor)
+        HD = sim.dipolar_hamiltonian_3d(dipolar_tensor, 0, 1)
         H = HZt + HH + HD
         time = np.arange(0, 15e-6, 5e-9)
         # rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, H)
