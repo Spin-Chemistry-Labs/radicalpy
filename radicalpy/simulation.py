@@ -3,10 +3,11 @@
 import enum
 import itertools
 from math import prod
-from typing import Optional
+from typing import Iterator, Optional
 
 import numpy as np
 import scipy as sp
+from numpy.typing import NDArray
 from tqdm import tqdm
 
 from . import utils
@@ -1205,6 +1206,9 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):
+    def semiclassical_gen(num_samples) -> Iterator[NDArray[float]]:
+        pass
+
     @property
     def nuclei(self):
         return []

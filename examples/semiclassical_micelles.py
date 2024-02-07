@@ -8,20 +8,16 @@ from numpy import testing as npt  # ####################################
 
 import radicalpy as rp
 from radicalpy.data import Molecule
+from radicalpy.estimations import (autocorrelation, autocorrelation_fit,
+                                   exchange_interaction_in_solution_MC, k_STD)
 from radicalpy.experiments import semiclassical_mary
+from radicalpy.kinetics import Haberkorn
+from radicalpy.relaxation import SingletTripletDephasing
 from radicalpy.simulation import SemiclassicalSimulation, State
+from radicalpy.utils import Bhalf_fit, read_trajectory_files
 
 
-def main(data_path="./examples/data/md_fad_trp_aot"):
-    flavin = Molecule.all_nuclei("flavin_anion")
-    trp = Molecule.all_nuclei("tryptophan_cation")
-    sim = SemiclassicalSimulation([flavin, trp], basis="Zeeman")
-
-    all_data = rp.utils.read_trajectory_files(data_path)
-
-    time = np.linspace(0, len(all_data), len(all_data)) * 5e-12 * 1e9
-    j = rp.estimations.exchange_interaction_in_solution_MC(all_data[:, 1], J0=5)
-
+def plot_exchange_interaction_in_solution(ts, trajectory_data, j):
     fig = plt.figure(1)
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_facecolor("none")
@@ -29,10 +25,10 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     plt.axis("on")
     plt.rc("axes", edgecolor="black")
     color = "tab:red"
-    plt.plot(time, all_data[:, 1] * 1e9, color=color)
+    plt.plot(ts, trajectory_data[:, 1] * 1e9, color=color)
     ax2 = ax.twinx()
     color2 = "tab:blue"
-    plt.plot(time, -j, color=color2)
+    plt.plot(ts, -j, color=color2)
     ax.set_xlabel("Time (ns)", size=24)
     ax.set_ylabel("Radical pair separation (nm)", size=24, color=color)
     ax2.set_ylabel("Exchange interaction (mT)", size=24, color=color2)
@@ -42,17 +38,8 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     fig.set_size_inches(7, 5)
     plt.show()
 
-    # Calculate the autocorrelation, tau_c, and k_STD
-    acf_j = rp.utils.autocorrelation(j, factor=1)
-    zero_point_crossing_j = np.where(np.diff(np.sign(acf_j)))[0][0]
-    t_j_max = max(time[:zero_point_crossing_j]) * 1e-9
-    t_j = np.linspace(5e-12, t_j_max, zero_point_crossing_j)
 
-    acf_j_fit = rp.estimations.autocorrelation_fit(t_j, j, 5e-12, t_j_max)
-    acf_j_fit["tau_c"]
-    kstd = rp.estimations.k_STD(j, acf_j_fit["tau_c"])
-    k_STD = np.mean(kstd)  # singlet-triplet dephasing rate
-
+def plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j):
     fig = plt.figure(2)
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_facecolor("none")
@@ -68,30 +55,54 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     fig.set_size_inches(7, 5)
     plt.show()
 
-    kq = 5e6  # triplet excited state quenching rate
-    krec = 8e6  # recombination rate
-    kesc = 5e5  # escape rate
 
-    time = np.arange(0, 10e-6, 10e-9)
+def main(data_path="./examples/data/md_fad_trp_aot"):
+    flavin = Molecule.all_nuclei("flavin_anion")
+    trp = Molecule.all_nuclei("tryptophan_cation")
+    sim = SemiclassicalSimulation([flavin, trp], basis="Zeeman")
+    print(f"{sim.molecules[0].semiclassical_tau=}")
+    print(f"{sim.molecules[1].semiclassical_tau=}")
+
+    trajectory_data = read_trajectory_files(data_path)
+    ts = np.linspace(0, len(trajectory_data), len(trajectory_data)) * 5e-12 * 1e9
+    j = exchange_interaction_in_solution_MC(trajectory_data[:, 1], J0=5)
+
+    # plot_exchange_interaction_in_solution(ts, trajectory_data, j)
+
+    # Calculate the autocorrelation, tau_c, and k_STD
+    acf_j = autocorrelation(j, factor=1)
+    zero_point_crossing_j = np.where(np.diff(np.sign(acf_j)))[0][0]
+    t_j_max = max(ts[:zero_point_crossing_j]) * 1e-9
+    t_j = np.linspace(5e-12, t_j_max, zero_point_crossing_j)
+
+    acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
+    acf_j_fit["tau_c"]
+    kstd = rp.estimations.k_STD(j, acf_j_fit["tau_c"])
+    # k_STD = np.mean(kstd)  # singlet-triplet dephasing rate ##################################
+
+    # plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j)
+
+    triplet_excited_state_quenching_rate = 5e6
+    recombination_rate = 8e6
+    free_radical_escape_rate = 5e5
+
+    ts = np.arange(0, 10e-6, 10e-9)
     Bs = np.arange(0, 50, 1)
 
-    kinetics = [
-        rp.kinetics.Haberkorn(krec, State.SINGLET),
-        rp.kinetics.FreeRadical(kesc),
-        rp.kinetics.ElectronTransfer(kq),
-    ]
-    relaxations = [rp.relaxation.SingletTripletDephasing(kstd)]
     results = semiclassical_mary(
+        sim=sim,
+        num_samples=10,
         init_state=State.TRIPLET,
-        obs_state=State.TRIPLET,
-        time=time,
+        # obs_state=State.TRIPLET,
+        time=ts,
         B0=Bs,
         D=0,
         J=0,
-        kinetics=kinetics,
-        relaxations=relaxations,
+        triplet_excited_state_quenching_rate=triplet_excited_state_quenching_rate,
+        free_radical_escape_rate=free_radical_escape_rate,
+        kinetics=[Haberkorn(recombination_rate, State.SINGLET)],
+        relaxations=[SingletTripletDephasing(kstd)],
     )
-    results = sim.MARY()
 
     # Calculate time evolution of the B1/2
     bhalf_time = np.zeros((len(results)))
@@ -105,16 +116,16 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
             fit_time[:, i],
             fit_error_time[:, i],
             R2_time[i],
-        ) = rp.utils.Bhalf_fit(B, results["MARY"])
+        ) = Bhalf_fit(Bs, results["MARY"])
 
     # Plotting
     factor = 1e6
 
     plt.figure(3)
-    for i in range(2, len(time), 35):
-        plt.plot(time[i] * factor, bhalf_time[i], "ro", linewidth=3)
+    for i in range(2, len(ts), 35):
+        plt.plot(ts[i] * factor, bhalf_time[i], "ro", linewidth=3)
         plt.errorbar(
-            time[i] * factor,
+            ts[i] * factor,
             bhalf_time[i],
             fit_error_time[1, i],
             color="k",
@@ -123,7 +134,7 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     plt.xlabel("Time ($\mu s$)", size=18)
     plt.ylabel("$B_{1/2}$ (mT)", size=18)
     plt.tick_params(labelsize=14)
-    fig.set_size_inches(10, 5)
+    plt.gcf().set_size_inches(10, 5)
     plt.show()
 
     fig = plt.figure(figsize=plt.figaspect(1.0))
@@ -131,7 +142,7 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
     ax.set_facecolor("none")
     ax.grid(False)
-    X, Y = np.meshgrid(Bs, time)
+    X, Y = np.meshgrid(Bs, ts)
     ax.plot_surface(
         X,
         Y * factor,
