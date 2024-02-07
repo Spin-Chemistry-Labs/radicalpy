@@ -589,7 +589,7 @@ class HilbertSimulation:
             (
                 -self.radicals[0].gamma_mT
                 * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
-                for ni, ei in enumerate(self.radicals)
+                for ni, ei in enumerate(self.coupling)
             )
         )
 
