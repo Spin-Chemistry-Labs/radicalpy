@@ -232,7 +232,7 @@ class HilbertSimulation:
 
             idx2 (int): Index of the second particle.
 
-            h (float): Isotopic interaction constant.
+            h (float): Isotropic interaction constant.
 
         Returns:
             np.ndarray:
@@ -589,7 +589,7 @@ class HilbertSimulation:
             (
                 -self.radicals[0].gamma_mT
                 * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
-                for ni, ei in enumerate(self.coupling)
+                for ni, ei in enumerate(self.radicals)
             )
         )
 
