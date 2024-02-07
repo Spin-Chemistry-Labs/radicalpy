@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import numpy as np
+from numpy.typing import NDArray
 from tqdm import tqdm
 
-from .simulation import HilbertIncoherentProcessBase, LiouvilleSimulation, State
+from .simulation import (HilbertIncoherentProcessBase, LiouvilleSimulation,
+                         SemiclassicalSimulation, State)
 from .utils import mary_lorentzian, modulated_signal, reference_signal
 
 
@@ -46,7 +48,7 @@ def modulated_mary_brute_force(
 def steady_state_mary(
     sim: LiouvilleSimulation,
     obs: State,
-    Bs: np.ndarray,
+    Bs: NDArray[float],
     D: float,
     E: float,
     J: float,
@@ -71,32 +73,24 @@ def steady_state_mary(
 
 
 def semiclassical_mary(
-    sim, num_samples, init_state, obs_state, time, B0, D, J, kinetics, relaxations
+    sim: SemiclassicalSimulation,
+    num_samples: int,
+    init_state: State,
+    time: NDArray[float],
+    B0,
+    D,
+    J,
+    triplet_excited_state_quenching_rate,
+    free_radical_escape_rate,
+    kinetics,
+    relaxations,
 ):
+    print(f"{sim.molecules[0].semiclassical_tau=}")
+    print(f"{sim.molecules[1].semiclassical_tau=}")
+    exit()
     for i, B0 in enumerate(tqdm(B)):
-        for j in range(0, sample_number):
-            FAD_omegax = (
-                FAD_gamma * FAD_I[j] * np.sin(FAD_theta[j]) * np.cos(FAD_phi[j])
-            )
-            Trp_omegax = (
-                Trp_gamma * Trp_I[j] * np.sin(Trp_theta[j]) * np.cos(Trp_phi[j])
-            )
-            hamiltonian_x = FAD_omegax * FAD_Sx + Trp_omegax * Trp_Sx
-
-            FAD_omegay = (
-                FAD_gamma * FAD_I[j] * np.sin(FAD_theta[j]) * np.sin(FAD_phi[j])
-            )
-            Trp_omegay = (
-                Trp_gamma * Trp_I[j] * np.sin(Trp_theta[j]) * np.sin(Trp_phi[j])
-            )
-            hamiltonian_y = FAD_omegay * FAD_Sy + Trp_omegay * Trp_Sy
-
-            FAD_omegaz = FAD_gamma * (B0 + FAD_I[j] * np.cos(FAD_theta[j]))
-            Trp_omegaz = Trp_gamma * (B0 + Trp_I[j] * np.cos(Trp_theta[j]))
-            hamiltonian_z = FAD_omegaz * FAD_Sz + Trp_omegaz * Trp_Sz
-
-            HZ = hamiltonian_x + hamiltonian_y + hamiltonian_z
-            HZL = rp.simulation.LiouvilleSimulation.convert(HZ)
+        gen = sim.semiclassical_gen(num_samples)
+        for HZL in gen:
             sim.apply_liouville_hamiltonian_modifiers(HZL, kinetics + relaxation)
             L = HZL
 
@@ -106,14 +100,12 @@ def semiclassical_mary(
             triplet_initial_population = 1  # triplet excited state
 
             initial_temp = np.reshape(initial / 3, (M, 1))
-            initial_density = np.reshape(np.zeros(16), (M, 1))
-            density = initial_density
+            density = np.reshape(np.zeros(16), (M, 1))
 
             for k in range(0, len(time)):
                 FR_density = density
                 population = np.trace(FR_density)
-                free_radical = FR_initial_population + population * kesc * dt
-                rho = population + free_radical
+                rho = population + (FR_initial_population + population * kesc * dt)
                 trace[j, k] = np.real(rho)
                 density = (
                     propagator * density
@@ -123,7 +115,7 @@ def semiclassical_mary(
                     -kq * dt
                 )
 
-        average = np.ones(sample_number) * 0.01
+        average = np.ones(num_samples) * 0.01
         decay = average @ trace
         if i == 0:
             decay0 = np.real(decay)

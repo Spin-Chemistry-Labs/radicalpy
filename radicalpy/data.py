@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import json
 from functools import singledispatchmethod
-from typing import Optional
+from typing import Iterator, Optional, Tuple
 
 import numpy as np
 from importlib_resources import files
@@ -568,6 +568,40 @@ class Molecule:
         spns_np = np.array(list(map(multiplicity_to_spin, multiplicities)))
         hfcs_np = np.array([h.isotropic for h in hfcs])
         return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
+
+    @property
+    def semiclassical_tau(self) -> float:
+        """Calculate the `tau` coefficient used in `Molecule.semiclassical_random_hfc_theta_phi_rng`.
+
+        Examples:
+            >>> m = Molecule.fromdb("flavin_anion", nuclei=["N14"])
+            >>> m.semiclassical_tau
+        """
+        tmp = sum(
+            n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
+            for n in self.nuclei
+        )
+        return (tmp / 6) ** -0.5
+
+    def semiclassical_random_hfc_theta_phi_rng(
+        self, num_samples: int, I_max: float, fI_max: float
+    ) -> Iterator[Tuple[float, float, float]]:
+        hfc_rng = np.random.default_rng(42)
+        ang_rng = np.random.default_rng(43)
+        rng = np.random.default_rng(42)
+        tau = self.semiclassical_tau
+        for j in range(num_samples):
+            while True:
+                I_r = rng.random() * I_max
+                fI_r = rng.random() * fI_max
+                f = (
+                    I_r**2
+                    * ((tau**2 / (4 * np.pi)) ** 1.5)
+                    * np.exp(-1 / 4 * I_r**2 * tau**2)
+                )
+                if fI_r < f:
+                    yield I_r
+                break
 
 
 class Triplet(Molecule):
