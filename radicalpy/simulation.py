@@ -504,7 +504,12 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         return Jcoupling * (prod_coeff * SASB + 0.5 * np.eye(SASB.shape[0]))
 
-    def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
+    def dipolar_hamiltonian(
+        self,
+        D: float | np.ndarray,
+        idx0: int = 0,
+        idx1: int = 1,
+    ) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
@@ -522,6 +527,10 @@ class HilbertSimulation:
             D (float | np.ndarray): dipolar coupling constant or
                 dipolar interaction tensor.
 
+            idx0 (int): index of first radical (default 0).
+
+            idx1 (int): index of second radical (default 1).
+
         Returns:
             np.ndarray:
 
@@ -532,11 +541,20 @@ class HilbertSimulation:
 
         """
         if isinstance(D, np.ndarray):
-            return self.dipolar_hamiltonian_3d(D)
+            return self.dipolar_hamiltonian_3d(D, idx0, idx1)
         else:
-            return self.dipolar_hamiltonian_1d(D)
+            return self.dipolar_hamiltonian_1d(D, idx0, idx1)
 
-    def dipolar_hamiltonian_1d(self, D: float) -> np.ndarray:
+    def _check_radical_idx(self, idx: int):
+        if not (0 <= idx and idx < len(self.radicals)):
+            raise ValueError(f"{idx} is not a radical index")
+
+    def dipolar_hamiltonian_1d(
+        self,
+        D: float,
+        idx0: int,
+        idx1: int,
+    ) -> np.ndarray:
         """Construct the 1D Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
@@ -549,6 +567,10 @@ class HilbertSimulation:
 
             D (float): dipolar coupling constant.
 
+            idx0 (int): index of first radical.
+
+            idx1 (int): index of second radical.
+
         Returns:
             np.ndarray:
 
@@ -557,13 +579,20 @@ class HilbertSimulation:
                 dipolar coupling constant `D`.
 
         """
-        SASB = self.product_operator(0, 1)
-        SAz = self.spin_operator(0, "z")
-        SBz = self.spin_operator(1, "z")
+        self._check_radical_idx(idx0)
+        self._check_radical_idx(idx1)
+        SASB = self.product_operator(idx0, idx1)
+        SAz = self.spin_operator(idx0, "z")
+        SBz = self.spin_operator(idx1, "z")
         omega = (2 / 3) * self.radicals[0].gamma_mT * D
         return omega * (3 * SAz * SBz - SASB)
 
-    def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
+    def dipolar_hamiltonian_3d(
+        self,
+        dipolar_tensor: np.ndarray,
+        idx0: int,
+        idx1: int,
+    ) -> np.ndarray:
         """Construct the 3D Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar interaction
@@ -576,6 +605,10 @@ class HilbertSimulation:
 
             D (np.ndarray): dipolar interaction tensor.
 
+            idx0 (int): index of first radical (default 0).
+
+            idx1 (int): index of second radical (default 1).
+
         Returns:
             np.ndarray:
 
@@ -584,12 +617,12 @@ class HilbertSimulation:
                 dipolar interaction tensor `D`.
 
         """
-        ne = len(self.radicals)
+        self._check_radical_idx(idx0)
+        self._check_radical_idx(idx1)
         return -sum(
             (
                 -self.radicals[0].gamma_mT
-                * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
-                for ni, ei in enumerate(self.coupling)
+                * self.product_operator_3d(idx0, idx1, dipolar_tensor)
             )
         )
 
