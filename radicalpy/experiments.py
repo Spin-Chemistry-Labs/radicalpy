@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
 from .simulation import (HilbertIncoherentProcessBase, LiouvilleSimulation,
@@ -77,16 +77,19 @@ def semiclassical_mary(
     num_samples: int,
     init_state: State,
     time: NDArray[float],
-    B0,
-    D,
-    J,
-    triplet_excited_state_quenching_rate,
-    free_radical_escape_rate,
-    kinetics,
-    relaxations,
+    B0: ArrayLike,
+    D: float,
+    J: float,
+    triplet_excited_state_quenching_rate: float,
+    free_radical_escape_rate: float,
+    kinetics,  ##########################################
+    relaxations,  #######################################
+    I_max: list[float],
+    fI_max: list[float],
 ):
-    print(f"{sim.molecules[0].semiclassical_tau=}")
-    print(f"{sim.molecules[1].semiclassical_tau=}")
+    gen = sim.semiclassical_gen(5, I_max, fI_max)
+    for g in gen:
+        print(f"{g=}")
     exit()
     for i, B0 in enumerate(tqdm(B)):
         gen = sim.semiclassical_gen(num_samples)

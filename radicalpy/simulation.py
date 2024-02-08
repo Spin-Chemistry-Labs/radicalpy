@@ -1206,8 +1206,15 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):
-    def semiclassical_gen(num_samples) -> Iterator[NDArray[float]]:
-        pass
+    def semiclassical_gen(
+        self,
+        num_samples: int,
+        I_max: float,
+        fI_max: float,
+    ) -> Iterator[NDArray[float]]:
+        for m, I, fI in zip(self.molecules, I_max, fI_max):
+            m.semiclassical_random_hfc_theta_phi_rng(num_samples, I, fI)
+        return [1, 2, 3]
 
     @property
     def nuclei(self):
