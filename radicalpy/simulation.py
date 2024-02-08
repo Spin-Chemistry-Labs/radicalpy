@@ -1209,12 +1209,25 @@ class SemiclassicalSimulation(LiouvilleSimulation):
     def semiclassical_gen(
         self,
         num_samples: int,
-        I_max: float,
-        fI_max: float,
+        B: float,
+        I_max: list[float],
+        fI_max: list[float],
     ) -> Iterator[NDArray[float]]:
-        for m, I, fI in zip(self.molecules, I_max, fI_max):
-            m.semiclassical_random_hfc_theta_phi_rng(num_samples, I, fI)
-        return [1, 2, 3]
+        spinops = [
+            [self.spin_operator(i, ax) for ax in "xyz"]
+            for i in range(len(self.radicals))
+        ]
+        for i in range(num_samples):
+            result = complex(0)
+            for ri, m in enumerate(self.molecules):
+                h = m.semiclassical_random_hfc(I_max[ri], fI_max[ri])
+                gamma = m.radical.gamma_mT
+                rots = m.semiclassical_random_rotations(I_max, fI_max)
+                for ai, rot in enumerate(rots):
+                    spinop = spinops[ri][ai]
+                    result += gamma * spinop * rot * h
+                result += gamma * B * spinop
+            yield result
 
     @property
     def nuclei(self):

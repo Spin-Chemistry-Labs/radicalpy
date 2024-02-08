@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import numpy as np
+import numpy.testing as npt
+import scipy as sp
 from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
@@ -76,8 +78,8 @@ def semiclassical_mary(
     sim: SemiclassicalSimulation,
     num_samples: int,
     init_state: State,
-    time: NDArray[float],
-    B0: ArrayLike,
+    ts: NDArray[float],
+    Bs: ArrayLike,
     D: float,
     J: float,
     triplet_excited_state_quenching_rate: float,
@@ -87,15 +89,19 @@ def semiclassical_mary(
     I_max: list[float],
     fI_max: list[float],
 ):
-    gen = sim.semiclassical_gen(5, I_max, fI_max)
-    for g in gen:
-        print(f"{g=}")
-    exit()
-    for i, B0 in enumerate(tqdm(B)):
-        gen = sim.semiclassical_gen(num_samples)
-        for HZL in gen:
-            sim.apply_liouville_hamiltonian_modifiers(HZL, kinetics + relaxation)
-            L = HZL
+    dt = ts[1] - ts[0]
+    initial = sim.projection_operator(init_state)
+    M = 16
+    trace = np.zeros((num_samples, len(ts)))
+    mary_1 = np.zeros((len(ts), len(Bs)))
+    mary_2 = np.zeros((len(ts), len(Bs)))
+    for i, B0 in enumerate(tqdm(Bs)):
+        gen = sim.semiclassical_gen(num_samples, B0, I_max, fI_max)
+        for j, H in enumerate(gen):
+            L = sim.convert(H)
+            sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
+            path = f"/tmp/rp-{i}-{j}.npy"
+            gold = np.load(path)
 
             propagator = sp.sparse.linalg.expm(L * dt)
 
@@ -105,17 +111,21 @@ def semiclassical_mary(
             initial_temp = np.reshape(initial / 3, (M, 1))
             density = np.reshape(np.zeros(16), (M, 1))
 
-            for k in range(0, len(time)):
+            for k in range(0, len(ts)):
                 FR_density = density
                 population = np.trace(FR_density)
-                rho = population + (FR_initial_population + population * kesc * dt)
+                rho = population + (
+                    FR_initial_population + population * free_radical_escape_rate * dt
+                )
                 trace[j, k] = np.real(rho)
                 density = (
                     propagator * density
-                    + triplet_initial_population * (1 - np.exp(-kq * dt)) * initial_temp
+                    + triplet_initial_population
+                    * (1 - np.exp(-triplet_excited_state_quenching_rate * dt))
+                    * initial_temp
                 )
                 triplet_initial_population = triplet_initial_population * np.exp(
-                    -kq * dt
+                    -triplet_excited_state_quenching_rate * dt
                 )
 
         average = np.ones(num_samples) * 0.01
@@ -125,3 +135,4 @@ def semiclassical_mary(
 
         mary_1[:, i] = np.real(decay)
         mary_2[:, i] = np.real(decay - decay0)
+        return mary_2
