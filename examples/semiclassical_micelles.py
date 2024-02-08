@@ -60,8 +60,6 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     flavin = Molecule.all_nuclei("flavin_anion")
     trp = Molecule.all_nuclei("tryptophan_cation")
     sim = SemiclassicalSimulation([flavin, trp], basis="Zeeman")
-    print(f"{sim.molecules[0].semiclassical_tau=}")
-    print(f"{sim.molecules[1].semiclassical_tau=}")
 
     trajectory_data = read_trajectory_files(data_path)
     ts = np.linspace(0, len(trajectory_data), len(trajectory_data)) * 5e-12 * 1e9
@@ -75,9 +73,9 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     t_j_max = max(ts[:zero_point_crossing_j]) * 1e-9
     t_j = np.linspace(5e-12, t_j_max, zero_point_crossing_j)
 
-    acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
-    acf_j_fit["tau_c"]
-    kstd = rp.estimations.k_STD(j, acf_j_fit["tau_c"])
+    # acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
+    # kstd = rp.estimations.k_STD(j, acf_j_fit["tau_c"])
+    kstd = 504.4281152872379
     # k_STD = np.mean(kstd)  # singlet-triplet dephasing rate ##################################
 
     # plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j)
@@ -102,6 +100,8 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
         free_radical_escape_rate=free_radical_escape_rate,
         kinetics=[Haberkorn(recombination_rate, State.SINGLET)],
         relaxations=[SingletTripletDephasing(kstd)],
+        I_max=[3.5, 4.0],
+        fI_max=[6.5e-4, 5.8e-4],
     )
 
     # Calculate time evolution of the B1/2
