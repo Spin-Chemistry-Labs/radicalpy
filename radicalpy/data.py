@@ -405,6 +405,9 @@ class Molecule:
         self.radical = radical
         self.custom = True
 
+        self.hfc_rng = np.random.default_rng(42)  ##################
+        self.ang_rng = np.random.default_rng(43)  ##################
+
     @classmethod
     def load_molecule_json(cls, molecule: str) -> dict:
         json_path = get_data(f"molecules/{molecule}.json")
@@ -569,7 +572,7 @@ class Molecule:
         hfcs_np = np.array([h.isotropic for h in hfcs])
         return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
 
-    @property
+    @property  ############ TODO(calc only once)
     def semiclassical_tau(self) -> float:
         """Calculate the `tau` coefficient used in `Molecule.semiclassical_random_hfc_theta_phi_rng`.
 
@@ -583,25 +586,29 @@ class Molecule:
         )
         return (tmp / 6) ** -0.5
 
-    def semiclassical_random_hfc_theta_phi_rng(
-        self, num_samples: int, I_max: float, fI_max: float
-    ) -> Iterator[Tuple[float, float, float]]:
-        hfc_rng = np.random.default_rng(42)
-        ang_rng = np.random.default_rng(43)
-        rng = np.random.default_rng(42)
+    def semiclassical_random_hfc(self, I_max: float, fI_max: float) -> float:
         tau = self.semiclassical_tau
-        for j in range(num_samples):
-            while True:
-                I_r = rng.random() * I_max
-                fI_r = rng.random() * fI_max
-                f = (
-                    I_r**2
-                    * ((tau**2 / (4 * np.pi)) ** 1.5)
-                    * np.exp(-1 / 4 * I_r**2 * tau**2)
-                )
-                if fI_r < f:
-                    yield I_r
+        I_r = self.hfc_rng.uniform(0, I_max)
+        fI_r = self.hfc_rng.uniform(0, fI_max)
+        f = (
+            I_r**2
+            * ((tau**2 / (4 * np.pi)) ** 1.5)
+            * np.exp(-1 / 4 * I_r**2 * tau**2)
+        )
+        return I_r if fI_r < f else 0
+
+    def semiclassical_random_rotations(
+        self, I_max: float, fI_max: float
+    ) -> Tuple[float, float, float]:
+        while True:
+            theta_r = self.ang_rng.uniform(0, np.pi)
+            s_r = self.ang_rng.uniform()
+            if s_r < np.sin(theta_r):
+                theta = theta_r
                 break
+
+        phi = self.ang_rng.uniform(0, 2 * np.pi)
+        return np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)
 
 
 class Triplet(Molecule):
