@@ -109,7 +109,7 @@ def main(
     )
     j = exchange_interaction_in_solution_MC(trajectory_data[:, 1], J0=5)
 
-    plot_exchange_interaction_in_solution(ts, trajectory_data, j)
+    plot_exchange_interaction_in_solution(trajectory_ts, trajectory_data, j)
 
     acf_j = autocorrelation(j, factor=1)
     zero_point_crossing_j = np.where(np.diff(np.sign(acf_j)))[0][0]
