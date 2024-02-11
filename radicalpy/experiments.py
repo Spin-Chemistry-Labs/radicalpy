@@ -100,9 +100,6 @@ def semiclassical_mary(
         for j, H in enumerate(gen):
             L = sim.convert(H)
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
-            path = f"/tmp/rp-{i}-{j}.npy"
-            gold = np.load(path)
-
             propagator = sp.sparse.linalg.expm(L * dt)
 
             FR_initial_population = 0  # free radical
@@ -135,4 +132,5 @@ def semiclassical_mary(
 
         mary_1[:, i] = np.real(decay)
         mary_2[:, i] = np.real(decay - decay0)
-        return mary_2
+    #### npt.assert_almost_equal(mary_2, np.load("/tmp/mary_2.npy"))
+    return {"MARY": mary_2}
