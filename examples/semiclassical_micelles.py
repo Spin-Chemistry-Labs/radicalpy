@@ -89,7 +89,7 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
 
     results = semiclassical_mary(
         sim=sim,
-        num_samples=10,
+        num_samples=400,
         init_state=State.TRIPLET,
         # obs_state=State.TRIPLET,
         ts=ts,
@@ -105,9 +105,9 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
     )
 
     # Calculate time evolution of the B1/2
-    bhalf_time = np.zeros((len(results)))
-    fit_time = np.zeros((len(Bs), len(results)))
-    fit_error_time = np.zeros((2, len(results)))
+    bhalf_time = np.zeros((len(results["MARY"])))
+    fit_time = np.zeros((len(Bs), len(results["MARY"])))
+    fit_error_time = np.zeros((2, len(results["MARY"])))
     R2_time = np.zeros((len(results)))
 
     for i in range(2, len(results), 1):
@@ -147,7 +147,7 @@ def main(data_path="./examples/data/md_fad_trp_aot"):
         X,
         Y * factor,
         results["MARY"],
-        facecolors=cmap.to_rgba(mary_2.real),
+        facecolors=cmap.to_rgba(results["MARY"].real),
         rstride=1,
         cstride=1,
     )
