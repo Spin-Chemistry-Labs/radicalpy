@@ -4,6 +4,7 @@
 
 .. todo:: Add module docstring.
 """
+import sys
 from pathlib import Path
 from typing import Tuple
 
@@ -13,6 +14,17 @@ from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
 
 from .shared import constants as C
+
+
+def is_fast_run():
+    """Is the `--fast` parameter at execution.
+
+    This function helps examples to be used as tests.  By running the
+    example with the `--fast` option, a faster version of main can be
+    called (e.g., by setting fewer number of time steps etc.).
+
+    """
+    return len(sys.argv) == 2 and sys.argv[1] == "--fast"
 
 
 def Bhalf_fit(
