@@ -132,6 +132,4 @@ def semiclassical_mary(
 
         mary_1[:, i] = np.real(decay)
         mary_2[:, i] = np.real(decay - decay0)
-    print("RETUUURN")
-    #### npt.assert_almost_equal(mary_2, np.load("/tmp/mary_2.npy"))
     return {"ts": ts, "Bs": Bs, "MARY": mary_2}
