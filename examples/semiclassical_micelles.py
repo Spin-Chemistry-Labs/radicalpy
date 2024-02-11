@@ -138,8 +138,8 @@ def main(
         free_radical_escape_rate=free_radical_escape_rate,
         kinetics=[Haberkorn(recombination_rate, State.SINGLET)],
         relaxations=[SingletTripletDephasing(kstd)],
-        I_max=[3.5, 4.0],
-        fI_max=[6.5e-4, 5.8e-4],
+        I_max=[3.5, 4.0],  ##### TODO
+        fI_max=[6.5e-4, 5.8e-4],  ##### TODO
     )
 
     # Calculate time evolution of the B1/2
