@@ -109,20 +109,17 @@ def main(
     )
     j = exchange_interaction_in_solution_MC(trajectory_data[:, 1], J0=5)
 
-    # plot_exchange_interaction_in_solution(ts, trajectory_data, j)
+    plot_exchange_interaction_in_solution(ts, trajectory_data, j)
 
-    # Calculate the autocorrelation, tau_c, and k_STD
     acf_j = autocorrelation(j, factor=1)
     zero_point_crossing_j = np.where(np.diff(np.sign(acf_j)))[0][0]
     t_j_max = max(trajectory_ts[:zero_point_crossing_j]) * 1e-9
     t_j = np.linspace(5e-12, t_j_max, zero_point_crossing_j)
 
-    # acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
-    # kstd = rp.estimations.k_STD(j, acf_j_fit["tau_c"])
-    kstd = 504.4281152872379  ################
-    # k_STD = np.mean(kstd)  # singlet-triplet dephasing rate ##################################
+    acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
+    kstd = k_STD(j, acf_j_fit["tau_c"])
 
-    # plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j)
+    plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j)
 
     triplet_excited_state_quenching_rate = 5e6
     recombination_rate = 8e6
@@ -161,7 +158,7 @@ def main(
 
     plot_bhalf_time(ts, bhalf_time, fit_error_time)
 
-    return 0
+    plot_3d_results(results, factor=1e6)
 
 
 if __name__ == "__main__":
