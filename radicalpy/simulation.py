@@ -1222,7 +1222,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
             for ri, m in enumerate(self.molecules):
                 h = m.semiclassical_random_hfc(I_max[ri], fI_max[ri])
                 gamma = m.radical.gamma_mT
-                rots = m.semiclassical_random_rotations(I_max, fI_max)
+                rots = m.semiclassical_random_rotations()
                 for ai, rot in enumerate(rots):
                     spinop = spinops[ri][ai]
                     result += gamma * spinop * rot * h

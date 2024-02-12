@@ -597,9 +597,7 @@ class Molecule:
         )
         return I_r if fI_r < f else 0
 
-    def semiclassical_random_rotations(
-        self, I_max: float, fI_max: float
-    ) -> Tuple[float, float, float]:
+    def semiclassical_random_rotations(self) -> Tuple[float, float, float]:
         while True:
             theta_r = self.ang_rng.uniform(0, np.pi)
             s_r = self.ang_rng.uniform()
