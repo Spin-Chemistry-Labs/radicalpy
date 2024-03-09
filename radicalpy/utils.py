@@ -17,7 +17,7 @@ from .shared import constants as C
 
 
 def is_fast_run():
-    """Is the `--fast` parameter at execution.
+    """Is the `--fast` parameter set at execution.
 
     This function helps examples to be used as tests.  By running the
     example with the `--fast` option, a faster version of main can be
