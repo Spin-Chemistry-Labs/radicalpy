@@ -67,11 +67,13 @@ class Rate:
         return Rate(self.value * value, f"{label} {self.label}")
 
     def __mul__(self, v):
+        # When multiplying with a constant, this puts the constant
+        # before the variable.
         return self.__rmul__(v)
 
     def __radd__(self, v):
         value, label = self._get_value_label(v)
-        return Rate(self.value + value, f"{label} + {self.label}")
+        return Rate(value + self.value, f"{label} + {self.label}")
 
     def __add__(self, v):
         value, label = self._get_value_label(v)
@@ -79,6 +81,10 @@ class Rate:
 
     def __neg__(self):
         return Rate(-self.value, f"-({self.label})")
+
+    def __truediv__(self, v):
+        value, label = self._get_value_label(v)
+        return Rate(self.value / value, f"{self.label} / {label}")
 
 
 class RateEquations:
@@ -116,6 +122,8 @@ class RateEquations:
         data, row_ind, col_ind = zip(*tmp)
         N = len(self.all_keys)
         matrix = sp.sparse.csc_matrix((data, (row_ind, col_ind)), (N, N))
+        dense = matrix.todense()
+        print(f"{dense.shape=}")
         propagator = sp.sparse.linalg.expm(matrix * dt)
         self.result = np.zeros([len(time), len(self.all_keys)], dtype=float)
         self.result[0] = [initial_states.get(k, 0) for k in self.all_keys]
