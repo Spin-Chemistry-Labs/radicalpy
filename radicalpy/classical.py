@@ -115,9 +115,8 @@ class RateEquations:
         dt = time[1] - time[0]
         data, row_ind, col_ind = zip(*tmp)
         N = len(self.all_keys)
-        propagator = sp.sparse.linalg.expm(
-            sp.sparse.csc_matrix((data, (row_ind, col_ind)), (N, N)) * dt
-        )
+        matrix = sp.sparse.csc_matrix((data, (row_ind, col_ind)), (N, N))
+        propagator = sp.sparse.linalg.expm(matrix * dt)
         self.result = np.zeros([len(time), len(self.all_keys)], dtype=float)
         self.result[0] = [initial_states.get(k, 0) for k in self.all_keys]
         for t in range(1, len(time)):
