@@ -7,7 +7,7 @@ from radicalpy.classical import Rate, RateEquations
 
 
 def main():
-    # Kinetic simulation of FAD at pH 2.3.
+    # Kinetic simulation of FAD at pH 2.1.
     # For FAD quenching: uncomment the three quenching kinetic parameters.
 
     # FAD kinetic parameters
@@ -31,22 +31,29 @@ def main():
     Q = Rate(0, "Q")  # 1e-3  # quencher concentration
 
     # Rate equations
+    S0, S1, T1p, T10, T1m, FR = "S0", "S1", "T1+", "T10", "T1-", "FR"
+    SS, STp, ST0, STm = "SS", "ST+", "ST0", "ST-"
+    TpS, TpTp, TpT0, TpTm = "T+S", "T+T+", "T+T0", "T+T-"
+    T0S, T0Tp, T0T0, T0Tm = "T0S", "T0T+", "T0T0", "T0T-"
+    TmS, TmTp, TmT0, TmTm = "T-S", "T-T+", "T-T0", "T-T-"
+
     base = {}
-    base["S0"] = {
-        "S0": -kex,
-        "T+/-": kd,
-        "T0": kd,
-        "S": kbet,
-        "S*": kfl + kic,
-        "Quencher": kp,
+    base[S0] = {
+        S0: -kex,
+        S1: kfl + kic,
+        T1p: kd,
+        T10: kd,
+        T1m: kd,
+        SS: kbet,
+        FR: kp,
     }
-    base["S*"] = {
-        "S*": -(kfl + kic + 3 * kisc),
-        "S0": kex,
+    base[S1] = {
+        S1: -(kfl + kic + 3 * kisc),
+        S0: kex,
     }
-    base["T*+/-"] = {
-        "T*+/-": -(kd + k1 + krt),
-        "T+/-": km1 * Hp,
+    base[T1p] = {
+        T1p: -(kd + k1 + krt),
+        Tp: km1 * Hp,
         "T*0": 2 * krt,
         "S*": 2 * kisc,
     }
@@ -116,10 +123,6 @@ def main():
     field_on = fac * result_on[keys]
     delta_delta_A = field_on - field_off
 
-    fluor_off = result_off["S0"]
-    fluor_on = result_on["S0"]
-    fluor_del_A = fluor_on - fluor_off
-
     plt.clf()
     fig = plt.figure()
     scale = 1e6
@@ -138,26 +141,6 @@ def main():
     axs[1].tick_params(labelsize=14)
     fig.set_size_inches(10, 5)
     path = __file__[:-3] + f"_{0}.png"
-    plt.savefig(path)
-
-    plt.clf()
-    fig = plt.figure()
-    scale = 1e6
-    gs = fig.add_gridspec(2, hspace=0)
-    axs = gs.subplots(sharex=True)
-    fig.suptitle("FAD (pH 2.3) Fluorescence", size=18)
-    axs[0].plot(time * scale, fluor_off, color="blue", linewidth=2)
-    axs[0].plot(time * scale, fluor_on, color="green", linewidth=2)
-    axs[1].plot(time * scale, fluor_del_A, color="orange", linewidth=2)
-    plt.xscale("linear")
-    axs[0].legend([r"$F (B_0 = 0)$", r"$F (B_0 \neq 0)$"])
-    axs[1].set_xlabel("Time ($\mu s$)", size=14)
-    axs[0].set_ylabel("$F$", size=14)
-    axs[1].set_ylabel("$\Delta F$", size=14)
-    axs[0].tick_params(labelsize=14)
-    axs[1].tick_params(labelsize=14)
-    fig.set_size_inches(10, 5)
-    path = __file__[:-3] + f"_{1}.png"
     plt.savefig(path)
 
 
