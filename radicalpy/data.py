@@ -573,18 +573,28 @@ class Molecule:
         return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
 
     @property  ############ TODO(calc only once)
-    def semiclassical_tau(self) -> float:
-        """Calculate the `tau` coefficient used in `Molecule.semiclassical_random_hfc_theta_phi_rng`.
+    def semiclassical_tau2(self) -> float:
+        """Calculate the :math:`\\tau^2` coefficient.
+
+        :math:`\\tau^2` is used in
+        `Molecule.semiclassical_random_hfc`.
+
+        .. math::
+           \\tau_i^{-2} = \\frac{1}{6} \\sum_k a_k^2 I_k (I_k + 1)
+
+        where :math:`a_k`, :math:`I_k` are the hyperfine coupling and
+        the spin quantum number of each nucleus, respectively.
 
         Examples:
             >>> m = Molecule.fromdb("flavin_anion", nuclei=["N14"])
             >>> m.semiclassical_tau
+
         """
         tmp = sum(
             n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
             for n in self.nuclei
         )
-        return (tmp / 6) ** -0.5
+        return 6 / tmp
 
     def semiclassical_random_hfc(self, I_max: float, fI_max: float) -> float:
         tau = self.semiclassical_tau
