@@ -4,6 +4,8 @@ import numpy as np
 from scipy.io import loadmat  # # TODO REMOVE THIS!
 
 from radicalpy.classical import Rate, RateEquations
+from radicalpy.experiments import semiclassical_kinetics_mary
+from radicalpy.simulation import LiouvilleSimulation
 
 
 def main():
@@ -125,6 +127,25 @@ def main():
     rate_eq = RateEquations(base)
     mat = rate_eq.matrix.todense()
 
+    flavin = Molecule.all_nuclei("flavin_anion")
+    trp = Molecule.all_nuclei("adenine_cation")
+    sim = SemiclassicalSimulation([flavin, trp])
+    num_samples = 10
+    semiclassical_kinetics_mary(
+        sim,
+        num_samples,
+        initial_states,
+        ts,
+        Bs,
+        D,
+        J,
+        triplet_excited_state_quenching_rate,
+        free_radical_escape_rate,
+        kinetics,
+        relaxations,
+        I_max,
+        fI_max,
+    )
     return  #############
     plt.clf()
     fig = plt.figure()
