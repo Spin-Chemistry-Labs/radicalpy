@@ -133,3 +133,64 @@ def semiclassical_mary(
         mary_1[:, i] = np.real(decay)
         mary_2[:, i] = np.real(decay - decay0)
     return {"ts": ts, "Bs": Bs, "MARY": mary_2}
+
+
+def semiclassical_kinetics_mary(
+    sim: SemiclassicalSimulation,
+    num_samples: int,
+    init_state: State,
+    ts: NDArray[float],
+    Bs: ArrayLike,
+    D: float,
+    J: float,
+    triplet_excited_state_quenching_rate: float,
+    free_radical_escape_rate: float,
+    kinetics: ArrayLike,
+    relaxations: list[ArrayLike],
+    I_max: list[float],
+    fI_max: list[float],
+):
+    dt = ts[1] - ts[0]
+    initial = sim.projection_operator(init_state)
+    M = 16
+    trace = np.zeros((num_samples, len(ts)))
+    mary_1 = np.zeros((len(ts), len(Bs)))
+    mary_2 = np.zeros((len(ts), len(Bs)))
+    for i, B0 in enumerate(tqdm(Bs)):
+        gen = sim.semiclassical_gen(num_samples, B0, I_max, fI_max)
+        for j, H in enumerate(gen):
+            L = sim.convert(H)
+            sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
+            propagator = sp.sparse.linalg.expm(L * dt)
+
+            FR_initial_population = 0  # free radical
+            triplet_initial_population = 1  # triplet excited state
+
+            initial_temp = np.reshape(initial / 3, (M, 1))
+            density = np.reshape(np.zeros(16), (M, 1))
+
+            for k in range(0, len(ts)):
+                FR_density = density
+                population = np.trace(FR_density)
+                rho = population + (
+                    FR_initial_population + population * free_radical_escape_rate * dt
+                )
+                trace[j, k] = np.real(rho)
+                density = (
+                    propagator * density
+                    + triplet_initial_population
+                    * (1 - np.exp(-triplet_excited_state_quenching_rate * dt))
+                    * initial_temp
+                )
+                triplet_initial_population = triplet_initial_population * np.exp(
+                    -triplet_excited_state_quenching_rate * dt
+                )
+
+        average = np.ones(num_samples) * 0.01
+        decay = average @ trace
+        if i == 0:
+            decay0 = np.real(decay)
+
+        mary_1[:, i] = np.real(decay)
+        mary_2[:, i] = np.real(decay - decay0)
+    return {"ts": ts, "Bs": Bs, "MARY": mary_2}
