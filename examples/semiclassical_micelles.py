@@ -10,7 +10,7 @@ from radicalpy.estimations import (autocorrelation, autocorrelation_fit,
 from radicalpy.experiments import semiclassical_mary
 from radicalpy.kinetics import Haberkorn
 from radicalpy.relaxation import SingletTripletDephasing
-from radicalpy.simulation import SemiclassicalSimulation, State
+from radicalpy.simulation import Basis, SemiclassicalSimulation, State
 from radicalpy.utils import Bhalf_fit, is_fast_run, read_trajectory_files
 
 
@@ -101,7 +101,7 @@ def main(
 ):
     flavin = Molecule.all_nuclei("flavin_anion")
     trp = Molecule.all_nuclei("tryptophan_cation")
-    sim = SemiclassicalSimulation([flavin, trp], basis="Zeeman")
+    sim = SemiclassicalSimulation([flavin, trp], basis=Basis.ZEEMAN)
 
     trajectory_data = read_trajectory_files("./examples/data/md_fad_trp_aot")
     trajectory_ts = (
@@ -138,8 +138,14 @@ def main(
         free_radical_escape_rate=free_radical_escape_rate,
         kinetics=[Haberkorn(recombination_rate, State.SINGLET)],
         relaxations=[SingletTripletDephasing(kstd)],
-        I_max=[3.5, 4.0],  ##### TODO
-        fI_max=[6.5e-4, 5.8e-4],  ##### TODO
+        # eq 1: I_i
+        # sum([n.spin_quantum_number * n.hfc.isotropic for n in trp.nuclei])
+        I_max=[1.355894620264429, 0.34675],  ##### TODO
+        # eq 4
+        # g^2: 3.945362314381874   2.146998453882501
+        # flavin, trp
+        # eq 3
+        fI_max=[0.028694114751462215, 0.06620716667285462],  ##### TODO
     )
 
     # Calculate time evolution of the B1/2
