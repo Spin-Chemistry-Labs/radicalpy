@@ -87,16 +87,28 @@ class Rate:
         return Rate(self.value / value, f"{self.label} / {label}")
 
 
+class EquationRateResult:
+    def __init__(self, result: np.ndarray, indices: dict):
+        self.result = result
+        self.indices = indices
+
+    def __getitem__(self, keys: list) -> np.ndarray:
+        ks = [keys] if isinstance(keys, str) else keys
+        return np.sum([self.result[:, self.indices[k]] for k in ks], axis=0)
+
+
 class RateEquations:
     """Results for `kinetics_solver`"""
 
-    def __init__(self, rate_equations: dict, time: np.ndarray, initial_states: dict):
+    def __init__(self, rate_equations: dict):
         self.rate_equations = rate_equations
         inner_keys = [list(v.keys()) for v in rate_equations.values()]
         outer_keys = list(rate_equations.keys())
-        all_keys = list(set(sum(inner_keys, outer_keys)))
-        self.indices = {k: i for i, k in enumerate(all_keys)}
-        self._calc_(time, initial_states)
+        if set(outer_keys) != set(sum(inner_keys, [])):
+            print("WARNING:The set of sources and sinks is different!")
+        # all_keys = list(set(sum(inner_keys, outer_keys)))
+        self.indices = {k: i for i, k in enumerate(outer_keys)}
+        self._construct_matrix()
 
     @property
     def all_keys(self) -> list:
@@ -105,34 +117,33 @@ class RateEquations:
     def are_valid_keys(self, keys: dict) -> bool:
         return set(keys).issubset(self.all_keys)
 
-    def check_initial_states(self, initial_states):
+    def check_initial_states(self, initial_states: dict):
         if not self.are_valid_keys(initial_states.keys()):
             raise ValueError("Unknown keys specified in `initial_states`")
         if sum(initial_states.values()) != 1:
-            raise ValueError("Initial state values don't sum up to 1")
+            print("WARNING: Initial state values don't sum up to 1")
 
-    def _calc_(self, time: np.ndarray, initial_states: dict):
-        self.check_initial_states(initial_states)
+    def _construct_matrix(self):
         tmp = [
             (v.value, self.indices[i], self.indices[j])
             for i, d in self.rate_equations.items()
             for j, v in d.items()
         ]
-        dt = time[1] - time[0]
         data, row_ind, col_ind = zip(*tmp)
         N = len(self.all_keys)
-        matrix = sp.sparse.csc_matrix((data, (row_ind, col_ind)), (N, N))
-        dense = matrix.todense()
-        print(f"{dense.shape=}")
-        propagator = sp.sparse.linalg.expm(matrix * dt)
-        self.result = np.zeros([len(time), len(self.all_keys)], dtype=float)
-        self.result[0] = [initial_states.get(k, 0) for k in self.all_keys]
-        for t in range(1, len(time)):
-            self.result[t] = propagator @ self.result[t - 1]
+        self.matrix = sp.sparse.csc_matrix((data, (row_ind, col_ind)), (N, N))
 
-    def __getitem__(self, keys: list) -> np.ndarray:
-        ks = [keys] if isinstance(keys, str) else keys
-        return np.sum([self.result[:, self.indices[k]] for k in ks], axis=0)
+    def time_evolution(
+        self, time: np.ndarray, initial_states: dict
+    ) -> EquationRateResult:
+        self.check_initial_states(initial_states)
+        dt = time[1] - time[0]
+        propagator = sp.sparse.linalg.expm(self.matrix * dt)
+        result = np.zeros([len(time), len(self.all_keys)], dtype=float)
+        result[0] = [initial_states.get(k, 0) for k in self.all_keys]
+        for t in range(1, len(time)):
+            result[t] = propagator @ result[t - 1]
+        return EquationRateResult(result, self.indices)
 
 
 def reaction_scheme(path: str, rate_equations: dict):
