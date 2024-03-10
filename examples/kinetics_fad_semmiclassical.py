@@ -1,7 +1,7 @@
 #! /usr/bin/env python
-
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # TODO REMOVE THIS
 import numpy as np
+from scipy.io import loadmat  # # TODO REMOVE THIS!
 
 from radicalpy.classical import Rate, RateEquations
 
@@ -21,8 +21,8 @@ def main():
     krt = Rate(1e9, "krt")  # triplet state relaxation rate
     kbet = Rate(1.3e7, "kbet")  # singlet recombination rate
     # kr = Rate(1.7e6, "kr")  # RP relaxation rate
-    pH = 2.3  # pH of the solution
-    Hp = Rate(10 ** (-1 * pH), "H^+")  # concentration of hydrogen ions
+    pH = 2.1  # pH of the solution
+    Hp = Rate(10**-pH, "H^+")  # concentration of hydrogen ions
 
     # Rate equations
     S0, S1, T1p, T10, T1m = "S0", "S1", "T1+", "T10", "T1-"
@@ -32,27 +32,88 @@ def main():
     TmS, TmTp, TmT0, TmTm = "T-S", "T-T+", "T-T0", "T-T-"
 
     base = {}
-    base[S0] = {S0: -kex, S1: kfl + kic, T1p: kd, T10: kd, T1m: kd, SS: kbet}
-    base[S1] = {S0: kex, S1: -(kfl + kic + 3 * kisc)}
-    base[T1p] = {S1: kisc, T1p: -(kd + k1 + krt), T10: krt, TpTp: km1}
-    base[T10] = {S1: kisc, T1p: krt, T10: -(kd + k1 + 2 * krt), T1m: krt, T0T0: km1}
-    base[T1m] = {S1: kisc, T10: krt, T1m: -(kd + k1 + krt), TmTm: km1}
-    base[SS] = {SS: -(kbet)}
-    base[STp] = {STp: -(kbet + km1 * Hp) / 2}
-    base[ST0] = {ST0: -(kbet + km1 * Hp) / 2}
-    base[STm] = {STm: -(kbet + km1 * Hp) / 2}
-    base[TpS] = {TpS: -(kbet + km1 * Hp) / 2}
-    base[TpTp] = {T1p: k1, TpTp: -km1 * Hp}
-    base[TpT0] = {TpT0: -km1 * Hp}
-    base[TpTm] = {TpTm: -km1 * Hp}
-    base[T0S] = {T0S: -(kbet + km1 * Hp) / 2}
-    base[T0Tp] = {T0Tp: -km1 * Hp}
-    base[T0T0] = {T10: k1, T0T0: -km1 * Hp}
-    base[T0Tm] = {T0Tm: -km1 * Hp}
-    base[TmS] = {TmS: -(kbet + km1 * Hp) / 2}
-    base[TmTp] = {TmTp: -km1 * Hp}
-    base[TmT0] = {TmT0: -km1 * Hp}
-    base[TmTm] = {T1m: k1, TmTm: -km1 * Hp}
+    base[S0] = {
+        S0: -kex,
+        S1: kfl + kic,
+        T1p: kd,
+        T10: kd,
+        T1m: kd,
+        SS: kbet,
+    }
+    base[S1] = {
+        S0: kex,
+        S1: -(kfl + kic + 3 * kisc),
+    }
+    base[T1p] = {
+        S1: kisc,
+        T1p: -(kd + k1 + krt),
+        T10: krt,
+        TpTp: km1 * Hp,
+    }
+    base[T10] = {
+        S1: kisc,
+        T1p: krt,
+        T10: -(kd + k1 + 2 * krt),
+        T1m: krt,
+        T0T0: km1 * Hp,
+    }
+    base[T1m] = {
+        S1: kisc,
+        T10: krt,
+        T1m: -(kd + k1 + krt),
+        TmTm: km1 * Hp,
+    }
+    base[SS] = {
+        SS: -(kbet),
+    }
+    base[STp] = {
+        STp: -(kbet + km1 * Hp) / 2,
+    }
+    base[ST0] = {
+        ST0: -(kbet + km1 * Hp) / 2,
+    }
+    base[STm] = {
+        STm: -(kbet + km1 * Hp) / 2,
+    }
+    base[TpS] = {
+        TpS: -(kbet + km1 * Hp) / 2,
+    }
+    base[TpTp] = {
+        T1p: k1,
+        TpTp: -km1 * Hp,
+    }
+    base[TpT0] = {
+        TpT0: -km1 * Hp,
+    }
+    base[TpTm] = {
+        TpTm: -km1 * Hp,
+    }
+    base[T0S] = {
+        T0S: -(kbet + km1 * Hp) / 2,
+    }
+    base[T0Tp] = {
+        T0Tp: -km1 * Hp,
+    }
+    base[T0T0] = {
+        T10: k1,
+        T0T0: -km1 * Hp,
+    }
+    base[T0Tm] = {
+        T0Tm: -km1 * Hp,
+    }
+    base[TmS] = {
+        TmS: -(kbet + km1 * Hp) / 2,
+    }
+    base[TmTp] = {
+        TmTp: -km1 * Hp,
+    }
+    base[TmT0] = {
+        TmT0: -km1 * Hp,
+    }
+    base[TmTm] = {
+        T1m: k1,
+        TmTm: -km1 * Hp,
+    }
 
     initial_states = {
         T1p: 1 / 3,
@@ -61,7 +122,25 @@ def main():
     }
     time = np.linspace(0, 6e-6, 200)
 
-    result = RateEquations(base, time, initial_states)
+    rate_eq = RateEquations(base)
+    Xkin = loadmat("/tmp/oct/Xkin.mat")["Xkin"]
+    mat = rate_eq.matrix.todense()
+    # print(np.linalg.norm(Xkin[:21, 10] - mat[:, 10]))
+
+    print(rate_eq.indices)
+    print(Xkin[2, 10])
+    print(mat[2, 10])
+    for t in range(3, 21):
+        delta = Xkin[:t, :t] - mat[:t, :t]
+        norm = np.linalg.norm(delta)
+        # if norm != 0.0:
+        #     plt.spy(delta)
+        #     plt.show()
+        print(f"{t=}: {norm=}")
+        # 2,10 & 3,15
+
+    rate_eq.matrix
+    result = rate_eq.time_evolution(time, initial_states)
     fac = 0.07
     keys = [SS, TpTp, T0T0, TmTm]
     data = fac * result[keys]
