@@ -123,28 +123,9 @@ def main():
     time = np.linspace(0, 6e-6, 200)
 
     rate_eq = RateEquations(base)
-    Xkin = loadmat("/tmp/oct/Xkin.mat")["Xkin"]
     mat = rate_eq.matrix.todense()
-    # print(np.linalg.norm(Xkin[:21, 10] - mat[:, 10]))
 
-    print(rate_eq.indices)
-    print(Xkin[2, 10])
-    print(mat[2, 10])
-    for t in range(3, 21):
-        delta = Xkin[:t, :t] - mat[:t, :t]
-        norm = np.linalg.norm(delta)
-        # if norm != 0.0:
-        #     plt.spy(delta)
-        #     plt.show()
-        print(f"{t=}: {norm=}")
-        # 2,10 & 3,15
-
-    rate_eq.matrix
-    result = rate_eq.time_evolution(time, initial_states)
-    fac = 0.07
-    keys = [SS, TpTp, T0T0, TmTm]
-    data = fac * result[keys]
-
+    return  #############
     plt.clf()
     fig = plt.figure()
     scale = 1e6
