@@ -200,6 +200,9 @@ class Hfc:
         available = "not " if self._anisotropic is None else ""
         return f"{self.isotropic:.4} <anisotropic {available}available>"
 
+    # `singledispatchmethod` and `__init__.register` is used to have
+    # one `__init__` function with two implementations BASED ON THE
+    # ARGUMENT TYPE!
     @singledispatchmethod
     def __init__(self, hfc: list[list[float]]):  # noqa D105
         self._anisotropic = np.array(hfc)
@@ -211,6 +214,7 @@ class Hfc:
             raise ValueError("\n".join(lines))
         self._isotropic = self._anisotropic.trace() / 3
 
+    # See the comment above the `singledispatchmethod` decorator.
     @__init__.register
     def _(self, hfc: float):  # noqa D105
         self._anisotropic = None
