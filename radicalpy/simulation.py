@@ -1214,20 +1214,20 @@ class SemiclassicalSimulation(LiouvilleSimulation):
         B: float,
         I_max: list[float],
         fI_max: list[float],
-    ) -> Iterator[NDArray[float]]:
+    ) -> Iterator[NDArray[np.float_]]:
+        num_particles = len(self.radicals)
         spinops = [
-            [self.spin_operator(i, ax) for ax in "xyz"]
-            for i in range(len(self.radicals))
+            [self.spin_operator(ri, ax) for ax in "xyz"] for ri in range(num_particles)
         ]
         for i in range(num_samples):
             result = complex(0)
             for ri, m in enumerate(self.molecules):
-                h = m.semiclassical_random_hfc(I_max[ri], fI_max[ri])
+                std = m.semiclassical_std
+                Is = np.random.normal(0, std, size=3)
                 gamma = m.radical.gamma_mT
-                rots = m.semiclassical_random_rotations()
-                for ai, rot in enumerate(rots):
-                    spinop = spinops[ri][ai]
-                    result += gamma * spinop * rot * h
+                for ax in range(3):
+                    spinop = spinops[ri][ax]
+                    result += gamma * spinop * Is[ax]
                 result += gamma * B * spinop
             yield result
 
