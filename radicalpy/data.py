@@ -577,50 +577,34 @@ class Molecule:
         return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
 
     @property  ############ TODO(calc only once)
-    def semiclassical_tau2(self) -> float:
-        """Calculate the :math:`\\tau^2` coefficient.
+    def semiclassical_std(self) -> float:
+        r"""The standard deviation for the semiclassical HFCs.
 
-        :math:`\\tau^2` is used in
-        `Molecule.semiclassical_random_hfc`.
+        Calculate the standard deviation :math:`\sigma` where
 
         .. math::
-           \\tau_i^{-2} = \\frac{1}{6} \\sum_k a_k^2 I_k (I_k + 1)
+           \sigma = \sqrt{\frac{2}{\tau^2}}
 
-        where :math:`a_k`, :math:`I_k` are the hyperfine coupling and
+        and
+
+        .. math::
+           \tau_i^{-2} = \frac{1}{6} \sum_k a_k^2 I_k (I_k + 1)
+
+        where :math:`a_k` is the hyperfine coupling and :math:`I_k`
         the spin quantum number of each nucleus, respectively.
 
         Examples:
             >>> m = Molecule.fromdb("flavin_anion", nuclei=["N14"])
-            >>> m.semiclassical_tau
+            >>> m.semiclassical_std
+            0.0010410773656027476
 
         """
         tmp = sum(
             n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
             for n in self.nuclei
         )
-        return 6 / tmp
-
-    def semiclassical_random_hfc(self, I_max: float, fI_max: float) -> float:
-        tau = self.semiclassical_tau
-        I_r = self.hfc_rng.uniform(0, I_max)
-        fI_r = self.hfc_rng.uniform(0, fI_max)
-        f = (
-            I_r**2
-            * ((tau**2 / (4 * np.pi)) ** 1.5)
-            * np.exp(-1 / 4 * I_r**2 * tau**2)
-        )
-        return I_r if fI_r < f else 0
-
-    def semiclassical_random_rotations(self) -> Tuple[float, float, float]:
-        while True:
-            theta_r = self.ang_rng.uniform(0, np.pi)
-            s_r = self.ang_rng.uniform()
-            if s_r < np.sin(theta_r):
-                theta = theta_r
-                break
-
-        phi = self.ang_rng.uniform(0, 2 * np.pi)
-        return np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)
+        tau2 = 6.0 / tmp
+        return np.sqrt(2 / tau2)
 
 
 class Triplet(Molecule):
