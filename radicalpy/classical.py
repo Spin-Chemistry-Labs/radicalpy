@@ -168,7 +168,7 @@ def reaction_scheme(path: str, rate_equations: dict):
     Path(path).write_text(texcode)
 
 
-def _random_theta_phi():
+def random_theta_phi() -> Tuple[float, float]:
     """Random sampling of theta and phi.
 
     Returns:
@@ -235,11 +235,11 @@ def randomwalk_3d(
         raise ValueError("Molecule starting distance is needs to be > r_min.")
 
     for i in range(1, n_steps):
-        theta, phi = _random_theta_phi()
+        theta, phi = random_theta_phi()
         new_pos = pos[i - 1] + delta_r * utils.spherical_to_cartesian(theta, phi)
         d = np.linalg.norm(new_pos)
         while (r_max > 0 and d >= r_max - r_min) or d <= r_min + r_min:
-            theta, phi = _random_theta_phi()
+            theta, phi = random_theta_phi()
             new_pos = pos[i - 1] + delta_r * utils.spherical_to_cartesian(theta, phi)
             d = np.linalg.norm(new_pos)
         angle[i] = theta
