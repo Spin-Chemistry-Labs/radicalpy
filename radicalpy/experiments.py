@@ -167,7 +167,9 @@ def semiclassical_kinetics_mary(
             propagator = sp.sparse.linalg.expm(kinetics * dt)
 
             for k in range(0, len(ts)):
-                rho_radical_pair[k] = init_state[5] + init_state[10] + init_state[15] + init_state[20]
+                rho_radical_pair[k] = (
+                    init_state[5] + init_state[10] + init_state[15] + init_state[20]
+                )
                 rho_triplet[k] = init_state[2] + init_state[3] + init_state[4]
 
                 init_state = propagator @ init_state
