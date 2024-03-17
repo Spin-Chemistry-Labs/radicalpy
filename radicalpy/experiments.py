@@ -6,8 +6,12 @@ import scipy as sp
 from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
-from .simulation import (HilbertIncoherentProcessBase, LiouvilleSimulation,
-                         SemiclassicalSimulation, State)
+from .simulation import (
+    HilbertIncoherentProcessBase,
+    LiouvilleSimulation,
+    SemiclassicalSimulation,
+    State,
+)
 from .utils import mary_lorentzian, modulated_signal, reference_signal
 
 
@@ -90,7 +94,7 @@ def semiclassical_mary(
 ):
     dt = ts[1] - ts[0]
     initial = sim.projection_operator(init_state)
-    M = 16 # number of spin states
+    M = 16  # number of spin states
     trace = np.zeros((num_samples, len(ts)))
     mary = np.zeros((len(ts), len(Bs)))
     for i, B0 in enumerate(tqdm(Bs)):
@@ -148,7 +152,7 @@ def semiclassical_kinetics_mary(
 ):
     dt = ts[1] - ts[0]
     initial = sim.projection_operator(init_state)
-    M = 16 # number of spin states
+    M = 16  # number of spin states
     trace = np.zeros((num_samples, len(ts)))
     mary = np.zeros((len(ts), len(Bs)))
     for i, B0 in enumerate(tqdm(Bs)):
