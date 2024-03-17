@@ -1212,8 +1212,6 @@ class SemiclassicalSimulation(LiouvilleSimulation):
         self,
         num_samples: int,
         B: float,
-        I_max: list[float],
-        fI_max: list[float],
     ) -> Iterator[NDArray[np.float_]]:
         num_particles = len(self.radicals)
         spinops = [
