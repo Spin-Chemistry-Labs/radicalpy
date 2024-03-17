@@ -129,7 +129,6 @@ def main(
         sim=sim,
         num_samples=num_samples,
         init_state=State.TRIPLET,
-        # obs_state=State.TRIPLET,
         ts=ts,
         Bs=Bs,
         D=0,
@@ -138,14 +137,7 @@ def main(
         free_radical_escape_rate=free_radical_escape_rate,
         kinetics=[Haberkorn(recombination_rate, State.SINGLET)],
         relaxations=[SingletTripletDephasing(kstd)],
-        # eq 1: I_i
-        # sum([n.spin_quantum_number * n.hfc.isotropic for n in trp.nuclei])
-        I_max=[1.355894620264429, 0.34675],  ##### TODO
-        # eq 4
-        # g^2: 3.945362314381874   2.146998453882501
-        # flavin, trp
-        # eq 3
-        fI_max=[0.028694114751462215, 0.06620716667285462],  ##### TODO
+        scale_factor=0.07
     )
 
     # Calculate time evolution of the B1/2

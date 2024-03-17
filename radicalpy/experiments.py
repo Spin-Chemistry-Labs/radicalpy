@@ -86,17 +86,15 @@ def semiclassical_mary(
     free_radical_escape_rate: float,
     kinetics,  ##########################################
     relaxations,  #######################################
-    I_max: list[float],
-    fI_max: list[float],
+    scale_factor: float,
 ):
     dt = ts[1] - ts[0]
     initial = sim.projection_operator(init_state)
-    M = 16
+    M = 16 # number of spin states
     trace = np.zeros((num_samples, len(ts)))
-    mary_1 = np.zeros((len(ts), len(Bs)))
-    mary_2 = np.zeros((len(ts), len(Bs)))
+    mary = np.zeros((len(ts), len(Bs)))
     for i, B0 in enumerate(tqdm(Bs)):
-        gen = sim.semiclassical_gen(num_samples, B0, I_max, fI_max)
+        gen = sim.semiclassical_gen(num_samples, B0)
         for j, H in enumerate(gen):
             L = sim.convert(H)
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
@@ -125,14 +123,13 @@ def semiclassical_mary(
                     -triplet_excited_state_quenching_rate * dt
                 )
 
-        average = np.ones(num_samples) * 0.01
+        average = np.ones(num_samples) * scale_factor
         decay = average @ trace
         if i == 0:
             decay0 = np.real(decay)
 
-        mary_1[:, i] = np.real(decay)
-        mary_2[:, i] = np.real(decay - decay0)
-    return {"ts": ts, "Bs": Bs, "MARY": mary_2}
+        mary[:, i] = np.real(decay - decay0)
+    return {"ts": ts, "Bs": Bs, "MARY": mary}
 
 
 def semiclassical_kinetics_mary(
@@ -147,17 +144,15 @@ def semiclassical_kinetics_mary(
     free_radical_escape_rate: float,
     kinetics: ArrayLike,
     relaxations: list[ArrayLike],
-    I_max: list[float],
-    fI_max: list[float],
+    scale_factor: float,
 ):
     dt = ts[1] - ts[0]
     initial = sim.projection_operator(init_state)
-    M = 16
+    M = 16 # number of spin states
     trace = np.zeros((num_samples, len(ts)))
-    mary_1 = np.zeros((len(ts), len(Bs)))
-    mary_2 = np.zeros((len(ts), len(Bs)))
+    mary = np.zeros((len(ts), len(Bs)))
     for i, B0 in enumerate(tqdm(Bs)):
-        gen = sim.semiclassical_gen(num_samples, B0, I_max, fI_max)
+        gen = sim.semiclassical_gen(num_samples, B0)
         for j, H in enumerate(gen):
             L = sim.convert(H)
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
@@ -186,11 +181,10 @@ def semiclassical_kinetics_mary(
                     -triplet_excited_state_quenching_rate * dt
                 )
 
-        average = np.ones(num_samples) * 0.01
+        average = np.ones(num_samples) * scale_factor
         decay = average @ trace
         if i == 0:
             decay0 = np.real(decay)
 
-        mary_1[:, i] = np.real(decay)
-        mary_2[:, i] = np.real(decay - decay0)
-    return {"ts": ts, "Bs": Bs, "MARY": mary_2}
+        mary[:, i] = np.real(decay - decay0)
+    return {"ts": ts, "Bs": Bs, "MARY": mary}
