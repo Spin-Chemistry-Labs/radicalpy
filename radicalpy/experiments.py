@@ -139,56 +139,48 @@ def semiclassical_mary(
 def semiclassical_kinetics_mary(
     sim: SemiclassicalSimulation,
     num_samples: int,
-    init_state: State,
+    init_state: ArrayLike,
     ts: NDArray[float],
     Bs: ArrayLike,
     D: float,
     J: float,
-    triplet_excited_state_quenching_rate: float,
-    free_radical_escape_rate: float,
     kinetics: ArrayLike,
     relaxations: list[ArrayLike],
-    scale_factor: float,
 ):
     dt = ts[1] - ts[0]
-    initial = sim.projection_operator(init_state)
-    M = 16  # number of spin states
-    trace = np.zeros((num_samples, len(ts)))
-    mary = np.zeros((len(ts), len(Bs)))
+    result_1 = np.zeros((len(ts), len(Bs)), dtype=complex)
+    zero_field = np.zeros((len(ts), len(Bs)), dtype=complex)
+    mary = np.zeros((len(ts), len(Bs)), dtype=complex)
+    kinetic_model = kinetics
+    kinetic_matrix = np.zeros((len(kinetics), len(kinetics)), dtype=complex)
+    rho_radical_pair = np.zeros(len(ts), dtype=complex)
+    rho_triplet = np.zeros(len(ts), dtype=complex)
+    radical_pair_yield = np.zeros((1, len(ts)), dtype=complex)
+    triplet_yield = np.zeros((1, len(ts)), dtype=complex)
     for i, B0 in enumerate(tqdm(Bs)):
         gen = sim.semiclassical_gen(num_samples, B0)
+
         for j, H in enumerate(gen):
             L = sim.convert(H)
-            sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
-            propagator = sp.sparse.linalg.expm(L * dt)
-
-            FR_initial_population = 0  # free radical
-            triplet_initial_population = 1  # triplet excited state
-
-            initial_temp = np.reshape(initial / 3, (M, 1))
-            density = np.reshape(np.zeros(16), (M, 1))
+            kinetic_matrix[5:21, 5:21] -= L
+            kinetics = kinetic_model + kinetic_matrix
+            propagator = sp.sparse.linalg.expm(kinetics * dt)
 
             for k in range(0, len(ts)):
-                FR_density = density
-                population = np.trace(FR_density)
-                rho = population + (
-                    FR_initial_population + population * free_radical_escape_rate * dt
-                )
-                trace[j, k] = np.real(rho)
-                density = (
-                    propagator * density
-                    + triplet_initial_population
-                    * (1 - np.exp(-triplet_excited_state_quenching_rate * dt))
-                    * initial_temp
-                )
-                triplet_initial_population = triplet_initial_population * np.exp(
-                    -triplet_excited_state_quenching_rate * dt
-                )
+                rho_radical_pair[k] = init_state[5] + init_state[10] + init_state[15] + init_state[20]
+                rho_triplet[k] = init_state[2] + init_state[3] + init_state[4]
 
-        average = np.ones(num_samples) * scale_factor
-        decay = average @ trace
-        if i == 0:
-            decay0 = np.real(decay)
+                init_state = propagator @ init_state
 
-        mary[:, i] = np.real(decay - decay0)
+        radical_pair_yield = (radical_pair_yield + rho_radical_pair) / num_samples
+        triplet_yield = (triplet_yield + rho_triplet) / num_samples
+
+        total_yield = radical_pair_yield + triplet_yield
+        result_1[:, i] = result_1[:, i] + total_yield
+
+    yield_zero_field = result_1[:, 0]
+    for i in range(0, len(Bs)):
+        zero_field[:, i] = yield_zero_field
+
+    mary = np.real(result_1 - zero_field)
     return {"ts": ts, "Bs": Bs, "MARY": mary}

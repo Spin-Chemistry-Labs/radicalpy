@@ -1,12 +1,49 @@
 #! /usr/bin/env python
 import matplotlib.pyplot as plt  # TODO REMOVE THIS
 import numpy as np
-from scipy.io import loadmat  # # TODO REMOVE THIS!
-
 from radicalpy.classical import Rate, RateEquations
 from radicalpy.experiments import semiclassical_kinetics_mary
-from radicalpy.simulation import LiouvilleSimulation
+from radicalpy.simulation import LiouvilleSimulation, Molecule, SemiclassicalSimulation
+from radicalpy.utils import Bhalf_fit
 
+def plot_3d_results(results, factor=1e6):
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    ax.set_facecolor("none")
+    ax.grid(False)
+    X, Y = np.meshgrid(results["Bs"], results["ts"])
+    ax.plot_surface(
+        X,
+        Y * factor,
+        results["MARY"],
+        facecolors=cmap.to_rgba(results["MARY"].real),
+        rstride=1,
+        cstride=1,
+    )
+    ax.set_xlabel("$B_0$ (mT)", size=18)
+    ax.set_ylabel("Time ($\mu s$)", size=18)
+    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
+    plt.show()
+
+def plot_bhalf_time(ts, bhalf_time, fit_error_time, factor=1e6):
+    plt.figure(3)
+    for i in range(2, len(ts), 35):
+        plt.plot(ts[i] * factor, bhalf_time[i], "ro", linewidth=3)
+        plt.errorbar(
+            ts[i] * factor,
+            bhalf_time[i],
+            fit_error_time[1, i],
+            color="k",
+            linewidth=2,
+        )
+    plt.xlabel("Time ($\mu s$)", size=18)
+    plt.ylabel("$B_{1/2}$ (mT)", size=18)
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    plt.show()
 
 def main():
     # Kinetic simulation of FAD at pH 2.1.
@@ -117,53 +154,46 @@ def main():
         TmTm: -km1 * Hp,
     }
 
-    initial_states = {
-        T1p: 1 / 3,
-        T10: 1 / 3,
-        T1m: 1 / 3,
-    }
-    time = np.linspace(0, 6e-6, 200)
-
     rate_eq = RateEquations(base)
     mat = rate_eq.matrix.todense()
+    rho0 = np.array([0, 0, 1/3, 1/3, 1/3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    time = np.arange(0, 10e-6, 10e-9)
+    Bs = np.arange(0, 40, 1)
 
     flavin = Molecule.all_nuclei("flavin_anion")
-    trp = Molecule.all_nuclei("adenine_cation")
-    sim = SemiclassicalSimulation([flavin, trp])
-    num_samples = 10
-    semiclassical_kinetics_mary(
+    adenine = Molecule.all_nuclei("adenine_cation")
+    sim = SemiclassicalSimulation([flavin, adenine])
+
+    num_samples = 400
+    results = semiclassical_kinetics_mary(
         sim,
         num_samples,
-        initial_states,
-        ts,
-        Bs,
-        D,
-        J,
-        triplet_excited_state_quenching_rate,
-        free_radical_escape_rate,
-        kinetics,
-        relaxations,
-        I_max,
-        fI_max,
+        rho0,
+        ts=time,
+        Bs=Bs,
+        D=0,
+        J=0,
+        kinetics=mat,
+        relaxations=[]
     )
-    return  #############
-    plt.clf()
-    fig = plt.figure()
-    scale = 1e6
-    gs = fig.add_gridspec(2, hspace=0)
-    axs = gs.subplots(sharex=True)
-    fig.suptitle("FAD (pH 2.3) Transient Absorption", size=18)
-    axs[0].plot(time * scale, data, color="blue", linewidth=2)
-    plt.xscale("linear")
-    axs[0].legend([r"$F (B_0 = 0)$", r"$F (B_0 \neq 0)$"])
-    axs[1].set_xlabel("Time ($\mu s$)", size=14)
-    axs[0].set_ylabel("$\Delta A$", size=14)
-    axs[1].set_ylabel("$\Delta \Delta A$", size=14)
-    axs[0].tick_params(labelsize=14)
-    axs[1].tick_params(labelsize=14)
-    fig.set_size_inches(10, 5)
-    path = __file__[:-3] + f"_{0}.png"
-    plt.savefig(path)
+
+    plot_3d_results(results, factor=1e6)
+
+    # Calculate time evolution of the B1/2
+    bhalf_time = np.zeros((len(results["MARY"])))
+    fit_time = np.zeros((len(Bs), len(results["MARY"])))
+    fit_error_time = np.zeros((2, len(results["MARY"])))
+    R2_time = np.zeros((len(results["MARY"])))
+
+    for i in range(2, len(results["MARY"])):
+        (
+            bhalf_time[i],
+            fit_time[:, i],
+            fit_error_time[:, i],
+            R2_time[i],
+        ) = Bhalf_fit(Bs, results["MARY"][i, :])
+
+    plot_bhalf_time(time, bhalf_time, fit_error_time)
 
 
 if __name__ == "__main__":
