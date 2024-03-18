@@ -1207,7 +1207,7 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
         H -= self.subH
 
 
-#class SemiclassicalSimulation(LiouvilleSimulation):
+# class SemiclassicalSimulation(LiouvilleSimulation):
 #    def semiclassical_gen(
 #        self,
 #        num_samples: int,
@@ -1228,6 +1228,7 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
 #                    result += gamma * spinop * Is
 #                #result += gamma * B * spinop
 #            yield result
+
 
 class SemiclassicalSimulation(LiouvilleSimulation):
     def semiclassical_gen(

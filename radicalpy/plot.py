@@ -167,6 +167,7 @@ def monte_carlo_caged(pos, r_max):
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 10)
 
+
 def plot_3d_results(results, factor=1e6):
     fig = plt.figure(figsize=plt.figaspect(1.0))
     ax = fig.add_subplot(projection="3d")
@@ -188,6 +189,7 @@ def plot_3d_results(results, factor=1e6):
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 5)
     plt.show()
+
 
 def plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j):
     fig = plt.figure(2)
@@ -223,6 +225,7 @@ def plot_bhalf_time(ts, bhalf_time, fit_error_time, factor=1e6):
     plt.gcf().set_size_inches(10, 5)
     plt.show()
 
+
 def plot_exchange_interaction_in_solution(ts, trajectory_data, j):
     fig = plt.figure(1)
     ax = fig.add_axes([0, 0, 1, 1])
@@ -243,6 +246,7 @@ def plot_exchange_interaction_in_solution(ts, trajectory_data, j):
     ax2.tick_params(labelsize=18, labelcolor=color2)
     fig.set_size_inches(7, 5)
     plt.show()
+
 
 def spin_state_labels(sim: HilbertSimulation):
     if len(sim.radicals) != 2:
