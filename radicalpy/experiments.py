@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from .simulation import (
     HilbertIncoherentProcessBase,
+    HilbertSimulation,
     LiouvilleSimulation,
     SemiclassicalSimulation,
     State,
@@ -97,10 +98,13 @@ def semiclassical_mary(
     M = 16  # number of spin states
     trace = np.zeros((num_samples, len(ts)))
     mary = np.zeros((len(ts), len(Bs)))
+    gen = sim.semiclassical_gen(num_samples)
+
     for i, B0 in enumerate(tqdm(Bs)):
-        gen = sim.semiclassical_gen(num_samples, B0)
-        for j, H in enumerate(gen):
-            L = sim.convert(H)
+        Hz = sim.zeeman_hamiltonian(B0)
+        for j, Hnuc in enumerate(gen):
+            Ht = Hz + Hnuc
+            L = sim.convert(Ht)
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
             propagator = sp.sparse.linalg.expm(L * dt)
 
@@ -157,11 +161,13 @@ def semiclassical_kinetics_mary(
     rho_triplet = np.zeros(len(ts), dtype=complex)
     radical_pair_yield = np.zeros((1, len(ts)), dtype=complex)
     triplet_yield = np.zeros((1, len(ts)), dtype=complex)
-    for i, B0 in enumerate(tqdm(Bs)):
-        gen = sim.semiclassical_gen(num_samples, B0)
+    gen = sim.semiclassical_gen(num_samples)
 
-        for j, H in enumerate(gen):
-            L = sim.convert(H)
+    for i, B0 in enumerate(tqdm(Bs)):
+        Hz = sim.zeeman_hamiltonian(B0)
+        for j, Hnuc in enumerate(gen):
+            Ht = Hz + Hnuc
+            L = sim.convert(Ht)
             kinetic_matrix[5:21, 5:21] -= L
             kinetics = kinetic_model + kinetic_matrix
             propagator = sp.sparse.linalg.expm(kinetics * dt)

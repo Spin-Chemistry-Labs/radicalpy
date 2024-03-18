@@ -3,47 +3,10 @@ import matplotlib.pyplot as plt  # TODO REMOVE THIS
 import numpy as np
 from radicalpy.classical import Rate, RateEquations
 from radicalpy.experiments import semiclassical_kinetics_mary
+from radicalpy.plot import (plot_3d_results,
+                            plot_bhalf_time)
 from radicalpy.simulation import LiouvilleSimulation, Molecule, SemiclassicalSimulation
 from radicalpy.utils import Bhalf_fit
-
-def plot_3d_results(results, factor=1e6):
-    fig = plt.figure(figsize=plt.figaspect(1.0))
-    ax = fig.add_subplot(projection="3d")
-    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
-    ax.set_facecolor("none")
-    ax.grid(False)
-    X, Y = np.meshgrid(results["Bs"], results["ts"])
-    ax.plot_surface(
-        X,
-        Y * factor,
-        results["MARY"],
-        facecolors=cmap.to_rgba(results["MARY"].real),
-        rstride=1,
-        cstride=1,
-    )
-    ax.set_xlabel("$B_0$ (mT)", size=18)
-    ax.set_ylabel("Time ($\mu s$)", size=18)
-    ax.set_zlabel("$\Delta \Delta A$", size=18)
-    plt.tick_params(labelsize=14)
-    fig.set_size_inches(10, 5)
-    plt.show()
-
-def plot_bhalf_time(ts, bhalf_time, fit_error_time, factor=1e6):
-    plt.figure(3)
-    for i in range(2, len(ts), 35):
-        plt.plot(ts[i] * factor, bhalf_time[i], "ro", linewidth=3)
-        plt.errorbar(
-            ts[i] * factor,
-            bhalf_time[i],
-            fit_error_time[1, i],
-            color="k",
-            linewidth=2,
-        )
-    plt.xlabel("Time ($\mu s$)", size=18)
-    plt.ylabel("$B_{1/2}$ (mT)", size=18)
-    plt.tick_params(labelsize=14)
-    plt.gcf().set_size_inches(10, 5)
-    plt.show()
 
 def main():
     # Kinetic simulation of FAD at pH 2.1.
@@ -158,7 +121,7 @@ def main():
     mat = rate_eq.matrix.todense()
     rho0 = np.array([0, 0, 1/3, 1/3, 1/3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     time = np.arange(0, 10e-6, 10e-9)
-    Bs = np.arange(0, 40, 1)
+    Bs = np.arange(0, 30)
 
     flavin = Molecule.all_nuclei("fad")
     adenine = Molecule.all_nuclei("fad")
