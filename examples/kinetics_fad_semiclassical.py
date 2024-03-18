@@ -160,11 +160,11 @@ def main():
     time = np.arange(0, 10e-6, 10e-9)
     Bs = np.arange(0, 40, 1)
 
-    flavin = Molecule.all_nuclei("flavin_anion")
-    adenine = Molecule.all_nuclei("adenine_cation")
+    flavin = Molecule.all_nuclei("fad")
+    adenine = Molecule.all_nuclei("fad")
     sim = SemiclassicalSimulation([flavin, adenine])
 
-    num_samples = 400
+    num_samples = 40
     results = semiclassical_kinetics_mary(
         sim,
         num_samples,
