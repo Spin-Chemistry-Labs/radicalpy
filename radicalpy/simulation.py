@@ -1207,27 +1207,47 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
         H -= self.subH
 
 
+#class SemiclassicalSimulation(LiouvilleSimulation):
+#    def semiclassical_gen(
+#        self,
+#        num_samples: int,
+#        #B: float,
+#    ) -> Iterator[NDArray[np.float_]]:
+#        num_particles = len(self.radicals)
+#        spinops = [
+#            [self.spin_operator(ri, ax) for ax in "xyz"] for ri in range(num_particles)
+#        ]
+#        for i in range(num_samples):
+#            result = complex(0)
+#            for ri, m in enumerate(self.molecules):
+#                std = m.semiclassical_std
+#                Is = np.random.normal(0, std, size=1)
+#                gamma = m.radical.gamma_mT
+#                for ax in range(3):
+#                    spinop = spinops[ri][ax]
+#                    result += gamma * spinop * Is
+#                #result += gamma * B * spinop
+#            yield result
+
 class SemiclassicalSimulation(LiouvilleSimulation):
     def semiclassical_gen(
         self,
         num_samples: int,
-        B: float,
-    ) -> Iterator[NDArray[np.float_]]:
+    ) -> np.ndarray:
         num_particles = len(self.radicals)
         spinops = [
             [self.spin_operator(ri, ax) for ax in "xyz"] for ri in range(num_particles)
         ]
+        result = np.zeros((num_samples, 4, 4), dtype=complex)
         for i in range(num_samples):
-            result = complex(0)
             for ri, m in enumerate(self.molecules):
                 std = m.semiclassical_std
-                Is = np.random.normal(0, std, size=3)
+                Is = np.random.normal(0, std, size=1)
                 gamma = m.radical.gamma_mT
                 for ax in range(3):
                     spinop = spinops[ri][ax]
-                    result += gamma * spinop * Is[ax]
-                result += gamma * B * spinop
-            yield result
+                    result[i, :, :] += gamma * spinop * Is
+        return result
 
     @property
     def nuclei(self):
