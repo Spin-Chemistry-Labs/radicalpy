@@ -8,6 +8,7 @@ import dot2tex
 import graphviz
 import numpy as np
 import scipy as sp
+from numpy.typing import ArrayLike
 
 from . import utils
 
@@ -168,16 +169,20 @@ def reaction_scheme(path: str, rate_equations: dict):
     Path(path).write_text(texcode)
 
 
-def random_theta_phi() -> Tuple[float, float]:
+def random_theta_phi(n: int = 1) -> ArrayLike:
     """Random sampling of theta and phi.
+
+    Args:
+
+            n_samples (int): The number of samples generated.
 
     Returns:
             Theta and phi (radians).
+
     """
-    theta = np.pi * np.random.rand()
-    arg = np.random.uniform(-1, 1)
-    phi = 2 * np.sign(arg) * np.arcsin(np.sqrt(np.abs(arg)))
-    return theta, phi
+    phi = np.random.uniform(0, 2 * np.pi, size=n)
+    theta = np.arccos(np.random.uniform(-1, 1, size=n))
+    return np.array([theta, phi])
 
 
 def randomwalk_3d(
