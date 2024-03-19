@@ -89,11 +89,26 @@ def randang():
 
 
 def surface():
-    pass
+    n = 5000
+    samples = np.random.normal(loc=0, scale=1, size=(3, n))
+    norm = np.linalg.norm(samples, axis=0)
+    ns = samples / norm
+    fig = plt.figure()
+    ax = fig.add_subplot(2, 2, 1, projection="3d")
+    ax.scatter(*ns)
+    ax = fig.add_subplot(2, 2, 3, projection="3d")
+    ax.scatter(*ns)
+    ax.scatter(*samples)
+    ax = fig.add_subplot(2, 2, 2)
+    ax.hist(norm)
+    x = np.linspace(0, 5)
+    fx = 
+    # ax.plot(x, fx)
+    plt.show()
 
 
 if __name__ == "__main__" or True:
     # main()
     # dist()
-    randang()
-    # surface()
+    # randang()
+    surface()
