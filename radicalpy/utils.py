@@ -429,7 +429,7 @@ def spherical_to_cartesian(
             np.sin(theta) * np.sin(phi),
             np.cos(theta),
         ]
-    )
+    ).T
 
 
 def yield_anisotropy(

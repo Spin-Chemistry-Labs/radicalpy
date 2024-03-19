@@ -8,10 +8,12 @@ sys.path.insert(0, "..")  ##############################################
 from functools import singledispatchmethod  # noqa E402
 from typing import Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from radicalpy import data  # noqa E402
+from radicalpy.utils import spherical_to_cartesian
 
 
 def main():
@@ -62,6 +64,36 @@ def dist():
     print(f"{np.var(norm)**2=}")
 
 
+def randang():
+    from radicalpy.classical import new_random_theta_phi, random_theta_phi
+
+    np.random.seed(42)
+    ra = random_theta_phi()
+    print(f"{ra=}")
+    np.random.seed(420)
+    ra = new_random_theta_phi(1000)
+    print(f"{ra=}")
+    t, p = new_random_theta_phi()
+    print(f"{t,p=}")
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
+    ax.scatter(*spherical_to_cartesian(ra[0], ra[1]))
+
+    old = []
+    for _ in range(50):
+        old.append(random_theta_phi())
+    old = np.array(old).T
+    # ax.scatter(*spherical_to_cartesian(old[0], old[1]))
+    # fig.savefig("wip_experiment.png")
+    plt.show()
+
+
+def surface():
+    pass
+
+
 if __name__ == "__main__" or True:
     # main()
-    dist()
+    # dist()
+    randang()
+    # surface()
