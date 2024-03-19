@@ -1,12 +1,13 @@
 #! /usr/bin/env python
 import matplotlib.pyplot as plt  # TODO REMOVE THIS
 import numpy as np
+
 from radicalpy.classical import Rate, RateEquations
 from radicalpy.experiments import semiclassical_kinetics_mary
-from radicalpy.plot import (plot_3d_results,
-                            plot_bhalf_time)
+from radicalpy.plot import plot_3d_results, plot_bhalf_time
 from radicalpy.simulation import LiouvilleSimulation, Molecule, SemiclassicalSimulation
 from radicalpy.utils import Bhalf_fit
+
 
 def main():
     # Kinetic simulation of FAD at pH 2.1.
@@ -119,7 +120,9 @@ def main():
 
     rate_eq = RateEquations(base)
     mat = rate_eq.matrix.todense()
-    rho0 = np.array([0, 0, 1/3, 1/3, 1/3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    rho0 = np.array(
+        [0, 0, 1 / 3, 1 / 3, 1 / 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    )
     time = np.arange(0, 10e-6, 10e-9)
     Bs = np.arange(0, 30)
 
@@ -129,15 +132,7 @@ def main():
 
     num_samples = 40
     results = semiclassical_kinetics_mary(
-        sim,
-        num_samples,
-        rho0,
-        ts=time,
-        Bs=Bs,
-        D=0,
-        J=0,
-        kinetics=mat,
-        relaxations=[]
+        sim, num_samples, rho0, ts=time, Bs=Bs, D=0, J=0, kinetics=mat, relaxations=[]
     )
 
     plot_3d_results(results, factor=1e6)
