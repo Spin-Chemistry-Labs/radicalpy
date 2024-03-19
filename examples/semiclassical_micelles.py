@@ -1,26 +1,32 @@
 #! /usr/bin/env python
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 
 from radicalpy.data import Molecule
-from radicalpy.estimations import (autocorrelation, autocorrelation_fit,
-                                   exchange_interaction_in_solution_MC, k_STD)
+from radicalpy.estimations import (
+    autocorrelation,
+    autocorrelation_fit,
+    exchange_interaction_in_solution_MC,
+    k_STD,
+)
 from radicalpy.experiments import semiclassical_mary
 from radicalpy.kinetics import Haberkorn
-from radicalpy.plot import (plot_3d_results,
-                            plot_autocorrelation_fit,
-                            plot_bhalf_time,
-                            plot_exchange_interaction_in_solution)
+from radicalpy.plot import (
+    plot_3d_results,
+    plot_autocorrelation_fit,
+    plot_bhalf_time,
+    plot_exchange_interaction_in_solution,
+)
 from radicalpy.relaxation import SingletTripletDephasing
 from radicalpy.simulation import Basis, SemiclassicalSimulation, State
 from radicalpy.utils import Bhalf_fit, is_fast_run, read_trajectory_files
 
+
 def main(
-    ts = np.arange(0, 10e-6, 10e-9),
-    Bs = np.arange(0, 50, 0.5),
-    num_samples = 100,
+    ts=np.arange(0, 10e-6, 10e-9),
+    Bs=np.arange(0, 50, 0.5),
+    num_samples=100,
 ):
     flavin = Molecule.all_nuclei("flavin_anion")
     trp = Molecule.all_nuclei("tryptophan_cation")
@@ -61,7 +67,7 @@ def main(
         free_radical_escape_rate=free_radical_escape_rate,
         kinetics=[Haberkorn(recombination_rate, State.SINGLET)],
         relaxations=[SingletTripletDephasing(kstd)],
-        scale_factor=0.005
+        scale_factor=0.005,
     )
 
     # Calculate time evolution of the B1/2

@@ -7,8 +7,13 @@ import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
 
-from radicalpy.classical import (Rate, RateEquations, latex_eqlist_to_align, latexify,
-                                 reaction_scheme)
+from radicalpy.classical import (
+    Rate,
+    RateEquations,
+    latex_eqlist_to_align,
+    latexify,
+    reaction_scheme,
+)
 
 
 def main():
