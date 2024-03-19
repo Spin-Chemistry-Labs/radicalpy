@@ -237,9 +237,11 @@ def HamiltonianDipolar3D(DipolarInteractions):
     ]
     return sum(
         [
-            t[0] * np.kron(np.kron(t[1], t[2]), t[3])
-            if ds == 3
-            else np.kron(t[1], t[2])
+            (
+                t[0] * np.kron(np.kron(t[1], t[2]), t[3])
+                if ds == 3
+                else np.kron(t[1], t[2])
+            )
             for t in terms
         ]
     )
