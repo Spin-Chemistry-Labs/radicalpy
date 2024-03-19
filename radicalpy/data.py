@@ -429,7 +429,7 @@ class Molecule:
         Examples:
             >>> available = Molecule.available()
             >>> available[:4]
-            ['2_6_aqds', 'adenine_cation', 'flavin_anion', 'flavin_neutral']
+            ['2_6_aqds', 'adenine_cation', 'fad', 'flavin_anion']
         """
         paths = get_data("molecules").glob("*.json")
         return sorted([path.with_suffix("").name for path in paths])
