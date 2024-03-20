@@ -89,26 +89,50 @@ def randang():
 
 
 def surface():
-    n = 5000
+    n = 500
     samples = np.random.normal(loc=0, scale=1, size=(3, n))
     norm = np.linalg.norm(samples, axis=0)
     ns = samples / norm
     fig = plt.figure()
-    ax = fig.add_subplot(2, 2, 1, projection="3d")
-    ax.scatter(*ns)
-    ax = fig.add_subplot(2, 2, 3, projection="3d")
-    ax.scatter(*ns)
-    ax.scatter(*samples)
+    # ax = fig.add_subplot(2, 2, 1, projection="3d")
+    # ax.scatter(*ns)
+    # ax = fig.add_subplot(2, 2, 3, projection="3d")
+    # ax.scatter(*ns)
+    # ax.scatter(*samples)
     ax = fig.add_subplot(2, 2, 2)
-    ax.hist(norm)
-    x = np.linspace(0, 5)
-    fx = 
-    # ax.plot(x, fx)
+    ax.hist(norm, density=True)
+    I = np.linspace(0, 5, 20)
+    tau2 = 4
+    fI = (tau2 / (4 * np.pi)) ** (3 / 2) * np.exp(-1 / 4 * I**2 * tau2)
+    ax.plot(I, fI)
     plt.show()
+
+
+def algebra():
+    from sympy import exp, pi, sqrt, symbols
+    from sympy.abc import T, h, l, n, sigma, tau, x
+
+    pexpr = (tau**2 / (4 * pi)) ** (3 / 2) * exp(-1 / 4 * x**2 * tau**2)
+    bexpr = (3 / (2 * pi * n * l**2)) ** (3 / 2) * exp(-(3 * h**2) / (2 * n * l**2))
+    nexpr = 1 / ((sigma**2 * 2 * pi) ** (1 / 2)) * exp(-1 / 2 * x**2 / sigma**2)
+
+    pexpr = pexpr.subs(tau**2, 1 / T)
+    pexpr = pexpr.subs(x, h)
+    print(pexpr)
+    bexpr = bexpr.subs(n * l**2, T * 6)
+    print(bexpr)
+    nexpr = nexpr.subs(sigma**2, 2 * T).subs(x, h)
+    print(nexpr**3)
+    pb_delta = (pexpr - bexpr).simplify()
+    print(f"{pb_delta=}")
+    pn_delta = (pexpr / nexpr**3).simplify().expand()
+    print(f"{pn_delta=}")
+    # 1/tau2 == n*l2 / 6
 
 
 if __name__ == "__main__" or True:
     # main()
     # dist()
     # randang()
-    surface()
+    # surface()
+    algebra()
