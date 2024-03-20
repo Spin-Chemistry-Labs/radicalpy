@@ -1250,6 +1250,22 @@ class SemiclassicalSimulation(LiouvilleSimulation):
                     result[i, :, :] += gamma * spinop * Is
         return result
 
+    def semiclassical_gen2(
+        self,
+        num_samples: int,
+    ) -> np.ndarray:
+        num_particles = len(self.radicals)
+        assert num_particles == 2
+        assert num_particles == len(self.molecules)
+        assert self.radicals[0].multiplicity == 2
+        assert self.radicals[1].multiplicity == 2
+
+        spinops = np.array([self.spin_operator(0, ax) for ax in "xyz"])
+        result = np.zeros((num_samples, 4, 4), dtype=complex)
+        cov = np.diag([m.semiclassical_std for m in self.molecules])
+        samples = np.random.multivariate_normal([0, 0], cov, size=(num_samples, 3))
+        return np.einsum("nam,axy->nxy", samples, spinops)
+
     @property
     def nuclei(self):
         return []

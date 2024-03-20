@@ -32,25 +32,24 @@ def main(
     trp = Molecule.all_nuclei("tryptophan_cation")
     sim = SemiclassicalSimulation([flavin, trp], basis=Basis.ZEEMAN)
 
-    trajectory_data = read_trajectory_files("./examples/data/md_fad_trp_aot")
-    trajectory_ts = (
-        np.linspace(0, len(trajectory_data), len(trajectory_data)) * 5e-12 * 1e9
-    )
-    j = exchange_interaction_in_solution_MC(trajectory_data[:, 1], J0=5)
+    # trajectory_data = read_trajectory_files("./examples/data/md_fad_trp_aot")
+    # trajectory_ts = (
+    #     np.linspace(0, len(trajectory_data), len(trajectory_data)) * 5e-12 * 1e9
+    # )
+    # j = exchange_interaction_in_solution_MC(trajectory_data[:, 1], J0=5)
 
-    plot_exchange_interaction_in_solution(trajectory_ts, trajectory_data, j)
+    # plot_exchange_interaction_in_solution(trajectory_ts, trajectory_data, j)
 
-    acf_j = autocorrelation(j, factor=1)
-    zero_point_crossing_j = np.where(np.diff(np.sign(acf_j)))[0][0]
-    t_j_max = max(trajectory_ts[:zero_point_crossing_j]) * 1e-9
-    t_j = np.linspace(5e-12, t_j_max, zero_point_crossing_j)
+    # acf_j = autocorrelation(j, factor=1)
+    # zero_point_crossing_j = np.where(np.diff(np.sign(acf_j)))[0][0]
+    # t_j_max = max(trajectory_ts[:zero_point_crossing_j]) * 1e-9
+    # t_j = np.linspace(5e-12, t_j_max, zero_point_crossing_j)
 
-    acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
-    kstd = k_STD(j, acf_j_fit["tau_c"])
+    # acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
+    # plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j)
 
-    plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j)
-
-    # kstd = 1e7
+    # kstd = k_STD(j, acf_j_fit["tau_c"])
+    kstd = 462.10479319787896
     triplet_excited_state_quenching_rate = 5e6
     recombination_rate = 8e6
     free_radical_escape_rate = 5e5
