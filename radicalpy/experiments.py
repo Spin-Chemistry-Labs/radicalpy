@@ -161,7 +161,7 @@ def semiclassical_kinetics_mary(
     rho_triplet = np.zeros(len(ts), dtype=complex)
     radical_pair_yield = np.zeros((1, len(ts)), dtype=complex)
     triplet_yield = np.zeros((1, len(ts)), dtype=complex)
-    gen = sim.semiclassical_gen(num_samples)
+    gen = sim.semiclassical_gen2(num_samples)
 
     for i, B0 in enumerate(tqdm(Bs)):
         Hz = sim.zeeman_hamiltonian(B0)
