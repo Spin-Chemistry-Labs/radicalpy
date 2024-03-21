@@ -113,16 +113,15 @@ def algebra():
     from sympy.abc import T, h, l, n, sigma, tau, x
 
     pexpr = (tau**2 / (4 * pi)) ** (3 / 2) * exp(-1 / 4 * x**2 * tau**2)
-    pexpr = pexpr.subs(tau**2, 1 / T).subs(x, h)
+    pexpr = pexpr.subs(x, h)
     print(pexpr)
 
     bexpr = (3 / (2 * pi * n * l**2)) ** (3 / 2) * exp(-(3 * h**2) / (2 * n * l**2))
-    bexpr = bexpr.subs(n * l**2, T * 6)
+    bexpr = bexpr.subs(n * l**2, 6 * tau**-2)
     print(bexpr)
+
     pb_delta = (pexpr - bexpr).simplify()
     print(f"{pb_delta=}")
-    # sigma = 6T = 6 tau^-2
-    # 1/T = tau^2
 
     nexpr = 1 / ((sigma**2 * 2 * pi) ** (1 / 2)) * exp(-1 / 2 * x**2 / sigma**2)
     nexpr = nexpr.subs(sigma**2, 2 * T).subs(x, h)

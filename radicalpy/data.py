@@ -582,9 +582,6 @@ class Molecule:
 
         Calculate the standard deviation :math:`\sigma` where
 
-        .. todo::
-           Do the math properly.
-
         .. math::
            \sigma = \sqrt{\frac{2}{\tau^2}}
 
@@ -599,14 +596,16 @@ class Molecule:
         Examples:
             >>> m = Molecule.fromdb("flavin_anion", nuclei=["N14"])
             >>> m.semiclassical_std
-            0.0010410773656027476
+            7.663920853309001e-07
 
+        .. todo::
+           reference
         """
-        tmp = sum(
+        tau = 6 / sum(
             n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
             for n in self.nuclei
         )
-        return tmp**2 / 6
+        return np.sqrt(2) / tau
 
 
 class Triplet(Molecule):
