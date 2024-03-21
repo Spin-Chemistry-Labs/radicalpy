@@ -83,7 +83,7 @@ def semiclassical_mary(
     sim: SemiclassicalSimulation,
     num_samples: int,
     init_state: State,
-    ts: NDArray[float],
+    ts: ArrayLike,
     Bs: ArrayLike,
     D: float,
     J: float,
@@ -98,12 +98,12 @@ def semiclassical_mary(
     M = 16  # number of spin states
     trace = np.zeros((num_samples, len(ts)))
     mary = np.zeros((len(ts), len(Bs)))
-    gen = sim.semiclassical_gen2(num_samples)
+    HHs = sim.semiclassical_HHs(num_samples)
 
     for i, B0 in enumerate(tqdm(Bs)):
         Hz = sim.zeeman_hamiltonian(B0)
-        for j, Hnuc in enumerate(gen):
-            Ht = Hz + Hnuc
+        for j, HH in enumerate(HHs):
+            Ht = Hz + HH
             L = sim.convert(Ht)
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
             propagator = sp.sparse.linalg.expm(L * dt)
@@ -161,11 +161,11 @@ def semiclassical_kinetics_mary(
     rho_triplet = np.zeros(len(ts), dtype=complex)
     radical_pair_yield = np.zeros((1, len(ts)), dtype=complex)
     triplet_yield = np.zeros((1, len(ts)), dtype=complex)
-    gen = sim.semiclassical_gen2(num_samples)
+    HHs = sim.semiclassical_HHs(num_samples)
 
     for i, B0 in enumerate(tqdm(Bs)):
         Hz = sim.zeeman_hamiltonian(B0)
-        for j, Hnuc in enumerate(gen):
+        for j, Hnuc in enumerate(HHs):
             Ht = Hz + Hnuc
             L = sim.convert(Ht)
             kinetic_matrix[5:21, 5:21] -= L
