@@ -200,7 +200,7 @@ def autocorrelation_fit(
         p0=np.zeros(num_exp),
     )
     fit = multiexponential(ts, *acf_popt)
-    tau_c = sum(acf_popt * taus) # * np.var(mT_to_MHz(trajectory)) / 1e6
+    tau_c = sum(acf_popt * taus)  # * np.var(mT_to_MHz(trajectory)) / 1e6
     return {"fit": fit, "tau_c": tau_c}
 
 
@@ -568,7 +568,8 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     B0 = utils.mT_to_MHz(B0)
     nu_0 = (C.g_e * (C.mu_B * 1e-3) * B0) / C.h
     jnu0tc = (2 / 15) * (
-        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2) + (tau_c) / (1 + nu_0**2 * tau_c**2)
+        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2)
+        + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )
     return (D**2 + 3 * E**2) * jnu0tc
 
