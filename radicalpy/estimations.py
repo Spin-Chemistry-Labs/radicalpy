@@ -200,7 +200,7 @@ def autocorrelation_fit(
         p0=np.zeros(num_exp),
     )
     fit = multiexponential(ts, *acf_popt)
-    tau_c = sum(acf_popt * taus) * np.var(mT_to_MHz(trajectory)) / 1e6
+    tau_c = sum(acf_popt * taus) # * np.var(mT_to_MHz(trajectory)) / 1e6
     return {"fit": fit, "tau_c": tau_c}
 
 
