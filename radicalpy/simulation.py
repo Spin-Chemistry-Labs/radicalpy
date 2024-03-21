@@ -1231,26 +1231,7 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):
-    def semiclassical_gen(
-        self,
-        num_samples: int,
-    ) -> np.ndarray:
-        num_particles = len(self.radicals)
-        spinops = [
-            [self.spin_operator(ri, ax) for ax in "xyz"] for ri in range(num_particles)
-        ]
-        result = np.zeros((num_samples, 4, 4), dtype=complex)
-        for i in range(num_samples):
-            for ri, m in enumerate(self.molecules):
-                std = m.semiclassical_std
-                Is = np.random.normal(0, std, size=1)
-                gamma = m.radical.gamma_mT
-                for ax in range(3):
-                    spinop = spinops[ri][ax]
-                    result[i, :, :] += gamma * spinop * Is
-        return result
-
-    def semiclassical_gen2(
+    def semiclassical_HHs(
         self,
         num_samples: int,
     ) -> np.ndarray:
@@ -1260,7 +1241,11 @@ class SemiclassicalSimulation(LiouvilleSimulation):
 
         spinops = np.array([self.spin_operator(0, ax) for ax in "xyz"])
         cov = np.diag([m.semiclassical_std for m in self.molecules])
-        samples = np.random.multivariate_normal([0, 0], cov, size=(num_samples, 3))
+        samples = np.random.multivariate_normal(
+            mean=[0, 0],
+            cov=cov,
+            size=(num_samples, 3),
+        )
         result = np.einsum("nam,axy->nxy", samples, spinops)
         return result * self.radicals[0].gamma_mT
 
