@@ -582,6 +582,9 @@ class Molecule:
 
         Calculate the standard deviation :math:`\sigma` where
 
+        .. todo::
+           Do the math properly.
+
         .. math::
            \sigma = \sqrt{\frac{2}{\tau^2}}
 
@@ -603,8 +606,7 @@ class Molecule:
             n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
             for n in self.nuclei
         )
-        tau2 = 6.0 / tmp
-        return np.sqrt(2 / tau2)
+        return tmp**2 / 6
 
 
 class Triplet(Molecule):

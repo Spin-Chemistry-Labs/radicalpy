@@ -98,7 +98,7 @@ def semiclassical_mary(
     M = 16  # number of spin states
     trace = np.zeros((num_samples, len(ts)))
     mary = np.zeros((len(ts), len(Bs)))
-    gen = sim.semiclassical_gen(num_samples)
+    gen = sim.semiclassical_gen2(num_samples)
 
     for i, B0 in enumerate(tqdm(Bs)):
         Hz = sim.zeeman_hamiltonian(B0)
