@@ -99,11 +99,13 @@ def semiclassical_mary(
     trace = np.zeros((num_samples, len(ts)))
     mary = np.zeros((len(ts), len(Bs)))
     HHs = sim.semiclassical_HHs(num_samples)
+    HJ = sim.exchange_hamiltonian(J)
+    HD = sim.dipolar_hamiltonian(D)
 
     for i, B0 in enumerate(tqdm(Bs)):
         Hz = sim.zeeman_hamiltonian(B0)
         for j, HH in enumerate(HHs):
-            Ht = Hz + HH
+            Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
             propagator = sp.sparse.linalg.expm(L * dt)
@@ -162,11 +164,13 @@ def semiclassical_kinetics_mary(
     radical_pair_yield = np.zeros((1, len(ts)), dtype=complex)
     triplet_yield = np.zeros((1, len(ts)), dtype=complex)
     HHs = sim.semiclassical_HHs(num_samples)
+    HJ = sim.exchange_hamiltonian(J)
+    HD = sim.dipolar_hamiltonian(D)
 
     for i, B0 in enumerate(tqdm(Bs)):
         Hz = sim.zeeman_hamiltonian(B0)
-        for j, Hnuc in enumerate(HHs):
-            Ht = Hz + Hnuc
+        for j, HH in enumerate(HHs):
+            Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
             kinetic_matrix[5:21, 5:21] -= L
             kinetics = kinetic_model + kinetic_matrix
