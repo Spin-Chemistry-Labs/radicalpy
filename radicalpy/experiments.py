@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
 import numpy as np
-import numpy.testing as npt
 import scipy as sp
 from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
 from .simulation import (
     HilbertIncoherentProcessBase,
-    HilbertSimulation,
     LiouvilleSimulation,
     SemiclassicalSimulation,
     State,
@@ -154,15 +152,14 @@ def semiclassical_kinetics_mary(
     relaxations: list[ArrayLike],
 ):
     dt = ts[1] - ts[0]
-    result_1 = np.zeros((len(ts), len(Bs)), dtype=complex)
+    total_yield = np.zeros((len(ts), len(Bs)), dtype=complex)
     zero_field = np.zeros((len(ts), len(Bs)), dtype=complex)
     mary = np.zeros((len(ts), len(Bs)), dtype=complex)
-    kinetic_model = kinetics
     kinetic_matrix = np.zeros((len(kinetics), len(kinetics)), dtype=complex)
     rho_radical_pair = np.zeros(len(ts), dtype=complex)
     rho_triplet = np.zeros(len(ts), dtype=complex)
-    radical_pair_yield = np.zeros((1, len(ts)), dtype=complex)
-    triplet_yield = np.zeros((1, len(ts)), dtype=complex)
+    radical_pair_yield = np.zeros(len(ts), dtype=complex)
+    triplet_yield = np.zeros(len(ts), dtype=complex)
     HHs = sim.semiclassical_HHs(num_samples)
     HJ = sim.exchange_hamiltonian(J)
     HD = sim.dipolar_hamiltonian(D)
@@ -172,27 +169,22 @@ def semiclassical_kinetics_mary(
         for j, HH in enumerate(HHs):
             Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
-            kinetic_matrix[5:21, 5:21] -= L
-            kinetics = kinetic_model + kinetic_matrix
-            propagator = sp.sparse.linalg.expm(kinetics * dt)
+            kinetic_matrix[5:, 5:] = L
+            kinetic = kinetics + kinetic_matrix
+            rho0 = init_state
+            propagator = sp.sparse.linalg.expm(kinetic * dt)
 
             for k in range(0, len(ts)):
-                rho_radical_pair[k] = (
-                    init_state[5] + init_state[10] + init_state[15] + init_state[20]
-                )
-                rho_triplet[k] = init_state[2] + init_state[3] + init_state[4]
+                rho_radical_pair[k] = rho0[5] + rho0[10] + rho0[15] + rho0[20]
+                rho_triplet[k] = rho0[2] + rho0[3] + rho0[4]
+                rho0 = propagator @ rho0
 
-                init_state = propagator @ init_state
+            radical_pair_yield = (radical_pair_yield + rho_radical_pair) / num_samples
+            triplet_yield = (triplet_yield + rho_triplet) / num_samples
+        total_yield[:, i] = radical_pair_yield + triplet_yield
 
-        radical_pair_yield = (radical_pair_yield + rho_radical_pair) / num_samples
-        triplet_yield = (triplet_yield + rho_triplet) / num_samples
-
-        total_yield = radical_pair_yield + triplet_yield
-        result_1[:, i] = result_1[:, i] + total_yield
-
-    yield_zero_field = result_1[:, 0]
     for i in range(0, len(Bs)):
-        zero_field[:, i] = yield_zero_field
+        zero_field[:, i] = total_yield[:, 0]
 
-    mary = np.real(result_1 - zero_field)
+    mary = np.real(total_yield - zero_field)
     return {"ts": ts, "Bs": Bs, "MARY": mary}

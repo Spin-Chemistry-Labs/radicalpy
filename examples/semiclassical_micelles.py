@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from radicalpy.data import Molecule
@@ -18,7 +17,7 @@ from radicalpy.plot import (
     plot_exchange_interaction_in_solution,
 )
 from radicalpy.relaxation import SingletTripletDephasing
-from radicalpy.simulation import Basis, SemiclassicalSimulation, State
+from radicalpy.simulation import SemiclassicalSimulation, State
 from radicalpy.utils import (
     Bhalf_fit,
     autocorrelation,
@@ -29,12 +28,12 @@ from radicalpy.utils import (
 
 def main(
     ts=np.arange(0, 10e-6, 10e-9),
-    Bs=np.arange(0, 50, 0.5),
-    num_samples=100,
+    Bs=np.arange(0, 30, 0.5),
+    num_samples=40,
 ):
     flavin = Molecule.all_nuclei("flavin_anion")
     trp = Molecule.all_nuclei("tryptophan_cation")
-    sim = SemiclassicalSimulation([flavin, trp], basis=Basis.ZEEMAN)
+    sim = SemiclassicalSimulation([flavin, trp])
 
     trajectory_data = read_trajectory_files(
         "./examples/data/md_fad_trp_aot", scale=1e-10

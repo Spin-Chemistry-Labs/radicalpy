@@ -1,29 +1,25 @@
 #! /usr/bin/env python
-import matplotlib.pyplot as plt  # TODO REMOVE THIS
 import numpy as np
-
 from radicalpy.classical import Rate, RateEquations
 from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time
-from radicalpy.simulation import LiouvilleSimulation, Molecule, SemiclassicalSimulation
+from radicalpy.simulation import Molecule, SemiclassicalSimulation
 from radicalpy.utils import Bhalf_fit
 
 
 def main():
     # Kinetic simulation of FAD at pH 2.1.
-    # For FAD quenching: uncomment the three quenching kinetic parameters.
 
     # FAD kinetic parameters
-    kex = Rate(1e4, "kex")  # groundstate excitation rate
-    kfl = Rate(3.55e8, "kfl")  # fluorescence rate
-    kic = Rate(1.28e9, "kic")  # internal conversion rate
-    kisc = Rate(3.64e8, "kisc")  # intersystem crossing rate
-    kd = Rate(3e5, "kd")  # protonated triplet to ground state
-    k1 = Rate(7e6, "k1")  # protonated triplet to RP
-    km1 = Rate(2.7e9, "km1")  # RP to protonated triplet
-    krt = Rate(1e9, "krt")  # triplet state relaxation rate
-    kbet = Rate(1.3e7, "kbet")  # singlet recombination rate
-    # kr = Rate(1.7e6, "kr")  # RP relaxation rate
+    kex = Rate(1e4, "k_{ex}")  # groundstate excitation rate
+    kfl = Rate(3.55e8, "k_{fl}")  # fluorescence rate
+    kic = Rate(1.28e9, "k_{IC}")  # internal conversion rate
+    kisc = Rate(3.64e8, "k_{ISC}")  # intersystem crossing rate
+    kd = Rate(3e5, "k_d")  # protonated triplet to ground state
+    k1 = Rate(7e6, "k_1")  # protonated triplet to RP
+    km1 = Rate(2.7e9, "k_{-1}")  # RP to protonated triplet
+    krt = Rate(1e9, "k^R_T")  # triplet state relaxation rate
+    kbet = Rate(1.3e7, "k_{BET}")  # singlet recombination rate
     pH = 2.1  # pH of the solution
     Hp = Rate(10**-pH, "H^+")  # concentration of hydrogen ions
 
@@ -123,14 +119,14 @@ def main():
     rho0 = np.array(
         [0, 0, 1 / 3, 1 / 3, 1 / 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    time = np.arange(0, 10e-6, 10e-9)
-    Bs = np.arange(0, 30)
+    time = np.arange(0, 20e-6, 10e-9)
+    Bs = np.arange(0, 30, 0.5)
 
     flavin = Molecule.all_nuclei("fad")
     adenine = Molecule.all_nuclei("fad")
     sim = SemiclassicalSimulation([flavin, adenine])
 
-    num_samples = 40
+    num_samples = 1000
     results = semiclassical_kinetics_mary(
         sim, num_samples, rho0, ts=time, Bs=Bs, D=0, J=0, kinetics=mat, relaxations=[]
     )
