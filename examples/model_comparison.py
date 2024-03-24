@@ -60,18 +60,22 @@ def main():
     plt.plot(
         raw_data_time[0, :] - raw_data_time[0, 0],
         raw_data[0, :] / raw_data[0, :].max(),
+        "k",
     )
     plt.plot(
         kinetics_time[0, :] * 1e6,
         kinetics_data[0, :] / kinetics_data[0, :].max(),
+        "b",
     )
     plt.plot(
         semiclassical_time[0, :],
         semiclassical_data[0, :] / semiclassical_data[0, :].max(),
+        "g",
     )
     plt.plot(
         semiclassical_kinetics_time[0, :] * 1e6,
         semiclassical_kinetics_data[0, :] / semiclassical_kinetics_data[0, :].max(),
+        "r",
     )
     ax.set_xlabel("Time / $\mu s$", size=24)
     ax.set_ylabel("Normalised $\Delta \Delta A / a.u.$", size=24)
@@ -83,18 +87,6 @@ def main():
     plt.tick_params(labelsize=14)
     plt.gcf().set_size_inches(10, 5)
     plt.show()
-
-
-# figure(1)
-# hold on
-# plot(FADpH21_data(:, 1) - FADpH21_data(1, 1), FADpH21_data(:, 2) / max(FADpH21_data(:, 2)))
-# plot(FAD_pH21_kinetics_time *1e6, FAD_pH21_kinetics / max(FAD_pH21_kinetics))
-# plot(semiclassical_kinetics_time, semiclassical_kinetics / max(semiclassical_kinetics))
-# plot(time, real(result3(:,1)) / max(real(result3(:,1))))
-# xlim([0, 6]); ylim([-0.1, 1]);
-# title("FAD pH 2.1")
-# xlabel("Time / \mus"); ylabel("Normalised \Delta\DeltaA / a.u.")
-# legend("Data", "Kinetic Model", "Semiclassical", "Semiclassical + Kinetic model")
 
 
 if __name__ == "__main__":
