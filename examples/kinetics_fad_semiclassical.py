@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import numpy as np
+import matplotlib.pyplot as plt
 from radicalpy.classical import Rate, RateEquations
 from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time
@@ -119,37 +120,140 @@ def main():
     rho0 = np.array(
         [0, 0, 1 / 3, 1 / 3, 1 / 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    time = np.arange(0, 6e-6, 10e-9)
+    time = np.arange(0, 20e-6, 10e-9)
     Bs = np.arange(0, 30, 0.5)
 
     flavin = Molecule.all_nuclei("fad")
     adenine = Molecule.all_nuclei("fad")
     sim = SemiclassicalSimulation([flavin, adenine])
 
-    num_samples = 40
+    num_samples = 50
     results = semiclassical_kinetics_mary(
-        sim, num_samples, rho0, ts=time, Bs=Bs, D=0, J=0, kinetics=mat, relaxations=[]
+        sim,
+        num_samples,
+        rho0,
+        radical_pair=[5, 21],
+        ts=time,
+        Bs=Bs,
+        D=0,
+        J=0,
+        kinetics=mat,
+        relaxations=[],
     )
 
-    plot_3d_results(results, factor=1e6)
+    zero_field = np.zeros((len(time), len(Bs)), dtype=complex)
+    total_yield = np.zeros((len(time), len(Bs)), dtype=complex)
+    mary = np.zeros((len(time), len(Bs)), dtype=complex)
+    fluorescence_zero_field = np.zeros((len(time), len(Bs)), dtype=complex)
+    fluorescence_total_yield = np.zeros((len(time), len(Bs)), dtype=complex)
+    fluorescence_mary = np.zeros((len(time), len(Bs)), dtype=complex)
+
+    radical_pair_yield = (
+        results["yield"][:, 5, :]
+        + results["yield"][:, 10, :]
+        + results["yield"][:, 15, :]
+        + results["yield"][:, 20, :]
+    )
+    triplet_yield = (
+        results["yield"][:, 2, :]
+        + results["yield"][:, 3, :]
+        + results["yield"][:, 4, :]
+    )
+    total_yield = radical_pair_yield + (2 * triplet_yield)
+
+    for i in range(0, len(Bs)):
+        zero_field[:, i] = total_yield[:, 0]
+
+    mary = np.real(total_yield - zero_field)
+
+    fluorescence = results["yield"][:, 0, :]
+    fluorescence_total_yield = fluorescence
+
+    for i in range(0, len(Bs)):
+        fluorescence_zero_field[:, i] = fluorescence_total_yield[:, 0]
+
+    fluorescence_mary = np.real(fluorescence_total_yield - fluorescence_zero_field)
+
+    # Plot absorption TR-MARY and B1/2 time evolution
+    factor = 1e6
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    ax.set_facecolor("none")
+    ax.grid(False)
+    X, Y = np.meshgrid(results["Bs"], results["ts"])
+    ax.plot_surface(
+        X,
+        Y * factor,
+        mary,
+        facecolors=cmap.to_rgba(mary.real),
+        rstride=1,
+        cstride=1,
+    )
+    ax.set_xlabel("$B_0$ (mT)", size=18)
+    ax.set_ylabel("Time / $\mu s$", size=18)
+    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
+    plt.show()
+
     # np.savetxt(
-    #     "./examples/data/fad_kinetics/semiclassical_kinetics_new.txt", results["MARY"][:, 1]
+    #     "./examples/data/fad_kinetics/semiclassical_kinetics_new.txt",
+    #     results["MARY"][:, 1],
     # )
     # np.savetxt("./examples/data/fad_kinetics/semiclassical_kinetics_time.txt", time)
 
     # Calculate time evolution of the B1/2
-    bhalf_time = np.zeros((len(results["MARY"])))
-    fit_time = np.zeros((len(Bs), len(results["MARY"])))
-    fit_error_time = np.zeros((2, len(results["MARY"])))
-    R2_time = np.zeros((len(results["MARY"])))
+    bhalf_time = np.zeros((len(mary)))
+    fit_time = np.zeros((len(Bs), len(mary)))
+    fit_error_time = np.zeros((2, len(mary)))
+    R2_time = np.zeros((len(mary)))
 
-    for i in range(2, len(results["MARY"])):
+    for i in range(2, len(mary)):
         (
             bhalf_time[i],
             fit_time[:, i],
             fit_error_time[:, i],
             R2_time[i],
-        ) = Bhalf_fit(Bs, results["MARY"][i, :])
+        ) = Bhalf_fit(Bs, mary[i, :])
+
+    plot_bhalf_time(time, bhalf_time, fit_error_time)
+
+    # Plot fluorescence TR-MARY and B1/2 time evolution
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    ax.set_facecolor("none")
+    ax.grid(False)
+    X, Y = np.meshgrid(results["Bs"], results["ts"])
+    ax.plot_surface(
+        X,
+        Y * factor,
+        fluorescence_mary,
+        facecolors=cmap.to_rgba(fluorescence_mary.real),
+        rstride=1,
+        cstride=1,
+    )
+    ax.set_xlabel("$B_0$ (mT)", size=18)
+    ax.set_ylabel("Time / $\mu s$", size=18)
+    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
+    plt.show()
+
+    # Calculate time evolution of the B1/2
+    bhalf_time = np.zeros((len(fluorescence_mary)))
+    fit_time = np.zeros((len(Bs), len(fluorescence_mary)))
+    fit_error_time = np.zeros((2, len(fluorescence_mary)))
+    R2_time = np.zeros((len(fluorescence_mary)))
+
+    for i in range(2, len(fluorescence_mary)):
+        (
+            bhalf_time[i],
+            fit_time[:, i],
+            fit_error_time[:, i],
+            R2_time[i],
+        ) = Bhalf_fit(Bs, fluorescence_mary[i, :])
 
     plot_bhalf_time(time, bhalf_time, fit_error_time)
 

@@ -144,6 +144,7 @@ def semiclassical_kinetics_mary(
     sim: SemiclassicalSimulation,
     num_samples: int,
     init_state: ArrayLike,
+    radical_pair: list,
     ts: NDArray[float],
     Bs: ArrayLike,
     D: float,
@@ -152,14 +153,10 @@ def semiclassical_kinetics_mary(
     relaxations: list[ArrayLike],
 ):
     dt = ts[1] - ts[0]
-    total_yield = np.zeros((len(ts), len(Bs)), dtype=complex)
-    zero_field = np.zeros((len(ts), len(Bs)), dtype=complex)
-    mary = np.zeros((len(ts), len(Bs)), dtype=complex)
+    total_yield = np.zeros((len(ts), len(init_state), len(Bs)), dtype=complex)
     kinetic_matrix = np.zeros((len(kinetics), len(kinetics)), dtype=complex)
-    rho_radical_pair = np.zeros(len(ts), dtype=complex)
-    rho_triplet = np.zeros(len(ts), dtype=complex)
-    radical_pair_yield = np.zeros(len(ts), dtype=complex)
-    triplet_yield = np.zeros(len(ts), dtype=complex)
+    loop_rho = np.zeros((len(ts), len(init_state)), dtype=complex)
+    loop_yield = np.zeros((len(ts), len(init_state)), dtype=complex)
     HHs = sim.semiclassical_HHs(num_samples)
     HJ = sim.exchange_hamiltonian(J)
     HD = sim.dipolar_hamiltonian(D)
@@ -169,22 +166,18 @@ def semiclassical_kinetics_mary(
         for j, HH in enumerate(HHs):
             Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
-            kinetic_matrix[5:, 5:] = L
+            kinetic_matrix[
+                radical_pair[0] : radical_pair[1], radical_pair[0] : radical_pair[1]
+            ] = L
             kinetic = kinetics + kinetic_matrix
             rho0 = init_state
             propagator = sp.sparse.linalg.expm(kinetic * dt)
 
             for k in range(0, len(ts)):
-                rho_radical_pair[k] = rho0[5] + rho0[10] + rho0[15] + rho0[20]
-                rho_triplet[k] = rho0[2] + rho0[3] + rho0[4]
+                loop_rho[k, :] = rho0
                 rho0 = propagator @ rho0
 
-            radical_pair_yield = (radical_pair_yield + rho_radical_pair) / num_samples
-            triplet_yield = (triplet_yield + rho_triplet) / num_samples
-        total_yield[:, i] = radical_pair_yield + triplet_yield
+            loop_yield = (loop_yield + loop_rho) / num_samples
+        total_yield[:, :, i] = loop_yield
 
-    for i in range(0, len(Bs)):
-        zero_field[:, i] = total_yield[:, 0]
-
-    mary = np.real(total_yield - zero_field)
-    return {"ts": ts, "Bs": Bs, "MARY": mary}
+    return {"ts": ts, "Bs": Bs, "yield": total_yield}
