@@ -51,36 +51,34 @@ def main():
         ]
     )
 
-    fig = plt.figure(1)
-    ax = fig.add_axes([0, 0, 1, 1])
-    ax.set_facecolor("none")
-    ax.grid(False)
-    plt.axis("on")
-    plt.rc("axes", edgecolor="black")
+    plt.figure(1)
     plt.plot(
         raw_data_time[0, :] - raw_data_time[0, 0],
         raw_data[0, :] / raw_data[0, :].max(),
         "k",
+        linewidth=3,
     )
     plt.plot(
         kinetics_time[0, :] * 1e6,
         kinetics_data[0, :] / kinetics_data[0, :].max(),
         "b",
+        linewidth=3,
     )
     plt.plot(
         semiclassical_time[0, :],
         semiclassical_data[0, :] / semiclassical_data[0, :].max(),
         "g",
+        linewidth=3,
     )
     plt.plot(
         semiclassical_kinetics_time[0, :] * 1e6,
         semiclassical_kinetics_data[0, :] / semiclassical_kinetics_data[0, :].max(),
         "r",
+        linewidth=3,
     )
-    ax.set_xlabel("Time / $\mu s$", size=24)
-    ax.set_ylabel("Normalised $\Delta \Delta A / a.u.$", size=24)
+    plt.xlabel("Time / $\mu s$", size=18)
+    plt.ylabel("Normalised $\Delta \Delta A$ / a.u.", size=18)
     plt.ylim([-0.1, 1.1])
-    # plt.xlim([0, 6])
     plt.legend(
         ["Data", "Kinetic Model", "Semiclassical", "Semiclassical + Kinetic Model"]
     )
