@@ -119,19 +119,23 @@ def main():
     rho0 = np.array(
         [0, 0, 1 / 3, 1 / 3, 1 / 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    time = np.arange(0, 20e-6, 10e-9)
+    time = np.arange(0, 6e-6, 10e-9)
     Bs = np.arange(0, 30, 0.5)
 
     flavin = Molecule.all_nuclei("fad")
     adenine = Molecule.all_nuclei("fad")
     sim = SemiclassicalSimulation([flavin, adenine])
 
-    num_samples = 1000
+    num_samples = 40
     results = semiclassical_kinetics_mary(
         sim, num_samples, rho0, ts=time, Bs=Bs, D=0, J=0, kinetics=mat, relaxations=[]
     )
 
     plot_3d_results(results, factor=1e6)
+    # np.savetxt(
+    #     "./examples/data/fad_kinetics/semiclassical_kinetics_new.txt", results["MARY"][:, 1]
+    # )
+    # np.savetxt("./examples/data/fad_kinetics/semiclassical_kinetics_time.txt", time)
 
     # Calculate time evolution of the B1/2
     bhalf_time = np.zeros((len(results["MARY"])))
