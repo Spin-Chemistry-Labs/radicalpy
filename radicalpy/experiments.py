@@ -87,8 +87,8 @@ def semiclassical_mary(
     J: float,
     triplet_excited_state_quenching_rate: float,
     free_radical_escape_rate: float,
-    kinetics,  ##########################################
-    relaxations,  #######################################
+    kinetics: list[ArrayLike],
+    relaxations: list[ArrayLike],
     scale_factor: float,
 ):
     dt = ts[1] - ts[0]
@@ -166,6 +166,7 @@ def semiclassical_kinetics_mary(
         for j, HH in enumerate(HHs):
             Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
+            sim.apply_liouville_hamiltonian_modifiers(L, relaxations)
             kinetic_matrix[
                 radical_pair[0] : radical_pair[1], radical_pair[0] : radical_pair[1]
             ] = L

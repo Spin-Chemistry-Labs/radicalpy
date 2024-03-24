@@ -487,10 +487,14 @@ def k_electron_transfer(
     )
 
 
-def k_excitation(
-    power: float, wavelength: float, volume: float, pathlength: float, epsilon: float
+def k_excitation_extinction_coefficient(
+    power: float,
+    wavelength: float,
+    volume: float,
+    pathlength: float,
+    epsilon: float,
 ) -> float:
-    """Groundstate excitation rate.
+    """Groundstate excitation rate using extinction coefficient.
 
     Args:
             power (float): The excitation laser power (W).
@@ -507,6 +511,38 @@ def k_excitation(
     nu = C.c / wavelength  # Frequency of excitation beam (1/s)
     I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
     return I0 * np.log(10) * epsilon * pathlength
+
+
+def k_excitation_photon_flux(
+    power: float,
+    wavelength: float,
+    beam_radius: float,
+    pathlength: float,
+    absorbance: float,
+    concentration: float,
+) -> float:
+    """Groundstate excitation rate using photon flux.
+
+    Args:
+            power (float): The excitation laser power (W).
+            wavelength (float): The excitation wavelength (m).
+            beam_radius (float): Radius of the beam spot (m).
+            pathlength (float): The path length of the sample cell
+                (m).
+            absorbance (float): Absorbance of the sample (OD).
+            concentration (float): Concentration of the sample (mol/m^3).
+
+    Returns:
+            float: The excitation rate (1/s).
+    """
+    photon_energy = (C.h * C.c) / wavelength  # energy of one photon (J)
+    beam_spot_area = np.pi * beam_radius**2  # beam spot area (m^2)
+    number_density = concentration * C.N_A  # number density of the sample (m^-3)
+    absorbance_cross_section = absorbance / (
+        number_density * pathlength
+    )  # absorbance cross section (m^2)
+    photon_flux = power / (beam_spot_area * photon_energy)  # photon flux (m^2 / s)
+    return photon_flux * absorbance_cross_section
 
 
 def k_recombination(MFE: float, k_escape: float) -> float:
@@ -568,8 +604,7 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     B0 = utils.mT_to_MHz(B0)
     nu_0 = (C.g_e * (C.mu_B * 1e-3) * B0) / C.h
     jnu0tc = (2 / 15) * (
-        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2)
-        + (tau_c) / (1 + nu_0**2 * tau_c**2)
+        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2) + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )
     return (D**2 + 3 * E**2) * jnu0tc
 

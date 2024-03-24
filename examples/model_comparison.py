@@ -84,7 +84,10 @@ def main():
     )
     plt.tick_params(labelsize=14)
     plt.gcf().set_size_inches(10, 5)
-    plt.show()
+    # plt.show()
+
+    path = __file__[:-3] + f"_{0}.png"
+    plt.savefig(path)
 
 
 if __name__ == "__main__":
