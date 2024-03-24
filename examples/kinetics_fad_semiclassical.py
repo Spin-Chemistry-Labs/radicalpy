@@ -1,14 +1,23 @@
 #! /usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
-from radicalpy.classical import Rate, RateEquations
+from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time
 from radicalpy.simulation import Molecule, SemiclassicalSimulation
 from radicalpy.utils import Bhalf_fit
+from radicalpy.relaxation import RandomFields
 
 
 def main():
+
+    # Parameters
+    time = np.arange(0, 20e-6, 10e-9)
+    Bs = np.arange(0, 30, 0.5)
+    num_samples = 40
+    kr = 0  # 1.7e6  # radical pair relaxation rate
+    relaxation = RandomFields(kr)  # relaxation model
+
     # Kinetic simulation of FAD at pH 2.1.
 
     # FAD kinetic parameters
@@ -24,12 +33,18 @@ def main():
     pH = 2.1  # pH of the solution
     Hp = Rate(10**-pH, "H^+")  # concentration of hydrogen ions
 
+    # Quenching kinetic parameters
+    kq = Rate(0, "k_q")  # 1e9  # quenching rate
+    kp = Rate(0, "k_p")  # 3.3e3  # free radical recombination
+    Q = Rate(0, "Q")  # 1e-3  # quencher concentration
+
     # Rate equations
     S0, S1, T1p, T10, T1m = "S0", "S1", "T1+", "T10", "T1-"
     SS, STp, ST0, STm = "SS", "ST+", "ST0", "ST-"
     TpS, TpTp, TpT0, TpTm = "T+S", "T+T+", "T+T0", "T+T-"
     T0S, T0Tp, T0T0, T0Tm = "T0S", "T0T+", "T0T0", "T0T-"
     TmS, TmTp, TmT0, TmTm = "T-S", "T-T+", "T-T0", "T-T-"
+    FR = "FR"
 
     base = {}
     base[S0] = {
@@ -39,6 +54,7 @@ def main():
         T10: kd,
         T1m: kd,
         SS: kbet,
+        FR: kp,
     }
     base[S1] = {
         S0: kex,
@@ -114,20 +130,39 @@ def main():
         T1m: k1,
         TmTm: -km1 * Hp,
     }
+    base[FR] = {
+        SS: kq * Q,
+        STp: kq * Q,
+        ST0: kq * Q,
+        STm: kq * Q,
+        TpS: kq * Q,
+        TpTp: kq * Q,
+        TpT0: kq * Q,
+        TpTm: kq * Q,
+        T0S: kq * Q,
+        T0Tp: kq * Q,
+        T0T0: kq * Q,
+        T0Tm: kq * Q,
+        TmS: kq * Q,
+        TmTp: kq * Q,
+        TmT0: kq * Q,
+        TmTm: kq * Q,
+        FR: -kp,
+    }
 
     rate_eq = RateEquations(base)
     mat = rate_eq.matrix.todense()
     rho0 = np.array(
-        [0, 0, 1 / 3, 1 / 3, 1 / 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        [0, 0, 1 / 3, 1 / 3, 1 / 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
-    time = np.arange(0, 20e-6, 10e-9)
-    Bs = np.arange(0, 30, 0.5)
+
+    latex_equations = latex_eqlist_to_align(latexify(base))
+    # print(latex_equations)
 
     flavin = Molecule.all_nuclei("fad")
     adenine = Molecule.all_nuclei("fad")
     sim = SemiclassicalSimulation([flavin, adenine])
 
-    num_samples = 50
     results = semiclassical_kinetics_mary(
         sim,
         num_samples,
@@ -138,7 +173,7 @@ def main():
         D=0,
         J=0,
         kinetics=mat,
-        relaxations=[],
+        relaxations=[relaxation],
     )
 
     zero_field = np.zeros((len(time), len(Bs)), dtype=complex)
@@ -159,7 +194,8 @@ def main():
         + results["yield"][:, 3, :]
         + results["yield"][:, 4, :]
     )
-    total_yield = radical_pair_yield + (2 * triplet_yield)
+    free_radical_yield = results["yield"][:, 21, :]
+    total_yield = radical_pair_yield + (2 * triplet_yield) + free_radical_yield
 
     for i in range(0, len(Bs)):
         zero_field[:, i] = total_yield[:, 0]
@@ -199,7 +235,7 @@ def main():
 
     # np.savetxt(
     #     "./examples/data/fad_kinetics/semiclassical_kinetics_new.txt",
-    #     results["MARY"][:, 1],
+    #     mary[:, 1],
     # )
     # np.savetxt("./examples/data/fad_kinetics/semiclassical_kinetics_time.txt", time)
 
