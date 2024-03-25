@@ -2,10 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-import pandas as p
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 from radicalpy.experiments import semiclassical_kinetics_mary
-from radicalpy.plot import plot_3d_results, plot_bhalf_time
 from radicalpy.simulation import Molecule, SemiclassicalSimulation
 from radicalpy.utils import Bhalf_fit
 from radicalpy.relaxation import RandomFields
@@ -16,10 +14,14 @@ def main():
     # Parameters
     time = np.arange(0, 20e-6, 10e-9)
     Bs = np.arange(0, 30, 0.5)
-    num_samples = 400
+    num_samples = 100
     scale_factor = 4e-4
-    kr = 0  # 1.7e6  # radical pair relaxation rate
+    kr = 1.7e6  # radical pair relaxation rate
     relaxation = RandomFields(kr)  # relaxation model
+
+    azim = -135
+    dist = 10
+    elev = 35
 
     # Load reference spectra
     path = "./examples/data/fad_kinetics"
@@ -41,9 +43,37 @@ def main():
             for file_path in Path(path).glob("fad_radical_wavelength.txt")
         ]
     )
+    groundstate_spectrum = np.array(
+        [
+            np.genfromtxt(file_path)
+            for file_path in Path(path).glob("fad_groundstate_spectrum.txt")
+        ]
+    )
+    groundstate_wavelength = np.array(
+        [
+            np.genfromtxt(file_path)
+            for file_path in Path(path).glob("fad_groundstate_spectrum_wavelength.txt")
+        ]
+    )
+    emission_spectrum = np.array(
+        [
+            np.genfromtxt(file_path)
+            for file_path in Path(path).glob("fad_emission_spectrum.txt")
+        ]
+    )
+    emission_wavelength = np.array(
+        [
+            np.genfromtxt(file_path)
+            for file_path in Path(path).glob("fad_emission_spectrum_wavelength.txt")
+        ]
+    )
     radical_spectrum = radical_spectrum[0, :] * 1e3
     triplet_spectrum = triplet_spectrum[0, :] * 1e3
     wavelength = wavelength[0, :]
+    groundstate_spectrum = groundstate_spectrum[0, :]
+    groundstate_wavelength = groundstate_wavelength[0, :]
+    emission_spectrum = emission_spectrum[0, :]
+    emission_wavelength = emission_wavelength[0, :]
 
     # Kinetic simulation of FAD at pH 2.1.
 
@@ -203,9 +233,27 @@ def main():
         relaxations=[relaxation],
     )
 
-    zero_field = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
     total_yield = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
+    zero_field = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
     mary = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
+    total_yield_groundstate = np.zeros(
+        (len(time), len(Bs), len(groundstate_wavelength)), dtype=complex
+    )
+    zero_field_groundstate = np.zeros(
+        (len(time), len(Bs), len(groundstate_wavelength)), dtype=complex
+    )
+    mary_groundstate = np.zeros(
+        (len(time), len(Bs), len(groundstate_wavelength)), dtype=complex
+    )
+    total_yield_emission = np.zeros(
+        (len(time), len(Bs), len(emission_wavelength)), dtype=complex
+    )
+    zero_field_emission = np.zeros(
+        (len(time), len(Bs), len(emission_wavelength)), dtype=complex
+    )
+    mary_emission = np.zeros(
+        (len(time), len(Bs), len(emission_wavelength)), dtype=complex
+    )
 
     radical_pair_yield = (
         results["yield"][:, 5, :]
@@ -219,24 +267,51 @@ def main():
         + results["yield"][:, 4, :]
     )
     free_radical_yield = results["yield"][:, 21, :]
+    groundstate_yield = results["yield"][:, 0, :]
     for i, r in enumerate(radical_spectrum):
         for j, t in enumerate(triplet_spectrum):
             total_yield[:, :, j + 1] = (
-                (r * radical_pair_yield) + (t * triplet_yield)  # + free_radical_yield
+                (r * radical_pair_yield) + (t * triplet_yield) + free_radical_yield
             ) * scale_factor
 
     for i in range(0, len(wavelength)):
         for j in range(0, len(Bs)):
             zero_field[:, j, i] = total_yield[:, 0, i]
 
+    for i, g in enumerate(groundstate_spectrum):
+        total_yield_groundstate[:, :, i] = (g * groundstate_yield) * (scale_factor)
+
+    for i in range(0, len(groundstate_wavelength)):
+        for j in range(0, len(Bs)):
+            zero_field_groundstate[:, j, i] = total_yield_groundstate[:, 0, i]
+
+    for i, g in enumerate(emission_spectrum):
+        total_yield_emission[:, :, i] = (g * groundstate_yield) * 100
+
+    for i in range(0, len(emission_wavelength)):
+        for j in range(0, len(Bs)):
+            zero_field_emission[:, j, i] = total_yield_emission[:, 0, i]
+
     mary = np.real(total_yield - zero_field)
+    mary_groundstate = np.real(total_yield_groundstate - zero_field_groundstate)
+    mary_emission = np.real(total_yield_emission - zero_field_emission)
 
     mfe_max = np.zeros(len(wavelength), dtype=complex)
     for i in range(1, len(wavelength)):
         mfe_max[i] = mary[:, -1, i].max()
 
-    plt.figure()
-    plt.plot(wavelength, np.real(mfe_max), "ro", linewidth=3)
+    mfe_groundstate_max = np.zeros(len(groundstate_wavelength), dtype=complex)
+    for i in range(1, len(groundstate_wavelength)):
+        mfe_groundstate_max[i] = mary_groundstate[:, -1, i].min()
+
+    mfe_emission_max = np.zeros(len(emission_wavelength), dtype=complex)
+    for i in range(1, len(emission_wavelength)):
+        mfe_emission_max[i] = mary_emission[:, -1, i].min()
+
+    plt.figure(1)
+    plt.plot(
+        groundstate_wavelength[1:], np.real(mfe_groundstate_max)[1:], "ro", linewidth=3
+    )
     plt.xlabel("Wavelength / nm", size=18)
     plt.ylabel("$\Delta \Delta A$", size=18)
     plt.tick_params(labelsize=14)
@@ -244,9 +319,400 @@ def main():
     # plt.show()
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path, dpi=300)
+    plt.close()
 
-    # Plot absorption TR-MARY and B1/2 time evolution
+    plt.figure(2)
+    plt.plot(emission_wavelength[1:], np.real(mfe_emission_max)[1:], "ro", linewidth=3)
+    plt.xlabel("Wavelength / nm", size=18)
+    plt.ylabel("$\Delta F$", size=18)
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{1}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(3)
+    plt.plot(wavelength, np.real(mfe_max), "ro", linewidth=3)
+    plt.xlabel("Wavelength / nm", size=18)
+    plt.ylabel("$\Delta \Delta A$", size=18)
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{2}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    n = 200
     factor = 1e6
+
+    plt.figure(4)
+    for i in range(1, len(time), n):
+        plt.plot(
+            groundstate_wavelength,
+            mary_groundstate[i, -1, :],
+            linewidth=3,
+            label=f"{time[i] * 1e6: .0f} $\mu s$",
+        )
+    plt.xlabel("Wavelength / nm", size=18)
+    plt.ylabel("$\Delta \Delta A$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{3}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(5)
+    for i in range(1, len(time), n):
+        plt.plot(
+            Bs,
+            mary_groundstate[i, :, 2],
+            linewidth=3,
+            label=f"{time[i] * 1e6: .0f} $\mu s$",
+        )
+    plt.xlabel("$B_0$ / mT", size=18)
+    plt.ylabel("$\Delta \Delta A$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{4}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(6)
+    for i in range(1, len(Bs), 5):
+        plt.plot(
+            time * factor,
+            mary_groundstate[:, i, 2],
+            linewidth=3,
+            label=f"{Bs[i]: .1f} mT",
+        )
+    plt.xlabel("Time / $\mu s$", size=18)
+    plt.ylabel("$\Delta \Delta A$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{5}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(7)
+    for i in range(1, len(time), n):
+        plt.plot(
+            emission_wavelength,
+            mary_emission[i, -1, :],
+            linewidth=3,
+            label=f"{time[i] * 1e6: .0f} $\mu s$",
+        )
+    plt.xlabel("Wavelength / nm", size=18)
+    plt.ylabel("$\Delta F$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{6}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(8)
+    for i in range(1, len(time), n):
+        plt.plot(
+            Bs,
+            mary_emission[i, :, 2],
+            linewidth=3,
+            label=f"{time[i] * 1e6: .0f} $\mu s$",
+        )
+    plt.xlabel("$B_0$ / mT", size=18)
+    plt.ylabel("$\Delta F$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{7}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(9)
+    for i in range(1, len(Bs), 5):
+        plt.plot(
+            time * factor,
+            mary_emission[:, i, 2],
+            linewidth=3,
+            label=f"{Bs[i]: .1f} mT",
+        )
+    plt.xlabel("Time / $\mu s$", size=18)
+    plt.ylabel("$\Delta F$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{8}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(10)
+    for i in range(1, len(time), n):
+        plt.plot(
+            wavelength,
+            mary[i, -1, :],
+            linewidth=3,
+            label=f"{time[i] * 1e6: .0f} $\mu s$",
+        )
+    plt.xlabel("Wavelength / nm", size=18)
+    plt.ylabel("$\Delta \Delta A$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{9}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(11)
+    for i in range(1, len(time), n):
+        plt.plot(
+            Bs,
+            mary[i, :, 2],
+            linewidth=3,
+            label=f"{time[i] * 1e6: .0f} $\mu s$",
+        )
+    plt.xlabel("$B_0$ / mT", size=18)
+    plt.ylabel("$\Delta \Delta A$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{10}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    plt.figure(12)
+    for i in range(1, len(Bs), 5):
+        plt.plot(
+            time * factor,
+            mary[:, i, 2],
+            linewidth=3,
+            label=f"{Bs[i]: .1f} mT",
+        )
+    plt.xlabel("Time / $\mu s$", size=18)
+    plt.ylabel("$\Delta \Delta A$", size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{11}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    # Calculate time evolution of the B1/2
+    bhalf_time = np.zeros((len(mary_groundstate)))
+    fit_time = np.zeros((len(Bs), len(mary_groundstate)))
+    fit_error_time = np.zeros((2, len(mary_groundstate)))
+    R2_time = np.zeros((len(mary_groundstate)))
+
+    for i in range(2, len(mary_groundstate)):
+        (
+            bhalf_time[i],
+            fit_time[:, i],
+            fit_error_time[:, i],
+            R2_time[i],
+        ) = Bhalf_fit(Bs, mary_groundstate[i, :, 5])
+
+    plt.figure(13)
+    for i in range(2, len(time), 35):
+        plt.plot(time[i] * factor, bhalf_time[i], "ro", linewidth=3)
+        plt.errorbar(
+            time[i] * factor,
+            bhalf_time[i],
+            fit_error_time[1, i],
+            color="k",
+            linewidth=2,
+        )
+    plt.xlabel("Time / $\mu s$", size=18)
+    plt.ylabel("$B_{1/2}$ / mT", size=18)
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    path = __file__[:-3] + f"_{18}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    # Calculate time evolution of the B1/2
+    bhalf_time = np.zeros((len(mary_emission)))
+    fit_time = np.zeros((len(Bs), len(mary_emission)))
+    fit_error_time = np.zeros((2, len(mary_emission)))
+    R2_time = np.zeros((len(mary_emission)))
+
+    for i in range(2, len(mary_emission)):
+        (
+            bhalf_time[i],
+            fit_time[:, i],
+            fit_error_time[:, i],
+            R2_time[i],
+        ) = Bhalf_fit(Bs, mary_emission[i, :, 5])
+
+    plt.figure(14)
+    for i in range(2, len(time), 35):
+        plt.plot(time[i] * factor, bhalf_time[i], "ro", linewidth=3)
+        plt.errorbar(
+            time[i] * factor,
+            bhalf_time[i],
+            fit_error_time[1, i],
+            color="k",
+            linewidth=2,
+        )
+    plt.xlabel("Time / $\mu s$", size=18)
+    plt.ylabel("$B_{1/2}$ / mT", size=18)
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    path = __file__[:-3] + f"_{19}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    # Calculate time evolution of the B1/2
+    bhalf_time = np.zeros((len(mary)))
+    fit_time = np.zeros((len(Bs), len(mary)))
+    fit_error_time = np.zeros((2, len(mary)))
+    R2_time = np.zeros((len(mary)))
+
+    for i in range(2, len(mary)):
+        (
+            bhalf_time[i],
+            fit_time[:, i],
+            fit_error_time[:, i],
+            R2_time[i],
+        ) = Bhalf_fit(Bs, mary[i, :, 5])
+
+    plt.figure(15)
+    for i in range(2, len(time), 35):
+        plt.plot(time[i] * factor, bhalf_time[i], "ro", linewidth=3)
+        plt.errorbar(
+            time[i] * factor,
+            bhalf_time[i],
+            fit_error_time[1, i],
+            color="k",
+            linewidth=2,
+        )
+    plt.xlabel("Time / $\mu s$", size=18)
+    plt.ylabel("$B_{1/2}$ / mT", size=18)
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    path = __file__[:-3] + f"_{20}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    # 3D plots
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    ax.set_facecolor("none")
+    ax.grid(False)
+    X, Y = np.meshgrid(groundstate_wavelength, results["ts"])
+    ax.plot_surface(
+        X,
+        Y * factor,
+        np.real(mary_groundstate[:, -1, :]),
+        facecolors=cmap.to_rgba(mary_groundstate[:, -1, :].real),
+        rstride=1,
+        cstride=1,
+    )
+    ax.set_xlabel("Wavelength / nm", size=18)
+    ax.set_ylabel("Time / $\mu s$", size=18)
+    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    ax.azim = azim
+    ax.dist = dist
+    ax.elev = elev
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{12}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    ax.set_facecolor("none")
+    ax.grid(False)
+    X, Y = np.meshgrid(groundstate_wavelength, results["Bs"])
+    ax.plot_surface(
+        X,
+        Y,
+        np.real(mary_groundstate[250, :, :]),
+        facecolors=cmap.to_rgba(mary_groundstate[250, :, :].real),
+        rstride=1,
+        cstride=1,
+    )
+    ax.set_xlabel("Wavelength / nm", size=18)
+    ax.set_ylabel("$B_0$ / mT", size=18)
+    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    ax.azim = azim
+    ax.dist = dist
+    ax.elev = elev
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{13}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    ax.set_facecolor("none")
+    ax.grid(False)
+    X, Y = np.meshgrid(emission_wavelength, results["ts"])
+    ax.plot_surface(
+        X,
+        Y * factor,
+        np.real(mary_emission[:, -1, :]),
+        facecolors=cmap.to_rgba(mary_emission[:, -1, :].real),
+        rstride=1,
+        cstride=1,
+    )
+    ax.set_xlabel("Wavelength / nm", size=18)
+    ax.set_ylabel("Time / $\mu s$", size=18)
+    ax.set_zlabel("$\Delta F$", size=18)
+    ax.azim = azim
+    ax.dist = dist
+    ax.elev = elev
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{14}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    ax.set_facecolor("none")
+    ax.grid(False)
+    X, Y = np.meshgrid(emission_wavelength, results["Bs"])
+    ax.plot_surface(
+        X,
+        Y,
+        np.real(mary_emission[250, :, :]),
+        facecolors=cmap.to_rgba(mary_emission[250, :, :].real),
+        rstride=1,
+        cstride=1,
+    )
+    ax.set_xlabel("Wavelength / nm", size=18)
+    ax.set_ylabel("$B_0$ / mT", size=18)
+    ax.set_zlabel("$\Delta F$", size=18)
+    ax.azim = azim
+    ax.dist = dist
+    ax.elev = elev
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{15}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
+
     fig = plt.figure(figsize=plt.figaspect(1.0))
     ax = fig.add_subplot(projection="3d")
     cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
@@ -264,11 +730,15 @@ def main():
     ax.set_xlabel("Wavelength / nm", size=18)
     ax.set_ylabel("Time / $\mu s$", size=18)
     ax.set_zlabel("$\Delta \Delta A$", size=18)
+    ax.azim = azim
+    ax.dist = dist
+    ax.elev = elev
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 5)
     # plt.show()
-    path = __file__[:-3] + f"_{1}.png"
+    path = __file__[:-3] + f"_{16}.png"
     plt.savefig(path, dpi=300)
+    plt.close()
 
     fig = plt.figure(figsize=plt.figaspect(1.0))
     ax = fig.add_subplot(projection="3d")
@@ -287,51 +757,15 @@ def main():
     ax.set_xlabel("Wavelength / nm", size=18)
     ax.set_ylabel("$B_0$ / mT", size=18)
     ax.set_zlabel("$\Delta \Delta A$", size=18)
+    ax.azim = azim
+    ax.dist = dist
+    ax.elev = elev
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 5)
     # plt.show()
-    path = __file__[:-3] + f"_{2}.png"
+    path = __file__[:-3] + f"_{17}.png"
     plt.savefig(path, dpi=300)
-
-    # np.savetxt(
-    #     "./examples/data/fad_kinetics/semiclassical_kinetics_new.txt",
-    #     mary[:, 1],
-    # )
-    # np.savetxt("./examples/data/fad_kinetics/semiclassical_kinetics_time.txt", time)
-
-    # Calculate time evolution of the B1/2
-    # bhalf_time = np.zeros((len(mary), len(wavelength)))
-    # fit_time = np.zeros((len(Bs), len(mary), len(wavelength)))
-    # fit_error_time = np.zeros((2, len(mary), len(wavelength)))
-    # R2_time = np.zeros((len(mary), len(wavelength)))
-
-    # for i in range(2, len(mary)):
-    #     for j in range(1, len(wavelength)):
-    #         (
-    #             bhalf_time[i, j],
-    #             fit_time[:, i, j],
-    #             fit_error_time[:, i, j],
-    #             R2_time[i, j],
-    #         ) = Bhalf_fit(Bs, mary[:, :, j])
-
-    # plot_bhalf_time(time, bhalf_time, fit_error_time)
-    # plt.figure()
-    # for j in range(0, len(wavelength, 5)):
-    #     for i in range(2, len(time), 35):
-    #         plt.plot(time[i] * factor, bhalf_time[i, j], "ro", linewidth=3)
-    #         plt.errorbar(
-    #             time[i, j] * factor,
-    #             bhalf_time[i, j],
-    #             fit_error_time[1, i, j],
-    #             color="k",
-    #             linewidth=2,
-    #         )
-    #     plt.xlabel("Time / $\mu s$", size=18)
-    #     plt.ylabel("$B_{1/2}$ / mT", size=18)
-    #     plt.tick_params(labelsize=14)
-    #     plt.gcf().set_size_inches(10, 5)
-    # path = __file__[:-3] + f"_{3}.png"
-    # plt.savefig(path, dpi=300)
+    plt.close()
 
 
 if __name__ == "__main__":
