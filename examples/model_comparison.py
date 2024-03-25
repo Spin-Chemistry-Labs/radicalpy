@@ -87,7 +87,7 @@ def main():
     # plt.show()
 
     path = __file__[:-3] + f"_{0}.png"
-    plt.savefig(path)
+    plt.savefig(path, dpi=300)
 
 
 if __name__ == "__main__":

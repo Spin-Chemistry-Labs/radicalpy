@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
+import pandas as p
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time
@@ -15,9 +17,33 @@ def main():
     time = np.arange(0, 20e-6, 10e-9)
     Bs = np.arange(0, 30, 0.5)
     num_samples = 400
-    scale_factor = 10
+    scale_factor = 4e-4
     kr = 0  # 1.7e6  # radical pair relaxation rate
     relaxation = RandomFields(kr)  # relaxation model
+
+    # Load reference spectra
+    path = "./examples/data/fad_kinetics"
+    radical_spectrum = np.array(
+        [
+            np.genfromtxt(file_path)
+            for file_path in Path(path).glob("fad_radical_spectrum.txt")
+        ]
+    )
+    triplet_spectrum = np.array(
+        [
+            np.genfromtxt(file_path)
+            for file_path in Path(path).glob("fad_triplet_spectrum.txt")
+        ]
+    )
+    wavelength = np.array(
+        [
+            np.genfromtxt(file_path)
+            for file_path in Path(path).glob("fad_radical_wavelength.txt")
+        ]
+    )
+    radical_spectrum = radical_spectrum[0, :] * 1e3
+    triplet_spectrum = triplet_spectrum[0, :] * 1e3
+    wavelength = wavelength[0, :]
 
     # Kinetic simulation of FAD at pH 2.1.
 
@@ -177,12 +203,9 @@ def main():
         relaxations=[relaxation],
     )
 
-    zero_field = np.zeros((len(time), len(Bs)), dtype=complex)
-    total_yield = np.zeros((len(time), len(Bs)), dtype=complex)
-    mary = np.zeros((len(time), len(Bs)), dtype=complex)
-    fluorescence_zero_field = np.zeros((len(time), len(Bs)), dtype=complex)
-    fluorescence_total_yield = np.zeros((len(time), len(Bs)), dtype=complex)
-    fluorescence_mary = np.zeros((len(time), len(Bs)), dtype=complex)
+    zero_field = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
+    total_yield = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
+    mary = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
 
     radical_pair_yield = (
         results["yield"][:, 5, :]
@@ -196,22 +219,31 @@ def main():
         + results["yield"][:, 4, :]
     )
     free_radical_yield = results["yield"][:, 21, :]
-    total_yield = (
-        radical_pair_yield + (2 * triplet_yield) + free_radical_yield
-    ) * scale_factor
+    for i, r in enumerate(radical_spectrum):
+        for j, t in enumerate(triplet_spectrum):
+            total_yield[:, :, j + 1] = (
+                (r * radical_pair_yield) + (t * triplet_yield)  # + free_radical_yield
+            ) * scale_factor
 
-    for i in range(0, len(Bs)):
-        zero_field[:, i] = total_yield[:, 0]
+    for i in range(0, len(wavelength)):
+        for j in range(0, len(Bs)):
+            zero_field[:, j, i] = total_yield[:, 0, i]
 
     mary = np.real(total_yield - zero_field)
 
-    fluorescence = results["yield"][:, 0, :]
-    fluorescence_total_yield = fluorescence * scale_factor
+    mfe_max = np.zeros(len(wavelength), dtype=complex)
+    for i in range(1, len(wavelength)):
+        mfe_max[i] = mary[:, -1, i].max()
 
-    for i in range(0, len(Bs)):
-        fluorescence_zero_field[:, i] = fluorescence_total_yield[:, 0]
-
-    fluorescence_mary = np.real(fluorescence_total_yield - fluorescence_zero_field)
+    plt.figure()
+    plt.plot(wavelength, np.real(mfe_max), "ro", linewidth=3)
+    plt.xlabel("Wavelength / nm", size=18)
+    plt.ylabel("$\Delta \Delta A$", size=18)
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{0}.png"
+    plt.savefig(path, dpi=300)
 
     # Plot absorption TR-MARY and B1/2 time evolution
     factor = 1e6
@@ -220,22 +252,45 @@ def main():
     cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
     ax.set_facecolor("none")
     ax.grid(False)
-    X, Y = np.meshgrid(results["Bs"], results["ts"])
+    X, Y = np.meshgrid(wavelength, results["ts"])
     ax.plot_surface(
         X,
         Y * factor,
-        mary,
-        facecolors=cmap.to_rgba(mary.real),
+        np.real(mary[:, -1, :]),
+        facecolors=cmap.to_rgba(mary[:, -1, :].real),
         rstride=1,
         cstride=1,
     )
-    ax.set_xlabel("$B_0$ / mT", size=18)
+    ax.set_xlabel("Wavelength / nm", size=18)
     ax.set_ylabel("Time / $\mu s$", size=18)
     ax.set_zlabel("$\Delta \Delta A$", size=18)
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 5)
     # plt.show()
-    path = __file__[:-3] + f"_{0}.png"
+    path = __file__[:-3] + f"_{1}.png"
+    plt.savefig(path, dpi=300)
+
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    ax = fig.add_subplot(projection="3d")
+    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
+    ax.set_facecolor("none")
+    ax.grid(False)
+    X, Y = np.meshgrid(wavelength, results["Bs"])
+    ax.plot_surface(
+        X,
+        Y,
+        np.real(mary[250, :, :]),
+        facecolors=cmap.to_rgba(mary[250, :, :].real),
+        rstride=1,
+        cstride=1,
+    )
+    ax.set_xlabel("Wavelength / nm", size=18)
+    ax.set_ylabel("$B_0$ / mT", size=18)
+    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
+    # plt.show()
+    path = __file__[:-3] + f"_{2}.png"
     plt.savefig(path, dpi=300)
 
     # np.savetxt(
@@ -245,92 +300,38 @@ def main():
     # np.savetxt("./examples/data/fad_kinetics/semiclassical_kinetics_time.txt", time)
 
     # Calculate time evolution of the B1/2
-    bhalf_time = np.zeros((len(mary)))
-    fit_time = np.zeros((len(Bs), len(mary)))
-    fit_error_time = np.zeros((2, len(mary)))
-    R2_time = np.zeros((len(mary)))
+    # bhalf_time = np.zeros((len(mary), len(wavelength)))
+    # fit_time = np.zeros((len(Bs), len(mary), len(wavelength)))
+    # fit_error_time = np.zeros((2, len(mary), len(wavelength)))
+    # R2_time = np.zeros((len(mary), len(wavelength)))
 
-    for i in range(2, len(mary)):
-        (
-            bhalf_time[i],
-            fit_time[:, i],
-            fit_error_time[:, i],
-            R2_time[i],
-        ) = Bhalf_fit(Bs, mary[i, :])
-
-    # plot_bhalf_time(time, bhalf_time, fit_error_time)
-    plt.figure(2)
-    for i in range(2, len(time), 35):
-        plt.plot(time[i] * factor, bhalf_time[i], "ro", linewidth=3)
-        plt.errorbar(
-            time[i] * factor,
-            bhalf_time[i],
-            fit_error_time[1, i],
-            color="k",
-            linewidth=2,
-        )
-    plt.xlabel("Time / $\mu s$", size=18)
-    plt.ylabel("$B_{1/2}$ / mT", size=18)
-    plt.tick_params(labelsize=14)
-    plt.gcf().set_size_inches(10, 5)
-    path = __file__[:-3] + f"_{1}.png"
-    plt.savefig(path, dpi=300)
-
-    # Plot fluorescence TR-MARY and B1/2 time evolution
-    fig = plt.figure(figsize=plt.figaspect(1.0))
-    ax = fig.add_subplot(projection="3d")
-    cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
-    ax.set_facecolor("none")
-    ax.grid(False)
-    X, Y = np.meshgrid(results["Bs"], results["ts"])
-    ax.plot_surface(
-        X,
-        Y * factor,
-        fluorescence_mary,
-        facecolors=cmap.to_rgba(fluorescence_mary.real),
-        rstride=1,
-        cstride=1,
-    )
-    ax.set_xlabel("$B_0$ / mT", size=18)
-    ax.set_ylabel("Time / $\mu s$", size=18)
-    ax.set_zlabel("$\Delta \Delta A$", size=18)
-    plt.tick_params(labelsize=14)
-    fig.set_size_inches(10, 5)
-    # plt.show()
-    path = __file__[:-3] + f"_{2}.png"
-    plt.savefig(path, dpi=300)
-
-    # Calculate time evolution of the B1/2
-    bhalf_time = np.zeros((len(fluorescence_mary)))
-    fit_time = np.zeros((len(Bs), len(fluorescence_mary)))
-    fit_error_time = np.zeros((2, len(fluorescence_mary)))
-    R2_time = np.zeros((len(fluorescence_mary)))
-
-    for i in range(2, len(fluorescence_mary)):
-        (
-            bhalf_time[i],
-            fit_time[:, i],
-            fit_error_time[:, i],
-            R2_time[i],
-        ) = Bhalf_fit(Bs, fluorescence_mary[i, :])
+    # for i in range(2, len(mary)):
+    #     for j in range(1, len(wavelength)):
+    #         (
+    #             bhalf_time[i, j],
+    #             fit_time[:, i, j],
+    #             fit_error_time[:, i, j],
+    #             R2_time[i, j],
+    #         ) = Bhalf_fit(Bs, mary[:, :, j])
 
     # plot_bhalf_time(time, bhalf_time, fit_error_time)
-    plt.figure(4)
-    for i in range(2, len(time), 35):
-        plt.plot(time[i] * factor, bhalf_time[i], "ro", linewidth=3)
-        plt.errorbar(
-            time[i] * factor,
-            bhalf_time[i],
-            fit_error_time[1, i],
-            color="k",
-            linewidth=2,
-        )
-    plt.xlabel("Time / $\mu s$", size=18)
-    plt.ylabel("$B_{1/2}$ / mT", size=18)
-    plt.tick_params(labelsize=14)
-    plt.gcf().set_size_inches(10, 5)
-    path = __file__[:-3] + f"_{3}.png"
-    plt.savefig(path, dpi=300)
+    # plt.figure()
+    # for j in range(0, len(wavelength, 5)):
+    #     for i in range(2, len(time), 35):
+    #         plt.plot(time[i] * factor, bhalf_time[i, j], "ro", linewidth=3)
+    #         plt.errorbar(
+    #             time[i, j] * factor,
+    #             bhalf_time[i, j],
+    #             fit_error_time[1, i, j],
+    #             color="k",
+    #             linewidth=2,
+    #         )
+    #     plt.xlabel("Time / $\mu s$", size=18)
+    #     plt.ylabel("$B_{1/2}$ / mT", size=18)
+    #     plt.tick_params(labelsize=14)
+    #     plt.gcf().set_size_inches(10, 5)
+    # path = __file__[:-3] + f"_{3}.png"
+    # plt.savefig(path, dpi=300)
 
 
 if __name__ == "__main__":
