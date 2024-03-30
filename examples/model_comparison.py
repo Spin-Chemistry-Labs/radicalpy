@@ -79,6 +79,7 @@ def main():
     plt.xlabel("Time / $\mu s$", size=18)
     plt.ylabel("Normalised $\Delta \Delta A$ / a.u.", size=18)
     plt.ylim([-0.1, 1.1])
+    # plt.xlim([-0.1, 6])
     plt.legend(
         ["Data", "Kinetic Model", "Semiclassical", "Semiclassical + Kinetic Model"]
     )
@@ -87,7 +88,7 @@ def main():
     # plt.show()
 
     path = __file__[:-3] + f"_{0}.png"
-    plt.savefig(path, dpi=300)
+    plt.savefig(path, dpi=300, bbox_inches="tight")
 
 
 if __name__ == "__main__":
