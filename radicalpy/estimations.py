@@ -604,8 +604,7 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     B0 = utils.mT_to_MHz(B0)
     nu_0 = (C.g_e * (C.mu_B * 1e-3) * B0) / C.h
     jnu0tc = (2 / 15) * (
-        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2)
-        + (tau_c) / (1 + nu_0**2 * tau_c**2)
+        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2) + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )
     return (D**2 + 3 * E**2) * jnu0tc
 
