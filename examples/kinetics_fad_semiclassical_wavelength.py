@@ -1,23 +1,24 @@
 #! /usr/bin/env python
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 from pathlib import Path
+import radicalpy as rp
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 from radicalpy.experiments import semiclassical_kinetics_mary
+from radicalpy.plot import plot_3d_results, plot_bhalf_time, plot_general
+from radicalpy.relaxation import RandomFields, SingletTripletDephasing
 from radicalpy.simulation import Molecule, SemiclassicalSimulation
 from radicalpy.utils import Bhalf_fit
-from radicalpy.relaxation import RandomFields, SingletTripletDephasing
-from radicalpy.plot import plot_3d_results, plot_bhalf_time, plot_general
-import radicalpy as rp
 
 
 def main():
 
     # Parameters
-    time = np.arange(0, 10e-6, 10e-9)
+    time = np.arange(0, 10e-6, 5e-9)
     Bs = np.arange(0, 35, 0.5)
-    num_samples = 1000
-    scale_factor = 4e-2
+    num_samples = 500
+    scale_factor = 4e-1
     kr = 7e7  # radical pair relaxation rate
     # relaxation = RandomFields(kr)  # relaxation model
     # relaxation = SingletTripletDephasing(kr)  # relaxation model
