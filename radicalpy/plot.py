@@ -82,7 +82,7 @@ def linear_energy_levels(H, B, linecolour, title):
     ax = fig.add_axes([0, 0, 1, 1])
     ax.eventplot(E, orientation="vertical", color=linecolour, linewidth=3)
     ax.set_title(title, size=18)
-    ax.set_ylabel("Spin state energy (J)", size=14)
+    ax.set_ylabel("Spin state energy / J", size=14)
     plt.tick_params(labelsize=14)
 
 
@@ -106,8 +106,8 @@ def energy_levels(sim: HilbertSimulation, B: np.ndarray, J=0, D=0):
     ax = fig.add_axes([0, 0, 1, 1])
     ax.plot(B, np.real(E[:, ::-1]), linewidth=2)
     # ax.set_title(title, size=18)
-    ax.set_xlabel("$B_0 (T)$", size=14)
-    ax.set_ylabel("Spin state energy (J)", size=14)
+    ax.set_xlabel("$B_0 / T$", size=14)
+    ax.set_ylabel("Spin state energy / J", size=14)
     plt.tick_params(labelsize=14)
 
 
@@ -125,9 +125,9 @@ def monte_carlo_free(pos):
     ax.set_title(
         "3D Monte Carlo random walk simulation for a radical pair in water", size=16
     )
-    ax.set_xlabel("$X$ (nm)", size=14)
-    ax.set_ylabel("$Y$ (nm)", size=14)
-    ax.set_zlabel("$Z$ (nm)", size=14)
+    ax.set_xlabel("$X$ / nm", size=14)
+    ax.set_ylabel("$Y$ / nm", size=14)
+    ax.set_zlabel("$Z$ / nm", size=14)
     # plt.xlim([-1, 1]); plt.ylim([-1, 1])
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 10)
@@ -160,39 +160,44 @@ def monte_carlo_caged(pos, r_max):
     ax.plot(*pos[0], "bo", markersize=15)
     ax.plot(0, 0, 0, "ro", markersize=15)
     #     ax.set_title("3D Monte Carlo random walk simulation for an encapsulated radical pair", size=16)
-    ax.set_xlabel("$X$ (nm)", size=14)
-    ax.set_ylabel("$Y$ (nm)", size=14)
-    ax.set_zlabel("$Z$ (nm)", size=14)
+    ax.set_xlabel("$X$ / nm", size=14)
+    ax.set_ylabel("$Y$ / nm", size=14)
+    ax.set_zlabel("$Z$ / nm", size=14)
     # plt.xlim([-1, 1]); plt.ylim([-1, 1])
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 10)
 
 
-def plot_3d_results(results, factor=1e6):
+def plot_3d_results(
+    xdata, ydata, zdata, xlabel, ylabel, zlabel, azim=-135, dist=10, elev=35, factor=1e6
+):
     fig = plt.figure(figsize=plt.figaspect(1.0))
     ax = fig.add_subplot(projection="3d")
     cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("viridis"))
     ax.set_facecolor("none")
     ax.grid(False)
-    X, Y = np.meshgrid(results["Bs"], results["ts"])
+    X, Y = np.meshgrid(xdata, ydata)
     ax.plot_surface(
         X,
         Y * factor,
-        results["MARY"],
-        facecolors=cmap.to_rgba(results["MARY"].real),
+        zdata,
+        facecolors=cmap.to_rgba(zdata.real),
         rstride=1,
         cstride=1,
     )
-    ax.set_xlabel("$B_0$ (mT)", size=18)
-    ax.set_ylabel("Time ($\mu s$)", size=18)
-    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    ax.set_xlabel(xlabel, size=18)
+    ax.set_ylabel(ylabel, size=18)
+    ax.set_zlabel(zlabel, size=18)
+    ax.azim = azim
+    ax.dist = dist
+    ax.elev = elev
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 5)
-    plt.show()
+    # plt.show()
 
 
 def plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j):
-    fig = plt.figure(2)
+    fig = plt.figure()
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_facecolor("none")
     ax.grid(False)
@@ -201,16 +206,16 @@ def plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j):
     # .rc("axes", edgecolor="black")
     plt.plot(t_j, acf_j[0:zero_point_crossing_j], color="tab:blue", linewidth=3)
     plt.plot(t_j, acf_j_fit["fit"], color="black", linestyle="dashed", linewidth=2)
-    ax.set_xlabel(r"$\tau$ (s)", size=24)
-    ax.set_ylabel(r"$g_J(\tau)$", size=24)
-    plt.tick_params(labelsize=18)
-    fig.set_size_inches(7, 5)
+    ax.set_xlabel(r"$\tau$ / s", size=18)
+    ax.set_ylabel(r"$g_J(\tau)$", size=18)
+    plt.tick_params(labelsize=14)
+    fig.set_size_inches(10, 5)
     plt.show()
 
 
 def plot_bhalf_time(ts, bhalf_time, fit_error_time, factor=1e6):
-    plt.figure(3)
-    for i in range(2, len(ts), 35):
+    plt.figure()
+    for i in range(2, len(ts), 10):
         plt.plot(ts[i] * factor, bhalf_time[i], "ro", linewidth=3)
         plt.errorbar(
             ts[i] * factor,
@@ -219,15 +224,15 @@ def plot_bhalf_time(ts, bhalf_time, fit_error_time, factor=1e6):
             color="k",
             linewidth=2,
         )
-    plt.xlabel("Time ($\mu s$)", size=18)
-    plt.ylabel("$B_{1/2}$ (mT)", size=18)
+    plt.xlabel("Time / $\mu s$", size=18)
+    plt.ylabel("$B_{1/2}$ / mT", size=18)
     plt.tick_params(labelsize=14)
     plt.gcf().set_size_inches(10, 5)
-    plt.show()
+    # plt.show()
 
 
 def plot_exchange_interaction_in_solution(ts, trajectory_data, j):
-    fig = plt.figure(1)
+    fig = plt.figure()
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_facecolor("none")
     ax.grid(False)
@@ -238,14 +243,24 @@ def plot_exchange_interaction_in_solution(ts, trajectory_data, j):
     ax2 = ax.twinx()
     color2 = "tab:blue"
     plt.plot(ts, -j, color=color2)
-    ax.set_xlabel("Time (ns)", size=24)
-    ax.set_ylabel("Radical pair separation (nm)", size=24, color=color)
-    ax2.set_ylabel("Exchange interaction (mT)", size=24, color=color2)
-    ax.tick_params(axis="y", labelsize=18, labelcolor=color)
-    ax.tick_params(axis="x", labelsize=18, labelcolor="k")
-    ax2.tick_params(labelsize=18, labelcolor=color2)
-    fig.set_size_inches(7, 5)
+    ax.set_xlabel("Time (ns)", size=18)
+    ax.set_ylabel("Radical pair separation / nm", size=18, color=color)
+    ax2.set_ylabel("Exchange interaction / mT", size=18, color=color2)
+    ax.tick_params(axis="y", labelsize=14, labelcolor=color)
+    ax.tick_params(axis="x", labelsize=14, labelcolor="k")
+    ax2.tick_params(labelsize=14, labelcolor=color2)
+    fig.set_size_inches(10, 5)
     plt.show()
+
+
+def plot_general(xdata, ydata, xlabel, ylabel, style, label=[], factor=1):
+    # plt.figure()
+    plt.plot(xdata * factor, ydata, style, linewidth=3, label=label)
+    plt.xlabel(xlabel, size=18)
+    plt.ylabel(ylabel, size=18)
+    plt.legend()
+    plt.tick_params(labelsize=14)
+    plt.gcf().set_size_inches(10, 5)
 
 
 def spin_state_labels(sim: HilbertSimulation):
