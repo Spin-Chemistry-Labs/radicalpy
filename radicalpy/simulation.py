@@ -1246,7 +1246,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
             cov=cov,
             size=(num_samples, 3),
         )
-        result = np.einsum("nam,axy->nxy", samples, spinops)
+        result = np.einsum("nam,axy->nxy", samples, spinops) * 2
         return result * self.radicals[0].gamma_mT
 
     @property

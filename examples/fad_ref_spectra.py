@@ -46,15 +46,15 @@ def main():
         "bo",
         linewidth=3,
     )
-    plt.xlabel("Wavelength / nm", size=18)
-    plt.ylabel("$\epsilon$ / $M^{-1} cm^{-1}$", size=18)
-    plt.legend(["Radical", "Triplet"])
-    plt.tick_params(labelsize=14)
+    plt.xlabel("Wavelength / nm", size=24)
+    plt.ylabel("$\epsilon$ / $M^{-1} cm^{-1}$", size=24)
+    plt.legend(["Radical", "Triplet"], fontsize=16)
+    plt.tick_params(labelsize=18)
     plt.gcf().set_size_inches(10, 5)
     # plt.show()
 
     path = __file__[:-3] + f"_{0}.png"
-    plt.savefig(path, dpi=300)
+    plt.savefig(path, dpi=300, bbox_inches="tight")
 
 
 if __name__ == "__main__":
