@@ -2,24 +2,25 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
 import radicalpy as rp
+from pathlib import Path
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time, plot_general
 from radicalpy.relaxation import RandomFields, SingletTripletDephasing
-from radicalpy.simulation import Molecule, SemiclassicalSimulation
+from radicalpy.simulation import Molecule, SemiclassicalSimulation, Basis
 from radicalpy.utils import Bhalf_fit
 
 
 def main():
 
     # Parameters
-    time = np.arange(0, 10e-6, 5e-9)
-    Bs = np.arange(0, 35, 0.5)
-    num_samples = 500
-    scale_factor = 4e-1
-    kr = 7e7  # radical pair relaxation rate
+    time = np.arange(0, 10e-6, 10e-9)
+    Bs = np.arange(0, 30, 0.1)
+    num_samples = 200
+    scale_factor = 1  # 4e-1
+    kr = 7e7  # 1.7e6  # radical pair relaxation rate
+    kstd = 7e8  # 5e9  # spin dephasing rate
     # relaxation = RandomFields(kr)  # relaxation model
     # relaxation = SingletTripletDephasing(kr)  # relaxation model
 
@@ -82,7 +83,7 @@ def main():
 
     flavin = Molecule.all_nuclei("fad")
     adenine = Molecule.all_nuclei("fad")
-    sim = SemiclassicalSimulation([flavin, adenine])
+    sim = SemiclassicalSimulation([flavin, adenine], basis=Basis.ZEEMAN)
     bhalf = rp.estimations.Bhalf_theoretical(sim)
     khfc_new = rp.estimations.k_ST_mixing(bhalf)
     khfc = 8e7  # spin-state mixing rate
@@ -95,7 +96,7 @@ def main():
     kfl = Rate(3.55e8, "k_{fl}")  # fluorescence rate
     kic = Rate(1.28e9, "k_{IC}")  # internal conversion rate
     kisc = Rate(3.64e8, "k_{ISC}")  # intersystem crossing rate
-    kd = Rate(3e5, "k_d")  # protonated triplet to ground state
+    kd = Rate(7e6, "k_d")  # protonated triplet to ground state
     k1 = Rate(7e6, "k_1")  # protonated triplet to RP
     km1 = Rate(2.7e9 * khfc_ratio, "k_{-1}")  # RP to protonated triplet
     krt = Rate(1e9, "k^R_T")  # triplet state relaxation rate
@@ -239,8 +240,10 @@ def main():
         D=0,
         J=0,
         kinetics=mat,
-        relaxations=[RandomFields(kr), SingletTripletDephasing(kr)],
+        relaxations=[RandomFields(kr), SingletTripletDephasing(kstd)],
     )
+
+    np.save("./examples/data/fad_kinetics/results.npy", results)
 
     total_yield = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
     zero_field = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
@@ -280,7 +283,7 @@ def main():
     for i, r in enumerate(radical_spectrum):
         for j, t in enumerate(triplet_spectrum):
             total_yield[:, :, j + 1] = (
-                (r * radical_pair_yield) + (t * triplet_yield)
+                (r * radical_pair_yield) + (t * (2 * triplet_yield))
             ) * scale_factor
 
     for i in range(0, len(wavelength)):
@@ -304,6 +307,12 @@ def main():
     mary = np.real(total_yield - zero_field)
     mary_groundstate = np.real(total_yield_groundstate - zero_field_groundstate)
     mary_emission = np.real(total_yield_emission - zero_field_emission)
+
+    # np.savetxt(
+    #     "./examples/data/fad_kinetics/semiclassical_kinetics_new3.txt",
+    #     mary[:, 1],
+    # )
+    # np.savetxt("./examples/data/fad_kinetics/semiclassical_kinetics_time3.txt", time)
 
     mfe_max = np.zeros(len(wavelength), dtype=complex)
     for i in range(1, len(wavelength)):
@@ -332,7 +341,7 @@ def main():
     plt.close()
 
     xlabel = "Wavelength / nm"
-    ylabel = "$\Delta F$"
+    ylabel = "$\Delta I_F$"
     plot_general(
         emission_wavelength[1:],
         np.real(mfe_emission_max)[1:],
@@ -359,12 +368,9 @@ def main():
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    # np.savetxt(
-    #     "./examples/data/fad_kinetics/semiclassical_kinetics_new.txt", mary[:, -1, 5]
-    # )
-    # np.savetxt("./examples/data/fad_kinetics/semiclassical_kinetics_time.txt", time)
-
     n = 100
+    f = 25
+    wl = -1
     factor = 1e6
 
     xlabel = "Wavelength / nm"
@@ -376,7 +382,7 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * 1e6: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\mu s$",
         )
     path = __file__[:-3] + f"_{3}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
@@ -387,11 +393,11 @@ def main():
     for i in range(0, len(time), n):
         plot_general(
             Bs,
-            mary_groundstate[i, :, 5],
+            mary_groundstate[i, :, wl],
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * 1e6: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\mu s$",
         )
     path = __file__[:-3] + f"_{4}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
@@ -399,10 +405,10 @@ def main():
 
     xlabel = "Time / $\mu s$"
     ylabel = "$\Delta \Delta A$"
-    for i in range(0, len(Bs), 5):
+    for i in range(0, len(Bs), f):
         plot_general(
             time,
-            mary_groundstate[:, i, 5],
+            mary_groundstate[:, i, wl],
             xlabel,
             ylabel,
             style="-",
@@ -414,7 +420,7 @@ def main():
     plt.close()
 
     xlabel = "Wavelength / nm"
-    ylabel = "$\Delta F$"
+    ylabel = "$\Delta I_F$"
     for i in range(0, len(time), n):
         plot_general(
             emission_wavelength,
@@ -422,33 +428,33 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * 1e6: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\mu s$",
         )
     path = __file__[:-3] + f"_{6}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
     xlabel = "$B_0$ / mT"
-    ylabel = "$\Delta F$"
+    ylabel = "$\Delta I_F$"
     for i in range(0, len(time), n):
         plot_general(
             Bs,
-            mary_emission[i, :, 5],
+            mary_emission[i, :, wl],
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * 1e6: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\mu s$",
         )
     path = __file__[:-3] + f"_{7}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
     xlabel = "Time / $\mu s$"
-    ylabel = "$\Delta F$"
-    for i in range(0, len(Bs), 5):
+    ylabel = "$\Delta I_F$"
+    for i in range(0, len(Bs), f):
         plot_general(
             time,
-            mary_emission[:, i, 5],
+            mary_emission[:, i, wl],
             xlabel,
             ylabel,
             style="-",
@@ -468,7 +474,7 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * 1e6: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\mu s$",
         )
     path = __file__[:-3] + f"_{9}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
@@ -479,11 +485,11 @@ def main():
     for i in range(0, len(time), n):
         plot_general(
             Bs,
-            mary[i, :, 5],
+            mary[i, :, wl],
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * 1e6: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\mu s$",
         )
     path = __file__[:-3] + f"_{10}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
@@ -491,10 +497,10 @@ def main():
 
     xlabel = "Time / $\mu s$"
     ylabel = "$\Delta \Delta A$"
-    for i in range(0, len(Bs), 5):
+    for i in range(0, len(Bs), f):
         plot_general(
             time,
-            mary[:, i, 5],
+            mary[:, i, wl],
             xlabel,
             ylabel,
             style="-",
@@ -517,9 +523,11 @@ def main():
             fit_time[:, i],
             fit_error_time[:, i],
             R2_time[i],
-        ) = Bhalf_fit(Bs, mary_groundstate[i, :, -1])
+        ) = Bhalf_fit(Bs, mary_groundstate[i, :, wl])
 
-    plot_bhalf_time(time, bhalf_time, fit_error_time)
+    plot_bhalf_time(
+        time[2:], bhalf_time[2:], fit_error_time[:, 2:] / np.sqrt(num_samples)
+    )
     path = __file__[:-3] + f"_{18}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
@@ -535,9 +543,9 @@ def main():
             fit_time[:, i],
             fit_error_time[:, i],
             R2_time[i],
-        ) = Bhalf_fit(Bs, mary_emission[i, :, -1])
+        ) = Bhalf_fit(Bs, mary_emission[i, :, wl])
 
-    plot_bhalf_time(time, bhalf_time, fit_error_time)
+    plot_bhalf_time(time, bhalf_time, fit_error_time / np.sqrt(num_samples))
     path = __file__[:-3] + f"_{19}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
@@ -553,9 +561,9 @@ def main():
             fit_time[:, i],
             fit_error_time[:, i],
             R2_time[i],
-        ) = Bhalf_fit(Bs, mary[i, :, -1])
+        ) = Bhalf_fit(Bs, mary[i, :, wl])
 
-    plot_bhalf_time(time, bhalf_time, fit_error_time)
+    plot_bhalf_time(time, bhalf_time, fit_error_time / np.sqrt(num_samples))
     path = __file__[:-3] + f"_{20}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
@@ -594,7 +602,7 @@ def main():
 
     xlabel = "Wavelength / nm"
     ylabel = "Time / $\mu s$"
-    zlabel = "$\Delta \Delta A$"
+    zlabel = "$\Delta I_F$"
     plot_3d_results(
         emission_wavelength,
         results["ts"],
@@ -609,7 +617,7 @@ def main():
 
     xlabel = "Wavelength / nm"
     ylabel = "$B_0$ / mT"
-    zlabel = "$\Delta \Delta A$"
+    zlabel = "$\Delta I_F$"
     plot_3d_results(
         emission_wavelength,
         results["Bs"],

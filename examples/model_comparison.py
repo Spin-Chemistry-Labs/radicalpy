@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 
 def main():
@@ -44,12 +44,24 @@ def main():
             for file_path in Path(path).glob("semiclassical_kinetics.txt")
         ]
     )
+    # semiclassical_kinetics3 = np.array(
+    #     [
+    #         np.genfromtxt(file_path)
+    #         for file_path in Path(path).glob("semiclassical_kinetics_new3.txt")
+    #     ]
+    # )
     semiclassical_kinetics_time = np.array(
         [
             np.genfromtxt(file_path)
             for file_path in Path(path).glob("semiclassical_kinetics_time.txt")
         ]
     )
+    # semiclassical_kinetics_time3 = np.array(
+    #     [
+    #         np.genfromtxt(file_path)
+    #         for file_path in Path(path).glob("semiclassical_kinetics_time3.txt")
+    #     ]
+    # )
 
     plt.figure(1)
     plt.plot(
@@ -76,14 +88,21 @@ def main():
         "r",
         linewidth=3,
     )
-    plt.xlabel("Time / $\mu s$", size=18)
-    plt.ylabel("Normalised $\Delta \Delta A$ / a.u.", size=18)
+    # plt.plot(
+    #     semiclassical_kinetics_time3[0, :] * 1e6,
+    #     semiclassical_kinetics3[0, :, 16] / semiclassical_kinetics3[0, :, 16].max(),
+    #     "m",
+    #     linewidth=3,
+    # )
+    plt.xlabel("Time / $\mu s$", size=24)
+    plt.ylabel("Normalised $\Delta \Delta A$ / a.u.", size=24)
     plt.ylim([-0.1, 1.1])
     # plt.xlim([-0.1, 6])
     plt.legend(
-        ["Data", "Kinetic Model", "Semiclassical", "Semiclassical + Kinetic Model"]
+        ["Data", "Kinetic Model", "Semiclassical", "Semiclassical + Kinetic Model"],
+        fontsize=16,
     )
-    plt.tick_params(labelsize=14)
+    plt.tick_params(labelsize=18)
     plt.gcf().set_size_inches(10, 5)
     # plt.show()
 

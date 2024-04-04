@@ -185,14 +185,15 @@ def plot_3d_results(
         rstride=1,
         cstride=1,
     )
-    ax.set_xlabel(xlabel, size=18)
-    ax.set_ylabel(ylabel, size=18)
-    ax.set_zlabel(zlabel, size=18)
+    ax.set_xlabel(xlabel, size=24, labelpad=15)
+    ax.set_ylabel(ylabel, size=24, labelpad=15)
+    ax.set_zlabel(zlabel, size=24, labelpad=18)
+    # ax.set_proj_type("ortho")
     ax.azim = azim
     ax.dist = dist
     ax.elev = elev
-    plt.tick_params(labelsize=14)
-    fig.set_size_inches(10, 5)
+    plt.tick_params(labelsize=18)
+    fig.set_size_inches(10, 10)
     # plt.show()
 
 
@@ -206,17 +207,17 @@ def plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j):
     # .rc("axes", edgecolor="black")
     plt.plot(t_j, acf_j[0:zero_point_crossing_j], color="tab:blue", linewidth=3)
     plt.plot(t_j, acf_j_fit["fit"], color="black", linestyle="dashed", linewidth=2)
-    ax.set_xlabel(r"$\tau$ / s", size=18)
-    ax.set_ylabel(r"$g_J(\tau)$", size=18)
-    plt.tick_params(labelsize=14)
+    ax.set_xlabel(r"$\tau$ / s", size=24)
+    ax.set_ylabel(r"$g_J(\tau)$", size=24)
+    plt.tick_params(labelsize=18)
     fig.set_size_inches(10, 5)
     plt.show()
 
 
-def plot_bhalf_time(ts, bhalf_time, fit_error_time, factor=1e6):
+def plot_bhalf_time(ts, bhalf_time, fit_error_time, style="ro", factor=1e6):
     plt.figure()
     for i in range(2, len(ts), 10):
-        plt.plot(ts[i] * factor, bhalf_time[i], "ro", linewidth=3)
+        plt.plot(ts[i] * factor, bhalf_time[i], style, linewidth=3)
         plt.errorbar(
             ts[i] * factor,
             bhalf_time[i],
@@ -224,9 +225,9 @@ def plot_bhalf_time(ts, bhalf_time, fit_error_time, factor=1e6):
             color="k",
             linewidth=2,
         )
-    plt.xlabel("Time / $\mu s$", size=18)
-    plt.ylabel("$B_{1/2}$ / mT", size=18)
-    plt.tick_params(labelsize=14)
+    plt.xlabel("Time / $\mu s$", size=24)
+    plt.ylabel("$B_{1/2}$ / mT", size=24)
+    plt.tick_params(labelsize=18)
     plt.gcf().set_size_inches(10, 5)
     # plt.show()
 
@@ -253,13 +254,15 @@ def plot_exchange_interaction_in_solution(ts, trajectory_data, j):
     plt.show()
 
 
-def plot_general(xdata, ydata, xlabel, ylabel, style, label=[], factor=1):
+def plot_general(
+    xdata, ydata, xlabel, ylabel, style="-", label=[], colors="r", factor=1
+):
     # plt.figure()
-    plt.plot(xdata * factor, ydata, style, linewidth=3, label=label)
-    plt.xlabel(xlabel, size=18)
-    plt.ylabel(ylabel, size=18)
+    plt.plot(xdata * factor, ydata, style, linewidth=3, label=label, color=colors)
+    plt.xlabel(xlabel, size=24)
+    plt.ylabel(ylabel, size=24)
     plt.legend()
-    plt.tick_params(labelsize=14)
+    plt.tick_params(labelsize=18)
     plt.gcf().set_size_inches(10, 5)
 
 
