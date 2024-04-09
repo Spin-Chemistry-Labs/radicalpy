@@ -8,7 +8,7 @@ from pathlib import Path
 def main():
 
     # Load B1/2 spectra, kd = 3e5
-    path = "./examples/data/fad_03_kd3e5"
+    path = "./examples/data/bhalf_analysis/fad_kd3e5"
     time_3e5 = np.array(
         [np.genfromtxt(file_path) for file_path in Path(path).glob("time.txt")]
     )
@@ -20,7 +20,7 @@ def main():
     )
 
     # Load B1/2 spectra, kd = 3e6
-    path = "./examples/data/fad_04_kd3e6"
+    path = "./examples/data/bhalf_analysis/fad_kd3e6"
     time_3e6 = np.array(
         [np.genfromtxt(file_path) for file_path in Path(path).glob("time.txt")]
     )
@@ -32,7 +32,7 @@ def main():
     )
 
     # Load B1/2 spectra, kd = 7e6
-    path = "./examples/data/fad_06_kd7e6"
+    path = "./examples/data/bhalf_analysis/fad_kd7e6"
     time_7e6 = np.array(
         [np.genfromtxt(file_path) for file_path in Path(path).glob("time.txt")]
     )
@@ -63,29 +63,8 @@ def main():
     plt.figure(1)
     for i in range(2, len(time_3e5), 50):
         plt.plot(time_3e5[cutoff:i] * factor, bhalf_3e5[cutoff:i], "r", linewidth=3)
-        # plt.errorbar(
-        #     time_3e5[cutoff:i] * factor,
-        #     bhalf_3e5[cutoff:i],
-        #     error_3e5[1, cutoff:i],
-        #     color="r",
-        #     linewidth=2,
-        # )
         plt.plot(time_3e6[cutoff:i] * factor, bhalf_3e6[cutoff:i], "b", linewidth=3)
-        # plt.errorbar(
-        #     time_3e6[cutoff:i] * factor,
-        #     bhalf_3e6[cutoff:i],
-        #     error_3e6[1, i],
-        #     color="b",
-        #     linewidth=2,
-        # )
         plt.plot(time_7e6[cutoff:i] * factor, bhalf_7e6[cutoff:i], "g", linewidth=3)
-        # plt.errorbar(
-        #     time_7e6[cutoff:i] * factor,
-        #     bhalf_7e6[cutoff:i],
-        #     error_7e6[1, i],
-        #     color="g",
-        #     linewidth=2,
-        # )
     plt.xlabel("Time / $\mu s$", size=24)
     plt.ylabel("Normalised $B_{1/2}$ / a.u.", size=24)
     plt.legend(
