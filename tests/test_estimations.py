@@ -6,12 +6,19 @@ import radicalpy as rp
 
 
 class EstimationsTests(unittest.TestCase):
-    def test_Bhalf_theoretical(self):
+    def test_Bhalf_theoretical_hyperfine(self):
         flavin = rp.simulation.Molecule.fromdb("flavin_anion")
         trp = rp.simulation.Molecule.fromdb("tryptophan_cation")
         sim = rp.simulation.HilbertSimulation([flavin, trp])
         Bhalf_theoretical = rp.estimations.Bhalf_theoretical(sim)
         self.assertAlmostEqual(Bhalf_theoretical, 2.9692816566569937, places=2)
+
+    def test_Bhalf_theoretical_relaxation(self):
+        gold = 6.581867450174098
+        kstd = 3.8e7
+        k = 1e6
+        bhalf = rp.estimations.Bhalf_theoretical_relaxation(kstd, k)
+        self.assertAlmostEqual(gold, bhalf)
 
     def test_T1_relaxation_rate(self):
         gold = 557760.0907618533

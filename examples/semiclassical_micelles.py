@@ -28,7 +28,7 @@ from radicalpy.utils import (
 
 def main(
     ts=np.arange(0, 10e-6, 10e-9),
-    Bs=np.arange(0, 30, 0.5),
+    Bs=np.arange(0, 50, 1),
     num_samples=40,
 ):
     flavin = Molecule.all_nuclei("flavin_anion")
