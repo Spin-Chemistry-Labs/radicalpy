@@ -10,8 +10,9 @@ from .simulation import HilbertSimulation
 from .utils import autocorrelation, mT_to_MHz
 
 
-def Bhalf_theoretical(sim: HilbertSimulation) -> float:
-    """Theoretical B1/2 for radical pairs in solution.
+def Bhalf_theoretical_hyperfine(sim: HilbertSimulation) -> float:
+    """Theoretical B1/2 for radical pairs.
+    Estimated with hyperfine interactions.
 
     Source: `Weller et al. Chem. Phys. Lett. 96, 1, 24-27 (1983)`_.
 
@@ -30,6 +31,25 @@ def Bhalf_theoretical(sim: HilbertSimulation) -> float:
     sum_hfc2 = sum(m.effective_hyperfine**2 for m in sim.molecules)
     sum_hfc = sum(m.effective_hyperfine for m in sim.molecules)
     return np.sqrt(3) * (sum_hfc2 / sum_hfc)
+
+
+def Bhalf_theoretical_relaxation(kstd: float, k: float) -> float:
+    """Theoretical B1/2 for radical pairs.
+    Estimated with spin dephasing rate.
+
+    Source: `Golesworthy et al. J. Chem. Phys. 159, 105102 (2023)`_.
+
+    Args:
+            kstd: Singlet-triplet dephasing rate (1/s).
+            k: Recombination rate (1/s).
+
+    Returns:
+            float: The B1/2 value (mT).
+
+    .. _Golesworthy et al. J. Chem. Phys. 159, 105102 (2023):
+       https://doi.org/10.1063/5.0166675
+    """
+    return 2.5 + 0.37 * (kstd / k) ** 0.66
 
 
 def _relaxation_gtensor_term(g: list) -> float:
