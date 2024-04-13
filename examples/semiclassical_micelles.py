@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from radicalpy.data import Molecule
@@ -28,8 +29,8 @@ from radicalpy.utils import (
 
 def main(
     ts=np.arange(0, 10e-6, 10e-9),
-    Bs=np.arange(0, 50, 1),
-    num_samples=40,
+    Bs=np.arange(0, 30, 0.1),
+    num_samples=100,
 ):
     flavin = Molecule.all_nuclei("flavin_anion")
     trp = Molecule.all_nuclei("tryptophan_cation")
@@ -44,6 +45,9 @@ def main(
     j = exchange_interaction_in_solution_MC(trajectory_data[:, 1], J0=5)
 
     plot_exchange_interaction_in_solution(trajectory_ts, trajectory_data, j)
+    path = __file__[:-3] + f"_{0}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
 
     acf_j = autocorrelation(j, factor=1)
     zero_point_crossing_j = np.where(np.diff(np.sign(acf_j)))[0][0]
@@ -52,6 +56,9 @@ def main(
 
     acf_j_fit = autocorrelation_fit(t_j, j, 5e-12, t_j_max)
     plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j)
+    path = __file__[:-3] + f"_{1}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
 
     kstd = k_STD(-j, acf_j_fit["tau_c"])
     # kstd = 11681368.059456564
@@ -89,8 +96,25 @@ def main(
         ) = Bhalf_fit(Bs, results["MARY"][i, :])
 
     plot_bhalf_time(ts, bhalf_time, fit_error_time)
+    path = __file__[:-3] + f"_{2}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
 
-    plot_3d_results(results, factor=1e6)
+    xlabel = "$B_0$ / mT"
+    ylabel = "Time / $\mu s$"
+    zlabel = "$\Delta \Delta A$"
+    plot_3d_results(
+        xdata=Bs,
+        ydata=ts,
+        zdata=results["MARY"],
+        xlabel=xlabel,
+        ylabel=ylabel,
+        zlabel=zlabel,
+        factor=1e6,
+    )
+    path = __file__[:-3] + f"_{3}.png"
+    plt.savefig(path, dpi=300)
+    plt.close()
 
 
 if __name__ == "__main__":
