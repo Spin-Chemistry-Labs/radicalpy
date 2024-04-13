@@ -16,7 +16,7 @@ def main():
 
     # Parameters
     time = np.arange(0, 10e-6, 10e-9)
-    Bs = np.arange(0, 30, 0.1)
+    Bs = np.arange(0, 30, 0.5)
     num_samples = 200
     scale_factor = 1  # 4e-1
     kr = 7e7  # 1.7e6  # radical pair relaxation rate
@@ -84,7 +84,7 @@ def main():
     flavin = Molecule.all_nuclei("fad")
     adenine = Molecule.all_nuclei("fad")
     sim = SemiclassicalSimulation([flavin, adenine], basis=Basis.ZEEMAN)
-    bhalf = rp.estimations.Bhalf_theoretical(sim)
+    bhalf = rp.estimations.Bhalf_theoretical_hyperfine(sim)
     khfc_new = rp.estimations.k_ST_mixing(bhalf)
     khfc = 8e7  # spin-state mixing rate
     khfc_ratio = khfc_new / khfc
@@ -243,7 +243,7 @@ def main():
         relaxations=[RandomFields(kr), SingletTripletDephasing(kstd)],
     )
 
-    np.save("./examples/data/fad_kinetics/results.npy", results)
+    np.save("./examples/data/fad_mary/results_new.npy", results)
 
     total_yield = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
     zero_field = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
@@ -372,7 +372,155 @@ def main():
     f = 25
     wl = -1
     factor = 1e6
+    colors_time = plt.colormaps.get_cmap("viridis").resampled(len(time)).colors
+    colors_field = plt.colormaps.get_cmap("viridis").resampled(len(Bs)).colors
 
+    xlabel = "Wavelength / nm"
+    ylabel = "$\Delta \Delta A$"
+    for i in range(0, len(time), n):
+        plot_general(
+            groundstate_wavelength,
+            mary_groundstate[i, -1, :],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{time[i] * factor: .0f} $\mu s$",
+            colors=colors_time[i],
+        )
+    path = __file__[:-3] + f"_{3}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    xlabel = "$B_0$ / mT"
+    ylabel = "$\Delta \Delta A$"
+    for i in range(0, len(time), n):
+        plot_general(
+            Bs,
+            mary_groundstate[i, :, wl],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{time[i] * factor: .0f} $\mu s$",
+            colors=colors_time[i],
+        )
+    path = __file__[:-3] + f"_{4}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    xlabel = "Time / $\mu s$"
+    ylabel = "$\Delta \Delta A$"
+    for i in range(0, len(Bs), f):
+        plot_general(
+            time,
+            mary_groundstate[:, i, wl],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{Bs[i]: .1f} mT",
+            colors=colors_field[i],
+            factor=1e6,
+        )
+    path = __file__[:-3] + f"_{5}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    xlabel = "Wavelength / nm"
+    ylabel = "$\Delta I_F$"
+    for i in range(0, len(time), n):
+        plot_general(
+            emission_wavelength,
+            mary_emission[i, -1, :],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{time[i] * factor: .0f} $\mu s$",
+            colors=colors_time[i],
+        )
+    path = __file__[:-3] + f"_{6}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    xlabel = "$B_0$ / mT"
+    ylabel = "$\Delta I_F$"
+    for i in range(0, len(time), n):
+        plot_general(
+            Bs,
+            mary_emission[i, :, wl],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{time[i] * factor: .0f} $\mu s$",
+            colors=colors_time[i],
+        )
+    path = __file__[:-3] + f"_{7}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    xlabel = "Time / $\mu s$"
+    ylabel = "$\Delta I_F$"
+    for i in range(0, len(Bs), f):
+        plot_general(
+            time,
+            mary_emission[:, i, wl],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{Bs[i]: .1f} mT",
+            colors=colors_field[i],
+            factor=1e6,
+        )
+    path = __file__[:-3] + f"_{8}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    xlabel = "Wavelength / nm"
+    ylabel = "$\Delta \Delta A$"
+    for i in range(0, len(time), n):
+        plot_general(
+            wavelength,
+            mary[i, -1, :],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{time[i] * factor: .0f} $\mu s$",
+            colors=colors_time[i],
+        )
+    path = __file__[:-3] + f"_{9}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    xlabel = "$B_0$ / mT"
+    ylabel = "$\Delta \Delta A$"
+    for i in range(0, len(time), n):
+        plot_general(
+            Bs,
+            mary[i, :, wl],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{time[i] * factor: .0f} $\mu s$",
+            colors=colors_time[i],
+        )
+    path = __file__[:-3] + f"_{10}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    xlabel = "Time / $\mu s$"
+    ylabel = "$\Delta \Delta A$"
+    for i in range(0, len(Bs), f):
+        plot_general(
+            time,
+            mary[:, i, wl],
+            xlabel,
+            ylabel,
+            style="-",
+            label=f"{Bs[i]: .1f} mT",
+            colors=colors_field[i],
+            factor=1e6,
+        )
+    path = __file__[:-3] + f"_{11}.png"
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
     xlabel = "Wavelength / nm"
     ylabel = "$\Delta \Delta A$"
     for i in range(0, len(time), n):

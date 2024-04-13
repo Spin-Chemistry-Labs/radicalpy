@@ -210,8 +210,8 @@ def plot_autocorrelation_fit(t_j, acf_j, acf_j_fit, zero_point_crossing_j):
     ax.set_xlabel(r"$\tau$ / s", size=24)
     ax.set_ylabel(r"$g_J(\tau)$", size=24)
     plt.tick_params(labelsize=18)
-    fig.set_size_inches(10, 5)
-    plt.show()
+    fig.set_size_inches(5, 5)
+    # plt.show()
 
 
 def plot_bhalf_time(ts, bhalf_time, fit_error_time, style="ro", factor=1e6):
@@ -228,7 +228,7 @@ def plot_bhalf_time(ts, bhalf_time, fit_error_time, style="ro", factor=1e6):
     plt.xlabel("Time / $\mu s$", size=24)
     plt.ylabel("$B_{1/2}$ / mT", size=24)
     plt.tick_params(labelsize=18)
-    plt.gcf().set_size_inches(10, 5)
+    plt.gcf().set_size_inches(5, 5)
     # plt.show()
 
 
@@ -244,14 +244,14 @@ def plot_exchange_interaction_in_solution(ts, trajectory_data, j):
     ax2 = ax.twinx()
     color2 = "tab:blue"
     plt.plot(ts, -j, color=color2)
-    ax.set_xlabel("Time (ns)", size=18)
-    ax.set_ylabel("Radical pair separation / nm", size=18, color=color)
-    ax2.set_ylabel("Exchange interaction / mT", size=18, color=color2)
-    ax.tick_params(axis="y", labelsize=14, labelcolor=color)
-    ax.tick_params(axis="x", labelsize=14, labelcolor="k")
-    ax2.tick_params(labelsize=14, labelcolor=color2)
-    fig.set_size_inches(10, 5)
-    plt.show()
+    ax.set_xlabel("Time / ns", size=24)
+    ax.set_ylabel("Radical pair separation / nm", size=24, color=color)
+    ax2.set_ylabel("Exchange interaction / mT", size=24, color=color2)
+    ax.tick_params(axis="y", labelsize=18, labelcolor=color)
+    ax.tick_params(axis="x", labelsize=18, labelcolor="k")
+    ax2.tick_params(labelsize=18, labelcolor=color2)
+    fig.set_size_inches(5, 5)
+    # plt.show()
 
 
 def plot_general(
