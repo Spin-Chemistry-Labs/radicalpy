@@ -10,7 +10,7 @@ class EstimationsTests(unittest.TestCase):
         flavin = rp.simulation.Molecule.fromdb("flavin_anion")
         trp = rp.simulation.Molecule.fromdb("tryptophan_cation")
         sim = rp.simulation.HilbertSimulation([flavin, trp])
-        Bhalf_theoretical = rp.estimations.Bhalf_theoretical(sim)
+        Bhalf_theoretical = rp.estimations.Bhalf_theoretical_hyperfine(sim)
         self.assertAlmostEqual(Bhalf_theoretical, 2.9692816566569937, places=2)
 
     def test_Bhalf_theoretical_relaxation(self):
