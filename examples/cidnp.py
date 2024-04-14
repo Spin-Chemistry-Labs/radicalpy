@@ -5,6 +5,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 import radicalpy as rp
 from radicalpy import kinetics, relaxation
 from radicalpy.shared import constants as C

@@ -34,5 +34,5 @@ class Constant(float):
         return SimpleNamespace(**{k: Constant(v) for k, v in data.items()})
 
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).parent / "data_files"
 constants = Constant.fromjson(DATA_DIR / "constants.json")

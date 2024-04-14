@@ -237,9 +237,11 @@ def HamiltonianDipolar3D(DipolarInteractions):
     ]
     return sum(
         [
-            t[0] * np.kron(np.kron(t[1], t[2]), t[3])
-            if ds == 3
-            else np.kron(t[1], t[2])
+            (
+                t[0] * np.kron(np.kron(t[1], t[2]), t[3])
+                if ds == 3
+                else np.kron(t[1], t[2])
+            )
             for t in terms
         ]
     )
@@ -572,14 +574,12 @@ def TimeEvolution(
     space="Hilbert",
     model="Exponential",
 ):
-
     #     time = np.linspace(t_min, t_max, t_stepsize)
     #     dt = time[1] - time[0]
     time = np.arange(0, t_max, dt)
 
     match space:
         case "Hilbert":
-
             HZ = HamiltonianZeeman_RadicalPair(spins, B)
             H_total = H + HZ
             rho0 = Hilbert_initial(initial, spins, H_total)
@@ -601,14 +601,15 @@ def TimeEvolution(
             K = Kinetics(spins, k, time, model=model)
             evol_reaction = evol * K
 
-            ProductYield = integrate.cumtrapz(evol_reaction, time, initial=0) * k
+            ProductYield = (
+                integrate.cumulative_trapezoid(evol_reaction, time, initial=0) * k
+            )
             ProductYieldSum = np.max(ProductYield)
             # print('Product yield: ', '%.2f' % ProductYieldSum)
 
             return [time, evol_reaction, ProductYield, ProductYieldSum, rho]
 
         case "Liouville":
-
             HZ = HamiltonianZeeman_RadicalPair(spins, B)
             HZ = Hilbert2Liouville(HZ)
             H_total = H + HZ
@@ -627,7 +628,7 @@ def TimeEvolution(
                 evol[i] = np.real(np.trace(np.matmul(Pobs.T, rhotL)))
                 rho.append(rhotL)
 
-            ProductYield = integrate.cumtrapz(evol, time, initial=0) * k
+            ProductYield = integrate.cumulative_trapezoid(evol, time, initial=0) * k
             ProductYieldSum = np.max(ProductYield)
             #             print('Product yield: ', '%.2f' % ProductYieldSum)
 
@@ -747,7 +748,6 @@ def BhalfTheoretical(radicalA_effectiveHFC, radicalB_effectiveHFC):
 def SingletYieldTwoSite(
     B, gamma, theta, phi, r12A, r13A, r23A, r12B, r13B, r23B, kS, kF, tau, spins
 ):
-
     P12S = projop(spins, "S")
     P12SA = np.concatenate((np.ndarray.flatten(P12S), np.zeros(len(P12S) ** 2)))
     P12SB = np.concatenate((np.zeros(len(P12S) ** 2), np.ndarray.flatten(P12S)))
@@ -795,7 +795,6 @@ def SingletYieldTwoSite(
 def SingletYieldTwoSiteRelaxation(
     B, gamma, theta, phi, r12A, r13A, r23A, r12B, r13B, r23B, kS, kF, tau, spins
 ):
-
     P12S = projop(spins, "S")
     rho0 = P12S
     M = 2
@@ -881,7 +880,6 @@ def SingletYieldTwoSiteApprox(
     tstep,
     spins,
 ):
-
     P12S = projop(spins, "S")
     HZ = HamiltonianZeeman3D(spins, B, theta, phi, gamma)
 
@@ -921,7 +919,6 @@ def SingletYieldTwoSiteTimePropagation(
     tstep,
     spins,
 ):
-
     P12S = projop(spins, "S")
     P12SA = np.concatenate((np.ndarray.flatten(P12S), np.zeros(len(P12S) ** 2)))
     P12SB = np.concatenate((np.zeros(len(P12S) ** 2), np.ndarray.flatten(P12S)))
@@ -989,7 +986,6 @@ def SingletYieldTwoSiteTimePropagationApprox(
     tstep,
     spins,
 ):
-
     P12S = projop(spins, "S")
     HZ = HamiltonianZeeman3D(spins, B, theta, phi, gamma)
 
@@ -1067,7 +1063,6 @@ def TimeEvolutionPlot2D(
 def DensityMatrixPlot2D(
     rhot, x_axis_labels, y_axis_labels, space="Hilbert", colourmap="viridis"
 ):
-
     match space:
         case "Hilbert":
             fig = plt.figure()

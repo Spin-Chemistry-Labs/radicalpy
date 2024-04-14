@@ -10,8 +10,9 @@ from .simulation import HilbertSimulation
 from .utils import autocorrelation, mT_to_MHz
 
 
-def Bhalf_theoretical(sim: HilbertSimulation) -> float:
-    """Theoretical B1/2 for radical pairs in solution.
+def Bhalf_theoretical_hyperfine(sim: HilbertSimulation) -> float:
+    """Theoretical B1/2 for radical pairs.
+    Estimated with hyperfine interactions.
 
     Source: `Weller et al. Chem. Phys. Lett. 96, 1, 24-27 (1983)`_.
 
@@ -30,6 +31,48 @@ def Bhalf_theoretical(sim: HilbertSimulation) -> float:
     sum_hfc2 = sum(m.effective_hyperfine**2 for m in sim.molecules)
     sum_hfc = sum(m.effective_hyperfine for m in sim.molecules)
     return np.sqrt(3) * (sum_hfc2 / sum_hfc)
+
+
+def Bhalf_theoretical_relaxation(kstd: float, krec: float) -> float:
+    """Theoretical B1/2 for radical pairs.
+    Estimated with spin dephasing rate.
+
+    Source: `Golesworthy et al. J. Chem. Phys. 159, 105102 (2023)`_.
+
+    Args:
+            kstd (float): Singlet-triplet dephasing rate (1/s).
+            krec (float): Recombination rate (1/s).
+
+    Returns:
+            float: The B1/2 value (mT).
+
+    .. _Golesworthy et al. J. Chem. Phys. 159, 105102 (2023):
+       https://doi.org/10.1063/5.0166675
+    """
+    return 2.5 + 0.37 * (kstd / krec) ** 0.66
+
+
+def Bhalf_theoretical_relaxation_delay(
+    kstd: float, krec: float, td: float | np.ndarray
+) -> float:
+    """Theoretical B1/2 for radical pairs.
+    Estimated with spin dephasing rate and pump-probe delay time.
+
+    Source: `Golesworthy et al. J. Chem. Phys. 159, 105102 (2023)`_.
+
+    Args:
+            kstd (float): Singlet-triplet dephasing rate (1/s).
+            krec (float): Recombination rate (1/s).
+            td (float or np.ndarray): Pump-probe delay (s).
+
+    Returns:
+            float: The B1/2 value (mT).
+
+    .. _Golesworthy et al. J. Chem. Phys. 159, 105102 (2023):
+       https://doi.org/10.1063/5.0166675
+    """
+    bhalf = Bhalf_theoretical_relaxation(kstd, krec)
+    return (2.5 - bhalf) * np.exp(-(krec * td)) + bhalf
 
 
 def _relaxation_gtensor_term(g: list) -> float:
@@ -200,7 +243,7 @@ def autocorrelation_fit(
         p0=np.zeros(num_exp),
     )
     fit = multiexponential(ts, *acf_popt)
-    tau_c = sum(acf_popt * taus) * np.var(mT_to_MHz(trajectory)) / 1e6
+    tau_c = sum(acf_popt * taus)  # * np.var(mT_to_MHz(trajectory)) / 1e6
     return {"fit": fit, "tau_c": tau_c}
 
 
@@ -487,10 +530,14 @@ def k_electron_transfer(
     )
 
 
-def k_excitation(
-    power: float, wavelength: float, volume: float, pathlength: float, epsilon: float
+def k_excitation_extinction_coefficient(
+    power: float,
+    wavelength: float,
+    volume: float,
+    pathlength: float,
+    epsilon: float,
 ) -> float:
-    """Groundstate excitation rate.
+    """Groundstate excitation rate using extinction coefficient.
 
     Args:
             power (float): The excitation laser power (W).
@@ -507,6 +554,38 @@ def k_excitation(
     nu = C.c / wavelength  # Frequency of excitation beam (1/s)
     I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
     return I0 * np.log(10) * epsilon * pathlength
+
+
+def k_excitation_photon_flux(
+    power: float,
+    wavelength: float,
+    beam_radius: float,
+    pathlength: float,
+    absorbance: float,
+    concentration: float,
+) -> float:
+    """Groundstate excitation rate using photon flux.
+
+    Args:
+            power (float): The excitation laser power (W).
+            wavelength (float): The excitation wavelength (m).
+            beam_radius (float): Radius of the beam spot (m).
+            pathlength (float): The path length of the sample cell
+                (m).
+            absorbance (float): Absorbance of the sample (OD).
+            concentration (float): Concentration of the sample (mol/m^3).
+
+    Returns:
+            float: The excitation rate (1/s).
+    """
+    photon_energy = (C.h * C.c) / wavelength  # energy of one photon (J)
+    beam_spot_area = np.pi * beam_radius**2  # beam spot area (m^2)
+    number_density = concentration * C.N_A  # number density of the sample (m^-3)
+    absorbance_cross_section = absorbance / (
+        number_density * pathlength
+    )  # absorbance cross section (m^2)
+    photon_flux = power / (beam_spot_area * photon_energy)  # photon flux (m^2 / s)
+    return photon_flux * absorbance_cross_section
 
 
 def k_recombination(MFE: float, k_escape: float) -> float:
@@ -568,8 +647,7 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
     B0 = utils.mT_to_MHz(B0)
     nu_0 = (C.g_e * (C.mu_B * 1e-3) * B0) / C.h
     jnu0tc = (2 / 15) * (
-        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2)
-        + (tau_c) / (1 + nu_0**2 * tau_c**2)
+        (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2) + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )
     return (D**2 + 3 * E**2) * jnu0tc
 

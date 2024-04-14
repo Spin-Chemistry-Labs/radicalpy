@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import json
 from functools import singledispatchmethod
-from typing import Optional
+from typing import Iterator, Optional, Tuple
 
 import numpy as np
 from importlib_resources import files
@@ -39,7 +39,7 @@ def multiplicity_to_spin(multiplicity: int) -> float:
 
 def get_data(suffix: str = "") -> Traversable:
     """Get the directory containing data files."""
-    return files(__package__) / "data" / suffix
+    return files(__package__) / "data_files" / suffix
 
 
 class Isotope:
@@ -200,6 +200,9 @@ class Hfc:
         available = "not " if self._anisotropic is None else ""
         return f"{self.isotropic:.4} <anisotropic {available}available>"
 
+    # `singledispatchmethod` and `__init__.register` is used to have
+    # one `__init__` function with two implementations BASED ON THE
+    # ARGUMENT TYPE!
     @singledispatchmethod
     def __init__(self, hfc: list[list[float]]):  # noqa D105
         self._anisotropic = np.array(hfc)
@@ -211,6 +214,7 @@ class Hfc:
             raise ValueError("\n".join(lines))
         self._isotropic = self._anisotropic.trace() / 3
 
+    # See the comment above the `singledispatchmethod` decorator.
     @__init__.register
     def _(self, hfc: float):  # noqa D105
         self._anisotropic = None
@@ -306,6 +310,11 @@ class Nucleus:
         """Return magnetogyric ratio, :math:`\gamma` (rad/s/mT)."""
         return self.magnetogyric_ratio * 0.001
 
+    @property
+    def spin_quantum_number(self) -> float:
+        """Spin quantum numer of `Isotope`."""
+        return multiplicity_to_spin(self.multiplicity)
+
 
 class Molecule:
     """Representation of a molecule for the simulation.
@@ -400,6 +409,9 @@ class Molecule:
         self.radical = radical
         self.custom = True
 
+        self.hfc_rng = np.random.default_rng(42)  ##################
+        self.ang_rng = np.random.default_rng(43)  ##################
+
     @classmethod
     def load_molecule_json(cls, molecule: str) -> dict:
         json_path = get_data(f"molecules/{molecule}.json")
@@ -417,10 +429,62 @@ class Molecule:
         Examples:
             >>> available = Molecule.available()
             >>> available[:4]
-            ['2_6_aqds', 'adenine_cation', 'flavin_anion', 'flavin_neutral']
+            ['2_6_aqds', 'adenine_cation', 'fad', 'flavin_anion']
         """
         paths = get_data("molecules").glob("*.json")
         return sorted([path.with_suffix("").name for path in paths])
+
+    @classmethod
+    def _check_molecule_available(cls, name):
+        if name not in cls.available():
+            lines = [f"Molecule `{name}` not found in database."]
+            lines += ["Available molecules:"]
+            lines += cls.available()
+            raise ValueError("\n".join(lines))
+
+    @classmethod
+    def all_nuclei(cls, name: str):
+        """Construct a molecule from the database with all nuclei.
+
+        Args:
+            name (str): A name of the molecule available in the
+                database (see `Molecule.available()`).
+
+        Examples:
+            >>> Molecule.all_nuclei("flavin_anion")
+            Molecule: flavin_anion
+            Nuclei:
+              14N(19337792.0, 3, 0.5141 <anisotropic available>)
+              14N(19337792.0, 3, -0.001275 <anisotropic available>)
+              14N(19337792.0, 3, -0.03654 <anisotropic available>)
+              1H(267522187.44, 2, 0.05075 <anisotropic available>)
+              1H(267522187.44, 2, -0.1371 <anisotropic available>)
+              1H(267522187.44, 2, -0.1371 <anisotropic available>)
+              1H(267522187.44, 2, -0.1371 <anisotropic available>)
+              1H(267522187.44, 2, -0.4403 <anisotropic available>)
+              1H(267522187.44, 2, 0.4546 <anisotropic available>)
+              1H(267522187.44, 2, 0.4546 <anisotropic available>)
+              1H(267522187.44, 2, 0.4546 <anisotropic available>)
+              1H(267522187.44, 2, 0.009597 <anisotropic available>)
+              1H(267522187.44, 2, 0.4263 <anisotropic available>)
+              1H(267522187.44, 2, 0.4233 <anisotropic available>)
+              1H(267522187.44, 2, -0.02004 <anisotropic available>)
+              14N(19337792.0, 3, 0.1784 <anisotropic available>)
+            Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
+            Info: {'units': 'mT', 'name': 'Flavin radical anion'}
+        """
+        cls._check_molecule_available(name)
+        molecule_json = cls.load_molecule_json(name)
+        info = molecule_json["info"]
+        data = molecule_json["data"]
+        nuclei_list = []
+        for nucleus in data.keys():
+            isotope = data[nucleus]["element"]
+            hfc = data[nucleus]["hfc"]
+            nuclei_list.append(Nucleus.fromisotope(isotope, hfc))
+        molecule = cls(name=name, nuclei=nuclei_list, info=info)
+        molecule.custom = False
+        return molecule
 
     @classmethod
     def fromdb(cls, name: str, nuclei: list[str] = []):
@@ -440,11 +504,7 @@ class Molecule:
             Radical: E(-176085963023.0, 2, 0.0 <anisotropic not available>)
             Info: {'units': 'mT', 'name': 'Flavin radical anion'}
         """
-        if name not in cls.available():
-            lines = [f"Molecule `{name}` not found in database."]
-            lines += ["Available molecules:"]
-            lines += cls.available()
-            raise ValueError("\n".join(lines))
+        cls._check_molecule_available(name)
         molecule_json = cls.load_molecule_json(name)
         info = molecule_json["info"]
         data = molecule_json["data"]
@@ -515,6 +575,37 @@ class Molecule:
         spns_np = np.array(list(map(multiplicity_to_spin, multiplicities)))
         hfcs_np = np.array([h.isotropic for h in hfcs])
         return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
+
+    @property  ############ TODO(calc only once)
+    def semiclassical_std(self) -> float:
+        r"""The standard deviation for the semiclassical HFCs.
+
+        Calculate the standard deviation :math:`\sigma` where
+
+        .. math::
+           \sigma = \sqrt{\frac{2}{\tau^2}}
+
+        and
+
+        .. math::
+           \tau_i^{-2} = \frac{1}{6} \sum_k a_k^2 I_k (I_k + 1)
+
+        where :math:`a_k` is the hyperfine coupling and :math:`I_k`
+        the spin quantum number of each nucleus, respectively.
+
+        Examples:
+            >>> m = Molecule.fromdb("flavin_anion", nuclei=["N14"])
+            >>> m.semiclassical_std
+            7.663920853309001e-07
+
+        .. todo::
+           reference
+        """
+        tau = 6 / sum(
+            n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
+            for n in self.nuclei
+        )
+        return np.sqrt(2) / tau
 
 
 class Triplet(Molecule):
