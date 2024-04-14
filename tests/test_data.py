@@ -5,6 +5,7 @@ import unittest
 
 import numpy as np
 import numpy.testing
+
 from radicalpy import data
 
 
@@ -90,6 +91,6 @@ class MoleculeTestCase(unittest.TestCase):
     """Test case for the `Molecule` class."""
 
     def test_number_of_molecules(self):
-        previous_number = 6
+        previous_number = 7
         current_number = len(data.Molecule.available())
         self.assertEqual(current_number, previous_number)

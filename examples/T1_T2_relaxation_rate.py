@@ -1,7 +1,9 @@
 #! /usr/bin/env python
 
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 from radicalpy.estimations import (
     T1_relaxation_rate,
     T2_relaxation_rate,
