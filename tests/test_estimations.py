@@ -16,8 +16,16 @@ class EstimationsTests(unittest.TestCase):
     def test_Bhalf_theoretical_relaxation(self):
         gold = 6.581867450174098
         kstd = 3.8e7
-        k = 1e6
-        bhalf = rp.estimations.Bhalf_theoretical_relaxation(kstd, k)
+        krec = 1e6
+        bhalf = rp.estimations.Bhalf_theoretical_relaxation(kstd, krec)
+        self.assertAlmostEqual(gold, bhalf)
+
+    def test_Bhalf_theoretical_relaxation_delay(self):
+        gold = 7.386542039837055
+        kstd = 1e8
+        krec = 1e6
+        td = 1e-6
+        bhalf = rp.estimations.Bhalf_theoretical_relaxation_delay(kstd, krec, td)
         self.assertAlmostEqual(gold, bhalf)
 
     def test_T1_relaxation_rate(self):

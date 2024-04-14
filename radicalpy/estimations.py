@@ -33,15 +33,15 @@ def Bhalf_theoretical_hyperfine(sim: HilbertSimulation) -> float:
     return np.sqrt(3) * (sum_hfc2 / sum_hfc)
 
 
-def Bhalf_theoretical_relaxation(kstd: float, k: float) -> float:
+def Bhalf_theoretical_relaxation(kstd: float, krec: float) -> float:
     """Theoretical B1/2 for radical pairs.
     Estimated with spin dephasing rate.
 
     Source: `Golesworthy et al. J. Chem. Phys. 159, 105102 (2023)`_.
 
     Args:
-            kstd: Singlet-triplet dephasing rate (1/s).
-            k: Recombination rate (1/s).
+            kstd (float): Singlet-triplet dephasing rate (1/s).
+            krec (float): Recombination rate (1/s).
 
     Returns:
             float: The B1/2 value (mT).
@@ -49,7 +49,30 @@ def Bhalf_theoretical_relaxation(kstd: float, k: float) -> float:
     .. _Golesworthy et al. J. Chem. Phys. 159, 105102 (2023):
        https://doi.org/10.1063/5.0166675
     """
-    return 2.5 + 0.37 * (kstd / k) ** 0.66
+    return 2.5 + 0.37 * (kstd / krec) ** 0.66
+
+
+def Bhalf_theoretical_relaxation_delay(
+    kstd: float, krec: float, td: float | np.ndarray
+) -> float:
+    """Theoretical B1/2 for radical pairs.
+    Estimated with spin dephasing rate and pump-probe delay time.
+
+    Source: `Golesworthy et al. J. Chem. Phys. 159, 105102 (2023)`_.
+
+    Args:
+            kstd (float): Singlet-triplet dephasing rate (1/s).
+            krec (float): Recombination rate (1/s).
+            td (float or np.ndarray): Pump-probe delay (s).
+
+    Returns:
+            float: The B1/2 value (mT).
+
+    .. _Golesworthy et al. J. Chem. Phys. 159, 105102 (2023):
+       https://doi.org/10.1063/5.0166675
+    """
+    bhalf = Bhalf_theoretical_relaxation(kstd, krec)
+    return (2.5 - bhalf) * np.exp(-(krec * td)) + bhalf
 
 
 def _relaxation_gtensor_term(g: list) -> float:
