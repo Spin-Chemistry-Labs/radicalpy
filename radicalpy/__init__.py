@@ -1,12 +1,13 @@
 """Radicalpy package root."""
+
 from pint import UnitRegistry
 
-from . import (  # noqa: F401 F403
+from . import plot  # noqa: F401 F403
+from . import (
     classical,
     data,
     estimations,
     kinetics,
-    plot,
     relaxation,
     shared,
     simulation,
