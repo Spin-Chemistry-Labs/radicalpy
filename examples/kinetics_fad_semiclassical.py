@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time

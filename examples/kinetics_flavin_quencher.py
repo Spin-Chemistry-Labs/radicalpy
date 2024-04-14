@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from radicalpy.classical import RateEquations, Rate
+from radicalpy.classical import Rate, RateEquations
 
 
 def main():
