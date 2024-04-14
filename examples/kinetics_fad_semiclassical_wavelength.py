@@ -1,14 +1,16 @@
 #! /usr/bin/env python
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 import radicalpy as rp
-from pathlib import Path
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
 from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time, plot_general
 from radicalpy.relaxation import RandomFields, SingletTripletDephasing
-from radicalpy.simulation import Molecule, SemiclassicalSimulation, Basis
+from radicalpy.simulation import Basis, Molecule, SemiclassicalSimulation
 from radicalpy.utils import Bhalf_fit
 
 
