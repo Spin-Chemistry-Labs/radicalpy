@@ -245,7 +245,7 @@ def main():
         relaxations=[RandomFields(kr), SingletTripletDephasing(kstd)],
     )
 
-    np.save("./examples/data/fad_mary/results_new.npy", results)
+    # np.save("./examples/data/fad_mary/results_new.npy", results)
 
     total_yield = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
     zero_field = np.zeros((len(time), len(Bs), len(wavelength)), dtype=complex)
