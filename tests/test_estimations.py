@@ -6,12 +6,27 @@ import radicalpy as rp
 
 
 class EstimationsTests(unittest.TestCase):
-    def test_Bhalf_theoretical(self):
+    def test_Bhalf_theoretical_hyperfine(self):
         flavin = rp.simulation.Molecule.fromdb("flavin_anion")
         trp = rp.simulation.Molecule.fromdb("tryptophan_cation")
         sim = rp.simulation.HilbertSimulation([flavin, trp])
-        Bhalf_theoretical = rp.estimations.Bhalf_theoretical(sim)
+        Bhalf_theoretical = rp.estimations.Bhalf_theoretical_hyperfine(sim)
         self.assertAlmostEqual(Bhalf_theoretical, 2.9692816566569937, places=2)
+
+    def test_Bhalf_theoretical_relaxation(self):
+        gold = 6.581867450174098
+        kstd = 3.8e7
+        krec = 1e6
+        bhalf = rp.estimations.Bhalf_theoretical_relaxation(kstd, krec)
+        self.assertAlmostEqual(gold, bhalf)
+
+    def test_Bhalf_theoretical_relaxation_delay(self):
+        gold = 7.386542039837055
+        kstd = 1e8
+        krec = 1e6
+        td = 1e-6
+        bhalf = rp.estimations.Bhalf_theoretical_relaxation_delay(kstd, krec, td)
+        self.assertAlmostEqual(gold, bhalf)
 
     def test_T1_relaxation_rate(self):
         gold = 557760.0907618533
@@ -70,14 +85,14 @@ class EstimationsTests(unittest.TestCase):
         k_et = rp.estimations.k_electron_transfer(R)
         self.assertAlmostEqual(gold, k_et)
 
-    def test_k_excitation(self):
+    def test_k_excitation_extinction_coefficient(self):
         gold = 52749.44112741747
         P = 290e-6
         wl = 450e-9
         V = 0.54e-15
         l = 900e-9
         epsilon = 12600
-        kI = rp.estimations.k_excitation(P, wl, V, l, epsilon)
+        kI = rp.estimations.k_excitation_extinction_coefficient(P, wl, V, l, epsilon)
         self.assertAlmostEqual(gold, kI)
 
     def test_k_recombination(self):

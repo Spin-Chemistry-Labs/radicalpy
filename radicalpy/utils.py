@@ -4,6 +4,8 @@
 
 .. todo:: Add module docstring.
 """
+import sys
+from pathlib import Path
 from typing import Tuple
 
 import numpy as np
@@ -12,6 +14,17 @@ from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
 
 from .shared import constants as C
+
+
+def is_fast_run():
+    """Is the `--fast` parameter set at execution.
+
+    This function helps examples to be used as tests.  By running the
+    example with the `--fast` option, a faster version of main can be
+    called (e.g., by setting fewer number of time steps etc.).
+
+    """
+    return len(sys.argv) == 2 and sys.argv[1] == "--fast"
 
 
 def Bhalf_fit(
@@ -110,21 +123,6 @@ def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
     return (amplitude / Bhalf**2) - (amplitude / (B**2 + Bhalf**2))
 
 
-def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
-    """Lorentzian MARY spectral shape.
-
-    Used for brute force modulated MARY simulations.
-
-    Args:
-            mod_signal (np.ndarray): The modulated signal.
-            lfe_magnitude (float): The magnitude of your low field effect (G).
-
-    Returns:
-            np.ndarray: The modulated MARY signal.
-    """
-    return 1 / (1 + mod_signal**2) - lfe_magnitude / (0.1 + mod_signal**2)
-
-
 def MHz_in_angular_frequency(MHz: float) -> float:
     """Convert MHz into angular frequency.
 
@@ -161,22 +159,6 @@ def MHz_to_mT(MHz: float) -> float:
     return MHz / (1e-9 * -C.g_e * C.mu_B / C.h)
 
 
-def modulated_signal(timeconstant: np.ndarray, theta: float, frequency: float):
-    """Modulated MARY signal.
-
-    Used for brute force modulated MARY simulations.
-
-    Args:
-            timeconstant (np.ndarray): The modulation time constant (s).
-            theta (float): The modulation phase (rad).
-            frequency (float): The modulation frequency (Hz).
-
-    Returns:
-            np.ndarray: The modulated signal.
-    """
-    return np.cos(frequency * timeconstant * (2 * np.pi) + theta)
-
-
 def angular_frequency_in_MHz(ang_freq: float) -> float:
     """Convert angular frequency into MHz.
 
@@ -211,6 +193,27 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
             float: The angular frequency converted to millitesla (mT).
     """
     return ang_freq / (C.mu_B / C.hbar * -C.g_e / 1e9)
+
+
+def anisotropy_check(
+    theta: float | np.ndarray, phi: float | np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    if isinstance(theta, float):
+        theta = np.array([theta])
+    if isinstance(phi, float):
+        phi = np.array([phi])
+    if theta.min() < 0 or np.pi < theta.max():
+        raise ValueError("Value of `theta` needs to be between 0 and pi!")
+    if min(phi) < 0 or 2 * np.pi < max(phi):
+        raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
+    lt, lp = len(theta), len(phi)
+    if lt > 1 and lp > 1:
+        # theta odd, phi even
+        if lt % 2 == 0:
+            raise ValueError("Number of `len(theta)` needs to be odd!")
+        if lp % 2 == 1:
+            raise ValueError("Number of `len(phi)` needs to be even!")
+    return theta, phi
 
 
 def autocorrelation(data: np.ndarray, factor: int = 1) -> np.ndarray:
@@ -259,6 +262,37 @@ def cartesian_to_spherical(
     return r, theta, phi
 
 
+def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
+    """Lorentzian MARY spectral shape.
+
+    Used for brute force modulated MARY simulations.
+
+    Args:
+            mod_signal (np.ndarray): The modulated signal.
+            lfe_magnitude (float): The magnitude of your low field effect (G).
+
+    Returns:
+            np.ndarray: The modulated MARY signal.
+    """
+    return 1 / (1 + mod_signal**2) - lfe_magnitude / (0.1 + mod_signal**2)
+
+
+def modulated_signal(timeconstant: np.ndarray, theta: float, frequency: float):
+    """Modulated MARY signal.
+
+    Used for brute force modulated MARY simulations.
+
+    Args:
+            timeconstant (np.ndarray): The modulation time constant (s).
+            theta (float): The modulation phase (rad).
+            frequency (float): The modulation frequency (Hz).
+
+    Returns:
+            np.ndarray: The modulated signal.
+    """
+    return np.cos(frequency * timeconstant * (2 * np.pi) + theta)
+
+
 def mT_to_Gauss(mT: float) -> float:
     """Convert millitesla to Gauss.
 
@@ -295,6 +329,11 @@ def mT_to_angular_frequency(mT: float) -> float:
     return mT * (C.mu_B / C.hbar * -C.g_e / 1e9)
 
 
+def read_trajectory_files(path: Path, scale=1e-10):
+    data = [np.genfromtxt(file_path) for file_path in Path(path).glob("*")]
+    return scale * np.concatenate(data, axis=0)
+
+
 def reference_signal(
     timeconstant: np.ndarray, harmonic: float, theta: float, frequency: float
 ):
@@ -318,34 +357,13 @@ def spectral_density(omega: float, tau_c: float) -> float:
     """Frequency at which the motion of the particle exists.
 
     Args:
-            omega (float): The Larmor frequency of the electron.
-            tau_c (float): The rotational correlation time.
+            omega (float): The Larmor frequency of the electron (1/s).
+            tau_c (float): The rotational correlation time (s).
 
     Returns:
-            float: Spectral density frequency.
+            float: Spectral density frequency (1/s).
     """
     return tau_c / (1 + omega**2 * tau_c**2)
-
-
-def anisotropy_check(
-    theta: float | np.ndarray, phi: float | np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
-    if isinstance(theta, float):
-        theta = np.array([theta])
-    if isinstance(phi, float):
-        phi = np.array([phi])
-    if theta.min() < 0 or np.pi < theta.max():
-        raise ValueError("Value of `theta` needs to be between 0 and pi!")
-    if min(phi) < 0 or 2 * np.pi < max(phi):
-        raise ValueError("Value of `phi` needs to be between 0 and 2*pi!")
-    lt, lp = len(theta), len(phi)
-    if lt > 1 and lp > 1:
-        # theta odd, phi even
-        if lt % 2 == 0:
-            raise ValueError("Number of `len(theta)` needs to be odd!")
-        if lp % 2 == 1:
-            raise ValueError("Number of `len(phi)` needs to be even!")
-    return theta, phi
 
 
 def _check_full_sphere(theta: np.ndarray, phi: np.ndarray) -> Tuple[int, int]:
@@ -416,7 +434,7 @@ def spherical_to_cartesian(
             np.sin(theta) * np.sin(phi),
             np.cos(theta),
         ]
-    )
+    ).T
 
 
 def yield_anisotropy(

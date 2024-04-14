@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 import radicalpy as rp
 from radicalpy import relaxation
 from radicalpy.simulation import State

@@ -45,6 +45,7 @@ disable = ["C0103"]
 
 [tool.isort]
 line_length = 88
+profile = "black"
 
 [tool.mypy]
 plugins = ["numpy.typing.mypy_plugin"]

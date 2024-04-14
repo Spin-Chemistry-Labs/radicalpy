@@ -1,8 +1,7 @@
-#! /usr/bin/env python
-
 import matplotlib.pyplot as plt
 import numpy as np
-from radicalpy.classical import RateEquations
+
+from radicalpy.classical import Rate, RateEquations
 
 
 def main():
@@ -10,18 +9,22 @@ def main():
     # The examples given here are FMN-HEWL and FMN-Trp
 
     # kinetic parameters
-    kex = 1.36e4  # groundstate excitation rate
-    kds = 1.09e8  # excited singlet state decay kinetics (fluorescence + IC)
-    kisc = 1.09e8  # intersystem crossing rate
-    ket = 1.2e9  # 1/M/s
-    kdt = 3.85e5  # excited triplet state decay kinetics
-    ksep = 2e8  # geminate RP to free radical separation
-    khfc = 8e7  # ST-mixing rate
-    kr = 2e6  # RP relaxation rate
-    kre = 1.87e10  # re-encounter of free radicals to form geminate RPs
-    kbet = 1e8  # spin selective reverse electron transfer of RP to groundstate
-    ka = 0.7  # FMN/lysozyme acceptor recombination rate
-    kd = 4.9  # FMN/lysozyme donor recombination rate
+    kex = Rate(1.36e4, "k_{ex}")  # groundstate excitation rate
+    kds = Rate(
+        1.09e8, "k_{ds}"
+    )  # excited singlet state decay kinetics (fluorescence + IC)
+    kisc = Rate(1.09e8, "k_{ISC}")  # intersystem crossing rate
+    ket = Rate(1.2e9, "k_{ET}")  # 1/M/s
+    kdt = Rate(3.85e5, "k_{dt}")  # excited triplet state decay kinetics
+    ksep = Rate(2e8, "k_{sep}")  # geminate RP to free radical separation
+    khfc = Rate(8e7, "k_{HFC}")  # ST-mixing rate
+    kr = Rate(2e6, "k_R")  # RP relaxation rate
+    kre = Rate(1.87e10, "k_{re}")  # re-encounter of free radicals to form geminate RPs
+    kbet = Rate(
+        1e8, "k_{BET}"
+    )  # spin selective reverse electron transfer of RP to groundstate
+    ka = Rate(0.7, "k_a")  # FMN/lysozyme acceptor recombination rate
+    kd = Rate(4.9, "k_d")  # FMN/lysozyme donor recombination rate
     # ka = 70  # FMN/Trp
     # kd = 12  # FMN/Trp
 
@@ -131,8 +134,11 @@ def main():
     }
     time = np.linspace(0, 1e-3, 2000000)
 
-    result_off = RateEquations({**base, **off}, time, initial_states)
-    result_on = RateEquations({**base, **on}, time, initial_states)
+    roff = RateEquations({**base, **off})
+    ron = RateEquations({**base, **on})
+
+    result_off = RateEquations.time_evolution(roff, time, initial_states)
+    result_on = RateEquations.time_evolution(ron, time, initial_states)
 
     fluor_field_off = result_off["A"]
     fluor_field_on = result_on["A"]
