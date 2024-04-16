@@ -2,9 +2,11 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 import radicalpy as rp
+from radicalpy import kinetics, relaxation
+from radicalpy.experiments import anisotropy
 from radicalpy.simulation import State
-from radicalpy import relaxation, kinetics
 
 
 def main():
@@ -13,24 +15,24 @@ def main():
         [
             [0.280, -0.138, 0.678],
             [-0.138, 0.043, -0.331],
-            [0.678, -0.331, 1.412]
-    ]
+            [0.678, -0.331, 1.412],
+        ]
     )
 
     trp_hbeta_hfc = np.array(
         [
             [0.944, -0.019, 0.030],
             [-0.019, 1.091, -0.065],
-            [0.030, -0.065, 1.070]
-    ]
+            [0.030, -0.065, 1.070],
+        ]
     )
-    
+
     dipolar = np.array(
         [
-            [-0.225,  0.156,  0.198],
-            [0.156,  0.117, -0.082],
-            [0.198, -0.082,  0.107]
-    ]
+            [-0.225, 0.156, 0.198],
+            [0.156, 0.117, -0.082],
+            [0.198, -0.082, 0.107],
+        ]
     )
 
     theta = np.linspace(0, np.pi, 21)
@@ -44,7 +46,8 @@ def main():
     B0 = 0.05
     k = 1e6
 
-    results = sim.anisotropy(
+    results = anisotropy(
+        sim,
         init_state=State.SINGLET,
         obs_state=State.SINGLET,
         time=time,
@@ -53,9 +56,7 @@ def main():
         B0=B0,
         D=dipolar,
         J=0,
-        kinetics=[
-            kinetics.Exponential(k)
-        ],
+        kinetics=[kinetics.Exponential(k)],
     )
 
     Y = results["product_yield_sums"]
