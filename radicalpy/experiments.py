@@ -189,6 +189,7 @@ def semiclassical_kinetics_mary(
 def anisotropy_loop(
     sim,
     init_state: State,
+    obs_state: State,
     time: np.ndarray,
     B0: float,
     H_base: np.ndarray,
@@ -229,14 +230,16 @@ def anisotropy_loop(
 
     """
     shape = sim._get_rho_shape(H_base.shape[0])
-    rhos = np.zeros((len(theta), len(phi), len(time), *shape), dtype=complex)
+    product_probabilities = np.zeros((len(theta), len(phi), len(time)), dtype=complex)
 
     iters = itertools.product(enumerate(theta), enumerate(phi))
     for (i, th), (j, ph) in tqdm(list(iters)):
         H_zee = sim.zeeman_hamiltonian(B0, th, ph)
         H = H_base + sim.convert(H_zee)
-        rhos[i, j] = sim.time_evolution(init_state, time, H)
-    return rhos
+        rho = sim.time_evolution(init_state, time, H)
+        product_probability = sim.product_probability(obs_state, rho)
+        product_probabilities[i, j] = product_probability
+    return product_probabilities
 
 
 def anisotropy(
@@ -309,22 +312,20 @@ def anisotropy(
 
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     theta, phi = anisotropy_check(theta, phi)
-    rhos = anisotropy_loop(sim, init_state, time, B0, H, theta=theta, phi=phi)
-    product_probabilities = sim.product_probability(obs_state, rhos)
-
+    product_probabilities = anisotropy_loop(
+        sim, init_state, obs_state, time, B0, H, theta=theta, phi=phi
+    )
     sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)
     k = kinetics[0].rate_constant if kinetics else 1.0
     product_yields, product_yield_sums = sim.product_yield(
         product_probabilities, time, k
     )
-    rhos = sim._square_liouville_rhos(rhos)
 
     return dict(
         time=time,
         B0=B0,
         theta=theta,
         phi=phi,
-        rhos=rhos,
         time_evolutions=product_probabilities,
         product_yields=product_yields,
         product_yield_sums=product_yield_sums,
