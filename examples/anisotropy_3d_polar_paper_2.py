@@ -35,8 +35,8 @@ def main():
         ]
     )
 
-    theta = np.linspace(0, np.pi, 21)
-    phi = np.linspace(0, 2 * np.pi, 38)
+    theta = np.linspace(0, np.pi, 35)
+    phi = np.linspace(0, 2 * np.pi, 58)
 
     flavin = rp.simulation.Molecule.fromisotopes(isotopes=["14N"], hfcs=[fad_n5_hfc])
     trp = rp.simulation.Molecule.fromisotopes(isotopes=["1H"], hfcs=[trp_hbeta_hfc])
