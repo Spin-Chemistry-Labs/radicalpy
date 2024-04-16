@@ -585,12 +585,15 @@ class HilbertSimulation:
                 dipolar interaction tensor `D`.
 
         """
-        ne = len(self.radicals)
-        return -sum(
+        spinops = [
+            [self.spin_operator(r, ax) for ax in "xyz"]
+            for r, _ in enumerate(self.radicals)
+        ]
+        return sum(
             (
-                -self.radicals[0].gamma_mT
-                * self.product_operator_3d(ei, ne + ni, dipolar_tensor)
-                for ni, ei in enumerate(self.coupling)
+                dipolar_tensor[i, j] * (si @ sj)
+                for i, si in enumerate(spinops[0])
+                for j, sj in enumerate(spinops[1])
             )
         )
 
