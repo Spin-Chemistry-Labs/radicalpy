@@ -264,7 +264,7 @@ class Nucleus:
     magnetogyric_ratio: float
     multiplicity: int
     hfc: Hfc
-    name: str
+    name: Optional[str]
 
     def __repr__(self) -> str:  # noqa D105
         name = self.name if self.name else "Nucleus"
