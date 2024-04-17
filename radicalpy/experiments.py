@@ -188,7 +188,7 @@ def semiclassical_kinetics_mary(
 
 
 def anisotropy_loop(
-    sim: HilberSimulation,
+    sim: HilbertSimulation,
     init_state: State,
     obs_state: State,
     time: np.ndarray,

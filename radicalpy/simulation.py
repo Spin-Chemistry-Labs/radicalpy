@@ -591,7 +591,7 @@ class HilbertSimulation:
         ]
         return sum(
             (
-                (self.radicals[0].gamma_mT * dipolar_tensor[i, j]) * (si @ sj)
+                dipolar_tensor[i, j] * (si @ sj)
                 for i, si in enumerate(spinops[0])
                 for j, sj in enumerate(spinops[1])
             )
