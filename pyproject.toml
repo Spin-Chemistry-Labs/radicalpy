@@ -42,6 +42,7 @@ line-length = 88
 [tool.pylint]
 max-line-length = 88
 disable = ["C0103"]
+load-plugins='pylint.extensions.docparams'
 
 [tool.isort]
 line_length = 88
