@@ -9,14 +9,15 @@ from radicalpy.simulation import State
 
 
 def main():
-    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["H25", "N5"])
-    trp = rp.simulation.Molecule.fromdb("tryptophan_cation", ["N1"])
+    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["H25"])  # , "H27", "H29"])
+    trp = rp.simulation.Molecule.fromdb("tryptophan_cation", ["H1"])  # , "Hbeta1"])
     sim = rp.simulation.LiouvilleSimulation([flavin, trp])
-    time = np.arange(0, 5e-6, 5e-9)
-    Bs = np.arange(0, 30, 0.1)
-    krec = 1e6
-    kesc = 1e6
-    kSTD = 1e7
+    time = np.arange(0, 10e-6, 10e-9)
+    Bs = np.arange(0, 20, 0.5)
+    krec = 1.1e7
+    kesc = 7e6
+    kSTD = 1e8
+    kr = 7e7
 
     results = sim.MARY(
         init_state=State.TRIPLET,
@@ -29,11 +30,16 @@ def main():
             rp.kinetics.Haberkorn(krec, State.SINGLET),
             rp.kinetics.HaberkornFree(kesc),
         ],
-        relaxations=[relaxation.SingletTripletDephasing(kSTD)],
+        relaxations=[
+            relaxation.SingletTripletDephasing(kSTD),
+            relaxation.RandomFields(kr),
+        ],
     )
     MARY = results["MARY"]
     HFE = results["HFE"]
     LFE = results["LFE"]
+
+    # np.save("./examples/data/fad_mary/results_5nuc_liouville_relaxation.npy", results)
 
     Bhalf, fit_result, fit_error, R2 = rp.utils.Bhalf_fit(Bs, MARY)
 
@@ -51,7 +57,7 @@ def main():
     print(f"B1/2 fit error = {fit_error[1]: .2f} mT")
     print(f"R^2 for B1/2 fit = {R2: .3f}")
 
-    path = __file__[:-3] + f"_{0}.png"
+    path = __file__[:-3] + f"_{15}.png"
     plt.savefig(path)
 
 

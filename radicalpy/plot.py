@@ -15,7 +15,7 @@ def anisotropy_surface(theta, phi, Y):
     PH, TH = np.meshgrid(phi, theta)
     xyz = np.array([np.sin(TH) * np.cos(PH), np.sin(TH) * np.sin(PH), np.cos(TH)])
 
-    Yx, Yy, Yz = Y.real * spherical_to_cartesian(TH, PH)
+    Yx, Yy, Yz = Y.real * spherical_to_cartesian(TH, PH).T
 
     # Colour the plotted surface according to the sign of Y
     # cmap = plt.cm.ScalarMappable(cmap=plt.get_cmap("Accent_r"))
