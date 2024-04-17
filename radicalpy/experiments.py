@@ -187,7 +187,7 @@ def semiclassical_kinetics_mary(
 
 
 def anisotropy_loop(
-    sim,
+    sim: LiouvilleSimulation,
     init_state: State,
     obs_state: State,
     time: np.ndarray,
@@ -196,11 +196,15 @@ def anisotropy_loop(
     theta: np.ndarray,
     phi: np.ndarray,
 ) -> np.ndarray:
-    """Inner loop of anisotropy experiment.
+    r"""Inner loop of anisotropy experiment.
 
     Args:
 
+        sim (LiouvilleSimulation): Simulation object.
+
         init_state (State): Initial `State` of the density matrix.
+
+        obs_state (State): Observable `State` of the density matrix.
 
         time (np.ndarray): An sequence of (uniform) time points,
             usually created using `np.arange` or `np.linspace`.
@@ -229,7 +233,6 @@ def anisotropy_loop(
         time\-steps, `B0` magnetic intensity).
 
     """
-    shape = sim._get_rho_shape(H_base.shape[0])
     product_probabilities = np.zeros((len(theta), len(phi), len(time)), dtype=complex)
 
     iters = itertools.product(enumerate(theta), enumerate(phi))
@@ -237,8 +240,7 @@ def anisotropy_loop(
         H_zee = sim.zeeman_hamiltonian(B0, th, ph)
         H = H_base + sim.convert(H_zee)
         rho = sim.time_evolution(init_state, time, H)
-        product_probability = sim.product_probability(obs_state, rho)
-        product_probabilities[i, j] = product_probability
+        product_probabilities[i, j] = sim.product_probability(obs_state, rho)
     return product_probabilities
 
 

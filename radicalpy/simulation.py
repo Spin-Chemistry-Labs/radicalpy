@@ -658,8 +658,7 @@ class HilbertSimulation:
     ) -> np.ndarray:
         """Evolve the system through time.
 
-        See also:
-
+        See Also:
         - `HilbertSimulation.unitary_propagator`
         - `HilbertSimulation.propagate`
         - `LiouvilleSimulation.unitary_propagator`
@@ -683,7 +682,6 @@ class HilbertSimulation:
                 the Hamiltonian `H`.
 
         Examples:
-
             >>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]),
             ...              Molecule("Z")]
             >>> sim = HilbertSimulation(molecules)
