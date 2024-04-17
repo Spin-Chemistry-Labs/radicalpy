@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from .simulation import (
     HilbertIncoherentProcessBase,
+    HilbertSimulation,
     LiouvilleSimulation,
     SemiclassicalSimulation,
     State,
@@ -187,7 +188,7 @@ def semiclassical_kinetics_mary(
 
 
 def anisotropy_loop(
-    sim: LiouvilleSimulation,
+    sim: HilberSimulation,
     init_state: State,
     obs_state: State,
     time: np.ndarray,
@@ -245,12 +246,12 @@ def anisotropy_loop(
 
 
 def anisotropy(
-    sim,
+    sim: HilbertSimulation,
     init_state: State,
     obs_state: State,
     time: np.ndarray,
-    theta: np.ndarray | float,
-    phi: np.ndarray | float,
+    theta: ArrayLike,
+    phi: ArrayLike,
     B0: float,
     D: np.ndarray,
     J: float,
@@ -268,20 +269,16 @@ def anisotropy(
         time (np.ndarray): An sequence of (uniform) time points,
             usually created using `np.arange` or `np.linspace`.
 
-        H_base (np.ndarray): A "base" Hamiltonian, i.e., the
-            Zeeman Hamiltonian will be added to this base, usually
-            obtained with `total_hamiltonian` and `B0=0`.
-
         theta (np.ndarray): rotation (polar) angle between the
+            external magnetic field and the fixed molecule. See
+            `zeeman_hamiltonian_3d`.
+
+        phi (np.ndarray): rotation (azimuth) angle between the
             external magnetic field and the fixed molecule. See
             `zeeman_hamiltonian_3d`.
 
         B0 (float): External magnetic field intensity (milli
             Tesla) (see `zeeman_hamiltonian`).
-
-        phi (np.ndarray): rotation (azimuth) angle between the
-            external magnetic field and the fixed molecule. See
-            `zeeman_hamiltonian_3d`.
 
         D (np.ndarray): Dipolar coupling constant (see
             `dipolar_hamiltonian`).
