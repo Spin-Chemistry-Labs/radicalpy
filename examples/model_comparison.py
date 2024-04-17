@@ -18,12 +18,17 @@ def main():
     path = Path("./examples/data/fad_kinetics")
     start = 19
     raw_data = np.genfromtxt(path / "FADpH21_data.txt")[start:]
+    raw_data /= raw_data.max()
     raw_data_time = np.genfromtxt(path / "FADpH21_data_time.txt")[start:]
+    raw_data_time -= raw_data_time[0]
     kinetics_data = np.genfromtxt(path / "FAD_pH21_kinetics.txt")
+    kinetics_data /= kinetics_data.max()
     kinetics_time = np.genfromtxt(path / "FAD_pH21_kinetics_time.txt")
     semiclassical_data = np.genfromtxt(path / "semiclassical.txt")
+    semiclassical_data /= semiclassical_data.max()
     semiclassical_time = np.genfromtxt(path / "semiclassical_time.txt")
     semiclassical_kinetics_data = np.genfromtxt(path / "semiclassical_kinetics.txt")
+    semiclassical_kinetics_data /= semiclassical_kinetics_data.max()
     semiclassical_kinetics_time = np.genfromtxt(
         path / "semiclassical_kinetics_time.txt"
     )
@@ -42,27 +47,28 @@ def main():
     print(f"{mse(semiclassical_kinetics_data, raw_semiclassical_kinetics_zoom)=}")
 
     plt.figure(1)
+    # plt.plot(raw_data_time)
     plt.plot(
-        raw_data_time - raw_data_time[0],
-        raw_data / raw_data.max(),
+        raw_data_time,
+        raw_data,
         "k",
         linewidth=3,
     )
     plt.plot(
         kinetics_time * 1e6,
-        kinetics_data / kinetics_data.max(),
+        kinetics_data,
         "b",
         linewidth=3,
     )
     plt.plot(
         semiclassical_time,
-        semiclassical_data / semiclassical_data.max(),
+        semiclassical_data,
         "g",
         linewidth=3,
     )
     plt.plot(
         semiclassical_kinetics_time * 1e6,
-        semiclassical_kinetics_data / semiclassical_kinetics_data.max(),
+        semiclassical_kinetics_data,
         "r",
         linewidth=3,
     )
