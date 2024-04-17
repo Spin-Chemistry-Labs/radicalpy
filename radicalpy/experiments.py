@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import itertools
+
 import numpy as np
 import scipy as sp
 from numpy.typing import ArrayLike, NDArray
@@ -7,11 +9,12 @@ from tqdm import tqdm
 
 from .simulation import (
     HilbertIncoherentProcessBase,
+    HilbertSimulation,
     LiouvilleSimulation,
     SemiclassicalSimulation,
     State,
 )
-from .utils import mary_lorentzian, modulated_signal, reference_signal
+from .utils import anisotropy_check, mary_lorentzian, modulated_signal, reference_signal
 
 
 def modulated_mary_brute_force(
@@ -182,3 +185,147 @@ def semiclassical_kinetics_mary(
         total_yield[:, :, i] = loop_yield
 
     return {"ts": ts, "Bs": Bs, "yield": total_yield}
+
+
+def anisotropy_loop(
+    sim: HilbertSimulation,
+    init_state: State,
+    obs_state: State,
+    time: np.ndarray,
+    B0: float,
+    H_base: np.ndarray,
+    theta: np.ndarray,
+    phi: np.ndarray,
+) -> np.ndarray:
+    r"""Inner loop of anisotropy experiment.
+
+    Args:
+
+        sim (LiouvilleSimulation): Simulation object.
+
+        init_state (State): Initial `State` of the density matrix.
+
+        obs_state (State): Observable `State` of the density matrix.
+
+        time (np.ndarray): An sequence of (uniform) time points,
+            usually created using `np.arange` or `np.linspace`.
+
+        B0 (float): External magnetic field intensity (milli
+            Tesla) (see `zeeman_hamiltonian`).
+
+        H_base (np.ndarray): A "base" Hamiltonian, i.e., the
+            Zeeman Hamiltonian will be added to this base, usually
+            obtained with `total_hamiltonian` and `B0=0`.
+
+        theta (np.ndarray): rotation (polar) angle between the
+            external magnetic field and the fixed molecule. See
+            `zeeman_hamiltonian_3d`.
+
+        phi (np.ndarray): rotation (azimuth) angle between the
+            external magnetic field and the fixed molecule. See
+            `zeeman_hamiltonian_3d`.
+
+    Returns:
+        np.ndarray:
+
+        A tensor which has a series of density matrices for each
+        angle `theta` and `phi` obtained by running
+        `time_evolution` for each of them (with `time`
+        time\-steps, `B0` magnetic intensity).
+
+    """
+    product_probabilities = np.zeros((len(theta), len(phi), len(time)), dtype=complex)
+
+    iters = itertools.product(enumerate(theta), enumerate(phi))
+    for (i, th), (j, ph) in tqdm(list(iters)):
+        H_zee = sim.zeeman_hamiltonian(B0, th, ph)
+        H = H_base + sim.convert(H_zee)
+        rho = sim.time_evolution(init_state, time, H)
+        product_probabilities[i, j] = sim.product_probability(obs_state, rho)
+    return product_probabilities
+
+
+def anisotropy(
+    sim: HilbertSimulation,
+    init_state: State,
+    obs_state: State,
+    time: np.ndarray,
+    theta: ArrayLike,
+    phi: ArrayLike,
+    B0: float,
+    D: np.ndarray,
+    J: float,
+    kinetics: list[HilbertIncoherentProcessBase] = [],
+    relaxations: list[HilbertIncoherentProcessBase] = [],
+) -> dict:
+    """Anisotropy experiment.
+
+    Args:
+
+        init_state (State): Initial `State` of the density matrix.
+
+        obs_state (State): Observable `State` of the density matrix.
+
+        time (np.ndarray): An sequence of (uniform) time points,
+            usually created using `np.arange` or `np.linspace`.
+
+        theta (np.ndarray): rotation (polar) angle between the
+            external magnetic field and the fixed molecule. See
+            `zeeman_hamiltonian_3d`.
+
+        phi (np.ndarray): rotation (azimuth) angle between the
+            external magnetic field and the fixed molecule. See
+            `zeeman_hamiltonian_3d`.
+
+        B0 (float): External magnetic field intensity (milli
+            Tesla) (see `zeeman_hamiltonian`).
+
+        D (np.ndarray): Dipolar coupling constant (see
+            `dipolar_hamiltonian`).
+
+        J (float): Exchange coupling constant (see
+            `exchange_hamiltonian`).
+
+        kinetics (list): A list of kinetic (super)operators of
+            type `radicalpy.kinetics.HilbertKineticsBase` or
+            `radicalpy.kinetics.LiouvilleKineticsBase`.
+
+        relaxations (list): A list of relaxation superoperators of
+            type `radicalpy.relaxation.LiouvilleRelaxationBase`.
+
+    Returns:
+        dict:
+
+        - time: the original `time` object
+        - B0: `B0` parameter
+        - theta: `theta` parameter
+        - phi: `phi` parameter
+        - rhos: tensor of sequences of time evolution of density
+            matrices
+        - time_evolutions: product probabilities
+        - product_yields: product yields
+        - product_yield_sums: product yield sums
+
+    """
+    H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=True)
+
+    sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
+    theta, phi = anisotropy_check(theta, phi)
+    product_probabilities = anisotropy_loop(
+        sim, init_state, obs_state, time, B0, H, theta=theta, phi=phi
+    )
+    sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)
+    k = kinetics[0].rate_constant if kinetics else 1.0
+    product_yields, product_yield_sums = sim.product_yield(
+        product_probabilities, time, k
+    )
+
+    return dict(
+        time=time,
+        B0=B0,
+        theta=theta,
+        phi=phi,
+        time_evolutions=product_probabilities,
+        product_yields=product_yields,
+        product_yield_sums=product_yield_sums,
+    )
