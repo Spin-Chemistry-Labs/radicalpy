@@ -28,7 +28,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    # "sphinx_autodoc_typehints", # did't work when I tried :(
+    "sphinx_autodoc_typehints",  # did't work when I tried :(
     "sphinx_rtd_theme",
 ]
 
