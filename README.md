@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/radicalpy/badge/?version=latest)](https://radicalpy.readthedocs.io/en/latest/?badge=latest)
+
 # RadicalPy: a toolbox for radical pair spin dynamics
 
 RadicalPy in an intuitive (object-oriented) open-source Python

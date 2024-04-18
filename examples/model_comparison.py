@@ -7,16 +7,15 @@ import numpy as np
 from scipy.ndimage.interpolation import zoom
 
 
-def mse(x, y):
-    n = len(x)
-    assert n == len(y)
-    return 1 / n * sum((x - y) ** 2)
+def mse(raw, raw_time, data):
+    N = len(data) - 1
+    indices = N * raw_time / raw_time[-1]
+    return sum((data[indices.astype(int)] - raw) ** 2) / len(raw)
 
 
-def main():
+def main(start=19):
 
     path = Path("./examples/data/fad_kinetics")
-    start = 19
     raw_data = np.genfromtxt(path / "FADpH21_data.txt")[start:]
     raw_data /= raw_data.max()
     raw_data_time = np.genfromtxt(path / "FADpH21_data_time.txt")[start:]
@@ -32,28 +31,16 @@ def main():
     semiclassical_kinetics_time = np.genfromtxt(
         path / "semiclassical_kinetics_time.txt"
     )
-    print(f"{len(kinetics_data)=}")  # 500
-    print(f"{len(semiclassical_data)=}")  # 600
-    print(f"{len(semiclassical_kinetics_data)=}")  # 600
-
-    raw_size = len(raw_data)
-    raw_kinetics_zoom = zoom(raw_data, len(kinetics_data) / raw_size)
-    raw_semiclassical_zoom = zoom(raw_data, len(semiclassical_data) / raw_size)
-    raw_semiclassical_kinetics_zoom = zoom(
-        raw_data, len(semiclassical_kinetics_data) / raw_size
-    )
-    print(f"{mse(kinetics_data, raw_kinetics_zoom)=}")
-    print(f"{mse(semiclassical_data, raw_semiclassical_zoom)=}")
-    print(f"{mse(semiclassical_kinetics_data, raw_semiclassical_kinetics_zoom)=}")
+    mse_semiclassical = mse(raw_data, raw_data_time, semiclassical_data)
+    mse_kinetics = mse(raw_data, raw_data_time, kinetics_data)
+    mse_new_method = mse(raw_data, raw_data_time, semiclassical_kinetics_data)
+    print(f"{mse_semiclassical=}")
+    print(f"{mse_kinetics=}")
+    print(f"{mse_new_method=}")
 
     plt.figure(1)
     # plt.plot(raw_data_time)
-    plt.plot(
-        raw_data_time,
-        raw_data,
-        "k",
-        linewidth=3,
-    )
+    plt.plot(raw_data_time, raw_data, "k", linewidth=3)
     plt.plot(
         kinetics_time * 1e6,
         kinetics_data,
@@ -86,7 +73,14 @@ def main():
 
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
+    return mse_semiclassical, mse_kinetics, mse_new_method
 
 
 if __name__ == "__main__":
-    main()
+    results = []
+    for start in [19]:
+        # for start in range(0, 30):
+        print(f"raw data cut off: {start=}")
+        results.append(main(start))
+    results = np.array(results)
+    print(f"{results.min(axis=0)=}")
