@@ -4,97 +4,61 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.ndimage.interpolation import zoom
 
 
-def main():
+def mse(raw, raw_time, data):
+    N = len(data) - 1
+    indices = N * raw_time / raw_time[-1]
+    return sum((data[indices.astype(int)] - raw) ** 2) / len(raw)
 
-    path = "./examples/data/fad_kinetics"
-    raw_data = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("FADpH21_data.txt")]
+
+def main(start=19):
+
+    path = Path("./examples/data/fad_kinetics")
+    raw_data = np.genfromtxt(path / "FADpH21_data.txt")[start:]
+    raw_data /= raw_data.max()
+    raw_data_time = np.genfromtxt(path / "FADpH21_data_time.txt")[start:]
+    raw_data_time -= raw_data_time[0]
+    kinetics_data = np.genfromtxt(path / "FAD_pH21_kinetics.txt")
+    kinetics_data /= kinetics_data.max()
+    kinetics_time = np.genfromtxt(path / "FAD_pH21_kinetics_time.txt")
+    semiclassical_data = np.genfromtxt(path / "semiclassical.txt")
+    semiclassical_data /= semiclassical_data.max()
+    semiclassical_time = np.genfromtxt(path / "semiclassical_time.txt")
+    semiclassical_kinetics_data = np.genfromtxt(path / "semiclassical_kinetics.txt")
+    semiclassical_kinetics_data /= semiclassical_kinetics_data.max()
+    semiclassical_kinetics_time = np.genfromtxt(
+        path / "semiclassical_kinetics_time.txt"
     )
-    raw_data_time = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("FADpH21_data_time.txt")
-        ]
-    )
-    kinetics_data = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("FAD_pH21_kinetics.txt")
-        ]
-    )
-    kinetics_time = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("FAD_pH21_kinetics_time.txt")
-        ]
-    )
-    semiclassical_data = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("semiclassical.txt")]
-    )
-    semiclassical_time = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("semiclassical_time.txt")
-        ]
-    )
-    semiclassical_kinetics_data = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("semiclassical_kinetics.txt")
-        ]
-    )
-    # semiclassical_kinetics3 = np.array(
-    #     [
-    #         np.genfromtxt(file_path)
-    #         for file_path in Path(path).glob("semiclassical_kinetics_new3.txt")
-    #     ]
-    # )
-    semiclassical_kinetics_time = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("semiclassical_kinetics_time.txt")
-        ]
-    )
-    # semiclassical_kinetics_time3 = np.array(
-    #     [
-    #         np.genfromtxt(file_path)
-    #         for file_path in Path(path).glob("semiclassical_kinetics_time3.txt")
-    #     ]
-    # )
+    mse_semiclassical = mse(raw_data, raw_data_time, semiclassical_data)
+    mse_kinetics = mse(raw_data, raw_data_time, kinetics_data)
+    mse_new_method = mse(raw_data, raw_data_time, semiclassical_kinetics_data)
+    print(f"{mse_semiclassical=}")
+    print(f"{mse_kinetics=}")
+    print(f"{mse_new_method=}")
 
     plt.figure(1)
+    # plt.plot(raw_data_time)
+    plt.plot(raw_data_time, raw_data, "k", linewidth=3)
     plt.plot(
-        raw_data_time[0, :] - raw_data_time[0, 0],
-        raw_data[0, :] / raw_data[0, :].max(),
-        "k",
-        linewidth=3,
-    )
-    plt.plot(
-        kinetics_time[0, :] * 1e6,
-        kinetics_data[0, :] / kinetics_data[0, :].max(),
+        kinetics_time * 1e6,
+        kinetics_data,
         "b",
         linewidth=3,
     )
     plt.plot(
-        semiclassical_time[0, :],
-        semiclassical_data[0, :] / semiclassical_data[0, :].max(),
+        semiclassical_time,
+        semiclassical_data,
         "g",
         linewidth=3,
     )
     plt.plot(
-        semiclassical_kinetics_time[0, :] * 1e6,
-        semiclassical_kinetics_data[0, :] / semiclassical_kinetics_data[0, :].max(),
+        semiclassical_kinetics_time * 1e6,
+        semiclassical_kinetics_data,
         "r",
         linewidth=3,
     )
-    # plt.plot(
-    #     semiclassical_kinetics_time3[0, :] * 1e6,
-    #     semiclassical_kinetics3[0, :, 16] / semiclassical_kinetics3[0, :, 16].max(),
-    #     "m",
-    #     linewidth=3,
-    # )
     plt.xlabel("Time / $\mu s$", size=24)
     plt.ylabel("Normalised $\Delta \Delta A$ / a.u.", size=24)
     plt.ylim([-0.1, 1.1])
@@ -109,7 +73,14 @@ def main():
 
     path = __file__[:-3] + f"_{0}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
+    return mse_semiclassical, mse_kinetics, mse_new_method
 
 
 if __name__ == "__main__":
-    main()
+    results = []
+    for start in [19]:
+        # for start in range(0, 30):
+        print(f"raw data cut off: {start=}")
+        results.append(main(start))
+    results = np.array(results)
+    print(f"{results.min(axis=0)=}")

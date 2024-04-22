@@ -24,11 +24,12 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.githubpages",
     "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    # "sphinx_autodoc_typehints", # did't work when I tried :(
+    "sphinx_autodoc_typehints",  # did't work when I tried :(
     "sphinx_rtd_theme",
 ]
 
@@ -37,6 +38,10 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # autoclass_content = "both"
 todo_include_todos = True
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("http://docs.scipy.org/doc/numpy", None),
+}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

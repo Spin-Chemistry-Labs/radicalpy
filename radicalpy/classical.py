@@ -169,19 +169,18 @@ def reaction_scheme(path: str, rate_equations: dict):
     Path(path).write_text(texcode)
 
 
-def random_theta_phi(n: int = 1) -> ArrayLike:
+def random_theta_phi(num_samples: int = 1) -> ArrayLike:
     """Random sampling of theta and phi.
 
     Args:
 
-            n_samples (int): The number of samples generated.
+            num_samples: The number of samples generated.
 
     Returns:
             Theta and phi (radians).
-
     """
-    phi = np.random.uniform(0, 2 * np.pi, size=n)
-    theta = np.arccos(np.random.uniform(-1, 1, size=n))
+    phi = np.random.uniform(0, 2 * np.pi, size=num_samples)
+    theta = np.arccos(np.random.uniform(-1, 1, size=num_samples))
     return np.array([theta, phi])
 
 
