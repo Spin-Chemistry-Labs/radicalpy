@@ -10,6 +10,7 @@ from radicalpy.estimations import (
     aqueous_glycerol_viscosity,
     rotational_correlation_time_for_protein,
 )
+from radicalpy.utils import is_fast_run
 
 
 def main():
@@ -96,4 +97,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main()  # quick enough
+    else:
+        main()
