@@ -26,9 +26,9 @@ def main():
     plt.axis("on")
     plt.rc("axes", edgecolor="k")
     for t in temperatures:
-        plt.plot(ratio, eta[t] * f, label=f"{t}$^\circ$C")
+        plt.plot(ratio, eta[t] * f, label=f"{t}$^\\circ$C")
     plt.xlabel("Glycerol fraction", size=14)
-    plt.ylabel("Viscosity ($mN \, s \, m^{-2}$)", size=14)
+    plt.ylabel(r"Viscosity ($mN \, s \, m^{-2}$)", size=14)
     plt.legend()
     plt.tick_params(labelsize=14)
     path = __file__[:-3] + f"_{0}.png"
@@ -47,7 +47,7 @@ def main():
     plt.axis("on")
     plt.rc("axes", edgecolor="k")
     for t in temperatures:
-        plt.plot(ratio, tau_c[t] * f2, label=f"{t}$^\circ$C")
+        plt.plot(ratio, tau_c[t] * f2, label=f"{t}$^\\circ$C")
     plt.xlabel("Glycerol fraction", size=14)
     plt.ylabel(r"$\tau _C$ ($\mu s$)", size=14)
     plt.legend()
@@ -73,7 +73,7 @@ def main():
     plt.axis("on")
     plt.rc("axes", edgecolor="k")
     for t in temperatures:
-        plt.plot(ratio, 1 / t1[t], label=f"{t}$^\circ$C")
+        plt.plot(ratio, 1 / t1[t], label=f"{t}$^\\circ$C")
     plt.xlabel("Glycerol fraction", size=14)
     plt.ylabel(r"1 / T1 ($s$)", size=14)
     plt.legend()
@@ -86,7 +86,7 @@ def main():
     plt.axis("on")
     plt.rc("axes", edgecolor="k")
     for t in temperatures:
-        plt.plot(ratio, 1 / t2[t], label=f"{t}$^\circ$C")
+        plt.plot(ratio, 1 / t2[t], label=f"{t}$^\\circ$C")
     plt.xlabel("Glycerol fraction", size=14)
     plt.ylabel(r"1 / T2 ($s$)", size=14)
     plt.legend()
