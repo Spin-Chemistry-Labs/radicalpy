@@ -25,13 +25,13 @@ jobs:
         coverage erase
     - name: Run coverage
       run: >-
-        coverage run -a python -m
+        coverage run -a -m
         unittest
         discover -v
     - name: Run examples
       run: >-
         for file in $(ls examples/*.py); do
-          PYTHONPATH=. coverage run -a python $file --fast
+          PYTHONPATH=. coverage run -a $file --fast
         done
     - name: Create report
       run: >-
