@@ -7,10 +7,10 @@ import radicalpy as rp
 from radicalpy import kinetics, relaxation
 from radicalpy.experiments import anisotropy
 from radicalpy.simulation import State
+from radicalpy.utils import is_fast_run
 
 
-def main():
-
+def main(theta_steps=35, phi_steps=58, tmax=15e-6, dt=5e-9):
     fad_n5_hfc = np.array(
         [
             [0.280, -0.138, 0.678],
@@ -21,14 +21,14 @@ def main():
 
     dipolar = rp.estimations.dipolar_interaction_anisotropic(r=22e-10)
 
-    theta = np.linspace(0, np.pi, 35)
-    phi = np.linspace(0, 2 * np.pi, 58)
+    theta = np.linspace(0, np.pi, theta_steps)
+    phi = np.linspace(0, 2 * np.pi, phi_steps)
 
     flavin = rp.simulation.Molecule.fromisotopes(isotopes=["14N"], hfcs=[fad_n5_hfc])
     Z = rp.simulation.Molecule("zorro", [])
     sim = rp.simulation.HilbertSimulation([flavin, Z])
 
-    time = np.arange(0, 15e-6, 5e-9)
+    time = np.arange(0, tmax, dt)
     B0 = 0.05
     k = 1e6
 
@@ -58,10 +58,15 @@ def main():
     print(f"{Y_av=}")
     print(f"{delta_phi_s=}")
     print(f"{gamma_s=}")
-    plt.show()
+    # plt.show()
+    path = __file__[:-3] + f"_{3}.png"
+    plt.savefig(path)
 
     return 0
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main(theta_steps=7, phi_steps=6, tmax=10e-6, dt=1e-6)
+    else:
+        main()
