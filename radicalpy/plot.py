@@ -225,7 +225,7 @@ def plot_bhalf_time(ts, bhalf_time, fit_error_time, style="ro", factor=1e6):
             color="k",
             linewidth=2,
         )
-    plt.xlabel("Time / $\mu s$", size=24)
+    plt.xlabel(r"Time / $\mu s$", size=24)
     plt.ylabel("$B_{1/2}$ / mT", size=24)
     plt.tick_params(labelsize=18)
     plt.gcf().set_size_inches(5, 5)

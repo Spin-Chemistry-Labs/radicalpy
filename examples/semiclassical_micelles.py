@@ -100,9 +100,9 @@ def main(
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "$B_0$ / mT"
-    ylabel = "Time / $\mu s$"
-    zlabel = "$\Delta \Delta A$"
+    xlabel = r"$B_0$ / mT"
+    ylabel = r"Time / $\mu s$"
+    zlabel = r"$\Delta \Delta A$"
     plot_3d_results(
         xdata=Bs,
         ydata=ts,
