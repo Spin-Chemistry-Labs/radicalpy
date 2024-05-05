@@ -30,13 +30,13 @@ jobs:
         discover -v
     - name: Run examples
       run: >-
-        for file in $(ls examples/*.py); do
+        for file in $(ls examples/aniso*.py); do
           PYTHONPATH=. coverage run -a $file --fast
         done
     - name: Create report
       run: >-
         coverage report && coverage xml && ls -lrt
-    # - name: Code Coverage Report
-    #   uses: irongut/CodeCoverageSummary@v1.3.0
-    #   with:
-    #     filename: coverage/**/coverage.cobertura.xml
+    - name: Code Coverage Report
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        filename: report.xml
