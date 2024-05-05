@@ -9,54 +9,33 @@ import numpy as np
 def main():
 
     # Load B1/2 spectra, kd = 3e5
-    path = "./examples/data/bhalf_analysis/fad_kd3e5"
-    time_3e5 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("time.txt")]
-    )
-    bhalf_3e5 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("bhalf.txt")]
-    )
-    error_3e5 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("bhalf_error.txt")]
-    )
+    path = Path("./examples/data/bhalf_analysis/fad_kd3e5")
+    time_3e5 = np.genfromtxt(path / "time.txt")
+
+    bhalf_3e5 = np.genfromtxt(path / "bhalf.txt")
+    error_3e5 = np.genfromtxt(path / "bhalf_error.txt")
 
     # Load B1/2 spectra, kd = 3e6
-    path = "./examples/data/bhalf_analysis/fad_kd3e6"
-    time_3e6 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("time.txt")]
-    )
-    bhalf_3e6 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("bhalf.txt")]
-    )
-    error_3e6 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("bhalf_error.txt")]
-    )
+    path = Path("./examples/data/bhalf_analysis/fad_kd3e6")
+    time_3e6 = np.genfromtxt(path / "time.txt")
+    bhalf_3e6 = np.genfromtxt(path / "bhalf.txt")
+    error_3e6 = np.genfromtxt(path / "bhalf_error.txt")
 
     # Load B1/2 spectra, kd = 7e6
-    path = "./examples/data/bhalf_analysis/fad_kd7e6"
-    time_7e6 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("time.txt")]
-    )
-    bhalf_7e6 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("bhalf.txt")]
-    )
-    error_7e6 = np.array(
-        [np.genfromtxt(file_path) for file_path in Path(path).glob("bhalf_error.txt")]
-    )
+    path = Path("./examples/data/bhalf_analysis/fad_kd7e6")
+    time_7e6 = np.genfromtxt(path / "time.txt")
+    bhalf_7e6 = np.genfromtxt(path / "bhalf.txt")
+    error_7e6 = np.genfromtxt(path / "bhalf_error.txt")
 
-    time_3e5 = time_3e5[0, :]
-    time_3e6 = time_3e6[0, :]
-    time_7e6 = time_7e6[0, :]
-
-    bhalf_3e5 = bhalf_3e5[0, :] / bhalf_3e5[0, :].max()
-    bhalf_3e6 = bhalf_3e6[0, :] / bhalf_3e6[0, :].max()
-    bhalf_7e6 = bhalf_7e6[0, :] / bhalf_7e6[0, :].max()
+    bhalf_3e5 = bhalf_3e5 / bhalf_3e5.max()
+    bhalf_3e6 = bhalf_3e6 / bhalf_3e6.max()
+    bhalf_7e6 = bhalf_7e6 / bhalf_7e6.max()
 
     num_samples = 200
 
-    error_3e5 = error_3e5[0, :] / np.sqrt(num_samples)
-    error_3e6 = error_3e6[0, :] / np.sqrt(num_samples)
-    error_7e6 = error_7e6[0, :] / np.sqrt(num_samples)
+    error_3e5 = error_3e5 / np.sqrt(num_samples)
+    error_3e6 = error_3e6 / np.sqrt(num_samples)
+    error_7e6 = error_7e6 / np.sqrt(num_samples)
 
     factor = 1e6
     cutoff = 5
