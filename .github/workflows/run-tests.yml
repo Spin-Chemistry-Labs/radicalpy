@@ -25,3 +25,8 @@ jobs:
         python -m
         unittest
         discover -v
+    - name: Run examples
+      run: >-
+        for file in $(ls examples/ani*.py); do
+          PYTHONPATH=. python $file --fast
+        done
