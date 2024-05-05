@@ -4,6 +4,7 @@
 
 .. todo:: Add module docstring.
 """
+import argparse
 import sys
 from pathlib import Path
 from typing import Tuple
@@ -24,7 +25,15 @@ def is_fast_run():
     called (e.g., by setting fewer number of time steps etc.).
 
     """
-    return len(sys.argv) == 2 and sys.argv[1] == "--fast"
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--fast",
+        default=False,
+        action="store_true",
+        help="If set, the experiment should perform a reduced number of steps.",
+    )
+    args = parser.parse_args()
+    return args.fast
 
 
 def Bhalf_fit(
