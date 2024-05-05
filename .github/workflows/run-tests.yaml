@@ -30,6 +30,6 @@ jobs:
       # This is bash.
       # Need a separate branch to iterate over files on Windows.
       run: >-
-        for file in $(ls examples/ani*.py); do
+        for file in $(ls examples/*.py); do
           PYTHONPATH=. python $file --fast
         done
