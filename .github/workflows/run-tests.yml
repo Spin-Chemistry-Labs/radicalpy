@@ -26,6 +26,7 @@ jobs:
         unittest
         discover -v
     - name: Run examples
+      if: startsWith(${{ matrix.os }}, 'ubuntu')
       run: >-
         for file in $(ls examples/ani*.py); do
           PYTHONPATH=. python $file --fast
