@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import radicalpy as rp
+from radicalpy.experiments import mary
 from radicalpy.simulation import State
 
 
@@ -16,7 +17,8 @@ def main():
     Bs = np.arange(0, 10, 1)
     k = 1e6
 
-    MARY = sim.MARY(
+    MARY = mary(
+        sim,
         init_state=State.SINGLET,
         obs_state=State.TRIPLET,
         time=time,
@@ -43,7 +45,9 @@ def main():
     labels = rp.plot.spin_state_labels(sim)
     ax.set_xticklabels(labels, rotation=90)
     ax.set_yticklabels(labels, rotation=0)
-    plt.show()
+    # plt.show()
+    path = __file__[:-3] + f"_{0}.png"
+    plt.savefig(path)
 
 
 if __name__ == "__main__":
