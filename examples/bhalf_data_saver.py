@@ -15,32 +15,19 @@ def main():
     scale_factor = 2.5e-2  # 4e-1
 
     # Load reference spectra
-    path = "./examples/data/fad_kinetics"
-    radical_spectrum = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_radical_spectrum.txt")
-        ]
-    )
-    triplet_spectrum = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_triplet_spectrum.txt")
-        ]
-    )
-    wavelength = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_radical_wavelength.txt")
-        ]
-    )
+    path = Path("./examples/data/fad_kinetics")
+    radical_spectrum = np.genfromtxt(path / "fad_radical_spectrum.txt")
+    triplet_spectrum = np.genfromtxt(path / "fad_triplet_spectrum.txt")
+    wavelength = np.genfromtxt(path / "fad_radical_wavelength.txt")
 
-    radical_spectrum = radical_spectrum[0, :] * 1e3
-    triplet_spectrum = triplet_spectrum[0, :] * 1e3
-    wavelength = wavelength[0, :]
+    radical_spectrum = radical_spectrum * 1e3
+    triplet_spectrum = triplet_spectrum * 1e3
+    wavelength = wavelength
 
     result = np.load(
-        "./examples/data/fad_06_kd7e6/results.npy", allow_pickle=True
+        # "./examples/data/fad_06_kd7e6/results.npy",
+        "./examples/data/bhalf_analysis/fad_kd3e6/results.npy",
+        allow_pickle=True,
     ).item()
 
     time = result["ts"]
@@ -83,9 +70,11 @@ def main():
             R2_time[i],
         ) = Bhalf_fit(Bs, mary[i, :, wl])
 
-    np.savetxt("./examples/data/fad_06_kd7e6/time.txt", time)
-    np.savetxt("./examples/data/fad_06_kd7e6/bhalf.txt", bhalf_time)
-    np.savetxt("./examples/data/fad_06_kd7e6/bhalf_error.txt", fit_error_time)
+    np.savetxt("./examples/data/bhalf_analysis/fad_06_kd7e6/time.txt", time)
+    np.savetxt("./examples/data/bhalf_analysis/fad_06_kd7e6/bhalf.txt", bhalf_time)
+    np.savetxt(
+        "./examples/data/bhalf_analysis/fad_06_kd7e6/bhalf_error.txt", fit_error_time
+    )
 
 
 if __name__ == "__main__":
