@@ -683,55 +683,6 @@ class HilbertSimulation:
         for K in kinetics:  # skip in liouville
             K.adjust_product_probabilities(product_probabilities, time)
 
-    def mary_loop(
-        self,
-        init_state: State,
-        time: np.ndarray,
-        B: np.ndarray,
-        H_base: np.ndarray,
-        theta: Optional[float] = None,
-        phi: Optional[float] = None,
-        hfc_anisotropy: bool = False,
-    ) -> np.ndarray:
-        """Generate density matrices (rhos) for MARY.
-
-        Args:
-
-            init_state (State): initial state.
-
-        Returns:
-            np.ndarray:
-
-                Density matrices.
-
-        .. todo:: Write proper docs.
-        """
-        H_zee = self.convert(self.zeeman_hamiltonian(1, theta, phi))
-        shape = self._get_rho_shape(H_zee.shape[0])
-        rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
-        for i, B0 in enumerate(tqdm(B)):
-            H = H_base + B0 * H_zee
-            H_sparse = sp.sparse.csc_matrix(H)
-            rhos[i] = self.time_evolution(init_state, time, H_sparse)
-        return rhos
-
-    @staticmethod
-    def mary_lfe_hfe(
-        init_state: State,
-        B: np.ndarray,
-        product_probability_seq: np.ndarray,
-        dt: float,
-        k: float,
-    ) -> (np.ndarray, np.ndarray, np.ndarray):
-        """Calculate MARY, LFE, HFE."""
-        MARY = np.sum(product_probability_seq, axis=1) * dt * k
-        idx = int(len(MARY) / 2) if B[0] != 0 else 0
-        minmax = max if init_state == State.SINGLET else min
-        HFE = (MARY[-1] - MARY[idx]) / MARY[idx] * 100
-        LFE = (minmax(MARY) - MARY[idx]) / MARY[idx] * 100
-        MARY = (MARY - MARY[idx]) / MARY[idx] * 100
-        return MARY, LFE, HFE
-
     @staticmethod
     def _square_liouville_rhos(rhos):
         return rhos
@@ -739,50 +690,6 @@ class HilbertSimulation:
     @staticmethod
     def _get_rho_shape(dim):
         return dim, dim
-
-    def MARY(
-        self,
-        init_state: State,
-        obs_state: State,
-        time: np.ndarray,
-        B: np.ndarray,
-        D: float,
-        J: float,
-        kinetics: list[HilbertIncoherentProcessBase] = [],
-        relaxations: list[HilbertIncoherentProcessBase] = [],
-        theta: Optional[float] = None,
-        phi: Optional[float] = None,
-        hfc_anisotropy: bool = False,
-    ) -> dict:
-        H = self.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
-
-        self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
-        rhos = self.mary_loop(init_state, time, B, H, theta=theta, phi=phi)
-        product_probabilities = self.product_probability(obs_state, rhos)
-
-        self.apply_hilbert_kinetics(time, product_probabilities, kinetics)
-        k = kinetics[0].rate_constant if kinetics else 1.0
-        product_yields, product_yield_sums = self.product_yield(
-            product_probabilities, time, k
-        )
-
-        dt = time[1] - time[0]
-        MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
-        rhos = self._square_liouville_rhos(rhos)
-
-        return dict(
-            time=time,
-            B=B,
-            theta=theta,
-            phi=phi,
-            rhos=rhos,
-            time_evolutions=product_probabilities,
-            product_yields=product_yields,
-            product_yield_sums=product_yield_sums,
-            MARY=MARY,
-            LFE=LFE,
-            HFE=HFE,
-        )
 
     @staticmethod
     def convert(H: np.ndarray) -> np.ndarray:
