@@ -45,7 +45,7 @@ def main():
         plt.plot(time_3e5[cutoff:i] * factor, bhalf_3e5[cutoff:i], "r", linewidth=3)
         plt.plot(time_3e6[cutoff:i] * factor, bhalf_3e6[cutoff:i], "b", linewidth=3)
         plt.plot(time_7e6[cutoff:i] * factor, bhalf_7e6[cutoff:i], "g", linewidth=3)
-    plt.xlabel("Time / $\mu s$", size=24)
+    plt.xlabel(r"Time / $\mu s$", size=24)
     plt.ylabel("Normalised $B_{1/2}$ / a.u.", size=24)
     plt.legend(
         [
