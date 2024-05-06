@@ -10,6 +10,7 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy import estimations, kinetics, relaxation
+from radicalpy.experiments import mary
 from radicalpy.simulation import Basis
 
 # quick test:
@@ -361,7 +362,8 @@ class HilbertTests(unittest.TestCase):
             for obs_state in rp.simulation.State:
                 if obs_state == rp.simulation.State.EQUILIBRIUM:
                     continue
-                rslt = self.sim.MARY(
+                rslt = mary(
+                    self.sim,
                     init_state,
                     obs_state,
                     self.time,
@@ -421,7 +423,8 @@ class HilbertTests(unittest.TestCase):
         plt.show()
 
     def test_hyperfine_3d(self):
-        results = self.sim.MARY(
+        results = mary(
+            self.sim,
             rp.simulation.State.SINGLET,
             rp.simulation.State.TRIPLET,
             self.time,
@@ -565,7 +568,8 @@ class LiouvilleTests(unittest.TestCase):
             J=0,
         )
         k = 1e6
-        results = self.sim.MARY(
+        results = mary(
+            self.sim,
             kinetics=[],
             relaxations=[
                 # relaxation.SingletTripletDephasing( k),
