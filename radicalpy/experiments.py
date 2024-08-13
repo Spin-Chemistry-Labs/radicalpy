@@ -277,8 +277,8 @@ def semiclassical_kinetics_mary(
                 loop_rho[k, :] = rho0
                 rho0 = propagator @ rho0
 
-            loop_yield = (loop_yield + loop_rho) / num_samples
-        total_yield[:, :, i] = loop_yield
+            loop_yield = loop_yield + loop_rho
+        total_yield[:, :, i] = loop_yield / num_samples
 
     return {"ts": ts, "Bs": Bs, "yield": total_yield}
 
