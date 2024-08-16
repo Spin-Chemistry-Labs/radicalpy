@@ -32,5 +32,5 @@ jobs:
       run: >-
         for file in $(ls examples/*.py); do
           echo "Running example: $file"
-          PYTHONPATH=. time python $file --fast
+          PYTHONPATH=. python $file --fast
         done
