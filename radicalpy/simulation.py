@@ -670,7 +670,7 @@ class HilbertSimulation:
         product_yield = k * sp.integrate.cumulative_trapezoid(
             product_probability, time, initial=0
         )
-        product_yield_sum = k * np.trapz(product_probability, dx=time[1])
+        product_yield_sum = k * np.trapezoid(product_probability, dx=time[1])
         return product_yield, product_yield_sum
 
     def apply_liouville_hamiltonian_modifiers(self, H, modifiers):
@@ -727,14 +727,14 @@ class HilbertSimulation:
 
     @staticmethod
     def unitary_propagator(H: np.ndarray, dt: float) -> np.ndarray:
-        """Create unitary propagator (Hilbert space).
+        r"""Create unitary propagator (Hilbert space).
 
         Create unitary propagator matrices **U** and **U*** for time
         evolution of the density matrix in Hilbert space (for the spin
         Hamiltonian `H`).
 
         .. math::
-            \mathbf{U}   =& \exp( -i \hat{H} t ) \\\\
+            \mathbf{U}   =& \exp( -i \hat{H} t ) \\
             \mathbf{U}^* =& \exp( +i \hat{H} t )
 
         See also: `propagate` and `time_evolution`.
@@ -856,7 +856,7 @@ class LiouvilleSimulation(HilbertSimulation):
 
     @staticmethod
     def unitary_propagator(H, dt):
-        """Create unitary propagator (Liouville space).
+        r"""Create unitary propagator (Liouville space).
 
         Create unitary propagator matrix **U** for the time evolution
         of the density matrix in Liouville space (for the spin

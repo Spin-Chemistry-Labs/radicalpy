@@ -356,7 +356,7 @@ class Nucleus:
 
     @property
     def gamma_mT(self):
-        """Return magnetogyric ratio, :math:`\gamma` (rad/s/mT)."""
+        r"""Return magnetogyric ratio, :math:`\gamma` (rad/s/mT)."""
         return self.magnetogyric_ratio * 0.001
 
     @property
