@@ -32,56 +32,16 @@ def main():
     # elev = 35
 
     # Load reference spectra
-    path = "./examples/data/fad_kinetics"
-    radical_spectrum = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_radical_spectrum.txt")
-        ]
+    path = Path("./examples/data/fad_kinetics")
+    radical_spectrum = 1e3 * np.genfromtxt(path / "fad_radical_spectrum.txt")
+    triplet_spectrum = 1e3 * np.genfromtxt(path / "fad_triplet_spectrum.txt")
+    wavelength = np.genfromtxt(path / "fad_radical_wavelength.txt")
+    groundstate_spectrum = np.genfromtxt(path / "fad_groundstate_spectrum.txt")
+    groundstate_wavelength = np.genfromtxt(
+        path / "fad_groundstate_spectrum_wavelength.txt"
     )
-    triplet_spectrum = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_triplet_spectrum.txt")
-        ]
-    )
-    wavelength = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_radical_wavelength.txt")
-        ]
-    )
-    groundstate_spectrum = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_groundstate_spectrum.txt")
-        ]
-    )
-    groundstate_wavelength = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_groundstate_spectrum_wavelength.txt")
-        ]
-    )
-    emission_spectrum = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_emission_spectrum.txt")
-        ]
-    )
-    emission_wavelength = np.array(
-        [
-            np.genfromtxt(file_path)
-            for file_path in Path(path).glob("fad_emission_spectrum_wavelength.txt")
-        ]
-    )
-    radical_spectrum = radical_spectrum[0, :] * 1e3
-    triplet_spectrum = triplet_spectrum[0, :] * 1e3
-    wavelength = wavelength[0, :]
-    groundstate_spectrum = groundstate_spectrum[0, :]
-    groundstate_wavelength = groundstate_wavelength[0, :]
-    emission_spectrum = emission_spectrum[0, :]
-    emission_wavelength = emission_wavelength[0, :]
+    emission_spectrum = np.genfromtxt(path / "fad_emission_spectrum.txt")
+    emission_wavelength = np.genfromtxt(path / "fad_emission_spectrum_wavelength.txt")
 
     flavin = Molecule.all_nuclei("fad")
     adenine = Molecule.all_nuclei("fad")
