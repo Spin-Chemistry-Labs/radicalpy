@@ -38,7 +38,8 @@ def main():
     HFE = results["HFE"]
     LFE = results["LFE"]
 
-    results2 = sim2.MARY(
+    results2 = mary(
+        sim2,
         init_state=State.SINGLET,
         obs_state=State.SINGLET,
         time=time,
