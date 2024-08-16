@@ -8,14 +8,14 @@ from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time
 from radicalpy.relaxation import RandomFields
 from radicalpy.simulation import Molecule, SemiclassicalSimulation
-from radicalpy.utils import Bhalf_fit
+from radicalpy.utils import Bhalf_fit, is_fast_run
 
 
-def main():
+def main(Bmax=30, dB=0.5, tmax=20e-6, dt=10e-9):
 
     # Parameters
-    time = np.arange(0, 20e-6, 10e-9)
-    Bs = np.arange(0, 30, 0.5)
+    time = np.arange(0, tmax, dt)
+    Bs = np.arange(0, Bmax, dB)
     num_samples = 400
     scale_factor = 10
     kr = 0  # 1.7e6  # radical pair relaxation rate
@@ -231,9 +231,9 @@ def main():
         rstride=1,
         cstride=1,
     )
-    ax.set_xlabel("$B_0$ / mT", size=18)
-    ax.set_ylabel("Time / $\mu s$", size=18)
-    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    ax.set_xlabel(r"$B_0$ / mT", size=18)
+    ax.set_ylabel(r"Time / $\mu s$", size=18)
+    ax.set_zlabel(r"$\Delta \Delta A$", size=18)
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 5)
     # plt.show()
@@ -271,8 +271,8 @@ def main():
             color="k",
             linewidth=2,
         )
-    plt.xlabel("Time / $\mu s$", size=18)
-    plt.ylabel("$B_{1/2}$ / mT", size=18)
+    plt.xlabel(r"Time / $\mu s$", size=18)
+    plt.ylabel(r"$B_{1/2}$ / mT", size=18)
     plt.tick_params(labelsize=14)
     plt.gcf().set_size_inches(10, 5)
     path = __file__[:-3] + f"_{1}.png"
@@ -293,9 +293,9 @@ def main():
         rstride=1,
         cstride=1,
     )
-    ax.set_xlabel("$B_0$ / mT", size=18)
-    ax.set_ylabel("Time / $\mu s$", size=18)
-    ax.set_zlabel("$\Delta \Delta A$", size=18)
+    ax.set_xlabel(r"$B_0$ / mT", size=18)
+    ax.set_ylabel(r"Time / $\mu s$", size=18)
+    ax.set_zlabel(r"$\Delta \Delta A$", size=18)
     plt.tick_params(labelsize=14)
     fig.set_size_inches(10, 5)
     # plt.show()
@@ -327,8 +327,8 @@ def main():
             color="k",
             linewidth=2,
         )
-    plt.xlabel("Time / $\mu s$", size=18)
-    plt.ylabel("$B_{1/2}$ / mT", size=18)
+    plt.xlabel(r"Time / $\mu s$", size=18)
+    plt.ylabel(r"$B_{1/2}$ / mT", size=18)
     plt.tick_params(labelsize=14)
     plt.gcf().set_size_inches(10, 5)
     path = __file__[:-3] + f"_{3}.png"
@@ -336,4 +336,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main(Bmax=10, dB=2, tmax=10e-6, dt=1e-6)
+    else:
+        main()
