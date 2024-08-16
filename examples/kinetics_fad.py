@@ -107,8 +107,10 @@ def main():
     }
     time = np.linspace(0, 6e-6, 200)
 
-    result_off = RateEquations({**base, **off}, time, initial_states)
-    result_on = RateEquations({**base, **on}, time, initial_states)
+    re_off = RateEquations({**base, **off})
+    re_on = RateEquations({**base, **on})
+    result_off = re_off.time_evolution(time, initial_states)
+    result_on = re_on.time_evolution(time, initial_states)
     fac = 0.07
 
     keys = ["S", "T+/-", "T0", "Quencher"] + 2 * ["T*+/-", "T*0"]
