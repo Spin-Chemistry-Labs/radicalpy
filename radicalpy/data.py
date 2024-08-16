@@ -233,13 +233,13 @@ class Hfc:
         return self._anisotropic
 
     @property
-    def isotropic(self) -> NDArray:
+    def isotropic(self) -> float:
         """Isotropic value.
 
         Returns:
             float: The isotropic HFC value.
         """
-        return self._isotropic
+        return float(self._isotropic)
 
 
 class Nucleus:
@@ -654,7 +654,7 @@ class Molecule:
             n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
             for n in self.nuclei
         )
-        return np.sqrt(2) / tau
+        return float(np.sqrt(2) / tau)
 
 
 class Triplet(Molecule):
