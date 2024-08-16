@@ -401,8 +401,8 @@ class HilbertTests(unittest.TestCase):
                     J=PARAMS["J"],
                     kinetics=[kinetics.Exponential(k)],
                 )
-                rslt = self.sim.MARY(**kwargs)
-                strs = st_sim.MARY(**kwargs)
+                rslt = mary(self.sim, **kwargs)
+                strs = mary(st_sim, **kwargs)
 
                 key = "time_evolutions"
                 Bi = 1
@@ -535,7 +535,8 @@ class LiouvilleTests(unittest.TestCase):
             J=0,
         )
         k = 1e6
-        results_haberkorn = self.sim.MARY(
+        results_haberkorn = mary(
+            self.sim,
             kinetics=[
                 kinetics.Haberkorn(k, rp.simulation.State.TRIPLET),
                 kinetics.Haberkorn(k, rp.simulation.State.SINGLET),
@@ -543,7 +544,8 @@ class LiouvilleTests(unittest.TestCase):
             ],
             **kwargs,
         )
-        results_jones_hore = self.sim.MARY(
+        results_jones_hore = mary(
+            self.sim,
             kinetics=[
                 kinetics.JonesHore(k, k),
                 kinetics.Exponential(k),
