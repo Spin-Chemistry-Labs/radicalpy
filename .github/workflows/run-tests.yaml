@@ -31,5 +31,6 @@ jobs:
       # Need a separate branch to iterate over files on Windows.
       run: >-
         for file in $(ls examples/*.py); do
+          echo "Running example: $file"
           PYTHONPATH=. python $file --fast
         done
