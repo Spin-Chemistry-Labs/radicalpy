@@ -11,14 +11,14 @@ from radicalpy.experiments import semiclassical_kinetics_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time, plot_general
 from radicalpy.relaxation import RandomFields, SingletTripletDephasing
 from radicalpy.simulation import Basis, Molecule, SemiclassicalSimulation
-from radicalpy.utils import Bhalf_fit
+from radicalpy.utils import Bhalf_fit, is_fast_run
 
 
-def main():
+def main(Bmax=30, dB=0.5, tmax=10e-6, dt=10e-9):
 
     # Parameters
-    time = np.arange(0, 10e-6, 10e-9)
-    Bs = np.arange(0, 30, 0.5)
+    time = np.arange(0, tmax, dt)
+    Bs = np.arange(0, Bmax, dB)
     num_samples = 200
     scale_factor = 1  # 4e-1
     kr = 7e7  # 1.7e6  # radical pair relaxation rate
@@ -700,7 +700,7 @@ def main():
     plot_3d_results(
         groundstate_wavelength,
         results["Bs"],
-        mary_groundstate[250, :, :],
+        mary_groundstate[len(mary_groundstate) // 4, :, :],
         xlabel,
         ylabel,
         zlabel,
@@ -731,7 +731,7 @@ def main():
     plot_3d_results(
         emission_wavelength,
         results["Bs"],
-        mary_emission[250, :, :],
+        mary_emission[len(mary_emission) // 4, :, :],
         xlabel,
         ylabel,
         zlabel,
@@ -762,7 +762,7 @@ def main():
     plot_3d_results(
         wavelength,
         results["Bs"],
-        mary[250, :, :],
+        mary[len(mary) // 4, :, :],
         xlabel,
         ylabel,
         zlabel,
@@ -774,4 +774,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main(Bmax=10, dB=2, tmax=10e-6, dt=1e-6)
+    else:
+        main()
