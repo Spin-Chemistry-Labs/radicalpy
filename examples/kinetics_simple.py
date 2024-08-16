@@ -46,8 +46,10 @@ def main():
     initial_states = {Tp: 1 / 3, T0: 1 / 3, Tm: 1 / 3}
     time = np.linspace(0, 1e-6, 10000)
 
-    result_off = RateEquations(off, time, initial_states)
-    result_on = RateEquations(on, time, initial_states)
+    re_off = RateEquations(off)
+    re_on = RateEquations(on)
+    result_off = re_off.time_evolution(time, initial_states)
+    result_on = re_on.time_evolution(time, initial_states)
 
     keys = [S, Tp, T0, Tm]
     rp_field_off = result_off[keys]
@@ -65,9 +67,9 @@ def main():
     axs[1].plot(time * scale, rp_delta_delta_A, color="orange", linewidth=2)
     plt.xscale("linear")
     axs[0].legend([r"$F (B_0 = 0)$", r"$F (B_0 \neq 0)$"])
-    axs[1].set_xlabel("Time ($\mu s$)", size=14)
-    axs[0].set_ylabel("$\Delta A$", size=14)
-    axs[1].set_ylabel("$\Delta \Delta A$", size=14)
+    axs[1].set_xlabel(r"Time ($\mu s$)", size=14)
+    axs[0].set_ylabel(r"$\Delta A$", size=14)
+    axs[1].set_ylabel(r"$\Delta \Delta A$", size=14)
     axs[0].tick_params(labelsize=14)
     axs[1].tick_params(labelsize=14)
     fig.set_size_inches(10, 5)

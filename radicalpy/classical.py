@@ -126,7 +126,7 @@ class RateEquations:
 
     def _construct_matrix(self):
         tmp = [
-            (v.value, self.indices[i], self.indices[j])
+            (v.value if isinstance(v, Rate) else v, self.indices[i], self.indices[j])
             for i, d in self.rate_equations.items()
             for j, v in d.items()
         ]
