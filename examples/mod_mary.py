@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from radicalpy.experiments import modulated_mary_brute_force
+from radicalpy.utils import is_fast_run
 
 
 def main(
@@ -100,4 +101,14 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main(
+            Bs=np.linspace(-5, 5, 100),
+            modulation_depths=[2, 1, 0.5],
+            modulation_frequency=3,
+            time_constant=0.3,
+            harmonics=[1, 2, 3, 4, 5],
+            lfe_magnitude=0.02,
+        )
+    else:
+        main()
