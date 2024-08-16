@@ -5,21 +5,24 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy import relaxation
+from radicalpy.experiments import mary
 from radicalpy.simulation import State
+from radicalpy.utils import is_fast_run
 
 
-def main():
+def main(Bmax=20, dB=0.5, tmax=10e-6, dt=10e-9):
     flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["H25"])  # , "H27", "H29"])
     trp = rp.simulation.Molecule.fromdb("tryptophan_cation", ["H1"])  # , "Hbeta1"])
     sim = rp.simulation.LiouvilleSimulation([flavin, trp])
-    time = np.arange(0, 10e-6, 10e-9)
-    Bs = np.arange(0, 20, 0.5)
+    time = np.arange(0, tmax, dt)
+    Bs = np.arange(0, Bmax, dB)
     krec = 1.1e7
     kesc = 7e6
     kSTD = 1e8
     kr = 7e7
 
-    results = sim.MARY(
+    results = mary(
+        sim,
         init_state=State.TRIPLET,
         obs_state=State.TRIPLET,
         time=time,
@@ -62,4 +65,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main(Bmax=10, dB=2, tmax=1e-6, dt=10e-8)
+    else:
+        main()
