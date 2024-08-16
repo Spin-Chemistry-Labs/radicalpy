@@ -262,7 +262,7 @@ def semiclassical_kinetics_mary(
 
     for i, B0 in enumerate(tqdm(Bs)):
         Hz = sim.zeeman_hamiltonian(B0)
-        for j, HH in enumerate(HHs):
+        for HH in HHs:
             Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
             sim.apply_liouville_hamiltonian_modifiers(L, relaxations)
