@@ -1,20 +1,11 @@
 #! /usr/bin/env python
 
-import pdb
 from pathlib import Path
 
-import dot2tex
-import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
 
-from radicalpy.classical import (
-    Rate,
-    RateEquations,
-    latex_eqlist_to_align,
-    latexify,
-    reaction_scheme,
-)
+from radicalpy.classical import Rate, RateEquations
 
 
 def main():
@@ -80,7 +71,7 @@ def main():
     # for eq in latexify(off):
     #     print(eq)
     # print(latex_eqlist_to_align(latexify(off)))
-    reaction_scheme(__file__, on)
+    # reaction_scheme(__file__, on)
 
 
 if __name__ == "__main__":
