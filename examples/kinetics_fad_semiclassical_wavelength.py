@@ -288,8 +288,8 @@ def main():
     for i in range(1, len(emission_wavelength)):
         mfe_emission_max[i] = mary_emission[:, -1, i].min()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta \Delta A$"
     plot_general(
         groundstate_wavelength[1:],
         np.real(mfe_groundstate_max)[1:],
@@ -302,8 +302,8 @@ def main():
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta I_F$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta I_F$"
     plot_general(
         emission_wavelength[1:],
         np.real(mfe_emission_max)[1:],
@@ -316,8 +316,8 @@ def main():
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta \Delta A$"
     plot_general(
         wavelength,
         np.real(mfe_max),
@@ -337,8 +337,8 @@ def main():
     colors_time = plt.colormaps.get_cmap("viridis").resampled(len(time)).colors
     colors_field = plt.colormaps.get_cmap("viridis").resampled(len(Bs)).colors
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(time), n):
         plot_general(
             groundstate_wavelength,
@@ -346,15 +346,15 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
             colors=colors_time[i],
         )
     path = __file__[:-3] + f"_{3}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "$B_0$ / mT"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"$B_0$ / mT"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(time), n):
         plot_general(
             Bs,
@@ -362,15 +362,15 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
             colors=colors_time[i],
         )
     path = __file__[:-3] + f"_{4}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Time / $\mu s$"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Time / $\mu s$"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(Bs), f):
         plot_general(
             time,
@@ -386,8 +386,8 @@ def main():
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta I_F$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta I_F$"
     for i in range(0, len(time), n):
         plot_general(
             emission_wavelength,
@@ -395,15 +395,15 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
             colors=colors_time[i],
         )
     path = __file__[:-3] + f"_{6}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "$B_0$ / mT"
-    ylabel = "$\Delta I_F$"
+    xlabel = r"$B_0$ / mT"
+    ylabel = r"$\Delta I_F$"
     for i in range(0, len(time), n):
         plot_general(
             Bs,
@@ -411,15 +411,15 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
             colors=colors_time[i],
         )
     path = __file__[:-3] + f"_{7}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Time / $\mu s$"
-    ylabel = "$\Delta I_F$"
+    xlabel = r"Time / $\mu s$"
+    ylabel = r"$\Delta I_F$"
     for i in range(0, len(Bs), f):
         plot_general(
             time,
@@ -435,8 +435,8 @@ def main():
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(time), n):
         plot_general(
             wavelength,
@@ -444,15 +444,15 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
             colors=colors_time[i],
         )
     path = __file__[:-3] + f"_{9}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "$B_0$ / mT"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"$B_0$ / mT"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(time), n):
         plot_general(
             Bs,
@@ -460,15 +460,15 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
             colors=colors_time[i],
         )
     path = __file__[:-3] + f"_{10}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Time / $\mu s$"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Time / $\mu s$"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(Bs), f):
         plot_general(
             time,
@@ -483,8 +483,8 @@ def main():
     path = __file__[:-3] + f"_{11}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(time), n):
         plot_general(
             groundstate_wavelength,
@@ -492,14 +492,14 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
         )
     path = __file__[:-3] + f"_{3}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "$B_0$ / mT"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"$B_0$ / mT"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(time), n):
         plot_general(
             Bs,
@@ -507,14 +507,14 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
         )
     path = __file__[:-3] + f"_{4}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Time / $\mu s$"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Time / $\mu s$"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(Bs), f):
         plot_general(
             time,
@@ -529,8 +529,8 @@ def main():
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta I_F$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta I_F$"
     for i in range(0, len(time), n):
         plot_general(
             emission_wavelength,
@@ -538,14 +538,14 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
         )
     path = __file__[:-3] + f"_{6}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "$B_0$ / mT"
-    ylabel = "$\Delta I_F$"
+    xlabel = r"$B_0$ / mT"
+    ylabel = r"$\Delta I_F$"
     for i in range(0, len(time), n):
         plot_general(
             Bs,
@@ -553,14 +553,14 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
         )
     path = __file__[:-3] + f"_{7}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Time / $\mu s$"
-    ylabel = "$\Delta I_F$"
+    xlabel = r"Time / $\mu s$"
+    ylabel = r"$\Delta I_F$"
     for i in range(0, len(Bs), f):
         plot_general(
             time,
@@ -575,8 +575,8 @@ def main():
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(time), n):
         plot_general(
             wavelength,
@@ -584,14 +584,14 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
         )
     path = __file__[:-3] + f"_{9}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "$B_0$ / mT"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"$B_0$ / mT"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(time), n):
         plot_general(
             Bs,
@@ -599,14 +599,14 @@ def main():
             xlabel,
             ylabel,
             style="-",
-            label=f"{time[i] * factor: .0f} $\mu s$",
+            label=f"{time[i] * factor: .0f} $\\mu s$",
         )
     path = __file__[:-3] + f"_{10}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    xlabel = "Time / $\mu s$"
-    ylabel = "$\Delta \Delta A$"
+    xlabel = r"Time / $\mu s$"
+    ylabel = r"$\Delta \Delta A$"
     for i in range(0, len(Bs), f):
         plot_general(
             time,
@@ -679,9 +679,9 @@ def main():
     plt.close()
 
     # 3D plots
-    xlabel = "Wavelength / nm"
-    ylabel = "Time / $\mu s$"
-    zlabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"Time / $\mu s$"
+    zlabel = r"$\Delta \Delta A$"
     plot_3d_results(
         groundstate_wavelength,
         results["ts"],
@@ -694,9 +694,9 @@ def main():
     plt.savefig(path, dpi=300)
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$B_0$ / mT"
-    zlabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$B_0$ / mT"
+    zlabel = r"$\Delta \Delta A$"
     plot_3d_results(
         groundstate_wavelength,
         results["Bs"],
@@ -710,9 +710,9 @@ def main():
     plt.savefig(path, dpi=300)
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "Time / $\mu s$"
-    zlabel = "$\Delta I_F$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"Time / $\mu s$"
+    zlabel = r"$\Delta I_F$"
     plot_3d_results(
         emission_wavelength,
         results["ts"],
@@ -725,9 +725,9 @@ def main():
     plt.savefig(path, dpi=300)
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$B_0$ / mT"
-    zlabel = "$\Delta I_F$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$B_0$ / mT"
+    zlabel = r"$\Delta I_F$"
     plot_3d_results(
         emission_wavelength,
         results["Bs"],
@@ -741,9 +741,9 @@ def main():
     plt.savefig(path, dpi=300)
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "Time / $\mu s$"
-    zlabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"Time / $\mu s$"
+    zlabel = r"$\Delta \Delta A$"
     plot_3d_results(
         wavelength,
         results["ts"],
@@ -756,9 +756,9 @@ def main():
     plt.savefig(path, dpi=300)
     plt.close()
 
-    xlabel = "Wavelength / nm"
-    ylabel = "$B_0$ / mT"
-    zlabel = "$\Delta \Delta A$"
+    xlabel = r"Wavelength / nm"
+    ylabel = r"$B_0$ / mT"
+    zlabel = r"$\Delta \Delta A$"
     plot_3d_results(
         wavelength,
         results["Bs"],
