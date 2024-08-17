@@ -141,53 +141,6 @@ class HilbertSimulation:
         C = np.kron(ST, np.eye(prod([n.multiplicity for n in self.nuclei])))
         return C @ M @ C.T
 
-    @staticmethod
-    def pauli(mult: int):
-        """Generate Pauli matrices.
-
-        Generates the Pauli matrices corresponding to a given multiplicity.
-
-        Args:
-
-            mult (int): The multiplicity of the element.
-
-        Returns:
-            dict:
-
-                A dictionary containing 6 `np.array` matrices of
-                shape `(mult, mult)`:
-
-                - the unit operator `result["u"]`,
-                - raising operator `result["p"]`,
-                - lowering operator `result["m"]`,
-                - Pauli matrix for x axis `result["x"]`,
-                - Pauli matrix for y axis `result["y"]`,
-                - Pauli matrix for z axis `result["z"]`.
-        """
-        assert mult > 1
-        result = {}
-        if mult == 2:
-            result["u"] = np.array([[1, 0], [0, 1]])
-            result["p"] = np.array([[0, 1], [0, 0]])
-            result["m"] = np.array([[0, 0], [1, 0]])
-            result["x"] = 0.5 * np.array([[0.0, 1.0], [1.0, 0.0]])
-            result["y"] = 0.5 * np.array([[0.0, -1.0j], [1.0j, 0.0]])
-            result["z"] = 0.5 * np.array([[1.0, 0.0], [0.0, -1.0]])
-        else:
-            spin = (mult - 1) / 2
-            prjs = np.arange(mult - 1, -1, -1) - spin
-
-            p_data = np.sqrt(spin * (spin + 1) - prjs * (prjs + 1))
-            m_data = np.sqrt(spin * (spin + 1) - prjs * (prjs - 1))
-
-            result["u"] = np.eye(mult)
-            result["p"] = sp.sparse.spdiags(p_data, [1], mult, mult).toarray()
-            result["m"] = sp.sparse.spdiags(m_data, [-1], mult, mult).toarray()
-            result["x"] = 0.5 * (result["p"] + result["m"])
-            result["y"] = -0.5 * 1j * (result["p"] - result["m"])
-            result["z"] = sp.sparse.spdiags(prjs, 0, mult, mult).toarray()
-        return result
-
     def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator.
 
@@ -211,7 +164,7 @@ class HilbertSimulation:
         assert 0 <= idx and idx < len(self.particles)
         assert axis in "xyzpmu"
 
-        sigma = self.pauli(self.particles[idx].multiplicity)[axis]
+        sigma = self.particles[idx].pauli[axis]
         before_size = prod(p.multiplicity for p in self.particles[:idx])
         after_size = prod(p.multiplicity for p in self.particles[idx + 1 :])
         spinop = np.kron(np.eye(before_size), sigma)
@@ -717,7 +670,7 @@ class HilbertSimulation:
         product_yield = k * sp.integrate.cumulative_trapezoid(
             product_probability, time, initial=0
         )
-        product_yield_sum = k * np.trapz(product_probability, dx=time[1])
+        product_yield_sum = k * np.trapezoid(product_probability, dx=time[1])
         return product_yield, product_yield_sum
 
     def apply_liouville_hamiltonian_modifiers(self, H, modifiers):
@@ -730,55 +683,6 @@ class HilbertSimulation:
         for K in kinetics:  # skip in liouville
             K.adjust_product_probabilities(product_probabilities, time)
 
-    def mary_loop(
-        self,
-        init_state: State,
-        time: np.ndarray,
-        B: np.ndarray,
-        H_base: np.ndarray,
-        theta: Optional[float] = None,
-        phi: Optional[float] = None,
-        hfc_anisotropy: bool = False,
-    ) -> np.ndarray:
-        """Generate density matrices (rhos) for MARY.
-
-        Args:
-
-            init_state (State): initial state.
-
-        Returns:
-            np.ndarray:
-
-                Density matrices.
-
-        .. todo:: Write proper docs.
-        """
-        H_zee = self.convert(self.zeeman_hamiltonian(1, theta, phi))
-        shape = self._get_rho_shape(H_zee.shape[0])
-        rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
-        for i, B0 in enumerate(tqdm(B)):
-            H = H_base + B0 * H_zee
-            H_sparse = sp.sparse.csc_matrix(H)
-            rhos[i] = self.time_evolution(init_state, time, H_sparse)
-        return rhos
-
-    @staticmethod
-    def mary_lfe_hfe(
-        init_state: State,
-        B: np.ndarray,
-        product_probability_seq: np.ndarray,
-        dt: float,
-        k: float,
-    ) -> (np.ndarray, np.ndarray, np.ndarray):
-        """Calculate MARY, LFE, HFE."""
-        MARY = np.sum(product_probability_seq, axis=1) * dt * k
-        idx = int(len(MARY) / 2) if B[0] != 0 else 0
-        minmax = max if init_state == State.SINGLET else min
-        HFE = (MARY[-1] - MARY[idx]) / MARY[idx] * 100
-        LFE = (minmax(MARY) - MARY[idx]) / MARY[idx] * 100
-        MARY = (MARY - MARY[idx]) / MARY[idx] * 100
-        return MARY, LFE, HFE
-
     @staticmethod
     def _square_liouville_rhos(rhos):
         return rhos
@@ -786,50 +690,6 @@ class HilbertSimulation:
     @staticmethod
     def _get_rho_shape(dim):
         return dim, dim
-
-    def MARY(
-        self,
-        init_state: State,
-        obs_state: State,
-        time: np.ndarray,
-        B: np.ndarray,
-        D: float,
-        J: float,
-        kinetics: list[HilbertIncoherentProcessBase] = [],
-        relaxations: list[HilbertIncoherentProcessBase] = [],
-        theta: Optional[float] = None,
-        phi: Optional[float] = None,
-        hfc_anisotropy: bool = False,
-    ) -> dict:
-        H = self.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
-
-        self.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
-        rhos = self.mary_loop(init_state, time, B, H, theta=theta, phi=phi)
-        product_probabilities = self.product_probability(obs_state, rhos)
-
-        self.apply_hilbert_kinetics(time, product_probabilities, kinetics)
-        k = kinetics[0].rate_constant if kinetics else 1.0
-        product_yields, product_yield_sums = self.product_yield(
-            product_probabilities, time, k
-        )
-
-        dt = time[1] - time[0]
-        MARY, LFE, HFE = self.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
-        rhos = self._square_liouville_rhos(rhos)
-
-        return dict(
-            time=time,
-            B=B,
-            theta=theta,
-            phi=phi,
-            rhos=rhos,
-            time_evolutions=product_probabilities,
-            product_yields=product_yields,
-            product_yield_sums=product_yield_sums,
-            MARY=MARY,
-            LFE=LFE,
-            HFE=HFE,
-        )
 
     @staticmethod
     def convert(H: np.ndarray) -> np.ndarray:
@@ -867,14 +727,14 @@ class HilbertSimulation:
 
     @staticmethod
     def unitary_propagator(H: np.ndarray, dt: float) -> np.ndarray:
-        """Create unitary propagator (Hilbert space).
+        r"""Create unitary propagator (Hilbert space).
 
         Create unitary propagator matrices **U** and **U*** for time
         evolution of the density matrix in Hilbert space (for the spin
         Hamiltonian `H`).
 
         .. math::
-            \mathbf{U}   =& \exp( -i \hat{H} t ) \\\\
+            \mathbf{U}   =& \exp( -i \hat{H} t ) \\
             \mathbf{U}^* =& \exp( +i \hat{H} t )
 
         See also: `propagate` and `time_evolution`.
@@ -996,7 +856,7 @@ class LiouvilleSimulation(HilbertSimulation):
 
     @staticmethod
     def unitary_propagator(H, dt):
-        """Create unitary propagator (Liouville space).
+        r"""Create unitary propagator (Liouville space).
 
         Create unitary propagator matrix **U** for the time evolution
         of the density matrix in Liouville space (for the spin

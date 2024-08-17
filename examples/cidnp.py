@@ -8,12 +8,14 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy import kinetics, relaxation
+from radicalpy.experiments import mary_lfe_hfe, mary_loop
 from radicalpy.shared import constants as C
 from radicalpy.simulation import LiouvilleSimulation as Liouv
 from radicalpy.simulation import State
+from radicalpy.utils import is_fast_run
 
 
-def main():
+def main(tmax=5e-6, dt=5e-9, Bmax=20000, dB=100):
     # Create a radical pair with a 13C nucleus coupled to radical 1
     r1 = rp.simulation.Molecule.fromisotopes(isotopes=["13C"], hfcs=[0.0])
     r2 = rp.simulation.Molecule("radical 2")
@@ -36,8 +38,8 @@ def main():
     xi = 0.98
 
     init_state = State.SINGLET
-    time = np.arange(0, 5e-6, 5e-9)
-    B = np.arange(0, 20000, 100)
+    time = np.arange(0, tmax, dt)
+    B = np.arange(0, Bmax, dB)
     kinetic = [
         kinetics.Haberkorn(ks, State.SINGLET),
         kinetics.Haberkorn(kt, State.TRIPLET),
@@ -71,7 +73,7 @@ def main():
 
     # Run the magnetic field loop
     sim.apply_liouville_hamiltonian_modifiers(HL, kinetic + relaxations)
-    rhos = sim.mary_loop(init_state, time, B, HL, theta=None, phi=None)
+    rhos = mary_loop(sim, init_state, time, B, HL, theta=None, phi=None)
 
     # Calculate CIDNP of both singlet and triplet yields --> see Eqs. 6 and 7
     product_probabilities1 = np.real(np.trace(obs_state1 @ rhos, axis1=-2, axis2=-1))
@@ -85,7 +87,7 @@ def main():
     )
 
     dt = time[1] - time[0]
-    CIDNP, LFE, HFE = sim.mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
+    CIDNP, LFE, HFE = mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
 
     # Normalise the CIDNP intensity and plot and save figure
     norm_CIDNP = (CIDNP - CIDNP.max()) / (CIDNP.max() - CIDNP.min())
@@ -99,4 +101,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main(tmax=5e-6, dt=5e-7, Bmax=20000, dB=1000)
+    else:
+        main()

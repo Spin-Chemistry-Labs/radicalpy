@@ -4,22 +4,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import radicalpy as rp
+from radicalpy.experiments import anisotropy
 from radicalpy.simulation import State
+from radicalpy.utils import is_fast_run
 
 
-def main():
-    theta = np.linspace(0, np.pi, 17)
-    phi = np.linspace(0, 2 * np.pi, 32)
+# def main(theta_steps=35, phi_steps=58, tmax=15e-6, dt=5e-9):
+def main(theta_steps=17, phi_steps=32, tmax=5e-6, dt=5e-9):
+    theta = np.linspace(0, np.pi, theta_steps)
+    phi = np.linspace(0, 2 * np.pi, phi_steps)
 
     flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["N5", "N10"])
     Z = rp.simulation.Molecule("zorro", [])
     sim = rp.simulation.HilbertSimulation([flavin, Z])
 
-    time = np.arange(0, 5e-6, 5e-9)
+    time = np.arange(0, tmax, dt)
     B0 = 0.05
     k = 1e6
 
-    results = sim.anisotropy(
+    results = anisotropy(
+        sim,
         init_state=State.SINGLET,
         obs_state=State.SINGLET,
         time=time,
@@ -41,10 +45,15 @@ def main():
     print(f"{Y_av=}")
     print(f"{delta_phi_s=}")
     print(f"{gamma_s=}")
-    plt.show()
+    # plt.show()
+    path = __file__[:-3] + f"_{3}.png"
+    plt.savefig(path)
 
     return 0
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main(theta_steps=7, phi_steps=6, tmax=10e-6, dt=1e-6)
+    else:
+        main()

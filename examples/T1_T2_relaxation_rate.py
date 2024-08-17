@@ -10,6 +10,7 @@ from radicalpy.estimations import (
     aqueous_glycerol_viscosity,
     rotational_correlation_time_for_protein,
 )
+from radicalpy.utils import is_fast_run
 
 
 def main():
@@ -26,9 +27,9 @@ def main():
     plt.axis("on")
     plt.rc("axes", edgecolor="k")
     for t in temperatures:
-        plt.plot(ratio, eta[t] * f, label=f"{t}$^\circ$C")
+        plt.plot(ratio, eta[t] * f, label=f"{t}$^\\circ$C")
     plt.xlabel("Glycerol fraction", size=14)
-    plt.ylabel("Viscosity ($mN \, s \, m^{-2}$)", size=14)
+    plt.ylabel(r"Viscosity ($mN \, s \, m^{-2}$)", size=14)
     plt.legend()
     plt.tick_params(labelsize=14)
     path = __file__[:-3] + f"_{0}.png"
@@ -47,7 +48,7 @@ def main():
     plt.axis("on")
     plt.rc("axes", edgecolor="k")
     for t in temperatures:
-        plt.plot(ratio, tau_c[t] * f2, label=f"{t}$^\circ$C")
+        plt.plot(ratio, tau_c[t] * f2, label=f"{t}$^\\circ$C")
     plt.xlabel("Glycerol fraction", size=14)
     plt.ylabel(r"$\tau _C$ ($\mu s$)", size=14)
     plt.legend()
@@ -73,7 +74,7 @@ def main():
     plt.axis("on")
     plt.rc("axes", edgecolor="k")
     for t in temperatures:
-        plt.plot(ratio, 1 / t1[t], label=f"{t}$^\circ$C")
+        plt.plot(ratio, 1 / t1[t], label=f"{t}$^\\circ$C")
     plt.xlabel("Glycerol fraction", size=14)
     plt.ylabel(r"1 / T1 ($s$)", size=14)
     plt.legend()
@@ -86,7 +87,7 @@ def main():
     plt.axis("on")
     plt.rc("axes", edgecolor="k")
     for t in temperatures:
-        plt.plot(ratio, 1 / t2[t], label=f"{t}$^\circ$C")
+        plt.plot(ratio, 1 / t2[t], label=f"{t}$^\\circ$C")
     plt.xlabel("Glycerol fraction", size=14)
     plt.ylabel(r"1 / T2 ($s$)", size=14)
     plt.legend()
@@ -96,4 +97,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if is_fast_run():
+        main()  # quick enough
+    else:
+        main()

@@ -503,7 +503,7 @@ def k_ST_mixing(Bhalf: float) -> float:
 def k_electron_transfer(
     separation: float, driving_force: float = -1, reorganisation_energy: float = 1
 ) -> float:
-    """Electron transfer rate.
+    r"""Electron transfer rate.
 
     The default values (when `-driving_force ==
     reorganisation_energy`) return the maximum electron transfer rate.

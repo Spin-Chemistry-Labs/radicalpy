@@ -948,7 +948,7 @@ def SingletYieldTwoSiteTimePropagation(
     nt = np.round((tmax / tstep + 1)).astype(int)
     rho0 = 0.5 * (P12SA + P12SB)
     propagator = expm(-L * tstep)
-    singletfraction = np.zeros(nt, dtype=np.complex_)
+    singletfraction = np.zeros(nt, dtype=np.complex128)
 
     for i in range(0, nt):
         t = i * tstep
@@ -1007,7 +1007,7 @@ def SingletYieldTwoSiteTimePropagationApprox(
     rhoA = rhoB = P12S / 4
     propagatorA = expm((-1j * HA - 0.5 * K[0]) * tstep)
     propagatorB = expm((-1j * HB - 0.5 * K[1]) * tstep)
-    singletfraction = np.zeros(nt, dtype=np.complex_)
+    singletfraction = np.zeros(nt, dtype=np.complex128)
 
     for i in range(0, nt):
         t = i * tstep
@@ -1117,7 +1117,7 @@ def LinearEnergyLevelPlot2D(H, B, linecolour, title):
 def EnergyLevelPlot2D(spins, HFC, B_max, B_steps, J, D, xlabel, title):
     H = HamiltonianZeeman_RadicalPair(spins, B_max)
     B = np.linspace(0, B_max, B_steps)
-    E = np.zeros([B_steps, len(H)], dtype=np.complex_)
+    E = np.zeros([B_steps, len(H)], dtype=np.complex128)
 
     for i, B0 in enumerate(B):
         HZ = HamiltonianZeeman_RadicalPair(spins, B0)

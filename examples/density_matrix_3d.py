@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import radicalpy as rp
+from radicalpy.experiments import mary
 from radicalpy.simulation import State
 
 
@@ -16,7 +17,8 @@ def main():
     Bs = np.arange(0, 3, 1)
     k = 1e6
 
-    MARY = sim.MARY(
+    MARY = mary(
+        sim,
         init_state=State.SINGLET,
         obs_state=State.TRIPLET,
         time=time,
