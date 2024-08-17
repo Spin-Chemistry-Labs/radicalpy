@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Set up Python ${{ matrix.python }} 🐍
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
         cache: 'pip'
@@ -25,3 +25,12 @@ jobs:
         python -m
         unittest
         discover -v
+    - name: Run examples
+      if: runner.os == 'Linux'
+      # This is bash.
+      # Need a separate branch to iterate over files on Windows.
+      run: >-
+        for file in $(ls examples/*.py); do
+          echo "Running example: $file"
+          PYTHONPATH=. python $file --fast
+        done

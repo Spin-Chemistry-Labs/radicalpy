@@ -4,6 +4,7 @@ from functools import singledispatchmethod
 from typing import Iterator, Optional, Tuple
 
 import numpy as np
+import scipy as sp
 from importlib_resources import files
 from importlib_resources.abc import Traversable
 from numpy.typing import NDArray
@@ -232,13 +233,13 @@ class Hfc:
         return self._anisotropic
 
     @property
-    def isotropic(self) -> NDArray:
+    def isotropic(self) -> float:
         """Isotropic value.
 
         Returns:
             float: The isotropic HFC value.
         """
-        return self._isotropic
+        return float(self._isotropic)
 
 
 class Nucleus:
@@ -306,8 +307,56 @@ class Nucleus:
         return nucleus
 
     @property
+    def pauli(self):
+        """Generate Pauli matrices.
+
+        Generates the Pauli matrices corresponding to a given multiplicity.
+
+        Args:
+
+            mult (int): The multiplicity of the element.
+
+        Returns:
+            dict:
+
+                A dictionary containing 6 `np.array` matrices of
+                shape `(mult, mult)`:
+
+                - the unit operator `result["u"]`,
+                - raising operator `result["p"]`,
+                - lowering operator `result["m"]`,
+                - Pauli matrix for x axis `result["x"]`,
+                - Pauli matrix for y axis `result["y"]`,
+                - Pauli matrix for z axis `result["z"]`.
+        """
+        mult = self.multiplicity
+        assert mult > 1
+        result = {}
+        if mult == 2:
+            result["u"] = np.array([[1, 0], [0, 1]])
+            result["p"] = np.array([[0, 1], [0, 0]])
+            result["m"] = np.array([[0, 0], [1, 0]])
+            result["x"] = 0.5 * np.array([[0.0, 1.0], [1.0, 0.0]])
+            result["y"] = 0.5 * np.array([[0.0, -1.0j], [1.0j, 0.0]])
+            result["z"] = 0.5 * np.array([[1.0, 0.0], [0.0, -1.0]])
+        else:
+            spin = (mult - 1) / 2
+            prjs = np.arange(mult - 1, -1, -1) - spin
+
+            p_data = np.sqrt(spin * (spin + 1) - prjs * (prjs + 1))
+            m_data = np.sqrt(spin * (spin + 1) - prjs * (prjs - 1))
+
+            result["u"] = np.eye(mult)
+            result["p"] = sp.sparse.spdiags(p_data, [1], mult, mult).toarray()
+            result["m"] = sp.sparse.spdiags(m_data, [-1], mult, mult).toarray()
+            result["x"] = 0.5 * (result["p"] + result["m"])
+            result["y"] = -0.5 * 1j * (result["p"] - result["m"])
+            result["z"] = sp.sparse.spdiags(prjs, 0, mult, mult).toarray()
+        return result
+
+    @property
     def gamma_mT(self):
-        """Return magnetogyric ratio, :math:`\gamma` (rad/s/mT)."""
+        r"""Return magnetogyric ratio, :math:`\gamma` (rad/s/mT)."""
         return self.magnetogyric_ratio * 0.001
 
     @property
@@ -605,7 +654,7 @@ class Molecule:
             n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
             for n in self.nuclei
         )
-        return np.sqrt(2) / tau
+        return float(np.sqrt(2) / tau)
 
 
 class Triplet(Molecule):

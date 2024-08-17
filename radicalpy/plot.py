@@ -95,7 +95,7 @@ def energy_levels(sim: HilbertSimulation, B: np.ndarray, J=0, D=0):
     H_base = sim.total_hamiltonian(0, J, D)
     H_zee = sim.zeeman_hamiltonian(1)
 
-    E = np.zeros([len(B), len(H_base)], dtype=np.complex_)
+    E = np.zeros([len(B), len(H_base)], dtype=np.complex128)
 
     for i, B0 in enumerate(B):
         H = H_base + B0 * H_zee
@@ -225,7 +225,7 @@ def plot_bhalf_time(ts, bhalf_time, fit_error_time, style="ro", factor=1e6):
             color="k",
             linewidth=2,
         )
-    plt.xlabel("Time / $\mu s$", size=24)
+    plt.xlabel(r"Time / $\mu s$", size=24)
     plt.ylabel("$B_{1/2}$ / mT", size=24)
     plt.tick_params(labelsize=18)
     plt.gcf().set_size_inches(5, 5)

@@ -17,7 +17,9 @@ def main():
     E = np.real(eigval[0])  # 0 = eigenvalues, 1 = eigenvectors
 
     rp.plot.energy_levels(sim, B=np.arange(0.01, 1, 0.01), J=0, D=0)
-    plt.show()
+    # plt.show()
+    path = __file__[:-3] + f"_{0}.png"
+    plt.savefig(path)
 
 
 if __name__ == "__main__":
