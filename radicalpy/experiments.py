@@ -239,7 +239,7 @@ def semiclassical_mary(
     return {"ts": ts, "Bs": Bs, "MARY": mary}
 
 
-def semiclassical_kinetics_mary(
+def kine_quantum_mary(
     sim: SemiclassicalSimulation,
     num_samples: int,
     init_state: ArrayLike,

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from radicalpy.classical import Rate, RateEquations, latex_eqlist_to_align, latexify
-from radicalpy.experiments import semiclassical_kinetics_mary
+from radicalpy.experiments import kine_quantum_mary
 from radicalpy.plot import plot_3d_results, plot_bhalf_time
 from radicalpy.relaxation import RandomFields
 from radicalpy.simulation import Molecule, SemiclassicalSimulation
@@ -166,7 +166,7 @@ def main(Bmax=30, dB=0.5, tmax=20e-6, dt=10e-9):
     adenine = Molecule.all_nuclei("fad")
     sim = SemiclassicalSimulation([flavin, adenine])
 
-    results = semiclassical_kinetics_mary(
+    results = kine_quantum_mary(
         sim,
         num_samples,
         rho0,
