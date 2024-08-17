@@ -7,6 +7,7 @@ from . import (
     classical,
     data,
     estimations,
+    experiments,
     kinetics,
     relaxation,
     shared,
