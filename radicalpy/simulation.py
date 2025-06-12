@@ -517,7 +517,7 @@ class HilbertSimulation:
         SAz = self.spin_operator(0, "z")
         SBz = self.spin_operator(1, "z")
         omega = (2 / 3) * self.radicals[0].gamma_mT * D
-        return omega * (3 * SAz * SBz - SASB)
+        return omega * (3 * SAz @ SBz - SASB)
 
     def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
         """Construct the 3D Dipolar Hamiltonian.
