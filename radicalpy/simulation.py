@@ -374,13 +374,12 @@ class HilbertSimulation:
         """
         particles = np.array(
             [
-                [self.spin_operator(idx, axis) for axis in "xyz"]
-                for idx in range(len(self.particles))
+                [p.gamma_mT * self.spin_operator(idx, axis) for axis in "xyz"]
+                for idx, p in enumerate(self.particles)
             ]
         )
         rotation = utils.spherical_to_cartesian(theta, phi)
-        omega = B0 * self.radicals[0].gamma_mT
-        return omega * np.einsum("j,ijkl->kl", rotation, particles)
+        return -B0 * np.einsum("j,ijkl->kl", rotation, particles)
 
     def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> np.ndarray:
         """Construct the Hyperfine Hamiltonian.
