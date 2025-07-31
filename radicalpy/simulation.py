@@ -609,7 +609,7 @@ class HilbertSimulation:
         return self.convert(H)
 
     def time_evolution(
-        self, init_state: State, time: np.ndarray, H: np.ndarray
+        self, init_rho: np.ndarray, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
         """Evolve the system through time.
 
@@ -621,8 +621,7 @@ class HilbertSimulation:
 
         Args:
 
-            init_state (State): Initial `State` of the density matrix
-                (see `projection_operator`).
+            init_rho (np.ndarray): Initial density matrix.
 
             time (np.ndarray): An sequence of (uniform) time points,
                 usually created using `np.arange` or `np.linspace`.
@@ -652,9 +651,8 @@ class HilbertSimulation:
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
 
-        rho0 = self.initial_density_matrix(init_state, H)
-        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        rhos[0] = rho0
+        rhos = np.zeros([len(time), *init_rho.shape], dtype=complex)
+        rhos[0] = init_rho
         for t in range(1, len(time)):
             rhos[t] = self.propagate(propagator, rhos[t - 1])
         return rhos

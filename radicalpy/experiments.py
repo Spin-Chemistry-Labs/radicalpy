@@ -64,7 +64,8 @@ def mary_loop(
     for i, B0 in enumerate(tqdm(B)):
         H = H_base + B0 * H_zee
         H_sparse = sp.sparse.csc_matrix(H)
-        rhos[i] = sim.time_evolution(init_state, time, H_sparse)
+        init_rho = sim.initial_density_matrix(init_state, H_sparse)
+        rhos[i] = sim.time_evolution(init_rho, time, H_sparse)
     return rhos
 
 
@@ -336,7 +337,8 @@ def anisotropy_loop(
     for (i, th), (j, ph) in tqdm(list(iters)):
         H_zee = sim.zeeman_hamiltonian(B0, th, ph)
         H = H_base + sim.convert(H_zee)
-        rho = sim.time_evolution(init_state, time, H)
+        init_rho = sim.initial_density_matrix(init_state, H)
+        rho = sim.time_evolution(init_rho, time, H)
         product_probabilities[i, j] = sim.product_probability(obs_state, rho)
     return product_probabilities
 
