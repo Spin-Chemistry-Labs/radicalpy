@@ -329,7 +329,7 @@ def dipolar_interaction_isotropic(r: float | np.ndarray) -> float | np.ndarray:
     .. _Santabarbara et al. Biochemistry, 44, 6, 2119–2128 (2005):
        https://pubs.acs.org/doi/10.1021/bi048445d
     """
-    conversion = (3 * -C.g_e * C.mu_B * C.mu_0) / (8 * np.pi)
+    conversion = (3 * C.g_e * C.mu_B * C.mu_0) / (8 * np.pi)
     return (-conversion / r**3) * 1000
 
 
@@ -418,8 +418,8 @@ def g_tensor_relaxation_rate(tau_c: float, g1: list, g2: list) -> float:
     .. _Player et al. J. Chem. Phys. 153, 084303 (2020):
        https://doi.org/10.1063/5.0021643
     """
-    g1sum = sum((gi - C.g_e) ** 2 for gi in g1)
-    g2sum = sum((gi - C.g_e) ** 2 for gi in g2)
+    g1sum = sum((gi + C.g_e) ** 2 for gi in g1)
+    g2sum = sum((gi + C.g_e) ** 2 for gi in g2)
     return (g1sum + g2sum) / (9 * tau_c)
 
 
@@ -497,7 +497,7 @@ def k_ST_mixing(Bhalf: float) -> float:
     .. _Steiner et al. Chem. Rev. 89, 1, 51–147 (1989):
        https://doi.org/10.1021/cr00091a003
     """
-    return -C.g_e * (C.mu_B * 1e-3) * Bhalf / C.h
+    return C.g_e * (C.mu_B * 1e-3) * Bhalf / C.h
 
 
 def k_electron_transfer(
@@ -645,7 +645,7 @@ def k_triplet_relaxation(B0: float, tau_c: float, D: float, E: float) -> float:
        https://doi.org/10.1080/00268977400101361
     """
     B0 = utils.mT_to_MHz(B0)
-    nu_0 = (C.g_e * (C.mu_B * 1e-3) * B0) / C.h
+    nu_0 = (-C.g_e * (C.mu_B * 1e-3) * B0) / C.h
     jnu0tc = (2 / 15) * (
         (4 * tau_c) / (1 + 4 * nu_0**2 * tau_c**2) + (tau_c) / (1 + nu_0**2 * tau_c**2)
     )

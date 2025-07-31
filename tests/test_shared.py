@@ -36,7 +36,7 @@ class ConstantTestCase(unittest.TestCase):
         self.assertEqual(C.mu_N, 5.05078343e-27)
         self.assertEqual(C.mu_e, -9.28476412e-24)
         self.assertEqual(C.a_e, 0.0011596521859)
-        self.assertEqual(C.g_e, -2.0023193043718)
+        self.assertEqual(C.g_e, 2.0023193043718)
         self.assertEqual(C.mu_p, 1.41060671e-26)
         self.assertEqual(C.g_p, 5.5856946893)
         self.assertEqual(C.N_A, 6.0221415e23)
