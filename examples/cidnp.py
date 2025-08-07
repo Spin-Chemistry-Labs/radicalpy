@@ -8,7 +8,7 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy import kinetics, relaxation
-from radicalpy.experiments import mary_lfe_hfe, mary_loop
+from radicalpy.experiments import magnetic_field_loop, mary_lfe_hfe
 from radicalpy.shared import constants as C
 from radicalpy.simulation import LiouvilleSimulation as Liouv
 from radicalpy.simulation import State
@@ -73,7 +73,7 @@ def main(tmax=5e-6, dt=5e-9, Bmax=20000, dB=100):
 
     # Run the magnetic field loop
     sim.apply_liouville_hamiltonian_modifiers(HL, kinetic + relaxations)
-    rhos = mary_loop(sim, init_state, time, B, HL, theta=None, phi=None)
+    rhos = magnetic_field_loop(sim, init_state, time, HL, B, theta=None, phi=None)
 
     # Calculate CIDNP of both singlet and triplet yields --> see Eqs. 6 and 7
     product_probabilities1 = np.real(np.trace(obs_state1 @ rhos, axis1=-2, axis2=-1))
