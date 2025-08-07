@@ -5,7 +5,7 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy import relaxation
-from radicalpy.experiments import mary
+from radicalpy.experiments import odmr
 from radicalpy.simulation import State
 from radicalpy.utils import is_fast_run
 
@@ -15,20 +15,22 @@ def main(Bmax=20, dB=0.5, tmax=10e-6, dt=10e-9):
     trp = rp.simulation.Molecule.fromdb("tryptophan_cation", ["H1"])  # , "Hbeta1"])
     sim = rp.simulation.LiouvilleSimulation([flavin, trp])
     time = np.arange(0, tmax, dt)
-    Bs = np.arange(0, Bmax, dB)
+    B0 = 3.14  # FIX MEEEEE!
+    B1 = np.arange(0, Bmax, dB)
     krec = 1.1e7
     kesc = 7e6
     kSTD = 1e8
     kr = 7e7
 
-    results = mary(
+    results = odmr(
         sim,
         init_state=State.TRIPLET,
         obs_state=State.TRIPLET,
         time=time,
-        B=Bs,
         D=0,
         J=0,
+        B0=B0,
+        B1=B1,
         kinetics=[
             rp.kinetics.Haberkorn(krec, State.SINGLET),
             rp.kinetics.HaberkornFree(kesc),

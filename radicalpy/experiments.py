@@ -435,17 +435,17 @@ def odmr(
     init_state: State,
     obs_state: State,
     time: np.ndarray,
-    B0: float,
-    B0_axis: str,
-    B1: np.ndarray,
-    B1_axis: str,
     D: float,
     J: float,
+    B0: float,
+    B1: np.ndarray,
+    B0_axis: str = "z",
+    B1_axis: str = "x",
     kinetics: list[HilbertIncoherentProcessBase] = [],
     relaxations: list[HilbertIncoherentProcessBase] = [],
     hfc_anisotropy: bool = False,
 ) -> dict:
-    H = sim.zeeman_hamiltonian(B0=B0, axis=B0_axis)
+    H = sim.zeeman_hamiltonian(B0=B0, B_axis=B0_axis).astype(np.complex128)
     H += sim.dipolar_hamiltonian(D=D)
     H += sim.exchange_hamiltonian(J=J)
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
