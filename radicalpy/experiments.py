@@ -425,3 +425,50 @@ def anisotropy(
         product_yields=product_yields,
         product_yield_sums=product_yield_sums,
     )
+
+
+def odmr(
+    sim: HilbertSimulation,
+    init_state: State,
+    obs_state: State,
+    time: np.ndarray,
+    B0: float,
+    B1: np.ndarray,
+    D: float,
+    J: float,
+    kinetics: list[HilbertIncoherentProcessBase] = [],
+    relaxations: list[HilbertIncoherentProcessBase] = [],
+    theta: Optional[float] = None,
+    phi: Optional[float] = None,
+    hfc_anisotropy: bool = False,
+) -> dict:
+    H = sim.total_hamiltonian(B0=B0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
+
+    sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
+    rhos = mary_loop(sim, init_state, time, B1, H, theta=theta, phi=phi)
+    product_probabilities = sim.product_probability(obs_state, rhos)
+
+    sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)
+    k = kinetics[0].rate_constant if kinetics else 1.0
+    product_yields, product_yield_sums = sim.product_yield(
+        product_probabilities, time, k
+    )
+
+    dt = time[1] - time[0]
+    MARY, LFE, HFE = mary_lfe_hfe(init_state, B1, product_probabilities, dt, k)
+    rhos = sim._square_liouville_rhos(rhos)
+
+    return dict(
+        time=time,
+        B0=B0,
+        B1=B1,
+        theta=theta,
+        phi=phi,
+        rhos=rhos,
+        time_evolutions=product_probabilities,
+        product_yields=product_yields,
+        product_yield_sums=product_yield_sums,
+        MARY=MARY,
+        LFE=LFE,
+        HFE=HFE,
+    )
