@@ -10,13 +10,13 @@ from radicalpy.simulation import State
 from radicalpy.utils import is_fast_run
 
 
-def main(Bmax=20, dB=0.5, tmax=10e-6, dt=10e-9):
+def main(Bmax=28, dB=1, tmax=3e-6, dt=10e-9):
     flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["H25"])  # , "H27", "H29"])
-    trp = rp.simulation.Molecule.fromdb("tryptophan_cation", ["H1"])  # , "Hbeta1"])
+    trp = rp.simulation.Molecule.fromdb("tryptophan_cation", [])  # , "Hbeta1"])
     sim = rp.simulation.LiouvilleSimulation([flavin, trp])
     time = np.arange(0, tmax, dt)
-    B0 = 3.14  # FIX MEEEEE!
-    B1 = np.arange(0, Bmax, dB)
+    B0 = 21.6  # FIX MEEEEE!
+    B1 = np.arange(16, Bmax, dB)
     krec = 1.1e7
     kesc = 7e6
     kSTD = 1e8
@@ -62,7 +62,7 @@ def main(Bmax=20, dB=0.5, tmax=10e-6, dt=10e-9):
     print(f"B1/2 fit error = {fit_error[1]: .2f} mT")
     print(f"R^2 for B1/2 fit = {R2: .3f}")
 
-    path = __file__[:-3] + f"_{15}.png"
+    path = __file__[:-3] + f"_{1}.png"
     plt.savefig(path)
 
 
