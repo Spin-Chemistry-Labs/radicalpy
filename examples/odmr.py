@@ -46,10 +46,10 @@ def main(Bmax=20, dB=0.5, tmax=10e-6, dt=10e-9):
 
     # np.save("./examples/data/fad_mary/results_5nuc_liouville_relaxation.npy", results)
 
-    Bhalf, fit_result, fit_error, R2 = rp.utils.Bhalf_fit(Bs, MARY)
+    Bhalf, fit_result, fit_error, R2 = rp.utils.Bhalf_fit(B1, MARY)
 
-    plt.plot(Bs, MARY, color="red", linewidth=2)
-    plt.plot(Bs, fit_result, "k--", linewidth=1, label="Lorentzian fit")
+    plt.plot(B1, MARY, color="red", linewidth=2)
+    plt.plot(B1, fit_result, "k--", linewidth=1, label="Lorentzian fit")
 
     plt.xlabel("$B_0 (mT)$")
     plt.ylabel("MFE (%)")
