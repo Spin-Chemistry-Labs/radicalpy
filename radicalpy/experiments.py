@@ -449,6 +449,7 @@ def odmr(
     H += sim.dipolar_hamiltonian(D=D)
     H += sim.exchange_hamiltonian(J=J)
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
+    H = sim.convert(H)
 
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     rhos = magnetic_field_loop(sim, init_state, time, H, B1, B_axis=B1_axis)
