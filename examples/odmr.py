@@ -10,13 +10,14 @@ from radicalpy.simulation import State
 from radicalpy.utils import is_fast_run
 
 
-def main(Bmax=28, dB=1, tmax=3e-6, dt=10e-9):
-    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["H25"])  # , "H27", "H29"])
+def main(Bmax=28, Bmin=14, dB=0.3, tmax=3e-6, dt=10e-9):
+    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["N5"])  # , "H27", "H29"])
     trp = rp.simulation.Molecule.fromdb("tryptophan_cation", [])  # , "Hbeta1"])
     sim = rp.simulation.LiouvilleSimulation([flavin, trp])
     time = np.arange(0, tmax, dt)
-    B0 = 21.6  # FIX MEEEEE!
-    B1 = np.arange(16, Bmax, dB)
+    B0 = 21.6
+    B1 = 0.3
+    B1_freq = np.arange(Bmin, Bmax, dB)
     krec = 1.1e7
     kesc = 7e6
     kSTD = 1e8
@@ -25,12 +26,13 @@ def main(Bmax=28, dB=1, tmax=3e-6, dt=10e-9):
     results = odmr(
         sim,
         init_state=State.TRIPLET,
-        obs_state=State.TRIPLET,
+        obs_state=State.SINGLET,
         time=time,
         D=0,
         J=0,
         B0=B0,
         B1=B1,
+        B1_freq=B1_freq,
         kinetics=[
             rp.kinetics.Haberkorn(krec, State.SINGLET),
             rp.kinetics.HaberkornFree(kesc),
@@ -40,27 +42,26 @@ def main(Bmax=28, dB=1, tmax=3e-6, dt=10e-9):
             relaxation.RandomFields(kr),
         ],
     )
-    MARY = results["MARY"]
-    HFE = results["HFE"]
-    LFE = results["LFE"]
+    # MARY = results["MARY"]
+    # HFE = results["HFE"]
+    # LFE = results["LFE"]
 
     # np.save("./examples/data/fad_mary/results_5nuc_liouville_relaxation.npy", results)
 
-    Bhalf, fit_result, fit_error, R2 = rp.utils.Bhalf_fit(B1, MARY)
+    # Bhalf, fit_result, fit_error, R2 = rp.utils.Bhalf_fit(B1, MARY)
 
-    plt.plot(B1, MARY, color="red", linewidth=2)
-    plt.plot(B1, fit_result, "k--", linewidth=1, label="Lorentzian fit")
+    plt.plot(rp.utils.mT_to_MHz(B1_freq), results["product_yield_sums"], color="red", linewidth=2)
 
-    plt.xlabel("$B_0 (mT)$")
-    plt.ylabel("MFE (%)")
-    plt.title("")
-    plt.legend([r"Simulation", r"Fit"])
+    plt.xlabel("Frequency / MHz")
+    plt.ylabel("Singlet Yield")
+    # plt.title("")
+    # plt.legend([r"Simulation", r"Fit"])
 
-    print(f"HFE = {HFE: .2f} %")
-    print(f"LFE = {LFE: .2f} %")
-    print(f"B1/2 = {Bhalf: .2f} mT")
-    print(f"B1/2 fit error = {fit_error[1]: .2f} mT")
-    print(f"R^2 for B1/2 fit = {R2: .3f}")
+    # print(f"HFE = {HFE: .2f} %")
+    # print(f"LFE = {LFE: .2f} %")
+    # print(f"B1/2 = {Bhalf: .2f} mT")
+    # print(f"B1/2 fit error = {fit_error[1]: .2f} mT")
+    # print(f"R^2 for B1/2 fit = {R2: .3f}")
 
     path = __file__[:-3] + f"_{1}.png"
     plt.savefig(path)
@@ -68,6 +69,6 @@ def main(Bmax=28, dB=1, tmax=3e-6, dt=10e-9):
 
 if __name__ == "__main__":
     if is_fast_run():
-        main(Bmax=10, dB=2, tmax=1e-6, dt=10e-8)
+        main(Bmax=10, Bmin=0, dB=2, tmax=1e-6, dt=10e-8)
     else:
         main()

@@ -438,7 +438,8 @@ def odmr(
     D: float,
     J: float,
     B0: float,
-    B1: np.ndarray,
+    B1: float,
+    B1_freq: np.ndarray,
     B0_axis: str = "z",
     B1_axis: str = "x",
     kinetics: list[HilbertIncoherentProcessBase] = [],
@@ -446,13 +447,14 @@ def odmr(
     hfc_anisotropy: bool = False,
 ) -> dict:
     H = sim.zeeman_hamiltonian(B0=B0, B_axis=B0_axis).astype(np.complex128)
+    H += sim.zeeman_hamiltonian(B0=B1, B_axis=B1_axis).astype(np.complex128)
     H += sim.dipolar_hamiltonian(D=D)
     H += sim.exchange_hamiltonian(J=J)
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
     H = sim.convert(H)
 
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
-    rhos = magnetic_field_loop(sim, init_state, time, H, B1, B_axis=B1_axis)
+    rhos = magnetic_field_loop(sim, init_state, time, H, -B1_freq, B_axis=B0_axis)
     product_probabilities = sim.product_probability(obs_state, rhos)
 
     sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)
@@ -462,7 +464,7 @@ def odmr(
     )
 
     dt = time[1] - time[0]
-    MARY, LFE, HFE = mary_lfe_hfe(init_state, B1, product_probabilities, dt, k)
+    MARY, LFE, HFE = mary_lfe_hfe(init_state, B1_freq, product_probabilities, dt, k)
     rhos = sim._square_liouville_rhos(rhos)
 
     return dict(
@@ -471,6 +473,8 @@ def odmr(
         B0_axis=B0_axis,
         B1=B1,
         B1_axis=B1_axis,
+        B1_freq=B1_freq,
+        B1_freq_axis=B0_axis,
         rhos=rhos,
         time_evolutions=product_probabilities,
         product_yields=product_yields,
