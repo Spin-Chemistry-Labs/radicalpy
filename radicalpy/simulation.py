@@ -281,7 +281,11 @@ class HilbertSimulation:
         )
 
     def zeeman_hamiltonian(
-        self, B0: float, theta: Optional[float] = None, phi: Optional[float] = None
+        self,
+        B0: float,
+        B_axis: str = "z",
+        theta: Optional[float] = None,
+        phi: Optional[float] = None,
     ) -> np.ndarray:
         """Construct the Zeeman Hamiltonian (1D or 3D).
 
@@ -297,6 +301,8 @@ class HilbertSimulation:
             B0 (float): External magnetic field intensity (milli
                 Tesla). See `zeeman_hamiltonian_1d` and
                 `zeeman_hamiltonian_3d`.
+
+            axis (str): Axis of the magnetic field.
 
             theta (Optional[float]): rotation (polar) angle between
                 the external magnetic field and the fixed
@@ -316,11 +322,10 @@ class HilbertSimulation:
 
         """
         if theta is None and phi is None:
-            return self.zeeman_hamiltonian_1d(B0)
-        else:
-            return self.zeeman_hamiltonian_3d(B0, theta, phi)
+            return self.zeeman_hamiltonian_1d(B0, B_axis)
+        return self.zeeman_hamiltonian_3d(B0, theta, phi)
 
-    def zeeman_hamiltonian_1d(self, B0: float) -> np.ndarray:
+    def zeeman_hamiltonian_1d(self, B0: float, axis: str) -> np.ndarray:
         """Construct the 1D Zeeman Hamiltonian.
 
         Construct the 1D Zeeman Hamiltonian based on the external
@@ -331,6 +336,8 @@ class HilbertSimulation:
             B0 (float): External magnetic field intensity (milli
                 Tesla).
 
+            axis (str): Axis of the magnetic field.
+
         Returns:
             np.ndarray:
 
@@ -339,7 +346,7 @@ class HilbertSimulation:
                 external magnetic field intensity `B0`.
 
         """
-        axis = "z"
+        assert axis in "xyz", "`axis` can only be `x`, `y` or `z`"
         gammas = enumerate(p.gamma_mT for p in self.particles)
         return -B0 * sum(g * self.spin_operator(i, axis) for i, g in gammas)
 
@@ -598,7 +605,7 @@ class HilbertSimulation:
 
         """
         H = (
-            self.zeeman_hamiltonian(B0, theta, phi)
+            self.zeeman_hamiltonian(B0, theta=theta, phi=phi)
             + self.hyperfine_hamiltonian(hfc_anisotropy)
             + self.exchange_hamiltonian(J)
             + self.dipolar_hamiltonian(D)

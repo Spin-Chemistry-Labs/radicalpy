@@ -35,12 +35,13 @@ def mary_lfe_hfe(
     return MARY, LFE, HFE
 
 
-def mary_loop(
+def magnetic_field_loop(
     sim: HilbertSimulation,
     init_state: State,
     time: np.ndarray,
-    B: np.ndarray,
     H_base: np.ndarray,
+    B: np.ndarray,
+    B_axis: str,
     theta: Optional[float] = None,
     phi: Optional[float] = None,
     hfc_anisotropy: bool = False,
@@ -58,7 +59,7 @@ def mary_loop(
 
     .. todo:: Write proper docs.
     """
-    H_zee = sim.convert(sim.zeeman_hamiltonian(1, theta, phi))
+    H_zee = sim.convert(sim.zeeman_hamiltonian(1.0, B_axis, theta, phi))
     shape = sim._get_rho_shape(H_zee.shape[0])
     rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
     for i, B0 in enumerate(tqdm(B)):
@@ -85,7 +86,9 @@ def mary(
     H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
 
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
-    rhos = mary_loop(sim, init_state, time, B, H, theta=theta, phi=phi)
+    rhos = magnetic_field_loop(
+        sim, init_state, time, H, B, B_axis="z", theta=theta, phi=phi
+    )
     product_probabilities = sim.product_probability(obs_state, rhos)
 
     sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)
@@ -334,7 +337,7 @@ def anisotropy_loop(
 
     iters = itertools.product(enumerate(theta), enumerate(phi))
     for (i, th), (j, ph) in tqdm(list(iters)):
-        H_zee = sim.zeeman_hamiltonian(B0, th, ph)
+        H_zee = sim.zeeman_hamiltonian(B0, theta=th, phi=ph)
         H = H_base + sim.convert(H_zee)
         rho = sim.time_evolution(init_state, time, H)
         product_probabilities[i, j] = sim.product_probability(obs_state, rho)
@@ -424,4 +427,59 @@ def anisotropy(
         time_evolutions=product_probabilities,
         product_yields=product_yields,
         product_yield_sums=product_yield_sums,
+    )
+
+
+def odmr(
+    sim: HilbertSimulation,
+    init_state: State,
+    obs_state: State,
+    time: np.ndarray,
+    D: float,
+    J: float,
+    B0: float,
+    B1: float,
+    B1_freq: np.ndarray,
+    B0_axis: str = "z",
+    B1_axis: str = "x",
+    kinetics: list[HilbertIncoherentProcessBase] = [],
+    relaxations: list[HilbertIncoherentProcessBase] = [],
+    hfc_anisotropy: bool = False,
+) -> dict:
+    H = sim.zeeman_hamiltonian(B0=B0, B_axis=B0_axis).astype(np.complex128)
+    H += sim.zeeman_hamiltonian(B0=B1, B_axis=B1_axis).astype(np.complex128)
+    H += sim.dipolar_hamiltonian(D=D)
+    H += sim.exchange_hamiltonian(J=J)
+    H += sim.hyperfine_hamiltonian(hfc_anisotropy)
+    H = sim.convert(H)
+
+    sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
+    rhos = magnetic_field_loop(sim, init_state, time, H, -B1_freq, B_axis=B0_axis)
+    product_probabilities = sim.product_probability(obs_state, rhos)
+
+    sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)
+    k = kinetics[0].rate_constant if kinetics else 1.0
+    product_yields, product_yield_sums = sim.product_yield(
+        product_probabilities, time, k
+    )
+
+    dt = time[1] - time[0]
+    MARY, LFE, HFE = mary_lfe_hfe(init_state, B1_freq, product_probabilities, dt, k)
+    rhos = sim._square_liouville_rhos(rhos)
+
+    return dict(
+        time=time,
+        B0=B0,
+        B0_axis=B0_axis,
+        B1=B1,
+        B1_axis=B1_axis,
+        B1_freq=B1_freq,
+        B1_freq_axis=B0_axis,
+        rhos=rhos,
+        time_evolutions=product_probabilities,
+        product_yields=product_yields,
+        product_yield_sums=product_yield_sums,
+        MARY=MARY,
+        LFE=LFE,
+        HFE=HFE,
     )
