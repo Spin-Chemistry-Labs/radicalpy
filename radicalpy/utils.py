@@ -470,7 +470,7 @@ def yield_anisotropy(
     return delta_phi, gamma
 
 
-def read_orca(
+def read_orca_hyperfine(
     path: Path | str, version: int = 6
 ) -> tuple[list[int], list[str], list[np.ndarray]]:
     """Read ORCA output file.
@@ -498,9 +498,9 @@ def read_orca(
         path = Path(path)
     if version == 6:
         if path.name.endswith(".property.txt"):
-            indices, isotopes, hfc_matrices = _read_orca_6_property_txt(path)
+            indices, isotopes, hfc_matrices = _hyperfine_from_orca6_property_txt(path)
         else:
-            indices, isotopes, hfc_matrices = _read_orca_6_out(path)
+            indices, isotopes, hfc_matrices = _hyperfine_from_orca6_out(path)
     else:
         raise NotImplementedError(f"Version {version} is not supported")
 
@@ -512,7 +512,9 @@ def read_orca(
     return indices, isotopes, hfc_matrices
 
 
-def _read_orca_6_out(path: Path) -> tuple[list[int], list[str], list[np.ndarray]]:
+def _hyperfine_from_orca6_out(
+    path: Path,
+) -> tuple[list[int], list[str], list[np.ndarray]]:
     with open(path, "r") as file:
         lines = file.readlines()
 
@@ -604,7 +606,7 @@ def _read_orca_6_out(path: Path) -> tuple[list[int], list[str], list[np.ndarray]
     return indices, isotopes, hfc_matrices
 
 
-def _read_orca_6_property_txt(
+def _hyperfine_from_orca6_property_txt(
     path: Path,
 ) -> tuple[list[int], list[str], list[np.ndarray]]:
     with open(path, "r") as file:
