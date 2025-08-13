@@ -84,7 +84,7 @@ def Gauss_to_MHz(Gauss: float) -> float:
     Returns:
             float: The magnetic flux density converted to MHz.
     """
-    return Gauss / (1e-10 * -C.g_e * C.mu_B / C.h)
+    return Gauss / (1e-10 * C.g_e * C.mu_B / C.h)
 
 
 def Gauss_to_angular_frequency(Gauss: float) -> float:
@@ -97,7 +97,7 @@ def Gauss_to_angular_frequency(Gauss: float) -> float:
             float: The magnetic flux density converted to angular
             frequency (rad/s/T).
     """
-    return Gauss * (C.mu_B / C.hbar * -C.g_e / 1e10)
+    return Gauss * (C.mu_B / C.hbar * C.g_e / 1e10)
 
 
 def Gauss_to_mT(Gauss: float) -> float:
@@ -153,7 +153,7 @@ def MHz_to_Gauss(MHz: float) -> float:
     Returns:
             float: Megahertz (MHz) converted to Gauss (G).
     """
-    return MHz / (1e-10 * -C.g_e * C.mu_B / C.h)
+    return MHz / (1e-10 * C.g_e * C.mu_B / C.h)
 
 
 def MHz_to_mT(MHz: float) -> float:
@@ -165,7 +165,7 @@ def MHz_to_mT(MHz: float) -> float:
     Returns:
             float: Megahertz (MHz) converted to millitesla (mT).
     """
-    return MHz / (1e-9 * -C.g_e * C.mu_B / C.h)
+    return MHz / (1e-9 * C.g_e * C.mu_B / C.h)
 
 
 def angular_frequency_in_MHz(ang_freq: float) -> float:
@@ -189,7 +189,7 @@ def angular_frequency_to_Gauss(ang_freq: float) -> float:
     Returns:
             float: The angular frequency converted to Gauss (G).
     """
-    return ang_freq / (C.mu_B / C.hbar * -C.g_e / 1e10)
+    return ang_freq / (C.mu_B / C.hbar * C.g_e / 1e10)
 
 
 def angular_frequency_to_mT(ang_freq: float) -> float:
@@ -201,7 +201,7 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
     Returns:
             float: The angular frequency converted to millitesla (mT).
     """
-    return ang_freq / (C.mu_B / C.hbar * -C.g_e / 1e9)
+    return ang_freq / (C.mu_B / C.hbar * C.g_e / 1e9)
 
 
 def anisotropy_check(
@@ -323,7 +323,7 @@ def mT_to_MHz(mT: float) -> float:
     Returns:
             float: The magnetic flux density converted to Megahertz (MHz).
     """
-    return mT * (1e-9 * -C.g_e * C.mu_B / C.h)
+    return mT * (1e-9 * C.g_e * C.mu_B / C.h)
 
 
 def mT_to_angular_frequency(mT: float) -> float:
@@ -335,7 +335,7 @@ def mT_to_angular_frequency(mT: float) -> float:
     Returns:
             float: The magnetic flux density converted to angular frequency (rad/s/T).
     """
-    return mT * (C.mu_B / C.hbar * -C.g_e / 1e9)
+    return mT * (C.mu_B / C.hbar * C.g_e / 1e9)
 
 
 def read_trajectory_files(path: Path, scale=1e-10):

@@ -73,9 +73,9 @@
   },
   "g_e": {
     "name": "electron g-factor",
-    "value": -2.0023193043718,
+    "value": 2.0023193043718,
     "unit": "",
-    "alt_def": "-2(1 + a_e)"
+    "alt_def": "2(1 + a_e)"
   },
   "mu_p": {
     "name": "proton magnetic moment",

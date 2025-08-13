@@ -22,7 +22,7 @@ def main(tmax=5e-6, dt=5e-9, Bmax=20000, dB=100):
     sim = rp.simulation.LiouvilleSimulation([r1, r2])
 
     # Modify the g-factors for both radicals
-    ge = -C.g_e
+    ge = C.g_e
     g1 = 2.0031
     g2 = 2.0031
     r1.radical.magnetogyric_ratio = r1.radical.magnetogyric_ratio / ge * g1
