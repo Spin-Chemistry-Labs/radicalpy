@@ -1,7 +1,9 @@
 import radicalpy as rp
 
 print("Read from .out file")
-indices, isotopes, hfc_matrices = rp.utils.read_orca_hyperfine("./examples/data/NH2_A.out")
+indices, isotopes, hfc_matrices = rp.utils.read_orca_hyperfine(
+    "./examples/data/NH2_A.out"
+)
 nuclei = [
     rp.data.Nucleus.fromisotope(isotope, hfc_matrix.tolist())
     for isotope, hfc_matrix in zip(isotopes, hfc_matrices)
