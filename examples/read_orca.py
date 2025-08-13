@@ -13,7 +13,7 @@ print(molecule)
 
 
 print("\nRead from .property.txt file")
-indices, isotopes, hfc_matrices = rp.utils.read_orca(
+indices, isotopes, hfc_matrices = rp.utils.read_orca_hyperfine(
     "./examples/data/NH2_A.property.txt"
 )
 nuclei = [
