@@ -1,7 +1,12 @@
 #! /usr/bin/env python
+from __future__ import annotations
+
 import json
 from functools import singledispatchmethod
-from typing import Iterator, Optional, Tuple
+from typing import Optional
+
+from fractions import Fraction
+from collections import defaultdict
 
 import numpy as np
 import scipy as sp
@@ -363,6 +368,285 @@ class Nucleus:
     def spin_quantum_number(self) -> float:
         """Spin quantum numer of `Isotope`."""
         return multiplicity_to_spin(self.multiplicity)
+
+
+class FuseNucleus(Nucleus):
+    """
+    Fuse identical nuclei into a single effective nucleus.
+
+    This class represents multiple identical nuclei that have been combined
+    into a single effective nucleus for computational efficiency in spin
+    dynamics calculations.
+
+    Note:
+        This class should only be instantiated via the `from_nuclei` class method.
+        Direct instantiation using __init__ is not recommended for end users.
+
+    Examples:
+        Create a fused nucleus from three identical protons:
+
+        >>> protons = [Nucleus.fromisotope("1H", 1.5) for _ in range(3)]
+        >>> fused = FuseNucleus.from_nuclei(protons)
+    """
+
+    def __init__(
+        self,
+        magnetogyric_ratio: float,
+        multiplicity: int,
+        hfc: Hfc,
+        name: Optional[str] = None,
+        spinop: Optional[dict] = None,
+        weight: Optional[NDArray] = None,
+    ):
+        """Initialize a FuseNucleus.
+
+        Warning:
+            This method is intended for internal use only. Users should use
+            the `from_nuclei` class method instead to properly fuse nuclei.
+
+        Args:
+            magnetogyric_ratio: Magnetogyric ratio of the nucleus
+            multiplicity: Spin multiplicity of the fused system
+            hfc: Hyperfine coupling constant
+            name: Optional name for the nucleus
+            spinop: Precomputed spin operators dictionary
+            weight: Weight vector for initial density matrix
+        """
+        super().__init__(magnetogyric_ratio, multiplicity, hfc, name)
+        self.spinop = spinop or {}
+        self._weight = weight
+
+    @classmethod
+    def from_nuclei(cls, nuclei: list[Nucleus]) -> FuseNucleus:
+        """
+        Create a FuseNucleus from a list of identical nuclei.
+
+        This is the recommended way to create a FuseNucleus instance.
+        The method validates that all nuclei are identical and computes
+        the appropriate spin operators for the fused system.
+
+        Args:
+            nuclei: List of identical nuclei to fuse (minimum 2 nuclei)
+
+        Returns:
+            FuseNucleus: The fused nucleus with computed spin operators
+
+        Raises:
+            ValueError: If fewer than 2 nuclei provided or nuclei are not identical
+
+        Examples:
+            >>> h1 = Nucleus.fromisotope("1H", 1.5)
+            >>> h2 = Nucleus.fromisotope("1H", 1.5)
+            >>> h3 = Nucleus.fromisotope("1H", 1.5)
+            >>> h123 = FuseNucleus.from_nuclei([h1, h2, h3])
+        """
+        if len(nuclei) < 2:
+            raise ValueError("Cannot create FuseNucleus from less than 2 nuclei")
+
+        # Validate that all nuclei are identical
+        cls._validate_nuclei(nuclei)
+
+        # Get the base nucleus properties
+        base_nucleus = nuclei[0]
+
+        # Calculate the fusion information
+        merge_info = cls.multiplicities_spin(
+            len(nuclei), I=Fraction(base_nucleus.multiplicity - 1, 2)
+        )
+
+        # Calculate total multiplicity
+        total_multiplicity = sum(int(2 * J) + 1 for J, _ in merge_info)
+
+        # Compute spin operators and weights
+        spinop, weight = cls._compute_spin_operators(merge_info, total_multiplicity)
+
+        # Create the fused nucleus
+        return cls(
+            magnetogyric_ratio=base_nucleus.magnetogyric_ratio
+            / 1000,  # Convert back to original units
+            multiplicity=total_multiplicity,
+            hfc=base_nucleus.hfc,
+            name=f"Fused{base_nucleus.name or 'Nucleus'}({len(nuclei)})",
+            spinop=spinop,
+            weight=weight,
+        )
+
+    @staticmethod
+    def _compute_spin_operators(
+        merge_info: list[tuple[Fraction, int]], total_multiplicity: int
+    ) -> tuple[dict, NDArray]:
+        """
+        Compute spin operators for the fused nucleus.
+
+        Args:
+            merge_info: List of (J, multiplicity) tuples
+            total_multiplicity: Total multiplicity of the fused system
+
+        Returns:
+            tuple: (spinop dictionary, weight vector)
+        """
+        spinop_p = np.zeros((total_multiplicity, total_multiplicity))
+        spinop_m = np.zeros((total_multiplicity, total_multiplicity))
+        spinop_z = np.zeros((total_multiplicity, total_multiplicity))
+        weight = np.zeros(total_multiplicity)
+
+        cJ = 0  # cumulative 2J+1
+        for J, mJ in merge_info:
+            mult = int(2 * J) + 1
+            prjs = np.arange(mult - 1, -1, -1) - float(J)
+            p_data = np.sqrt(np.float64(J * (J + 1)) - prjs * (prjs + 1))
+            m_data = np.sqrt(np.float64(J * (J + 1)) - prjs * (prjs - 1))
+
+            spinop_p[cJ : cJ + mult, cJ : cJ + mult] = sp.sparse.spdiags(
+                p_data, [1], mult, mult
+            ).toarray()
+            spinop_m[cJ : cJ + mult, cJ : cJ + mult] = sp.sparse.spdiags(
+                m_data, [-1], mult, mult
+            ).toarray()
+            spinop_z[cJ : cJ + mult, cJ : cJ + mult] = sp.sparse.spdiags(
+                prjs, 0, mult, mult
+            ).toarray()
+            weight[cJ : cJ + mult] = mJ
+            cJ += mult
+
+        assert cJ == total_multiplicity, "Total dimension mismatch"
+        weight /= weight.sum()
+
+        spinop_x = 0.5 * (spinop_p + spinop_m)
+        spinop_y = -0.5 * 1j * (spinop_p - spinop_m)
+        spinop_u = np.eye(total_multiplicity)
+
+        spinop = {
+            "u": spinop_u,
+            "p": spinop_p,
+            "m": spinop_m,
+            "x": spinop_x,
+            "y": spinop_y,
+            "z": spinop_z,
+        }
+
+        return spinop, weight
+
+    @property
+    def pauli(self) -> dict:
+        """Return the spin operators dictionary."""
+        return self.spinop
+
+    @property
+    def initial_density_matrix(self) -> NDArray:
+        """
+        Initial density matrix for the fused nucleus.
+
+        Returns:
+            NDArray: Diagonal matrix with weights for initial state
+        """
+        if self._weight is None:
+            raise ValueError("Weight vector not initialized")
+        return np.diag(self._weight)
+
+    @staticmethod
+    def _validate_nuclei(nuclei: list[Nucleus]) -> None:
+        """
+        Validate that all nuclei are identical.
+
+        Args:
+            nuclei: List of nuclei to validate
+
+        Raises:
+            ValueError: If nuclei are not identical in their properties
+        """
+        if len(nuclei) < 2:
+            return  # Single nucleus or empty list is trivially valid
+
+        reference = nuclei[0]
+        ref_mult = reference.multiplicity
+        ref_gamma = reference.gamma_mT
+
+        # Get reference anisotropic tensor
+        if reference.hfc._anisotropic is None:
+            ref_aniso = np.eye(3) * reference.hfc.isotropic
+        else:
+            ref_aniso = reference.hfc.anisotropic
+
+        for i, nucleus in enumerate(nuclei[1:], 1):
+            if nucleus.multiplicity != ref_mult:
+                raise ValueError(
+                    f"Nucleus {i} has multiplicity {nucleus.multiplicity}, "
+                    f"expected {ref_mult}. All nuclei must have the same multiplicity."
+                )
+
+            if nucleus.hfc._anisotropic is None:
+                nuc_aniso = np.eye(3) * nucleus.hfc.isotropic
+            else:
+                nuc_aniso = nucleus.hfc.anisotropic
+
+            if not np.allclose(nuc_aniso, ref_aniso, atol=1e-06):
+                raise ValueError(
+                    f"Nucleus {i} has different HFC tensor. "
+                    "All nuclei must have the same HFC."
+                )
+
+            if nucleus.gamma_mT != ref_gamma:
+                raise ValueError(
+                    f"Nucleus {i} has magnetogyric ratio {nucleus.gamma_mT}, "
+                    f"expected {ref_gamma}. All nuclei must have the same magnetogyric ratio."
+                )
+
+    @staticmethod
+    def multiplicities_spin(
+        N: int, I: Fraction = Fraction(1, 2)
+    ) -> list[tuple[Fraction, int]]:
+        """
+        Calculate the multiplicities for fusion of N identical spins.
+
+        Args:
+            N: Number of spins to fuse
+            I: Spin quantum number of individual spins
+
+        Returns:
+            List of (J, multiplicity) tuples where:
+            - J is the total angular momentum quantum number
+            - multiplicity is the number of times this J appears
+        """
+        if N < 2:
+            raise ValueError("N must be >= 2")
+
+        # normalize I to Fraction and validate it's integer or half-integer
+        if not isinstance(I, Fraction):
+            if isinstance(I, int):
+                I = Fraction(I, 1)
+            elif isinstance(I, float):
+                I = Fraction(I).limit_denominator()
+            else:
+                raise TypeError("I must be int, float, or Fraction")
+        if (2 * I).denominator != 1:
+            raise ValueError("I must be integer or half-integer (k/2)")
+
+        # Dynamic programming over N spins using Clebsch–Gordan rules.
+        # Start with 1 spin: only J=I with multiplicity 1.
+        counts = {I: 1}
+        for _ in range(2, N + 1):
+            new_counts = defaultdict(int)
+            for j, m in counts.items():
+                jmin, jmax = abs(j - I), j + I
+                J = jmin
+                # J runs in integer steps (parity fixed), so step by 1
+                while J <= jmax:
+                    new_counts[J] += m
+                    J += 1
+            counts = dict(new_counts)
+
+        # Pack results, sorted by descending J
+        J_mJ_block_dim = []
+        total_dim = 0
+        for J in sorted(counts.keys(), reverse=True):
+            mJ = counts[J]
+            block_dim = int((2 * J + 1) * mJ)
+            total_dim += block_dim
+            J_mJ_block_dim.append((J, mJ))
+
+        assert total_dim == (2 * I + 1) ** N, "Total dimension mismatch"
+        return J_mJ_block_dim
 
 
 class Molecule:
