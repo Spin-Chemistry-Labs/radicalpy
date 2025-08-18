@@ -616,7 +616,10 @@ class HilbertTests(unittest.TestCase):
         nitrogens = rp.data.Molecule(name="nitrogens", nuclei=[fused_nitrogen])
         sim = rp.simulation.HilbertSimulation([nitrogens, Z])
         ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
-        assert ham.shape == (2**2 * (1+3+5+7), 2**2 * (1+3+5+7)), f"{ham.shape=}"
+        assert ham.shape == (
+            2**2 * (1 + 3 + 5 + 7),
+            2**2 * (1 + 3 + 5 + 7),
+        ), f"{ham.shape=}"
         rho0 = np.kron(Ps, fused_nitrogen.initial_density_matrix)
         dt = time[1] - time[0]
         propagator = sim.unitary_propagator(ham, dt)
