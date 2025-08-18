@@ -472,6 +472,8 @@ class FuseNucleus(Nucleus):
         """
         if len(nuclei) < 2:
             raise ValueError("Cannot create FuseNucleus from less than 2 nuclei")
+        elif len(nuclei) == 2:
+            print("WARNING: There is no benefit to fuse 2 identical nuclei")
 
         # Validate that all nuclei are identical
         cls._validate_nuclei(nuclei)

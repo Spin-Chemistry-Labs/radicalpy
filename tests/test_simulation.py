@@ -598,6 +598,35 @@ class HilbertTests(unittest.TestCase):
         time_evol = sim.product_probability(rp.simulation.State.SINGLET, rhos)
         np.testing.assert_almost_equal(time_evol, time_evol_true)
 
+        # Case 3: 2 S=1 identical nuclei
+        nitrogens = rp.data.Molecule.fromisotopes(
+            name="nitrogens",
+            isotopes=["14N", "14N", "14N"],
+            hfcs=[0.5, 0.5, 0.5],
+        )
+        sim = rp.simulation.HilbertSimulation([nitrogens, Z])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        assert ham.shape == (2**2 * 3**3, 2**2 * 3**3), f"{ham.shape=}"
+        time = np.arange(0, 1e-08, 1e-9)  # only 10 steps to save time
+        rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+        time_evol_true = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+
+        # Case 3: 1 fused nucleus
+        fused_nitrogen = FuseNucleus.from_nuclei(nitrogens.nuclei[:3])
+        nitrogens = rp.data.Molecule(name="nitrogens", nuclei=[fused_nitrogen])
+        sim = rp.simulation.HilbertSimulation([nitrogens, Z])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        assert ham.shape == (2**2 * (1+3+5+7), 2**2 * (1+3+5+7)), f"{ham.shape=}"
+        rho0 = np.kron(Ps, fused_nitrogen.initial_density_matrix)
+        dt = time[1] - time[0]
+        propagator = sim.unitary_propagator(ham, dt)
+        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        rhos[0] = rho0
+        for t in range(1, len(time)):
+            rhos[t] = sim.propagate(propagator, rhos[t - 1])
+        time_evol = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+        np.testing.assert_almost_equal(time_evol, time_evol_true)
+
 
 class LiouvilleTests(unittest.TestCase):
     def setUp(self):
