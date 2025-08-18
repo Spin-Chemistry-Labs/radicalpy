@@ -378,15 +378,41 @@ class FuseNucleus(Nucleus):
     into a single effective nucleus for computational efficiency in spin
     dynamics calculations.
 
-    Note:
+    Warning:
         This class should only be instantiated via the `from_nuclei` class method.
-        Direct instantiation using __init__ is not recommended for end users.
+        Direct instantiation using `__init__` is not recommended for end users.
+        In addtion, for preparing the initial density matrix, the `initial_density_matrix`
+        property combined with `numpy.kron` should be used instead of the pre-defined initial states
+        such as `radicalpy.simulation.State.SINGLET` because the weights of each direct sum are not properly
+        normalized.
 
     Examples:
         Create a fused nucleus from three identical protons:
 
         >>> protons = [Nucleus.fromisotope("1H", 1.5) for _ in range(3)]
-        >>> fused = FuseNucleus.from_nuclei(protons)
+        >>> protons_fuse = FuseNucleus.from_nuclei(protons) # |J=3/2> ⊕ |J=1/2>
+        >>> assert protons_fuse.magnetogyric_ratio == protons[0].magnetogyric_ratio
+        >>> assert protons_fuse.multiplicity == 4 + 2
+        >>> assert protons_fuse.hfc.isotropic == protons[0].hfc.isotropic
+        >>> protons_fuse.name
+        'Fused1H(3)'
+
+        >>> protons_fuse.initial_density_matrix
+        array([[0.125, 0.   , 0.   , 0.   , 0.   , 0.   ],
+               [0.   , 0.125, 0.   , 0.   , 0.   , 0.   ],
+               [0.   , 0.   , 0.125, 0.   , 0.   , 0.   ],
+               [0.   , 0.   , 0.   , 0.125, 0.   , 0.   ],
+               [0.   , 0.   , 0.   , 0.   , 0.25 , 0.   ],
+               [0.   , 0.   , 0.   , 0.   , 0.   , 0.25 ]])
+
+        >>> protons_fuse.pauli["z"]  # z-axis Pauli matrix
+        array([[ 1.5,  0. ,  0. ,  0. ,  0. ,  0. ],
+               [ 0. ,  0.5,  0. ,  0. ,  0. ,  0. ],
+               [ 0. ,  0. , -0.5,  0. ,  0. ,  0. ],
+               [ 0. ,  0. ,  0. , -1.5,  0. ,  0. ],
+               [ 0. ,  0. ,  0. ,  0. ,  0.5,  0. ],
+               [ 0. ,  0. ,  0. ,  0. ,  0. , -0.5]])
+
     """
 
     def __init__(
