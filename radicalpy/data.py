@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import json
+from collections import defaultdict
+from fractions import Fraction
 from functools import singledispatchmethod
 from typing import Optional
-
-from fractions import Fraction
-from collections import defaultdict
 
 import numpy as np
 import scipy as sp
