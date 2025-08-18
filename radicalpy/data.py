@@ -378,6 +378,8 @@ class FuseNucleus(Nucleus):
     into a single effective nucleus for computational efficiency in spin
     dynamics calculations.
 
+    See also: `Phys. Rev. Lett. 120, 220604 (2019)`_.
+
     Warning:
         This class should only be instantiated via the `from_nuclei` class method.
         Direct instantiation using `__init__` is not recommended for end users.
@@ -413,6 +415,8 @@ class FuseNucleus(Nucleus):
                [ 0. ,  0. ,  0. ,  0. ,  0.5,  0. ],
                [ 0. ,  0. ,  0. ,  0. ,  0. , -0.5]])
 
+    .. _Phys. Rev. Lett. 120, 220604 (2019):
+       https://doi.org/10.1103/PhysRevLett.120.220604
     """
 
     def __init__(
