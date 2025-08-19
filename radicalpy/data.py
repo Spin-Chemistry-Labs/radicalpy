@@ -426,6 +426,7 @@ class FuseNucleus(Nucleus):
         name: Optional[str] = None,
         spinop: Optional[dict] = None,
         weight: Optional[NDArray] = None,
+        direct_sum_info: Optional[list[tuple[float, Nucleus]]] = None,
     ):
         """Initialize a FuseNucleus.
 
@@ -444,6 +445,7 @@ class FuseNucleus(Nucleus):
         super().__init__(magnetogyric_ratio, multiplicity, hfc, name)
         self.spinop = spinop or {}
         self._weight = weight
+        self._direct_sum_info = direct_sum_info or []
 
     @classmethod
     def from_nuclei(cls, nuclei: list[Nucleus]) -> FuseNucleus:
@@ -491,6 +493,22 @@ class FuseNucleus(Nucleus):
         # Compute spin operators and weights
         spinop, weight = cls._compute_spin_operators(merge_info, total_multiplicity)
 
+        direct_sum_info = [
+            (
+                mJ
+                * (int(2 * J) + 1)
+                / base_nucleus.multiplicity ** len(nuclei),  # weight
+                Nucleus(
+                    magnetogyric_ratio=base_nucleus.magnetogyric_ratio
+                    / 1000,  # Convert back to original units
+                    multiplicity=int(2 * J) + 1,
+                    hfc=base_nucleus.hfc,
+                    name=f"Fused{base_nucleus.name or 'Nucleus'}(J={J})",
+                ),
+            )
+            for J, mJ in merge_info
+        ]
+
         # Create the fused nucleus
         return cls(
             magnetogyric_ratio=base_nucleus.magnetogyric_ratio
@@ -500,7 +518,11 @@ class FuseNucleus(Nucleus):
             name=f"Fused{base_nucleus.name or 'Nucleus'}({len(nuclei)})",
             spinop=spinop,
             weight=weight,
+            direct_sum_info=direct_sum_info,
         )
+
+    def __iter__(self):
+        return iter(self._direct_sum_info)
 
     @staticmethod
     def _compute_spin_operators(
