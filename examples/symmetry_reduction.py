@@ -10,14 +10,14 @@ from radicalpy.data import FuseNucleus
 B0 = 0.5
 J = 0.5
 D = 0.3
-time = np.arange(0, 2e-08, 1e-9)  # only 20 steps to save time
+time = np.arange(0, 2e-07, 1e-9)  # only 20 steps to save time
 dt = time[1] - time[0]
 
 assert D > 0, "current radicalpy assumes D>0"
 
 # bench mark calculation
 
-n = 5
+n = 20
 h_left = rp.data.Molecule.fromisotopes(
     name="h_left",
     isotopes=["1H"] * n,
@@ -44,23 +44,27 @@ for (w1, h1), (w2, h2) in tqdm(items):  #
         mol2 = rp.data.Molecule(name="mol2", nuclei=[])
     else:
         mol2 = rp.data.Molecule(name="mol2", nuclei=[h2])
-    sim = rp.simulation.HilbertSimulation([mol1, mol2])
-    ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
-    ham = sp.sparse.csc_matrix(ham)
-    print(f"{ham.size=} {ham.data.nbytes / 1e6:.2f} MB")
+    sim = rp.simulation.SparseCholeskyHilbertSimulation([mol1, mol2])
     start = _time.time()
-    rhos_c = sim.time_evolution(rp.simulation.State.SINGLET, time, ham, cholesky=True)
+    ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+    rhos_c = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
     singlet_probability_c = sim.product_probability(rp.simulation.State.SINGLET, rhos_c)
     end = _time.time()
+    print(f"{ham.size=} {ham.data.nbytes / 1e6:.2f} MB")
+    print(f"{sum([X.data.nbytes * 2 for (X, Xt) in rhos_c]) / 1e6:.2f} MB")
     print(f"cholesky time: {end - start:.2f} s")
+
+    sim = rp.simulation.HilbertSimulation([mol1, mol2])
     start = _time.time()
+    ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
     rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham, cholesky=False)
     singlet_probability = sim.product_probability(rp.simulation.State.SINGLET, rhos)
     end = _time.time()
-    print(f"direct time: {end - start:.2f} s")
-    print(type(rhos), len(rhos))
+    print(f"{ham.size=} {ham.data.nbytes / 1e6:.2f} MB")
     print(f"{sum([rho.data.nbytes for rho in rhos]) / 1e6:.2f} MB")
+    print(f"direct time: {end - start:.2f} s")
     np.testing.assert_allclose(singlet_probability_c, singlet_probability, atol=1e-12)
     time_evol_true_list.append(
         w1 * w2 * sim.product_probability(rp.simulation.State.SINGLET, rhos)
     )
+    print("-" * 10)
