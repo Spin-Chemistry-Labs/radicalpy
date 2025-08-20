@@ -127,7 +127,7 @@ class HilbertSimulation:
             ]
         )
 
-    def ST_basis(self, M):
+    def ST_basis(self, M, sparse: bool = False):
         # T+  T0  S  T-
         ST = np.array(
             [
@@ -137,11 +137,18 @@ class HilbertSimulation:
                 [0, 0, 0, 1],
             ]
         )
-
-        C = np.kron(ST, np.eye(prod([n.multiplicity for n in self.nuclei])))
+        if sparse:
+            ST = sp.sparse.csr_matrix(ST)
+            C = sp.sparse.kron(
+                ST, sp.sparse.eye(prod([n.multiplicity for n in self.nuclei]))
+            )
+            if not isinstance(M, sp.sparse.csr_matrix):
+                M = sp.sparse.csr_matrix(M)
+        else:
+            C = np.kron(ST, np.eye(prod([n.multiplicity for n in self.nuclei])))
         return C @ M @ C.T
 
-    def spin_operator(self, idx: int, axis: str) -> np.ndarray:
+    def spin_operator(self, idx: int, axis: str, sparse: bool = False) -> np.ndarray:
         """Construct the spin operator.
 
         Construct the spin operator for the particle with index `idx`
@@ -167,10 +174,16 @@ class HilbertSimulation:
         sigma = self.particles[idx].pauli[axis]
         before_size = prod(p.multiplicity for p in self.particles[:idx])
         after_size = prod(p.multiplicity for p in self.particles[idx + 1 :])
-        spinop = np.kron(np.eye(before_size), sigma)
-        spinop = np.kron(spinop, np.eye(after_size))
+        if sparse:
+            spinop = sp.sparse.kron(
+                sp.sparse.eye(before_size), sp.sparse.csr_matrix(sigma)
+            )
+            spinop = sp.sparse.kron(spinop, sp.sparse.eye(after_size))
+        else:
+            spinop = np.kron(np.eye(before_size), sigma)
+            spinop = np.kron(spinop, np.eye(after_size))
         if self.basis == Basis.ST:
-            return self.ST_basis(spinop)
+            return self.ST_basis(spinop, sparse=sparse)
         else:
             return spinop
 
@@ -253,7 +266,11 @@ class HilbertSimulation:
 
         # Product operators
         SASB = self.product_operator(0, 1)
-        eye = np.eye(len(SASB))
+        if sp.sparse.issparse(SASB):
+            eye = sp.sparse.eye(SASB.shape[0])
+        else:
+            assert isinstance(SASB, np.ndarray), f"Unsupported type: {type(SASB)}"
+            eye = np.eye(SASB.shape[0])
 
         result = {
             State.SINGLET: (1 / 4) * eye - SASB,
@@ -276,8 +293,8 @@ class HilbertSimulation:
         Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)  #
         return (
             (1 / 12)
-            * (Ssquared - (6 * np.eye(len(SAx))))
-            @ (Ssquared - (2 * np.eye(len(SAx))))
+            * (Ssquared - (6 * np.eye(SAx.shape[0])))
+            @ (Ssquared - (2 * np.eye(SAx.shape[0])))
         )
 
     def zeeman_hamiltonian(
@@ -455,7 +472,10 @@ class HilbertSimulation:
         """
         Jcoupling = J * self.radicals[0].gamma_mT
         SASB = self.product_operator(0, 1)
-        return Jcoupling * (prod_coeff * SASB + 0.5 * np.eye(SASB.shape[0]))
+        if sp.sparse.issparse(SASB):
+            return Jcoupling * (prod_coeff * SASB + 0.5 * sp.sparse.eye(SASB.shape[0]))
+        else:
+            return Jcoupling * (prod_coeff * SASB + 0.5 * np.eye(SASB.shape[0]))
 
     def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
@@ -606,7 +626,7 @@ class HilbertSimulation:
         return self.convert(H)
 
     def time_evolution(
-        self, init_state: State, time: np.ndarray, H: np.ndarray
+        self, init_state: State, time: np.ndarray, H: np.ndarray, cholesky: bool = False
     ) -> np.ndarray:
         """Evolve the system through time.
 
@@ -648,12 +668,44 @@ class HilbertSimulation:
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
-
         rho0 = self.initial_density_matrix(init_state, H)
-        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        rhos[0] = rho0
-        for t in range(1, len(time)):
-            rhos[t] = self.propagate(propagator, rhos[t - 1])
+        if sp.sparse.issparse(rho0) or cholesky:
+            rhos = [None for _ in range(len(time))]
+        else:
+            rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+
+        if cholesky:
+
+            def is_sparse_diagonal(A) -> bool:
+                """Return True iff A is a (square) diagonal matrix.
+                Works for any SciPy sparse type without densifying."""
+                m, n = A.shape
+                if m != n:
+                    return False
+                C = A.tocoo()  # just reindexes the nnz, still sparse
+                C.sum_duplicates()  # combine duplicate entries
+                C.eliminate_zeros()  # drop explicit zeros if any
+                # all nonzeros must lie on the main diagonal
+                return np.all(C.row == C.col)
+
+            if sp.sparse.issparse(rho0) and is_sparse_diagonal(rho0):
+                # rho0 is diagonal
+                L = sp.sparse.diags_array(np.sqrt(rho0.diagonal()))
+            elif isinstance(rho0, np.ndarray) and np.all(np.diag(rho0) == rho0):
+                L = np.diag(np.sqrt(rho0.diagonal()))
+            else:
+                L = np.linalg.cholesky(rho0)
+            L = L.tocsc()
+            rhos[0] = (L, L.T)  # store the Cholesky factorization
+            Up, Um = propagator
+            Um = Um.tocsc()
+            for t in range(1, len(time)):
+                L = Um @ L
+                rhos[t] = (L, L.conj().T)
+        else:
+            rhos[0] = rho0
+            for t in range(1, len(time)):
+                rhos[t] = self.propagate(propagator, rhos[t - 1])
         return rhos
 
     def product_probability(self, obs: State, rhos: np.ndarray) -> np.ndarray:
@@ -661,7 +713,15 @@ class HilbertSimulation:
         if obs == State.EQUILIBRIUM:
             raise ValueError("Observable state should not be EQUILIBRIUM")
         Q = self.observable_projection_operator(obs)
-        return np.real(np.trace(Q @ rhos, axis1=-2, axis2=-1))
+        if isinstance(rhos, list):
+            if isinstance(rhos[0], tuple):
+                # Cholesky factorization
+                Qrhos = [(Lt @ Q @ L).trace().real for (L, Lt) in rhos]
+            else:
+                Qrhos = [(Q @ rho).trace().real for rho in rhos]
+            return np.array(Qrhos)
+        else:
+            return np.real(np.trace(Q @ rhos, axis1=-2, axis2=-1))
 
     @staticmethod
     def product_yield(product_probability, time, k):
@@ -721,7 +781,7 @@ class HilbertSimulation:
             rho0eq = sp.sparse.linalg.expm(-1j * sp.sparse.csc_matrix(H) * Pi).toarray()
             rho0 = rho0eq / rho0eq.trace()
         else:
-            rho0 = Pi / np.trace(Pi)
+            rho0 = Pi / Pi.trace()
         return rho0
 
     @staticmethod
@@ -802,7 +862,7 @@ class LiouvilleSimulation(HilbertSimulation):
     @staticmethod
     def convert(H: np.ndarray) -> np.ndarray:
         """Convert the Hamiltonian from Hilbert to Liouville space."""
-        eye = np.eye(len(H))
+        eye = np.eye(H.shape[0])
         tmp = np.kron(H, eye) - np.kron(eye, H.T)
         return 1j * tmp
 
@@ -894,27 +954,27 @@ class LiouvilleSimulation(HilbertSimulation):
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         """Propagate the density matrix (Liouville space).
 
-        Propagates the density matrix using the propagator obtained
-        using the `unitary_propagator` method.
+               Propagates the density matrix using the propagator obtained
+               using the `unitary_propagator` method.
 
-        .. math::
-            \\rho (t) = \\mathbf{U} \\rho_0
+               .. math::
+                   \\rho (t) = \\mathbf{U} \\rho_0
 
-        See also: `unitary_propagator` and `time_evolution`.
+               See also: `unitary_propagator` and `time_evolution`.
 
-        Args:
+               Args:
 
-            propagator (np.ndarray): Unitary operator obtained via the
-                `unitary_propagator` method.
+                   propagator (np.ndarray): Unitary operator obtained via the
+                       `unitary_propagator` method.
 
-            rho (np.ndarray): (Initial) density matrix.
+                   rho (np.ndarray): (Initial) density matrix.
 
-        Returns:
-            np.ndarray:
+               Returns:
+                   np.ndarray:
 
-                The new density matrix after the unitary operator was
-                applied to it.
-
+                       The new density matrix after the unitary operator was
+                       applied to it.
+        /2424
         """
         return propagator @ rho
 
