@@ -309,7 +309,7 @@ def dipolar_interaction_anisotropic(r: float | np.ndarray) -> np.ndarray:
     """
     dipolar1d = dipolar_interaction_isotropic(r)
     dipolar = (2 / 3) * dipolar1d
-    return dipolar * np.diag([-1, -1, 2])
+    return dipolar * np.diag([1, 1, -2])
 
 
 def dipolar_interaction_isotropic(r: float | np.ndarray) -> float | np.ndarray:
