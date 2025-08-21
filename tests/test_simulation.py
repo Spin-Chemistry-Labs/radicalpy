@@ -499,6 +499,222 @@ class HilbertTests(unittest.TestCase):
         # plt.show()
         # print("DONE")
 
+    def test_symmetry_reduction(self):
+        """
+        Confirm identical spins can be fused into a single spin
+
+        Case 1:
+        H_A = A1 S1 ⋅ (I1 + I2 + I3) + A2 S2 ⋅ I4
+        for 5 spins with |S1> ⊗ |I1> ⊗ |I2> ⊗ |I3> ⊗ |I4>, in which I1, I2, I3 are identical
+
+        This is equivalent to:
+        H_A = A1 S1 ⋅ K + A2 S2 ⋅ I4
+        for 3 spins with |S1> ⊗ |K> ⊗ |I4>, in which |K> = |J=1/2> ⊕ |J=3/2>.
+
+
+        Case 2:
+        H_A = A1 S1 ⋅ (I1 + I2 + I3 + I4 + I5 + I6)
+        for 6 spins with |S1> ⊗ |I1> ⊗ |I2> ⊗ |I3> ⊗ |I4> ⊗ |I5> ⊗ |I6>, in which I1, I2, I3, I4, I5, I6 are identical
+
+        This is equivalent to:
+        H_A = A1 S1 ⋅ K
+        for 2 spin with |S1> ⊗ |K>, in which |K> = |J=0> ⊕ |J=1> ⊕ |J=2> ⊕ |J=3>.
+
+        """
+        from radicalpy.data import FuseNucleus
+
+        B0 = PARAMS["B"][0]
+        J = PARAMS["J"]
+        D = PARAMS["D"]
+
+        # Case 1: 3 identical nuclei + 1 nucleus
+        methyl = rp.data.Molecule.fromisotopes(
+            name="methyl",
+            isotopes=["1H", "1H", "1H", "13C"],
+            hfcs=[1.5, 1.5, 1.5, 0.1],
+        )
+        Z = rp.data.Molecule.fromisotopes(name="zorro", isotopes=[], hfcs=[])
+        sim = rp.simulation.HilbertSimulation([methyl, Z])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        assert ham.shape == (2**6, 2**6)
+        time = np.arange(0, 2e-08, 1e-9)  # only 20 steps to save time
+        rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+        time_evol_true = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+
+        # Case 1: 1 fused nucleus + 1 nucleus
+        fused_hydrogen = FuseNucleus.from_nuclei(methyl.nuclei[:3])
+        fused_methyl = rp.data.Molecule(
+            name="methyl", nuclei=[fused_hydrogen, methyl.nuclei[3]]
+        )
+        sim = rp.simulation.HilbertSimulation([fused_methyl, Z])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        assert ham.shape == (
+            2**3 * (2 + 4),
+            2**3 * (2 + 4),
+        ), f"{ham.shape=}"  # smaller than the original hamiltonian
+        Ps = np.diag([0, 0, 1, 0])
+        rho0 = np.kron(
+            Ps, np.kron(fused_hydrogen.initial_density_matrix, np.eye(2) / 2.0)
+        )
+        dt = time[1] - time[0]
+        propagator = sim.unitary_propagator(ham, dt)
+        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        rhos[0] = rho0
+        for t in range(1, len(time)):
+            rhos[t] = sim.propagate(propagator, rhos[t - 1])
+        time_evol = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+        np.testing.assert_almost_equal(time_evol, time_evol_true)
+
+        # Can be also simulated by each direct sum nucleus
+        time_evol_true_list = []
+        for weight, nucleus in fused_hydrogen:
+            nuclei = (
+                [nucleus, methyl.nuclei[3]]
+                if nucleus.multiplicity > 1
+                else [methyl.nuclei[3]]
+            )
+            methyl_direct_sum = rp.data.Molecule(name="methyl", nuclei=nuclei)
+            sim = rp.simulation.HilbertSimulation([methyl_direct_sum, Z])
+            ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+            rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+            time_evol_true_list.append(
+                weight * sim.product_probability(rp.simulation.State.SINGLET, rhos)
+            )
+
+        np.testing.assert_almost_equal(sum(time_evol_true_list), time_evol_true)
+
+        # Case 2: 6 identical nuclei
+        benzene = rp.data.Molecule.fromisotopes(
+            name="benzene",
+            isotopes=["1H", "1H", "1H", "1H", "1H", "1H"],
+            hfcs=[1.5, 1.5, 1.5, 1.5, 1.5, 1.5],
+        )
+        sim = rp.simulation.HilbertSimulation([benzene, Z])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        assert ham.shape == (2**8, 2**8)
+        time = np.arange(0, 1e-08, 1e-9)  # only 10 steps to save time
+        rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+        time_evol_true = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+
+        # Case 2: 1 fused nucleus
+        fused_hydrogen = FuseNucleus.from_nuclei(benzene.nuclei[:6])
+        benzene = rp.data.Molecule(name="benzene", nuclei=[fused_hydrogen])
+        sim = rp.simulation.HilbertSimulation([benzene, Z])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        assert ham.shape == (
+            2**2 * (1 + 3 + 5 + 7),
+            2**2 * (1 + 3 + 5 + 7),
+        ), f"{ham.shape=}"  # smaller than the original hamiltonian
+        Ps = np.diag([0, 0, 1, 0])
+        rho0 = np.kron(Ps, fused_hydrogen.initial_density_matrix)
+        dt = time[1] - time[0]
+        propagator = sim.unitary_propagator(ham, dt)
+        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        rhos[0] = rho0
+        for t in range(1, len(time)):
+            rhos[t] = sim.propagate(propagator, rhos[t - 1])
+        time_evol = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+        np.testing.assert_almost_equal(time_evol, time_evol_true)
+
+        # Can be also simulated by each direct sum nucleus
+        time_evol_true_list = []
+        for weight, nucleus in fused_hydrogen:
+            # if multiplicity is 1, the nucleus is not included in the simulation
+            nuclei = [nucleus] if nucleus.multiplicity > 1 else []
+            benzene_direct_sum = rp.data.Molecule(name="benzene", nuclei=nuclei)
+            sim = rp.simulation.HilbertSimulation([benzene_direct_sum, Z])
+            ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+            rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+            time_evol_true_list.append(
+                weight * sim.product_probability(rp.simulation.State.SINGLET, rhos)
+            )
+
+        np.testing.assert_almost_equal(sum(time_evol_true_list), time_evol_true)
+
+        # Case 3: 2 S=1 identical nuclei
+        nitrogens = rp.data.Molecule.fromisotopes(
+            name="nitrogens",
+            isotopes=["14N", "14N", "14N"],
+            hfcs=[0.5, 0.5, 0.5],
+        )
+        sim = rp.simulation.HilbertSimulation([nitrogens, Z])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        assert ham.shape == (2**2 * 3**3, 2**2 * 3**3), f"{ham.shape=}"
+        time = np.arange(0, 1e-08, 1e-9)  # only 10 steps to save time
+        rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+        time_evol_true = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+
+        # Case 3: 1 fused nucleus
+        fused_nitrogen = FuseNucleus.from_nuclei(nitrogens.nuclei[:3])
+        nitrogens = rp.data.Molecule(name="nitrogens", nuclei=[fused_nitrogen])
+        sim = rp.simulation.HilbertSimulation([nitrogens, Z])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        assert ham.shape == (
+            2**2 * (1 + 3 + 5 + 7),
+            2**2 * (1 + 3 + 5 + 7),
+        ), f"{ham.shape=}"
+        rho0 = np.kron(Ps, fused_nitrogen.initial_density_matrix)
+        dt = time[1] - time[0]
+        propagator = sim.unitary_propagator(ham, dt)
+        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
+        rhos[0] = rho0
+        for t in range(1, len(time)):
+            rhos[t] = sim.propagate(propagator, rhos[t - 1])
+        time_evol = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+        np.testing.assert_almost_equal(time_evol, time_evol_true)
+
+        # Can be also simulated by each direct sum nucleus contribution
+        time_evol_true_list = []
+        for weight, nucleus in fused_nitrogen:
+            nuclei = [nucleus] if nucleus.multiplicity > 1 else []
+            nitrogens_direct_sum = rp.data.Molecule(name="nitrogens", nuclei=nuclei)
+            sim = rp.simulation.HilbertSimulation([nitrogens_direct_sum, Z])
+            ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+            rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+            time_evol_true_list.append(
+                weight * sim.product_probability(rp.simulation.State.SINGLET, rhos)
+            )
+        np.testing.assert_almost_equal(sum(time_evol_true_list), time_evol_true)
+
+        # Case 4: two methyl groups
+        h3_left = rp.data.Molecule.fromisotopes(
+            name="h3_left",
+            isotopes=["1H", "1H", "1H"],
+            hfcs=[1.5, 1.5, 1.5],
+        )
+        h3_right = rp.data.Molecule.fromisotopes(
+            name="h3_right",
+            isotopes=["1H", "1H", "1H"],
+            hfcs=[0.5, 0.5, 0.5],
+        )
+        sim = rp.simulation.HilbertSimulation([h3_left, h3_right])
+        ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+        # assert ham.shape == (2**8, 2**8)
+        time = np.arange(0, 1e-08, 1e-9)  # only 10 steps to save time
+        rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+        time_evol_true = sim.product_probability(rp.simulation.State.SINGLET, rhos)
+
+        fused_h3_left = FuseNucleus.from_nuclei(h3_left.nuclei)
+        fused_h3_right = FuseNucleus.from_nuclei(h3_right.nuclei)
+        time_evol_true_list = []
+        for w1, h1 in fused_h3_left:
+            if h1.multiplicity == 1:
+                mol1 = rp.data.Molecule(name="mol1", nuclei=[])
+            else:
+                mol1 = rp.data.Molecule(name="mol1", nuclei=[h1])
+            for w2, h2 in fused_h3_right:
+                if h2.multiplicity == 1:
+                    mol2 = rp.data.Molecule(name="mol2", nuclei=[])
+                else:
+                    mol2 = rp.data.Molecule(name="mol2", nuclei=[h2])
+                sim = rp.simulation.HilbertSimulation([mol1, mol2])
+                ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
+                rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
+                time_evol_true_list.append(
+                    w1 * w2 * sim.product_probability(rp.simulation.State.SINGLET, rhos)
+                )
+        np.testing.assert_almost_equal(sum(time_evol_true_list), time_evol_true)
+
 
 class LiouvilleTests(unittest.TestCase):
     def setUp(self):
