@@ -50,7 +50,12 @@ def main(Bmax=28, Bmin=14, dB=0.3, tmax=3e-6, dt=10e-9):
 
     # Bhalf, fit_result, fit_error, R2 = rp.utils.Bhalf_fit(B1, MARY)
 
-    plt.plot(rp.utils.mT_to_MHz(B1_freq), results["product_yield_sums"], color="red", linewidth=2)
+    plt.plot(
+        rp.utils.mT_to_MHz(B1_freq),
+        results["product_yield_sums"],
+        color="red",
+        linewidth=2,
+    )
 
     plt.xlabel("Frequency / MHz")
     plt.ylabel("Singlet Yield")
