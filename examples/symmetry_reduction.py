@@ -17,7 +17,7 @@ assert D > 0, "current radicalpy assumes D>0"
 
 # bench mark calculation
 
-n = 20
+n = 10 # up to ~50 for SparseCholeskyHilbertSimulation
 h_left = rp.data.Molecule.fromisotopes(
     name="h_left",
     isotopes=["1H"] * n,
