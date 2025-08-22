@@ -2,12 +2,11 @@
 
 import enum
 from math import prod
-from typing import Optional, overload
+from typing import Optional
 
 import numpy as np
 import scipy as sp
 from numpy.typing import NDArray
-from tqdm import tqdm
 
 from . import utils
 from .data import Molecule
@@ -623,7 +622,7 @@ class HilbertSimulation:
         return self.convert(H)
 
     def time_evolution(
-        self, init_state: State, time: np.ndarray, H: np.ndarray, cholesky: bool = False
+        self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
         """Evolve the system through time.
 
