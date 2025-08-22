@@ -9,69 +9,85 @@ radicalpy.classical module
 
 .. automodule:: radicalpy.classical
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 radicalpy.data module
 ---------------------
 
 .. automodule:: radicalpy.data
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 radicalpy.estimations module
 ----------------------------
 
 .. automodule:: radicalpy.estimations
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+radicalpy.experiments module
+----------------------------
+
+.. automodule:: radicalpy.experiments
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 radicalpy.kinetics module
 -------------------------
 
 .. automodule:: radicalpy.kinetics
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 radicalpy.plot module
 ---------------------
 
 .. automodule:: radicalpy.plot
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 radicalpy.relaxation module
 ---------------------------
 
 .. automodule:: radicalpy.relaxation
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+radicalpy.shared module
+-----------------------
+
+.. automodule:: radicalpy.shared
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 radicalpy.simulation module
 ---------------------------
 
 .. automodule:: radicalpy.simulation
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 radicalpy.utils module
 ----------------------
 
 .. automodule:: radicalpy.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: radicalpy
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
