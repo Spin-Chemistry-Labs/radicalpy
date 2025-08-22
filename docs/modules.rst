@@ -1,14 +1,7 @@
-.. This file is include from index.rst.
-
-Modules
-=======
-
-.. this is the start page!
+radicalpy
+=========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    radicalpy
-
-
-
