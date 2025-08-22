@@ -917,27 +917,26 @@ class LiouvilleSimulation(HilbertSimulation):
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
         """Propagate the density matrix (Liouville space).
 
-               Propagates the density matrix using the propagator obtained
-               using the `unitary_propagator` method.
+        Propagates the density matrix using the propagator obtained
+        using the `unitary_propagator` method.
 
-               .. math::
-                   \\rho (t) = \\mathbf{U} \\rho_0
+        .. math::
+            \\rho (t) = \\mathbf{U} \\rho_0
 
-               See also: `unitary_propagator` and `time_evolution`.
+        See also: `unitary_propagator` and `time_evolution`.
 
-               Args:
+        Args:
 
-                   propagator (np.ndarray): Unitary operator obtained via the
-                       `unitary_propagator` method.
+            propagator (np.ndarray): Unitary operator obtained via the
+                `unitary_propagator` method.
 
-                   rho (np.ndarray): (Initial) density matrix.
+            rho (np.ndarray): (Initial) density matrix.
 
-               Returns:
-                   np.ndarray:
+        Returns:
+            np.ndarray:
 
-                       The new density matrix after the unitary operator was
-                       applied to it.
-        /2424
+                The new density matrix after the unitary operator was
+                applied to it.
         """
         return propagator @ rho
 
