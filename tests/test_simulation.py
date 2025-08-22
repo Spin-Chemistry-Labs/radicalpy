@@ -622,7 +622,7 @@ class HilbertTests(unittest.TestCase):
             # if multiplicity is 1, the nucleus is not included in the simulation
             nuclei = [nucleus] if nucleus.multiplicity > 1 else []
             benzene_direct_sum = rp.data.Molecule(name="benzene", nuclei=nuclei)
-            sim = rp.simulation.HilbertSimulation([benzene_direct_sum, Z])
+            sim = rp.simulation.SparseCholeskyHilbertSimulation([benzene_direct_sum, Z])
             ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
             rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
             time_evol_true_list.append(
@@ -668,7 +668,9 @@ class HilbertTests(unittest.TestCase):
         for weight, nucleus in fused_nitrogen:
             nuclei = [nucleus] if nucleus.multiplicity > 1 else []
             nitrogens_direct_sum = rp.data.Molecule(name="nitrogens", nuclei=nuclei)
-            sim = rp.simulation.HilbertSimulation([nitrogens_direct_sum, Z])
+            sim = rp.simulation.SparseCholeskyHilbertSimulation(
+                [nitrogens_direct_sum, Z]
+            )
             ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
             rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
             time_evol_true_list.append(
@@ -707,7 +709,7 @@ class HilbertTests(unittest.TestCase):
                     mol2 = rp.data.Molecule(name="mol2", nuclei=[])
                 else:
                     mol2 = rp.data.Molecule(name="mol2", nuclei=[h2])
-                sim = rp.simulation.HilbertSimulation([mol1, mol2])
+                sim = rp.simulation.SparseCholeskyHilbertSimulation([mol1, mol2])
                 ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
                 rhos = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
                 time_evol_true_list.append(
