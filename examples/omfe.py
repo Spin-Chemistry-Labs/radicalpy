@@ -11,20 +11,19 @@ from radicalpy.utils import is_fast_run
 
 
 def main(Bmin=0, tmax=3e-6, dt=10e-9):
-    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["N5"])  # , "H27", "H29"])
+    radical1 = rp.simulation.Molecule.fromisotopes(isotopes=["1H"], hfcs=[2.3])
     trp = rp.simulation.Molecule.fromdb("tryptophan_cation", [])  # , "Hbeta1"])
-    sim = rp.simulation.LiouvilleSimulation([flavin, trp])
-    
-    gamma = sim.radicals[0].gamma_mT  # rad / s / mT
-    a = sim.nuclei[0].hfc.isotropic * gamma  # rad / s
+    sim = rp.simulation.HilbertSimulation([radical1, trp])
+
+    # gamma = sim.radicals[0].gamma_mT  # rad / s / mT
+    a = sim.nuclei[0].hfc.isotropic  # mT
     time = np.arange(0, tmax, dt)
     dB = a / 20
     B1 = a / 16
-    B1_freq = np.arange(Bmin, 3 * a, dB)
-    krec = 1.1e7
-    kesc = 7e6
-    kSTD = 1e8
-    kr = 7e7
+    Bmax = rp.utils.MHz_to_mT(100)
+    print(Bmax)
+    B1_freq = np.arange(Bmin, Bmax, dB)
+    k = 1 / (a / 80)  # 2.8e6
 
     results = omfe(
         sim,
@@ -35,14 +34,7 @@ def main(Bmin=0, tmax=3e-6, dt=10e-9):
         J=0,
         B1=B1,
         B1_freq=B1_freq,
-        kinetics=[
-            rp.kinetics.Haberkorn(krec, State.SINGLET),
-            rp.kinetics.HaberkornFree(kesc),
-        ],
-        relaxations=[
-            relaxation.SingletTripletDephasing(kSTD),
-            relaxation.RandomFields(kr),
-        ],
+        kinetics=[rp.kinetics.Exponential(k)],
     )
     # MARY = results["MARY"]
     # HFE = results["HFE"]
@@ -59,7 +51,7 @@ def main(Bmin=0, tmax=3e-6, dt=10e-9):
         linewidth=2,
     )
 
-    plt.xlabel("$\omega_{rf}$ / a")
+    plt.xlabel("$\omega$ / a")
     plt.ylabel("Singlet Yield")
     # plt.title("")
     # plt.legend([r"Simulation", r"Fit"])

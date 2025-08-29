@@ -366,7 +366,12 @@ def omfe(
     relaxations: list[HilbertIncoherentProcessBase] = [],
     hfc_anisotropy: bool = False,
 ) -> dict:
-    H = sim.zeeman_hamiltonian(B0=B1, B_axis=B1_axis).astype(np.complex128)
+    # H = sim.zeeman_hamiltonian(B0=B1, B_axis=B1_axis).astype(np.complex128)
+    H = (
+        B1
+        * sim.radicals[0].gamma_mT
+        * (sim.spin_operator(0, B1_axis) + sim.spin_operator(1, B1_axis))
+    ).astype(np.complex128)
     H += sim.dipolar_hamiltonian(D=D)
     H += sim.exchange_hamiltonian(J=J)
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
