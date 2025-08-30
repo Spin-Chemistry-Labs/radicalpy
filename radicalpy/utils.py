@@ -271,6 +271,45 @@ def cartesian_to_spherical(
     return r, theta, phi
 
 
+def define_xyz(x1, x2, z1, z2, z3, z4):
+    a = np.array(z1) - np.array(z2)
+    b = np.array(z3) - np.array(z4)
+    z = np.cross(a, b)
+    z = z / np.linalg.norm(z)
+    x = (np.array(x1) - np.array(x2)) / np.linalg.norm((np.array(x1) - np.array(x2)))
+    y = np.cross(z, x)
+    x = np.cross(y, z)
+    return x, y, z
+
+
+def get_angle_between_plane(A, B):
+    tmp = np.linalg.norm(A) * np.linalg.norm(B)
+    angle = np.arccos(np.dot(A, B) / tmp)
+    return np.degrees(angle)
+
+
+def get_rotation_matrix_euler_angles(A, B):
+    R = np.dot(np.array(A).T, np.array(B))
+    if np.abs(R[2, 2]) != 1:
+        beta = np.arccos(R[2, 2])
+        if R[2, 1] >= 0:
+            alpha = np.arccos(R[2, 0] / np.sin(beta))
+        else:
+            alpha = 2 * np.pi - np.arccos(R[2, 0] / np.sin(beta))
+        if R[1, 2] >= 0:
+            gamma = np.arccos(-R[0, 2] / np.sin(beta))
+        else:
+            gamma = 2 * np.pi - np.arccos(-R[0, 2] / np.sin(beta))
+    else:
+        beta = 0
+        gamma = 0
+        if R[0, 1] / R[2, 2] >= 0:
+            alpha = np.arccos(R[0, 0] / R[2, 2])
+        else:
+            alpha = 2 * np.pi - np.arccos(R[0, 0] / R[2, 2])
+    return R, alpha, beta, gamma
+
+
 def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
     """Lorentzian MARY spectral shape.
 
@@ -336,138 +375,6 @@ def mT_to_angular_frequency(mT: float) -> float:
             float: The magnetic flux density converted to angular frequency (rad/s/T).
     """
     return mT * (C.mu_B / C.hbar * C.g_e / 1e9)
-
-
-def read_trajectory_files(path: Path, scale=1e-10):
-    data = [np.genfromtxt(file_path) for file_path in Path(path).glob("*")]
-    return scale * np.concatenate(data, axis=0)
-
-
-def reference_signal(
-    timeconstant: np.ndarray, harmonic: float, theta: float, frequency: float
-):
-    """Modulated MARY reference signal.
-
-    Used for brute force modulated MARY simulations.
-
-    Args:
-            timeconstant (np.ndarray): The modulation time constant (s).
-            harmonic (float): The harmonic of the modulation.
-            theta (float): The modulation phase (rad).
-            frequency (float): The modulation frequency (Hz).
-
-    Returns:
-            np.ndarray: The modulated reference signal.
-    """
-    return np.cos(harmonic * frequency * timeconstant * (2 * np.pi) + harmonic * theta)
-
-
-def spectral_density(omega: float, tau_c: float) -> float:
-    """Frequency at which the motion of the particle exists.
-
-    Args:
-            omega (float): The Larmor frequency of the electron (1/s).
-            tau_c (float): The rotational correlation time (s).
-
-    Returns:
-            float: Spectral density frequency (1/s).
-    """
-    return tau_c / (1 + omega**2 * tau_c**2)
-
-
-def _check_full_sphere(theta: np.ndarray, phi: np.ndarray) -> Tuple[int, int]:
-    nth, nph = len(theta), len(phi)
-    if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
-        raise ValueError(
-            "Not a full sphere: `theta` should be `linspace(0, np.pi, ntheta)`"
-        )
-    if not np.all(np.isclose(phi, np.linspace(0, 2 * np.pi, nph))):
-        raise ValueError(
-            "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
-        )
-    return nth, nph
-
-
-def spherical_average(
-    product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
-) -> float:
-    """Spherical average of anisotropic product yields.
-
-    Args:
-            product_yield (np.ndarray): The anisotropic product
-                yields.
-            theta (np.ndarray): The angles theta by which the
-                anisotropic product yields were calculated.
-            phi (np.ndarray): The angles phi by which the anisotropic
-                product yields were calculated.
-
-    Returns:
-            float: The spherical average of the anisotropic product
-                yields.
-    """
-    theta, phi = anisotropy_check(theta, phi)
-    nth, nph = _check_full_sphere(theta, phi)
-
-    wt = 4 * np.ones(nth)
-    wt[2:-2:2] = 2
-    wt[0] = wt[-1] = 1
-
-    wp = 4 * np.ones(nph)
-    wp[0:-1:2] = 2
-    sintheta = np.sin(np.linspace(0, np.pi, nth))
-
-    spherical_avg = sum(
-        product_yield[i, j] * sintheta[i] * wt[i] * wp[j]
-        for i in range(nth)
-        for j in range(nph)
-    )
-
-    return spherical_avg * theta[1] * phi[1] / (4 * np.pi) / 9
-
-
-def spherical_to_cartesian(
-    theta: float | np.ndarray, phi: float | np.ndarray
-) -> np.ndarray:
-    """Spherical coordinates to Cartesian coordinates.
-
-    Args:
-            theta (float or np.ndarray): The polar angle(s).
-            phi (float or np.ndarray): The azimuthal angle(s).
-
-    Returns:
-            np.ndarray: The Cartesian coordinates.
-    """
-    return np.array(
-        [
-            np.sin(theta) * np.cos(phi),
-            np.sin(theta) * np.sin(phi),
-            np.cos(theta),
-        ]
-    ).T
-
-
-def yield_anisotropy(
-    product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
-) -> Tuple[float, float]:
-    """Calculate the yield anisotropy.
-
-    Args:
-            product_yield (np.ndarray): The anisotropic product yields.
-            theta (np.ndarray): The angles theta by which the
-                anisotropic product yields were calculated.
-            phi (np.ndarray): The angles phi by which the anisotropic
-                product yields were calculated.
-
-    Returns:
-            (float, float):
-            - delta_phi (float): Maximum yield - minimum yield.
-            - gamma (float): delta_phi / spherical average.
-
-    """
-    delta_phi = product_yield.max() - product_yield.min()
-    yield_av = spherical_average(product_yield, theta, phi)
-    gamma = delta_phi / yield_av
-    return delta_phi, gamma
 
 
 def read_orca_hyperfine(
@@ -831,3 +738,176 @@ def _hyperfine_from_orca6_property_txt(
             f"Number of HFC matrices mismatch: {len(hfc_matrices)} != {n_nuclei}"
         )
     return indices, isotopes, hfc_matrices
+
+
+def read_trajectory_files(path: Path, scale=1e-10):
+    data = [np.genfromtxt(file_path) for file_path in Path(path).glob("*")]
+    return scale * np.concatenate(data, axis=0)
+
+
+def reference_signal(
+    timeconstant: np.ndarray, harmonic: float, theta: float, frequency: float
+):
+    """Modulated MARY reference signal.
+
+    Used for brute force modulated MARY simulations.
+
+    Args:
+            timeconstant (np.ndarray): The modulation time constant (s).
+            harmonic (float): The harmonic of the modulation.
+            theta (float): The modulation phase (rad).
+            frequency (float): The modulation frequency (Hz).
+
+    Returns:
+            np.ndarray: The modulated reference signal.
+    """
+    return np.cos(harmonic * frequency * timeconstant * (2 * np.pi) + harmonic * theta)
+
+
+def rodrigues_rotation(v, k, theta):
+    m, n = v.shape
+
+    # Normalise rotation axis
+    k = k / np.sqrt(k[0] ** 2 + k[1] ** 2 + k[2] ** 2)
+    No = np.size(v) // 3  # Number of vectors in array
+    v_rot = np.copy(v)  # Initialise rotated vector array
+
+    if n == 3:
+        crosskv = np.zeros(3)  # Initialise cross product k and v with right dimensions
+        for i in range(No):
+            crosskv[0] = k[1] * v[i, 2] - k[2] * v[i, 1]
+            crosskv[1] = k[2] * v[i, 0] - k[0] * v[i, 2]
+            crosskv[2] = k[0] * v[i, 1] - k[1] * v[i, 0]
+            v_rot[i, :] = (
+                np.cos(theta) * v[i, :]
+                + crosskv * np.sin(theta)
+                + k * np.dot(k, v[i, :]) * (1 - np.cos(theta))
+            )
+    else:  # if m == 3 and n != 3
+        crosskv = np.zeros(3)  # Initialise cross product k and v with right dimensions
+        for i in range(No):
+            crosskv[0] = k[1] * v[2, i] - k[2] * v[1, i]
+            crosskv[1] = k[2] * v[0, i] - k[0] * v[2, i]
+            crosskv[2] = k[0] * v[1, i] - k[1] * v[0, i]
+            v_rot[:, i] = (
+                np.cos(theta) * v[:, i]
+                + crosskv * np.sin(theta)
+                + k * np.dot(k, v[:, i]) * (1 - np.cos(theta))
+            )
+
+    return v_rot
+
+
+def rotate_axes(A, x, y, z):
+    x = np.dot(A, x)
+    y = np.dot(A, y)
+    z = np.dot(A, z)
+    return x, y, z
+
+
+def spectral_density(omega: float, tau_c: float) -> float:
+    """Frequency at which the motion of the particle exists.
+
+    Args:
+            omega (float): The Larmor frequency of the electron (1/s).
+            tau_c (float): The rotational correlation time (s).
+
+    Returns:
+            float: Spectral density frequency (1/s).
+    """
+    return tau_c / (1 + omega**2 * tau_c**2)
+
+
+def _check_full_sphere(theta: np.ndarray, phi: np.ndarray) -> Tuple[int, int]:
+    nth, nph = len(theta), len(phi)
+    if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
+        raise ValueError(
+            "Not a full sphere: `theta` should be `linspace(0, np.pi, ntheta)`"
+        )
+    if not np.all(np.isclose(phi, np.linspace(0, 2 * np.pi, nph))):
+        raise ValueError(
+            "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
+        )
+    return nth, nph
+
+
+def spherical_average(
+    product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
+) -> float:
+    """Spherical average of anisotropic product yields.
+
+    Args:
+            product_yield (np.ndarray): The anisotropic product
+                yields.
+            theta (np.ndarray): The angles theta by which the
+                anisotropic product yields were calculated.
+            phi (np.ndarray): The angles phi by which the anisotropic
+                product yields were calculated.
+
+    Returns:
+            float: The spherical average of the anisotropic product
+                yields.
+    """
+    theta, phi = anisotropy_check(theta, phi)
+    nth, nph = _check_full_sphere(theta, phi)
+
+    wt = 4 * np.ones(nth)
+    wt[2:-2:2] = 2
+    wt[0] = wt[-1] = 1
+
+    wp = 4 * np.ones(nph)
+    wp[0:-1:2] = 2
+    sintheta = np.sin(np.linspace(0, np.pi, nth))
+
+    spherical_avg = sum(
+        product_yield[i, j] * sintheta[i] * wt[i] * wp[j]
+        for i in range(nth)
+        for j in range(nph)
+    )
+
+    return spherical_avg * theta[1] * phi[1] / (4 * np.pi) / 9
+
+
+def spherical_to_cartesian(
+    theta: float | np.ndarray, phi: float | np.ndarray
+) -> np.ndarray:
+    """Spherical coordinates to Cartesian coordinates.
+
+    Args:
+            theta (float or np.ndarray): The polar angle(s).
+            phi (float or np.ndarray): The azimuthal angle(s).
+
+    Returns:
+            np.ndarray: The Cartesian coordinates.
+    """
+    return np.array(
+        [
+            np.sin(theta) * np.cos(phi),
+            np.sin(theta) * np.sin(phi),
+            np.cos(theta),
+        ]
+    ).T
+
+
+def yield_anisotropy(
+    product_yield: np.ndarray, theta: np.ndarray, phi: np.ndarray
+) -> Tuple[float, float]:
+    """Calculate the yield anisotropy.
+
+    Args:
+            product_yield (np.ndarray): The anisotropic product yields.
+            theta (np.ndarray): The angles theta by which the
+                anisotropic product yields were calculated.
+            phi (np.ndarray): The angles phi by which the anisotropic
+                product yields were calculated.
+
+    Returns:
+            (float, float):
+            - delta_phi (float): Maximum yield - minimum yield.
+            - gamma (float): delta_phi / spherical average.
+
+    """
+    delta_phi = product_yield.max() - product_yield.min()
+    yield_av = spherical_average(product_yield, theta, phi)
+    gamma = delta_phi / yield_av
+    return delta_phi, gamma

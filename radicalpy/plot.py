@@ -295,3 +295,46 @@ def spin_state_labels(sim: HilbertSimulation):
 
 def _format_label(t):
     return f"$\\vert {t} \\rangle$"
+
+
+def visualise_tensor(tensor, rot_matrix, coords, colour):
+
+    resolution = 30
+    theta = np.linspace(0, np.pi, resolution)
+    phi = np.linspace(0, 2 * np.pi, resolution)
+
+    tensor_vis = np.zeros([len(theta), len(phi), 3])
+
+    for i in range(0, len(theta)):
+        for j in range(0, len(phi)):
+
+            xyz = np.array(
+                [
+                    np.sin(theta[i]) * np.cos(phi[j]),
+                    np.sin(theta[i]) * np.sin(phi[j]),
+                    np.cos(theta[i]),
+                ]
+            )
+
+            tensor_vis[i, j] = (
+                np.dot(
+                    np.dot(
+                        xyz.T, np.array(rot_matrix) @ tensor @ np.array(rot_matrix).T
+                    ),
+                    xyz,
+                )
+                * xyz.T
+                + coords
+            )
+
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
+    ax.set_facecolor("none")
+    ax.plot_surface(
+        tensor_vis[:, :, 0],
+        tensor_vis[:, :, 1],
+        tensor_vis[:, :, 2],
+        color=colour,
+        edgecolor="none",
+    )
+    return tensor_vis
