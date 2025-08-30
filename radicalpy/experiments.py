@@ -197,19 +197,20 @@ def magnetic_field_loop(
 
 
 def mary_lfe_hfe(
-    init_state: State,
+    obs_state: State,
     B: np.ndarray,
     product_probability_seq: np.ndarray,
     dt: float,
     k: float,
+    c: float = 0.0,
 ) -> (np.ndarray, np.ndarray, np.ndarray):
     """Calculate MARY, LFE, HFE."""
     MARY = np.sum(product_probability_seq, axis=1) * dt * k
     idx = int(len(MARY) / 2) if B[0] != 0 else 0
-    minmax = max if init_state == State.SINGLET else min
-    HFE = (MARY[-1] - MARY[idx]) / MARY[idx] * 100
-    LFE = (minmax(MARY) - MARY[idx]) / MARY[idx] * 100
-    MARY = (MARY - MARY[idx]) / MARY[idx] * 100
+    minmax = min if obs_state == State.SINGLET else max
+    HFE = (MARY[-1] - MARY[idx]) / (MARY[idx] + c) * 100
+    LFE = (minmax(MARY) - MARY[idx]) / (MARY[idx] + c) * 100
+    MARY = (MARY - MARY[idx]) / (MARY[idx] + c) * 100
     return MARY, LFE, HFE
 
 
@@ -366,12 +367,12 @@ def omfe(
     relaxations: list[HilbertIncoherentProcessBase] = [],
     hfc_anisotropy: bool = False,
 ) -> dict:
-    # H = sim.zeeman_hamiltonian(B0=B1, B_axis=B1_axis).astype(np.complex128)
-    H = (
-        B1
-        * sim.radicals[0].gamma_mT
-        * (sim.spin_operator(0, B1_axis) + sim.spin_operator(1, B1_axis))
-    ).astype(np.complex128)
+    H = sim.zeeman_hamiltonian(B0=B1, B_axis=B1_axis).astype(np.complex128)
+    # H = (
+    #     B1
+    #     * sim.radicals[0].gamma_mT
+    #     * (sim.spin_operator(0, B1_axis) + sim.spin_operator(1, B1_axis))
+    # ).astype(np.complex128)
     H += sim.dipolar_hamiltonian(D=D)
     H += sim.exchange_hamiltonian(J=J)
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
