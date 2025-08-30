@@ -11,19 +11,19 @@ from radicalpy.utils import is_fast_run
 
 
 def main(Bmin=0, tmax=3e-6, dt=10e-9):
-    radical1 = rp.simulation.Molecule.fromisotopes(isotopes=["1H"], hfcs=[2.3])
+    radical1 = rp.simulation.Molecule.fromisotopes(isotopes=["1H"], hfcs=[0.8])
     trp = rp.simulation.Molecule.fromdb("tryptophan_cation", [])  # , "Hbeta1"])
     sim = rp.simulation.HilbertSimulation([radical1, trp])
 
     # gamma = sim.radicals[0].gamma_mT  # rad / s / mT
     a = sim.nuclei[0].hfc.isotropic  # mT
     time = np.arange(0, tmax, dt)
-    dB = a / 20
-    B1 = a / 16
+    dB = 0.05
+    B1 = 0.3
     Bmax = rp.utils.MHz_to_mT(100)
     print(Bmax)
     B1_freq = np.arange(Bmin, Bmax, dB)
-    k = 1 / (a / 80)  # 2.8e6
+    k = 2.8e6
 
     results = omfe(
         sim,
@@ -34,6 +34,8 @@ def main(Bmin=0, tmax=3e-6, dt=10e-9):
         J=0,
         B1=B1,
         B1_freq=B1_freq,
+        B1_axis="x",
+        B1_freq_axis="z",
         kinetics=[rp.kinetics.Exponential(k)],
     )
     # MARY = results["MARY"]
@@ -51,7 +53,7 @@ def main(Bmin=0, tmax=3e-6, dt=10e-9):
         linewidth=2,
     )
 
-    plt.xlabel("$\omega$ / a")
+    plt.xlabel("$\omega_{rf}$ / a")
     plt.ylabel("Singlet Yield")
     # plt.title("")
     # plt.legend([r"Simulation", r"Fit"])
