@@ -579,8 +579,8 @@ def k_constant(r: float | np.ndarray, gamma: float) -> float | np.ndarray:
        https://journals.aps.org/pr/abstract/10.1103/PhysRev.73.679
 
     """
-    mu0 = rp.shared.constants.mu_0
-    hbar = rp.shared.constants.hbar
+    mu0 = C.mu_0
+    hbar = C.hbar
     return ((3 * mu0**2) / (160 * np.pi**2)) * ((hbar**2 * gamma**4) / r**6)
 
 
@@ -614,61 +614,34 @@ def k_electron_transfer(
     )
 
 
-def k_excitation_extinction_coefficient(
-    power: float,
-    wavelength: float,
-    volume: float,
-    pathlength: float,
-    epsilon: float,
-) -> float:
-    """Groundstate excitation rate using extinction coefficient.
-
-    Args:
-            power (float): The excitation laser power (W).
-            wavelength (float): The excitation wavelength (m).
-            volume (float): The excitation beam volume (m^3).
-            pathlength (float): The path length of the sample cell
-                (m).
-            epsilon (float): The extinction coefficient of the
-                molecule (m^2/mol).
-
-    Returns:
-            float: The excitation rate (1/s).
-    """
-    nu = C.c / wavelength  # Frequency of excitation beam (1/s)
-    I0 = power / (C.h * nu * C.N_A * volume)  # Initial intensity (I0)
-    return I0 * np.log(10) * epsilon * pathlength
-
-
-def k_excitation_photon_flux(
-    power: float,
+def k_excitation(
     wavelength: float,
     beam_radius: float,
-    pathlength: float,
     absorbance: float,
     concentration: float,
+    laser_power: float,
+    path_length: float,
 ) -> float:
-    """Groundstate excitation rate using photon flux.
+    """Groundstate excitation rate.
 
     Args:
-            power (float): The excitation laser power (W).
             wavelength (float): The excitation wavelength (m).
             beam_radius (float): Radius of the beam spot (m).
-            pathlength (float): The path length of the sample cell
-                (m).
             absorbance (float): Absorbance of the sample (OD).
             concentration (float): Concentration of the sample (mol/m^3).
+            laser_power (float): The excitation laser power (W).
+            pathlength (float): The path length of the sample cell
+                (m).
+
 
     Returns:
             float: The excitation rate (1/s).
     """
-    photon_energy = (C.h * C.c) / wavelength  # energy of one photon (J)
-    beam_spot_area = np.pi * beam_radius**2  # beam spot area (m^2)
-    number_density = concentration * C.N_A  # number density of the sample (m^-3)
-    absorbance_cross_section = absorbance / (
-        number_density * pathlength
-    )  # absorbance cross section (m^2)
-    photon_flux = power / (beam_spot_area * photon_energy)  # photon flux (m^2 / s)
+    photon_energy = (C.h * C.c) / wavelength  # J
+    beam_spot_radius = np.pi * beam_radius**2  # m
+    number_density = concentration * C.N_A  # m^-3
+    absorbance_cross_section = absorbance / (number_density * path_length)
+    photon_flux = laser_power / (beam_spot_radius * photon_energy)
     return photon_flux * absorbance_cross_section
 
 
