@@ -421,7 +421,7 @@ def oop_eseem(tau: float | np.ndarray, J: float, D: float, T1: float=np.inf, n_q
         n_quad (int): Number of Gauss–Legendre nodes (accuracy increases with n).
 
     Returns:
-        S (np.ndarray): Simulated out OOP-ESEEM spectrum.
+        S (np.ndarray): OOP-ESEEM spectrum.
     """
     tau = np.atleast_1d(tau).astype(float)
 
