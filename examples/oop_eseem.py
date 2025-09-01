@@ -6,7 +6,7 @@ import numpy as np
 from radicalpy.experiments import oop_eseem
 from radicalpy.utils import is_fast_run
 
-# OOP-ESEEM simualtion for ClCry4a WT and W369F
+# OOP-ESEEM simulation for ClCry4a WT and W369F
 # Gravell et al., JACS, 2025, 147, 28, 24286–24298
 
 def main(tmin=200e-9, tmax=2e-6, timesteps=800):
@@ -42,6 +42,6 @@ def main(tmin=200e-9, tmax=2e-6, timesteps=800):
 
 if __name__ == "__main__":
     if is_fast_run():
-        main(Bmax=10, Bmin=0, dB=2, tmax=1e-6, dt=10e-8)
+        main(tmin=200e-9, tmax=2e-6, timesteps=200)
     else:
         main()
