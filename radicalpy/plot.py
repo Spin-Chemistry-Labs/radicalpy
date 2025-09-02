@@ -10,6 +10,20 @@ from .simulation import HilbertSimulation, State
 from .utils import spherical_to_cartesian
 
 
+ELEMENT_COLORS = {
+    "H": "lightcoral",
+    "C": "black",
+    "N": "blue",
+    "O": "red",
+    "F": "green",
+    "Cl": "green",
+    "Br": "brown",
+    "I": "purple",
+    "S": "gold",
+    "P": "orange",
+}
+
+
 def anisotropy_surface(theta, phi, Y):
     # TODO(vatai): clean up
     PH, TH = np.meshgrid(phi, theta)
@@ -266,6 +280,29 @@ def plot_general(
     plt.gcf().set_size_inches(10, 5)
 
 
+def plot_molecule(
+    ax, labels, elements, coords, bonds, show_labels=True, show_atoms=False
+):
+    colors = [ELEMENT_COLORS.get(e, "gray") for e in elements]
+    X, Y, Z = coords[:, 0], coords[:, 1], coords[:, 2]
+    if show_atoms:
+        ax.scatter(X, Y, Z, s=100, c=colors, depthshade=True)
+    if show_labels:
+        for lab, x, y, z in zip(labels, X, Y, Z):
+            ax.text(x + 0.4, y + 0.4, z + 0.4, lab, fontsize=10)
+    for i, j in bonds:
+        ax.plot([X[i], X[j]], [Y[i], Y[j]], [Z[i], Z[j]], "k-", linewidth=4)
+    set_equal_aspect(ax, X, Y, Z)
+
+
+def set_equal_aspect(ax, X, Y, Z):
+    rng = np.array([X.max() - X.min(), Y.max() - Y.min(), Z.max() - Z.min()]).max()
+    xb = yb = zb = 0.5 * rng
+    ax.set_xlim(X.mean() - xb, X.mean() + xb)
+    ax.set_ylim(Y.mean() - yb, Y.mean() + yb)
+    ax.set_zlim(Z.mean() - zb, Z.mean() + zb)
+
+
 def spin_state_labels(sim: HilbertSimulation):
     if len(sim.radicals) != 2:
         raise ValueError(
@@ -297,7 +334,7 @@ def _format_label(t):
     return f"$\\vert {t} \\rangle$"
 
 
-def visualise_tensor(tensor, rot_matrix, coords, colour):
+def visualise_tensor(ax, tensor, rot_matrix, coords, colour):
 
     resolution = 30
     theta = np.linspace(0, np.pi, resolution)
@@ -327,9 +364,6 @@ def visualise_tensor(tensor, rot_matrix, coords, colour):
                 + coords
             )
 
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="3d")
-    ax.set_facecolor("none")
     ax.plot_surface(
         tensor_vis[:, :, 0],
         tensor_vis[:, :, 1],
