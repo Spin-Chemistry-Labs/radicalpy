@@ -512,11 +512,22 @@ def read_orca_hyperfine(
     return indices, isotopes, hfc_matrices
 
 
+def read_lines_utf8_or_utf16le(path: Path) -> list[str]:
+    # Try UTF-8 first (with BOM support via -sig)
+    # ORCA in Windows may have utf-16le
+    for enc in ("utf-8-sig", "utf-16le"):
+        try:
+            with open(path, "r", encoding=enc, newline="") as f:
+                return f.readlines()
+        except UnicodeDecodeError:
+            continue
+    raise UnicodeError("File is neither valid UTF-8 nor UTF-16LE.")
+
+
 def _hyperfine_from_orca6_out(
     path: Path,
 ) -> tuple[list[int], list[str], list[np.ndarray]]:
-    with open(path, "r") as file:
-        lines = file.readlines()
+    lines = read_lines_utf8_or_utf16le(path)
 
     is_epr_block = False
     is_hfc_matrix_block = False
@@ -609,8 +620,7 @@ def _hyperfine_from_orca6_out(
 def _hyperfine_from_orca6_property_txt(
     path: Path,
 ) -> tuple[list[int], list[str], list[np.ndarray]]:
-    with open(path, "r") as file:
-        lines = file.readlines()
+    lines = read_lines_utf8_or_utf16le(path)
     is_scf_a_tensor_block = False
     indices = []
     isotopes = []
