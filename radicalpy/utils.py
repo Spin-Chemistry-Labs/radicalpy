@@ -13,9 +13,23 @@ import numpy as np
 from scipy.fftpack import fft, ifft, ifftshift
 from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
 from .shared import constants as C
 
+# Covalent radii (Å) for many common elements
+COVALENT_RADII = {
+    "H": 0.31, "He": 0.28,
+    "Li": 1.28, "Be": 0.96, "B": 0.84, "C": 0.76, "N": 0.71, "O": 0.66, "F": 0.57, "Ne": 0.58,
+    "Na": 1.66, "Mg": 1.41, "Al": 1.21, "Si": 1.11, "P": 1.07, "S": 1.05, "Cl": 1.02, "Ar": 1.06,
+    "K": 2.03, "Ca": 1.76, "Sc": 1.70, "Ti": 1.60, "V": 1.53, "Cr": 1.39, "Mn": 1.39, "Fe": 1.32,
+    "Co": 1.26, "Ni": 1.24, "Cu": 1.32, "Zn": 1.22, "Ga": 1.22, "Ge": 1.20, "As": 1.19,
+    "Se": 1.20, "Br": 1.20, "Kr": 1.16,
+    "Rb": 2.20, "Sr": 1.95, "Y": 1.90, "Zr": 1.75, "Nb": 1.64, "Mo": 1.54, "Tc": 1.47,
+    "Ru": 1.46, "Rh": 1.42, "Pd": 1.39, "Ag": 1.45, "Cd": 1.44,
+    "In": 1.42, "Sn": 1.39, "Sb": 1.39, "Te": 1.38, "I": 1.39, "Xe": 1.40
+}
 
 def is_fast_run():
     """Is the `--fast` parameter set at execution.
@@ -310,6 +324,20 @@ def get_rotation_matrix_euler_angles(A, B):
     return R, alpha, beta, gamma
 
 
+def infer_bonds(elements, coords, scale=1.20, max_dist=2.0):
+    bonds = []
+    n = len(elements)
+    for i in range(n):
+        ri = COVALENT_RADII.get(elements[i], 0.77)
+        for j in range(i+1, n):
+            rj = COVALENT_RADII.get(elements[j], 0.77)
+            cutoff = scale * (ri + rj)
+            d = float(np.linalg.norm(coords[i] - coords[j]))
+            if d <= min(cutoff, max_dist):
+                bonds.append((i, j))
+    return bonds
+
+
 def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
     """Lorentzian MARY spectral shape.
 
@@ -339,6 +367,22 @@ def modulated_signal(timeconstant: np.ndarray, theta: float, frequency: float):
             np.ndarray: The modulated signal.
     """
     return np.cos(frequency * timeconstant * (2 * np.pi) + theta)
+
+
+def mol_to_plot_arrays(mol):
+    """Return labels, elements, coords[N,3], bonds[(i,j)] from an RDKit Mol with a conformer."""
+    conf = mol.GetConformer()
+    n = mol.GetNumAtoms()
+    coords = np.zeros((n, 3), dtype=float)
+    elements, labels = [], []
+    for i, atom in enumerate(mol.GetAtoms()):
+        pos = conf.GetAtomPosition(i)
+        coords[i] = [pos.x, pos.y, pos.z]
+        el = atom.GetSymbol()
+        elements.append(el)
+        labels.append(f"{el}{i:02d}")
+    bonds = [(b.GetBeginAtomIdx(), b.GetEndAtomIdx()) for b in mol.GetBonds()]
+    return labels, elements, coords, bonds
 
 
 def mT_to_Gauss(mT: float) -> float:
@@ -375,6 +419,87 @@ def mT_to_angular_frequency(mT: float) -> float:
             float: The magnetic flux density converted to angular frequency (rad/s/T).
     """
     return mT * (C.mu_B / C.hbar * C.g_e / 1e9)
+
+
+def parse_pdb(path, use_rdkit_bonds=False, label_scheme="atom"):
+    mol = Chem.MolFromPDBFile(path, removeHs=False)
+    if mol.GetNumConformers() == 0:
+        AllChem.EmbedMolecule(mol, AllChem.ETKDGv3())
+    conf = mol.GetConformer()
+    n = mol.GetNumAtoms()
+    coords = np.zeros((n, 3), dtype=float)
+    elements, labels = [], []
+    for i, atom in enumerate(mol.GetAtoms()):
+        pos = conf.GetAtomPosition(i)
+        coords[i] = [pos.x, pos.y, pos.z]
+        elements.append(atom.GetSymbol())
+        labels.append(pdb_label(atom, scheme=label_scheme))
+    bonds = []
+    if use_rdkit_bonds:
+        bonds = [(b.GetBeginAtomIdx(), b.GetEndAtomIdx()) for b in mol.GetBonds()]
+    return labels, elements, coords, bonds
+
+
+def parse_label_xyz_txt(path):
+    labels, coords = [], []
+    with open(path, "r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) != 4:
+                raise ValueError(f"Bad line in {path!r}: {line}")
+            labels.append(parts[0])
+            coords.append([float(parts[1]), float(parts[2]), float(parts[3])])
+    coords = np.array(coords, dtype=float)
+    elements = []
+    for lab in labels:
+        prefix = "".join(ch for ch in lab if ch.isalpha()) or lab[0]
+        elements.append(prefix if prefix in COVALENT_RADII else prefix[0])
+    return labels, elements, coords
+
+
+def parse_xyz(path):
+    with open(path, "r", encoding="utf-8") as f:
+        lines = [ln.rstrip() for ln in f]
+    if len(lines) < 3:
+        raise ValueError("XYZ file too short.")
+    n = int(lines[0].split()[0])
+    atom_lines = lines[2:2+n]
+    if len(atom_lines) != n:
+        raise ValueError(f"Expected {n} atom lines, got {len(atom_lines)}.")
+    elements, coords = [], []
+    for ln in atom_lines:
+        parts = ln.split()
+        el, x, y, z = parts[0], *map(float, parts[1:4])
+        elements.append(el)
+        coords.append([x, y, z])
+    coords = np.array(coords, dtype=float)
+    labels = [f"{el}{i:02d}" for i, el in enumerate(elements)]
+    return labels, elements, coords
+
+
+def pdb_label(atom, scheme="chain_res_atom"):
+    info = atom.GetPDBResidueInfo()
+    symbol = atom.GetSymbol()
+    if info is None:
+        return symbol
+    name = (info.GetName() or "").strip()
+    resn = (info.GetResidueName() or "").strip()
+    resi = info.GetResidueNumber()
+    chain = (info.GetChainId() or "").strip()
+    serial = info.GetSerialNumber()
+    res_tag = f"{resn}{resi}" if resn or resi else ""
+    if scheme == "atom":
+        return name or symbol
+    elif scheme == "res_atom":
+        return f"{res_tag}:{name}" if res_tag else (name or symbol)
+    elif scheme == "atom_serial":
+        return f"{name}({serial})" if name else f"{symbol}({serial})"
+    else:  # chain_res_atom
+        left = f"{chain}:{res_tag}" if chain and res_tag else (res_tag or chain)
+        return f"{left}:{name}" if left else (name or symbol)
 
 
 def read_orca_hyperfine(
@@ -805,6 +930,35 @@ def rotate_axes(A, x, y, z):
     return x, y, z
 
 
+def smiles_to_3d(smiles: str, add_h: bool = True, opt: str = "mmff"):
+    """Create a 3D-embedded RDKit Mol from SMILES (ETKDG + optional MMFF/UFF)."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None
+    if add_h:
+        mol = Chem.AddHs(mol)
+    params = AllChem.ETKDGv3()
+    params.randomSeed = 0xF00D
+    status = AllChem.EmbedMolecule(mol, params)
+    if status != 0:
+        # Retry with more attempts
+        params.maxAttempts = 2000
+        status = AllChem.EmbedMolecule(mol, params)
+        if status != 0:
+            return None
+    if opt.lower() == "mmff":
+        try:
+            AllChem.MMFFOptimizeMolecule(mol)
+        except Exception:
+            pass
+    elif opt.lower() == "uff":
+        try:
+            AllChem.UFFOptimizeMolecule(mol)
+        except Exception:
+            pass
+    return mol
+
+
 def spectral_density(omega: float, tau_c: float) -> float:
     """Frequency at which the motion of the particle exists.
 
@@ -887,6 +1041,34 @@ def spherical_to_cartesian(
             np.cos(theta),
         ]
     ).T
+
+
+def write_pdb(mol, path):
+    block = Chem.MolToPDBBlock(mol)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(block)
+    print(f"Saved PDB to {path}")
+
+
+def write_sdf(mol, path):
+    """Append the current conformer as an SDF record (retains bonds, charges, etc.)."""
+    writer = Chem.SDWriter(path)
+    writer.write(mol)
+    writer.flush()
+    writer.close()
+    print(f"Saved SDF to {path}")
+
+
+def write_xyz(mol, path):
+    conf = mol.GetConformer()
+    n = mol.GetNumAtoms()
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"{n}\nGenerated by plot_smiles.py\n")
+        for atom in mol.GetAtoms():
+            i = atom.GetIdx()
+            pos = conf.GetAtomPosition(i)
+            f.write(f"{atom.GetSymbol()} {pos.x:.6f} {pos.y:.6f} {pos.z:.6f}\n")
+    print(f"Saved XYZ to {path}")
 
 
 def yield_anisotropy(
