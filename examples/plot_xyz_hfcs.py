@@ -8,28 +8,18 @@ import radicalpy as rp
 from radicalpy.plot import plot_molecule, visualise_tensor
 from radicalpy.utils import (
     define_xyz,
-    mol_to_plot_arrays,
-    smiles_to_3d,
-    write_pdb,
-    write_sdf,
-    write_xyz,
+    infer_bonds,
+    parse_xyz,
 )
 from radicalpy.utils import is_fast_run
 
-# Import SMILES and plot 3D structure with HFCs from RadicalPy database
+# Import xyz file and plot 3D structure with HFCs from RadicalPy database
 
 
 def main():
-    # SMILES for FMN
-    smiles = (
-        "CC1=CC2=C(C=C1C)N(C3=NC(=O)NC(=O)C3=N2)C[C@@H]([C@@H]([C@@H](COP(=O)(O)O)O)O)O"
-    )
-
-    # Generate RDKit molecule with 3D coords
-    mol = smiles_to_3d(smiles, add_h=True)
-
-    # Extract arrays for plotting
-    labels, elements, coords, bonds = mol_to_plot_arrays(mol)
+    # xyz for FMN
+    labels, elements, coords = parse_xyz("./data/FMN.xyz")
+    bonds = infer_bonds(elements, coords)
 
     # Isolate key atomic positions
     (
@@ -118,7 +108,7 @@ def main():
     visualise_tensor(ax, H30hfc, rot, H30, "lightcoral")
     visualise_tensor(ax, H31hfc, rot, H31, "lightcoral")
     plot_molecule(
-        ax, labels, elements, coords, bonds, show_labels=True, show_atoms=False
+        ax, labels, elements, coords, bonds, show_labels=False, show_atoms=False
     )
     elev = 20
     azim = 30
@@ -128,11 +118,6 @@ def main():
     # path = __file__[:-3] + f"_{1}.png"
     # plt.savefig(path)
     plt.show()
-
-    # Export to files
-    # write_xyz(mol, "FMN.xyz")
-    # write_pdb(mol, "FMN.pdb")
-    # write_sdf(mol, "FMN.sdf")
 
 
 if __name__ == "__main__":

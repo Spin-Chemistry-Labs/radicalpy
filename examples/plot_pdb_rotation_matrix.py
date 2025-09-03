@@ -44,37 +44,13 @@ def main():
 
     # Define xyz for FAD
     fx, fy, fz = define_xyz(n5, n10, c4x, c9a, c10, c5x)
-    # print(fx)
-    # print(fy)
-    # print(fz)
 
     # Define xyz for Trp
     c = (np.array(cg) + np.array(cd2)) * 0.5
     wx, wy, wz = define_xyz(ne1, c, ne1, ce3, cd1, ch2)
-    # print(wx)
-    # print(-wy)
-    # print(-wz)
 
     # Normalise FAD to the centre
     rf = [fx, fy, fz]
-    fadx, fady, fadz = rotate_axes(rf, fx, fy, fz)
-    # print(np.round(fadx))
-    # print(np.round(fady))
-    # print(np.round(fadz))
-
-    # Rotate Trp to the centre
-    trpx, trpy, trpz = rotate_axes(rf, wx, wy, wz)
-    # print(trpx)
-    # print(trpy)
-    # print(trpz)
-
-    # Find the angle between each plane of FAD and Trp
-    x = get_angle_between_plane(fadx, trpx)
-    y = get_angle_between_plane(fady, trpy)
-    z = get_angle_between_plane(fadz, trpz)
-    # print(x)
-    # print(y)
-    # print(z)
 
     # Calculate the rotation matrix and euler angles
     w = [wx, -wy, -wz]

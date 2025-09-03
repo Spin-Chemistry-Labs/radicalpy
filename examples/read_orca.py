@@ -2,7 +2,7 @@ import radicalpy as rp
 
 print("Read from .out file")
 indices, isotopes, hfc_matrices = rp.utils.read_orca_hyperfine(
-    "./examples/data/NH2_A.out"
+    "./data/NH2_A.out"
 )
 nuclei = [
     rp.data.Nucleus.fromisotope(isotope, hfc_matrix.tolist())
@@ -14,7 +14,7 @@ print(molecule)
 
 print("\nRead from .property.txt file")
 indices, isotopes, hfc_matrices = rp.utils.read_orca_hyperfine(
-    "./examples/data/NH2_A.property.txt"
+    "./data/NH2_A.property.txt"
 )
 nuclei = [
     rp.data.Nucleus.fromisotope(isotope, hfc_matrix.tolist())
