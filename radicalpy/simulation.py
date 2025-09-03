@@ -12,10 +12,12 @@ from tqdm import tqdm
 
 from . import utils
 from .data import Molecule
+from .shared import constants as C
 
 
 class State(enum.Enum):
     EQUILIBRIUM = "Eq"
+    EPR = "EPR"
     SINGLET = "S"
     TRIPLET = "T"
     TRIPLET_ZERO = "T_0"
@@ -232,13 +234,14 @@ class HilbertSimulation:
             )
         )
 
-    def projection_operator(self, state: State):
+    def projection_operator(self, state: State, T: float = 298):
         """Construct the projection operator corresponding to a `state`.
 
         Args:
 
             state (State): The target state which is projected out of
                 the density matrix.
+            T (float): Temperature for the EQUILIBRIUM projection operator (K).
 
         Returns:
             np.ndarray:
@@ -263,8 +266,9 @@ class HilbertSimulation:
             State.TRIPLET_ZERO: (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz,
             State.TRIPLET_PLUS_MINUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
             + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
-            State.EQUILIBRIUM: 1.05459e-34 / (1.38e-23 * 298),
+            State.EQUILIBRIUM: C.hbar / (C.k_B * T),
             State.TP_SINGLET: self.tp_singlet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.EPR: -(SAy + SBy),
         }
 
         return result[state]

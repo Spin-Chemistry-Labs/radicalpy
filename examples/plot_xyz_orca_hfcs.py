@@ -10,11 +10,11 @@ from radicalpy.utils import (
     define_xyz,
     infer_bonds,
     parse_xyz,
+    read_orca_hyperfine,
 )
 from radicalpy.utils import is_fast_run
 
-# Import xyz file and plot 3D structure with HFCs from RadicalPy database
-
+# Import xyz file and plot 3D structure with HFCs from ORCA DFT calculation
 
 def main():
     # xyz for FMN
@@ -35,7 +35,7 @@ def main():
     rot = [x, y, z]  # Rotation matrix
 
     # Load HFCs from ORCA .out
-    indices, isotopes, hfc_matrices = rp.utils.read_orca_hyperfine(
+    indices, isotopes, hfc_matrices = read_orca_hyperfine(
         "./data/NH2_A.out"
     )
     N00hfc = hfc_matrices[0]

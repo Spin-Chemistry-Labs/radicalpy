@@ -12,8 +12,8 @@ def main():
     Py_h = rp.simulation.Molecule.fromisotopes(isotopes=["1H"], hfcs=[0.073])
     DMA_h = rp.simulation.Molecule.fromisotopes(isotopes=["1H"], hfcs=[0.181])
 
-    Py_d = rp.simulation.Molecule.fromisotopes(isotopes=["2H"], hfcs=[0.481])
-    DMA_d = rp.simulation.Molecule.fromisotopes(isotopes=["2H"], hfcs=[1.18])
+    Py_d = rp.simulation.Molecule.fromisotopes(isotopes=["2H"], hfcs=[0.073])
+    DMA_d = rp.simulation.Molecule.fromisotopes(isotopes=["2H"], hfcs=[0.181])
 
     sim = rp.simulation.HilbertSimulation([Py_h, DMA_h])
     sim2 = rp.simulation.HilbertSimulation([Py_d, DMA_d])

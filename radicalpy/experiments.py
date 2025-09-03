@@ -162,6 +162,61 @@ def anisotropy(
     )
 
 
+def epr(
+    sim: HilbertSimulation,
+    init_state: State,
+    obs_state: State,
+    time: np.ndarray,
+    D: float,
+    J: float,
+    B0: np.ndarray,
+    B1: float,
+    B1_freq: float,
+    B0_axis: str = "z",
+    B1_axis: str = "x",
+    kinetics: list[HilbertIncoherentProcessBase] = [],
+    relaxations: list[HilbertIncoherentProcessBase] = [],
+    hfc_anisotropy: bool = False,
+) -> dict:
+    H = sim.zeeman_hamiltonian(B0=-B1_freq, B_axis=B0_axis).astype(np.complex128)
+    H += sim.zeeman_hamiltonian(B0=B1, B_axis=B1_axis).astype(np.complex128)
+    H += sim.dipolar_hamiltonian(D=D)
+    H += sim.exchange_hamiltonian(J=J)
+    H += sim.hyperfine_hamiltonian(hfc_anisotropy)
+    H = sim.convert(H)
+
+    sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
+    rhos = magnetic_field_loop(sim, init_state, time, H, B0, B_axis=B0_axis)
+    product_probabilities = sim.product_probability(obs_state, rhos)
+
+    sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)
+    k = kinetics[0].rate_constant if kinetics else 1.0
+    product_yields, product_yield_sums = sim.product_yield(
+        product_probabilities, time, k
+    )
+
+    dt = time[1] - time[0]
+    MARY, LFE, HFE = mary_lfe_hfe(obs_state, B0, product_probabilities, dt, k)
+    rhos = sim._square_liouville_rhos(rhos)
+
+    return dict(
+        time=time,
+        B0=B0,
+        B0_axis=B0_axis,
+        B1=B1,
+        B1_axis=B1_axis,
+        B1_freq=B1_freq,
+        B1_freq_axis=B0_axis,
+        rhos=rhos,
+        time_evolutions=product_probabilities,
+        product_yields=product_yields,
+        product_yield_sums=product_yield_sums,
+        MARY=MARY,
+        LFE=LFE,
+        HFE=HFE,
+    )
+
+
 def magnetic_field_loop(
     sim: HilbertSimulation,
     init_state: State,
@@ -207,7 +262,7 @@ def mary_lfe_hfe(
     """Calculate MARY, LFE, HFE."""
     MARY = np.sum(product_probability_seq, axis=1) * dt * k
     idx = int(len(MARY) / 2) if B[0] != 0 else 0
-    minmax = min if obs_state == State.SINGLET else max
+    minmax = max if obs_state == State.SINGLET else min
     HFE = (MARY[-1] - MARY[idx]) / (MARY[idx] + c) * 100
     LFE = (minmax(MARY) - MARY[idx]) / (MARY[idx] + c) * 100
     MARY = (MARY - MARY[idx]) / (MARY[idx] + c) * 100
@@ -243,7 +298,7 @@ def mary(
     )
 
     dt = time[1] - time[0]
-    MARY, LFE, HFE = mary_lfe_hfe(init_state, B, product_probabilities, dt, k)
+    MARY, LFE, HFE = mary_lfe_hfe(obs_state, B, product_probabilities, dt, k)
     rhos = sim._square_liouville_rhos(rhos)
 
     return dict(
@@ -331,7 +386,7 @@ def odmr(
     )
 
     dt = time[1] - time[0]
-    MARY, LFE, HFE = mary_lfe_hfe(init_state, B1_freq, product_probabilities, dt, k)
+    MARY, LFE, HFE = mary_lfe_hfe(obs_state, B1_freq, product_probabilities, dt, k)
     rhos = sim._square_liouville_rhos(rhos)
 
     return dict(
@@ -384,7 +439,7 @@ def omfe(
     )
 
     dt = time[1] - time[0]
-    MARY, LFE, HFE = mary_lfe_hfe(init_state, B1_freq, product_probabilities, dt, k)
+    MARY, LFE, HFE = mary_lfe_hfe(obs_state, B1_freq, product_probabilities, dt, k)
     rhos = sim._square_liouville_rhos(rhos)
 
     return dict(
@@ -520,7 +575,7 @@ def rydmr(
     )
 
     dt = time[1] - time[0]
-    MARY, LFE, HFE = mary_lfe_hfe(init_state, B0, product_probabilities, dt, k)
+    MARY, LFE, HFE = mary_lfe_hfe(obs_state, B0, product_probabilities, dt, k)
     rhos = sim._square_liouville_rhos(rhos)
 
     return dict(
