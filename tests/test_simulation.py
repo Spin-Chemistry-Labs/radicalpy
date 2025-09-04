@@ -326,9 +326,9 @@ class HilbertTests(unittest.TestCase):
             if init_state in self.skip_states:
                 continue
             for obs_state in rp.simulation.State:
-                if obs_state == rp.simulation.State.EQUILIBRIUM:
+                if obs_state in self.skip_states:
                     continue
-                if obs_state == rp.simulation.State.TP_SINGLET:
+                if obs_state == rp.simulation.State.EQUILIBRIUM:
                     continue
                 evol_true = radpy.TimeEvolution(
                     len(self.sim.particles),
