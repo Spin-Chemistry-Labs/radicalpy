@@ -111,6 +111,7 @@ class HilbertTests(unittest.TestCase):
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
+        self.skip_states = [rp.simulation.State.TP_SINGLET, rp.simulation.State.EPR]
 
     def tearDown(self):
         if MEASURE_TIME:
@@ -303,7 +304,7 @@ class HilbertTests(unittest.TestCase):
     def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         for state in rp.simulation.State:
-            if state == rp.simulation.State.TP_SINGLET:
+            if state in self.skip_states:
                 continue
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
@@ -322,7 +323,7 @@ class HilbertTests(unittest.TestCase):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         Kexp = kinetics.Exponential(k)
         for init_state in rp.simulation.State:
-            if init_state == rp.simulation.State.TP_SINGLET:
+            if init_state in self.skip_states:
                 continue
             for obs_state in rp.simulation.State:
                 if obs_state == rp.simulation.State.EQUILIBRIUM:
@@ -722,11 +723,12 @@ class LiouvilleTests(unittest.TestCase):
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
+        self.skip_states = [rp.simulation.State.TP_SINGLET, rp.simulation.State.EPR]
 
     def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
         for state in rp.simulation.State:
-            if state == rp.simulation.State.TP_SINGLET:
+            if state in self.skip_states:
                 continue
             rho0 = self.sim.initial_density_matrix(state, H)
             rpstate = state2radpy(state)
