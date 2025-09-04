@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 
-import numpy as np
-import matplotlib.pyplot as plt
 import json
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 import radicalpy as rp
-from radicalpy.plot import set_equal_aspect, plot_molecule, visualise_tensor
+from radicalpy.plot import plot_molecule, set_equal_aspect, visualise_tensor
 from radicalpy.utils import (
     define_xyz,
     parse_pdb,
@@ -17,8 +19,10 @@ from radicalpy.utils import (
 
 def main():
     # Import PDB file
-    labels, elements, coords, bonds = parse_pdb("./data/fad.pdb", use_rdkit_bonds=True, label_scheme="atom")
-    labels2, elements2, coords2, bonds2 = parse_pdb("./data/trp.pdb", use_rdkit_bonds=True, label_scheme="atom")
+    data_dir = Path(__file__).parent / "data"
+    kwargs = {"use_rdkit_bonds": True, "label_scheme": "atom"}
+    labels, elements, coords, bonds = parse_pdb(data_dir / "fad.pdb", **kwargs)
+    labels2, elements2, coords2, bonds2 = parse_pdb(data_dir / "trp.pdb", **kwargs)
 
     # Isolate key atomic positions
     N5 = coords[7]
@@ -42,7 +46,9 @@ def main():
     trpx, trpy, trpz = rotate_axes(rot, wx, wy, wz)
     rot2 = [trpx, trpy, trpz]  # Rotation matrix
 
-    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["N5", "N10"])  # , "H27", "H29"])
+    flavin = rp.simulation.Molecule.fromdb(
+        "flavin_anion", ["N5", "N10"]
+    )  # , "H27", "H29"])
     trp = rp.simulation.Molecule.fromdb("tryptophan_cation", ["N1"])  # , "Hbeta1"])
 
     N5hfc = flavin.nuclei[0].hfc.anisotropic
@@ -61,9 +67,9 @@ def main():
     plot_molecule(
         ax, labels2, elements2, coords2, bonds2, show_labels=False, show_atoms=False
     )
-    allX = np.concatenate([coords[:,0], coords2[:,0]])
-    allY = np.concatenate([coords[:,1], coords2[:,1]])
-    allZ = np.concatenate([coords[:,2], coords2[:,2]])
+    allX = np.concatenate([coords[:, 0], coords2[:, 0]])
+    allY = np.concatenate([coords[:, 1], coords2[:, 1]])
+    allZ = np.concatenate([coords[:, 2], coords2[:, 2]])
     set_equal_aspect(ax, allX, allY, allZ)
     elev = 20
     azim = 30

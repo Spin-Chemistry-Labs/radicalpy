@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 
-import numpy as np
-import matplotlib.pyplot as plt
 import json
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 import radicalpy as rp
 from radicalpy.plot import plot_molecule, visualise_tensor
@@ -28,71 +29,69 @@ def main():
     labels, elements, coords, bonds = mol_to_plot_arrays(mol)
 
     # Isolate key atomic positions
-    (
-        N5,
-        N10,
-        C4X,
-        C9A,
-        C10,
-        C5X,
-        N14,
-        N16,
-        H20,
-        H21,
-        H22,
-        H23,
-        H24,
-        H25,
-        H26,
-        H27,
-        H28,
-        H29,
-        H30,
-        H31,
-    ) = (
-        coords[17],
-        coords[8],
-        coords[16],
-        coords[4],
-        coords[9],
-        coords[3],
-        coords[10],
-        coords[13],
-        coords[35],
-        coords[32],
-        coords[33],
-        coords[31],
-        coords[34],
-        coords[36],
-        coords[37],
-        coords[38],
-        coords[39],
-        coords[40],
-        coords[41],
-        coords[42],
-    )
+    N5 = coords[17]
+    N10 = coords[8]
+    C4X = coords[16]
+    C9A = coords[4]
+    C10 = coords[9]
+    C5X = coords[3]
+    N14 = coords[10]
+    N16 = coords[13]
+    H20 = coords[35]
+    H21 = coords[32]
+    H22 = coords[33]
+    H23 = coords[31]
+    H24 = coords[34]
+    H25 = coords[36]
+    H26 = coords[37]
+    H27 = coords[38]
+    H28 = coords[39]
+    H29 = coords[40]
+    H30 = coords[41]
+    H31 = coords[42]
+
     fx, fy, fz = define_xyz(N5, N10, C4X, C9A, C10, C5X)
     rot = [fx, fy, fz]  # Rotation matrix
 
     # Load HFCs from RadicalPy database
-    with open(rp.data.get_data("molecules/flavin_anion.json"), encoding="utf-8") as f:
-        flavin_dict = json.load(f)
-    N5hfc = flavin_dict["data"]["N5"]["hfc"]
-    N10hfc = flavin_dict["data"]["N10"]["hfc"]
-    N14hfc = flavin_dict["data"]["N14"]["hfc"]
-    N16hfc = flavin_dict["data"]["N16"]["hfc"]
-    H20hfc = flavin_dict["data"]["H20"]["hfc"]
-    H21hfc = flavin_dict["data"]["H21"]["hfc"]
-    H22hfc = flavin_dict["data"]["H22"]["hfc"]
-    H23hfc = flavin_dict["data"]["H23"]["hfc"]
-    H24hfc = flavin_dict["data"]["H24"]["hfc"]
-    H25hfc = flavin_dict["data"]["H25"]["hfc"]
-    H26hfc = flavin_dict["data"]["H26"]["hfc"]
-    H27hfc = flavin_dict["data"]["H27"]["hfc"]
-    H28hfc = flavin_dict["data"]["H28"]["hfc"]
-    H29hfc = flavin_dict["data"]["H29"]["hfc"]
-    H30hfc = flavin_dict["data"]["H30"]["hfc"]
-    H31hfc = flavin_dict["data"]["H31"]["hfc"]
+    flavin = rp.data.Molecule.fromdb(
+        "flavin_anion",
+        nuclei=[
+            "N5",
+            "N10",
+            "N14",
+            "N16",
+            "H20",
+            "H21",
+            "H22",
+            "H23",
+            "H24",
+            "H25",
+            "H26",
+            "H27",
+            "H28",
+            "H29",
+            "H30",
+            "H31",
+        ],
+    )
+
+    N5hfc = flavin.nuclei[0].hfc.anisotropic
+    N10hfc = flavin.nuclei[1].hfc.anisotropic
+    N14hfc = flavin.nuclei[2].hfc.anisotropic
+    N16hfc = flavin.nuclei[3].hfc.anisotropic
+    H20hfc = flavin.nuclei[4].hfc.anisotropic
+    H21hfc = flavin.nuclei[5].hfc.anisotropic
+    H22hfc = flavin.nuclei[6].hfc.anisotropic
+    H23hfc = flavin.nuclei[7].hfc.anisotropic
+    H24hfc = flavin.nuclei[8].hfc.anisotropic
+    H25hfc = flavin.nuclei[9].hfc.anisotropic
+    H26hfc = flavin.nuclei[10].hfc.anisotropic
+    H27hfc = flavin.nuclei[11].hfc.anisotropic
+    H28hfc = flavin.nuclei[12].hfc.anisotropic
+    H29hfc = flavin.nuclei[13].hfc.anisotropic
+    H30hfc = flavin.nuclei[14].hfc.anisotropic
+    H31hfc = flavin.nuclei[15].hfc.anisotropic
 
     fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(projection="3d")

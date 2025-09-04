@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
-import numpy as np
-import matplotlib.pyplot as plt
 import json
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 import radicalpy as rp
 from radicalpy.plot import plot_molecule, visualise_tensor
@@ -15,9 +17,10 @@ from radicalpy.utils import (
 
 # Import xyz file and plot 3D structure with HFCs from ORCA DFT calculation
 
+
 def main():
     # xyz for FMN
-    labels, elements, coords = parse_xyz("./data/NH2.xyz")
+    labels, elements, coords = parse_xyz(Path(__file__).parent / "data/NH2.xyz")
     bonds = infer_bonds(elements, coords)
 
     # Isolate key atomic positions
@@ -35,7 +38,7 @@ def main():
 
     # Load HFCs from ORCA .out
     indices, isotopes, hfc_matrices = read_orca_hyperfine(
-        "./data/NH2_A.out"
+        Path(__file__).parent / "data/NH2_A.out"
     )
     N00hfc = hfc_matrices[0]
     H01hfc = hfc_matrices[1]
@@ -44,9 +47,9 @@ def main():
     fig = plt.figure(figsize=(20, 10))
     ax = fig.add_subplot(projection="3d")
     ax.set_facecolor("none")
-    visualise_tensor(ax, N00hfc/np.linalg.norm(N00hfc), rot, N00, "blue")
-    visualise_tensor(ax, H01hfc/np.linalg.norm(N00hfc), rot, H01, "lightcoral")
-    visualise_tensor(ax, H02hfc/np.linalg.norm(N00hfc), rot, H02, "lightcoral")
+    visualise_tensor(ax, N00hfc / np.linalg.norm(N00hfc), rot, N00, "blue")
+    visualise_tensor(ax, H01hfc / np.linalg.norm(N00hfc), rot, H01, "lightcoral")
+    visualise_tensor(ax, H02hfc / np.linalg.norm(N00hfc), rot, H02, "lightcoral")
     plot_molecule(
         ax, labels, elements, coords, bonds, show_labels=False, show_atoms=False
     )
