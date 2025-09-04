@@ -11,7 +11,6 @@ from radicalpy.utils import (
     infer_bonds,
     parse_xyz,
 )
-from radicalpy.utils import is_fast_run
 
 # Import xyz file and plot 3D structure with HFCs from RadicalPy database
 
@@ -121,7 +120,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if is_fast_run():
-        main()
-    else:
-        main()
+    main()

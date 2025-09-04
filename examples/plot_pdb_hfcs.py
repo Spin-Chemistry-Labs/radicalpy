@@ -11,7 +11,6 @@ from radicalpy.utils import (
     parse_pdb,
     rotate_axes,
 )
-from radicalpy.utils import is_fast_run
 
 # Import PDB and plot 3D structure with HFCs from RadicalPy database
 
@@ -77,7 +76,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if is_fast_run():
-        main()
-    else:
-        main()
+    main()

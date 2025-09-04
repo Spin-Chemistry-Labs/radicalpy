@@ -11,7 +11,6 @@ from radicalpy.utils import (
     mol_to_plot_arrays,
     smiles_to_3d,
 )
-from radicalpy.utils import is_fast_run
 
 # Import SMILES and plot 3D structure with HFCs from RadicalPy database
 
@@ -128,7 +127,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if is_fast_run():
-        main()
-    else:
-        main()
+    main()

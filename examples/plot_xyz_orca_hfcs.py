@@ -12,7 +12,6 @@ from radicalpy.utils import (
     parse_xyz,
     read_orca_hyperfine,
 )
-from radicalpy.utils import is_fast_run
 
 # Import xyz file and plot 3D structure with HFCs from ORCA DFT calculation
 
@@ -62,7 +61,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if is_fast_run():
-        main()
-    else:
-        main()
+    main()
