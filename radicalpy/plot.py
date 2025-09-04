@@ -9,7 +9,6 @@ from matplotlib.animation import FuncAnimation
 from .simulation import HilbertSimulation, State
 from .utils import spherical_to_cartesian
 
-
 ELEMENT_COLORS = {
     "H": "lightcoral",
     "C": "black",

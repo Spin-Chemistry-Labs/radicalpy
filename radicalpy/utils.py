@@ -10,11 +10,11 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+from rdkit import Chem
+from rdkit.Chem import AllChem
 from scipy.fftpack import fft, ifft, ifftshift
 from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
-from rdkit import Chem
-from rdkit.Chem import AllChem
 
 from .shared import constants as C
 

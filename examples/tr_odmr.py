@@ -6,9 +6,9 @@ import numpy as np
 import radicalpy as rp
 from radicalpy import relaxation
 from radicalpy.experiments import odmr
+from radicalpy.plot import plot_general
 from radicalpy.simulation import State
 from radicalpy.utils import is_fast_run
-from radicalpy.plot import plot_general
 
 
 def main(Bmax=28, Bmin=14, dB=0.2, tmax=3e-6, dt=10e-9):
