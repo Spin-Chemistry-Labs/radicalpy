@@ -85,14 +85,16 @@ class EstimationsTests(unittest.TestCase):
         k_et = rp.estimations.k_electron_transfer(R)
         self.assertAlmostEqual(gold, k_et)
 
-    def test_k_excitation_extinction_coefficient(self):
-        gold = 52749.44112741747
-        P = 290e-6
-        wl = 450e-9
-        V = 0.54e-15
-        l = 900e-9
-        epsilon = 12600
-        kI = rp.estimations.k_excitation_extinction_coefficient(P, wl, V, l, epsilon)
+    def test_k_excitation(self):
+        gold = 1.819408189644055
+        kI = rp.estimations.k_excitation(
+            wavelength=450e-9,
+            beam_radius=0.5e-3,
+            absorbance=0.15,
+            concentration=15.4e-3,
+            laser_power=0.39e-3,
+            path_length=1e-2,
+        )
         self.assertAlmostEqual(gold, kI)
 
     def test_k_recombination(self):
