@@ -20,40 +20,21 @@ def main():
     # Import PDB file
     labels, elements, coords, bonds = parse_pdb("./data/fad.pdb", use_rdkit_bonds=True, label_scheme="atom")
     labels2, elements2, coords2, bonds2 = parse_pdb("./data/trp.pdb", use_rdkit_bonds=True, label_scheme="atom")
-    print(labels2)
 
     # Isolate key atomic positions
-    (
-        N5,
-        N10,
-        C4X,
-        C9A,
-        C10,
-        C5X,
-    ) = (
-        coords[7],
-        coords[16],
-        coords[6],
-        coords[15],
-        coords[17],
-        coords[8],
-    )
+    N5 = coords[7]
+    N10 = coords[16]
+    C4X = coords[6]
+    C9A = coords[15]
+    C10 = coords[17]
+    C5X = coords[8]
 
-    (
-        NE1,
-        CG,
-        CE3,
-        CD1,
-        CH2,
-        CD2,
-    ) = (
-        coords2[4],
-        coords2[1],
-        coords2[6],
-        coords2[2],
-        coords2[9],
-        coords2[3],
-    )
+    NE1 = coords2[4]
+    CG = coords2[1]
+    CE3 = coords2[6]
+    CD1 = coords2[2]
+    CH2 = coords2[9]
+    CD2 = coords2[3]
 
     fx, fy, fz = define_xyz(N5, N10, C4X, C9A, C10, C5X)
     c = (np.array(CG) + np.array(CD2)) * 0.5
@@ -62,16 +43,13 @@ def main():
     trpx, trpy, trpz = rotate_axes(rot, wx, wy, wz)
     rot2 = [trpx, trpy, trpz]  # Rotation matrix
 
-    # Load HFCs from RadicalPy database
-    with open(rp.data.get_data("molecules/flavin_anion.json"), encoding="utf-8") as f:
-        flavin_dict = json.load(f)
-    N5hfc = flavin_dict["data"]["N5"]["hfc"]
-    N10hfc = flavin_dict["data"]["N10"]["hfc"]
+    flavin = rp.simulation.Molecule.fromdb("flavin_anion", ["N5", "N10"])  # , "H27", "H29"])
+    trp = rp.simulation.Molecule.fromdb("tryptophan_cation", ["N1"])  # , "Hbeta1"])
 
-    with open(rp.data.get_data("molecules/tryptophan_cation.json"), encoding="utf-8") as f:
-        trp_dict = json.load(f)
-    N1hfc = trp_dict["data"]["N1"]["hfc"]
-    
+    N5hfc = flavin.nuclei[0].hfc.anisotropic
+    N10hfc = flavin.nuclei[1].hfc.anisotropic
+    N1hfc = trp.nuclei[0].hfc.anisotropic
+
     fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(projection="3d")
     ax.set_facecolor("none")
