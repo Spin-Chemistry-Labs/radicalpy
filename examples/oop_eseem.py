@@ -9,11 +9,12 @@ from radicalpy.utils import is_fast_run
 # OOP-ESEEM simulation for ClCry4a WT and W369F
 # Gravell et al., JACS, 2025, 147, 28, 24286–24298
 
+
 def main(tmin=200e-9, tmax=2e-6, timesteps=800):
     tau = np.linspace(tmin, tmax, timesteps)
 
     # ClCry4a WT
-    J = 0.03e6 * 2 * np.pi  
+    J = 0.03e6 * 2 * np.pi
     D = -8.37e6 * 2 * np.pi
     T1 = 0.6e-6
 
@@ -33,7 +34,7 @@ def main(tmin=200e-9, tmax=2e-6, timesteps=800):
     plt.figure()
     plt.plot(tau * 1e6, S_plot)
     plt.plot(tau * 1e6, S_plot2)
-    plt.xlabel(r'$\tau$ / $\mu$s', size=14)
+    plt.xlabel(r"$\tau$ / $\mu$s", size=14)
     plt.legend([r"ClCry4a WT", r"ClCry4a W369F"])
 
     path = __file__[:-3] + f"_{1}.png"

@@ -56,19 +56,16 @@ def main(tmax=3e-6, dt=5e-9):
         kinetics=[rp.kinetics.Exponential(k)],
     )
 
-    omfe_mfe = ((results["product_yields"] - results2["product_yields"]) / results2["product_yields"]) * 100
+    omfe_mfe = (
+        (results["product_yields"] - results2["product_yields"])
+        / results2["product_yields"]
+    ) * 100
     n = 15
     colours = plt.colormaps.get_cmap("cividis").resampled(n).colors
 
     plt.figure(1)
     for i in range(0, n, 1):
-        plt.plot(
-            B1_freq / a,
-            omfe_mfe[:,i],
-            "-",
-            linewidth=3,
-            color=colours[i]
-            )
+        plt.plot(B1_freq / a, omfe_mfe[:, i], "-", linewidth=3, color=colours[i])
     plt.xlabel(r"$B_1$ / a", size=14)
     plt.ylabel(r"OMFE / %", size=14)
     plt.legend()

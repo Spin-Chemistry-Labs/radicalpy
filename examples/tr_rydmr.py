@@ -68,19 +68,16 @@ def main(Bmax=340, Bmin=330, dB=0.1, tmax=3e-6, dt=10e-9):
         ],
     )
 
-    rydmr_mfe = ((results["product_yields"] - results2["product_yields"]) / results2["product_yields"]) * 100
+    rydmr_mfe = (
+        (results["product_yields"] - results2["product_yields"])
+        / results2["product_yields"]
+    ) * 100
 
     colours = plt.colormaps.get_cmap("cividis").resampled(len(time)).colors
 
     plt.figure(1)
     for i in range(0, len(time), 1):
-        plt.plot(
-            B0,
-            rydmr_mfe[:,i],
-            "-",
-            linewidth=3,
-            color=colours[i]
-            )
+        plt.plot(B0, rydmr_mfe[:, i], "-", linewidth=3, color=colours[i])
     plt.xlabel(r"$B_0$ / mT", size=14)
     plt.ylabel(r"RYDMR / %", size=14)
     plt.legend()

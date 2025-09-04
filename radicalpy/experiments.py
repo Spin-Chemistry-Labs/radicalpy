@@ -458,7 +458,9 @@ def omfe(
     )
 
 
-def oop_eseem(tau: float | np.ndarray, J: float, D: float, T1: float=np.inf, n_quad: int=200) -> np.ndarray:
+def oop_eseem(
+    tau: float | np.ndarray, J: float, D: float, T1: float = np.inf, n_quad: int = 200
+) -> np.ndarray:
     """Out-of-phase-electron-spin echo envelope modulation (OOP-ESEEM) simulation.
     Computes S(tau) ∝ exp(-tau/T1) * ∫_0^π sin( 2 [ J - D (cos^2 θ - 1/3) ] tau ) sinθ dθ
     using Gauss–Legendre quadrature on u = cosθ ∈ [-1, 1].
@@ -485,10 +487,10 @@ def oop_eseem(tau: float | np.ndarray, J: float, D: float, T1: float=np.inf, n_q
 
     # Phase inside the sine: 2 * [ J - D (u^2 - 1/3) ] * tau
     # Broadcast over tau and u
-    phi = 2.0 * (J - D * (u**2 - 1.0/3.0))  # shape (n_quad,)
+    phi = 2.0 * (J - D * (u**2 - 1.0 / 3.0))  # shape (n_quad,)
     # integrand integrated over u: sin(phi * tau)
     # result over u for each tau: sum_w sin(phi*tau)
-    S_int = (np.sin(np.outer(tau, phi)) @ w)  # shape (len(tau),)
+    S_int = np.sin(np.outer(tau, phi)) @ w  # shape (len(tau),)
 
     # exponential decay
     decay = np.exp(-tau / T1)

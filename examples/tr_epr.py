@@ -20,7 +20,9 @@ def main(Bmax=336, Bmin=333, dB=0.01, tmax=3e-6, dt=5e-9):
     B1_freq = rp.utils.MHz_to_mT(9373)
     print(B1_freq)
     D = 0
-    J = -0.001  # (np.sum((sim.projection_operator(state=State.SINGLET) - sim.projection_operator(state=State.TRIPLET))))
+    J = (
+        -0.001
+    )  # (np.sum((sim.projection_operator(state=State.SINGLET) - sim.projection_operator(state=State.TRIPLET))))
     krec = 1e7
     kesc = 1e7
     kSTD = 0
@@ -52,13 +54,7 @@ def main(Bmax=336, Bmin=333, dB=0.01, tmax=3e-6, dt=5e-9):
 
     plt.figure(1)
     for i in range(0, len(time), 1):
-        plt.plot(
-            B0,
-            trepr_result[:,i],
-            "-",
-            linewidth=3,
-            color=colours[i]
-            )
+        plt.plot(B0, trepr_result[:, i], "-", linewidth=3, color=colours[i])
     plt.xlabel(r"$B_0$ / mT", size=14)
     plt.legend()
     plt.tick_params(labelsize=18)

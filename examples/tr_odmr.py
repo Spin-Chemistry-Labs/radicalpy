@@ -68,7 +68,10 @@ def main(Bmax=28, Bmin=14, dB=0.2, tmax=3e-6, dt=10e-9):
         ],
     )
 
-    odmr_mfe = ((results["product_yields"] - results2["product_yields"]) / results2["product_yields"]) * 100
+    odmr_mfe = (
+        (results["product_yields"] - results2["product_yields"])
+        / results2["product_yields"]
+    ) * 100
 
     colours = plt.colormaps.get_cmap("cividis").resampled(len(time)).colors
 
@@ -76,11 +79,11 @@ def main(Bmax=28, Bmin=14, dB=0.2, tmax=3e-6, dt=10e-9):
     for i in range(0, len(time), 1):
         plt.plot(
             rp.utils.mT_to_MHz(B1_freq),
-            odmr_mfe[:,i],
+            odmr_mfe[:, i],
             "-",
             linewidth=3,
-            color=colours[i]
-            )
+            color=colours[i],
+        )
     plt.xlabel(r"Frequency / MHz", size=14)
     plt.ylabel(r"ODMR / %", size=14)
     plt.legend()
