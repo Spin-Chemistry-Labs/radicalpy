@@ -10,10 +10,12 @@ from numpy.typing import NDArray
 
 from . import utils
 from .data import Molecule
+from .shared import constants as C
 
 
 class State(enum.Enum):
     EQUILIBRIUM = "Eq"
+    EPR = "EPR"
     SINGLET = "S"
     TRIPLET = "T"
     TRIPLET_ZERO = "T_0"
@@ -232,13 +234,14 @@ class HilbertSimulation:
     def get_eye(self, shape: int) -> np.ndarray:
         return np.eye(shape)
 
-    def projection_operator(self, state: State):
+    def projection_operator(self, state: State, T: float = 298):
         """Construct the projection operator corresponding to a `state`.
 
         Args:
 
             state (State): The target state which is projected out of
                 the density matrix.
+            T (float): Temperature for the EQUILIBRIUM projection operator (K).
 
         Returns:
             np.ndarray:
@@ -255,27 +258,19 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         eye = self.get_eye(SASB.shape[0])
 
-        match state:
-            case State.SINGLET:
-                return (1 / 4) * eye - SASB
-            case State.TRIPLET:
-                return (3 / 4) * eye + SASB
-            case State.TRIPLET_PLUS:
-                return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
-            case State.TRIPLET_MINUS:
-                return (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz)
-            case State.TRIPLET_ZERO:
-                return (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz
-            case State.TRIPLET_PLUS_MINUS:
-                return (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz) + (
-                    2 * SAz**2 - SAz
-                ) * (2 * SBz**2 - SBz)
-            case State.EQUILIBRIUM:
-                return 1.05459e-34 / (1.38e-23 * 298)
-            case State.TP_SINGLET:
-                return self.tp_singlet_projop(SAx, SAy, SAz, SBx, SBy, SBz)
-            case _:
-                raise ValueError(f"Unsupported state: {state}")
+        result = {
+            State.SINGLET: (1 / 4) * eye - SASB,
+            State.TRIPLET: (3 / 4) * eye + SASB,
+            State.TRIPLET_PLUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz),
+            State.TRIPLET_MINUS: (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
+            State.TRIPLET_ZERO: (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz,
+            State.TRIPLET_PLUS_MINUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
+            + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
+            State.EQUILIBRIUM: C.hbar / (C.k_B * T),
+            State.TP_SINGLET: self.tp_singlet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.EPR: -(SAy + SBy),
+        }
+        return result[state]
 
     def tp_singlet_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
         # For radical triplet pair (RTP)
