@@ -60,7 +60,7 @@ def main(tmax=3e-6, dt=5e-9):
         (results["product_yields"] - results2["product_yields"])
         / results2["product_yields"]
     ) * 100
-    n = 15
+    n = len(time)
     colours = plt.colormaps.get_cmap("cividis").resampled(n).colors
 
     plt.figure(1)
