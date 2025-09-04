@@ -33,7 +33,7 @@ def main(tmin=200e-9, tmax=2e-6, timesteps=800):
     plt.figure()
     plt.plot(tau * 1e6, S_plot)
     plt.plot(tau * 1e6, S_plot2)
-    plt.xlabel(r'$\tau$ / $\mu$s')
+    plt.xlabel(r'$\tau$ / $\mu$s', size=14)
     plt.legend([r"ClCry4a WT", r"ClCry4a W369F"])
 
     path = __file__[:-3] + f"_{1}.png"

@@ -9,3 +9,4 @@ sympy
 tqdm
 graphviz
 dot2tex
+rdkit

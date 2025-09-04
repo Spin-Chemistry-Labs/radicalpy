@@ -81,10 +81,10 @@ def main(Bmax=340, Bmin=330, dB=0.1, tmax=3e-6, dt=10e-9):
             linewidth=3,
             color=colours[i]
             )
-    plt.xlabel(r"$B_0$ / mT", size=24)
-    plt.ylabel(r"RYDMR / %", size=24)
+    plt.xlabel(r"$B_0$ / mT", size=14)
+    plt.ylabel(r"RYDMR / %", size=14)
     plt.legend()
-    plt.tick_params(labelsize=18)
+    plt.tick_params(labelsize=12)
     plt.gcf().set_size_inches(10, 5)
     plt.show()
 

@@ -81,10 +81,10 @@ def main(Bmax=28, Bmin=14, dB=0.2, tmax=3e-6, dt=10e-9):
             linewidth=3,
             color=colours[i]
             )
-    plt.xlabel(r"Frequency / MHz", size=24)
-    plt.ylabel(r"ODMR / %", size=24)
+    plt.xlabel(r"Frequency / MHz", size=14)
+    plt.ylabel(r"ODMR / %", size=14)
     plt.legend()
-    plt.tick_params(labelsize=18)
+    plt.tick_params(labelsize=12)
     plt.gcf().set_size_inches(10, 5)
     plt.show()
     # path = __file__[:-3] + f"_{1}.png"

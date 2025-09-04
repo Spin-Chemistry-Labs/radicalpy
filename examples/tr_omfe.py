@@ -69,10 +69,10 @@ def main(tmax=3e-6, dt=5e-9):
             linewidth=3,
             color=colours[i]
             )
-    plt.xlabel(r"$B_1$ / a", size=24)
-    plt.ylabel(r"OMFE / %", size=24)
+    plt.xlabel(r"$B_1$ / a", size=14)
+    plt.ylabel(r"OMFE / %", size=14)
     plt.legend()
-    plt.tick_params(labelsize=18)
+    plt.tick_params(labelsize=12)
     plt.gcf().set_size_inches(10, 5)
     plt.show()
 
