@@ -79,6 +79,6 @@ def main(tmax=3e-6, dt=5e-9):
 
 if __name__ == "__main__":
     if is_fast_run():
-        main(Bmax=10, Bmin=0, dB=2, tmax=1e-6, dt=10e-8)
+        main(tmax=1e-6, dt=10e-8)
     else:
         main()
