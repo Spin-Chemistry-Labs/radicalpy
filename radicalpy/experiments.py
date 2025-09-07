@@ -173,17 +173,16 @@ def anisotropy(
 
 
 def cidnp(
-    *,
     B0: np.ndarray,
     deltag: float,
     cidnp_model: str,
-    ks: float | None = None,
-    alpha: float | None = None,
     nucleus_of_interest: int,
     donor_hfc_spinhalf: float,
     acceptor_hfc_spinhalf: float,
     donor_hfc_spin1: float,
     acceptor_hfc_spin1: float,
+    ks: float | None = None,
+    alpha: float | None = None,
 ) -> list[np.ndarray, np.ndarray]:
     """
     CIDNP polarisation vs field for a radical pair with S-T0 mixing only.
@@ -201,7 +200,7 @@ def cidnp(
 
         alpha (float): Parameter for the full diffusion model.
 
-        nucleus_of_interest (int): The nucleus cosen for the simulation.
+        nucleus_of_interest (int): The nucleus chosen for the simulation.
 
         donor_hfc_spinhalf (float): spin 1/2 HFCs (1H) for the donor (mT).
 
