@@ -180,11 +180,11 @@ def cidnp(
     ks: float | None = None,
     alpha: float | None = None,
     nucleus_of_interest: int,
-    donor_hfc_spinhalf: Sequence[float] = (),
-    acceptor_hfc_spinhalf: Sequence[float] = (),
-    donor_hfc_spin1: Sequence[float] = (),
-    acceptor_hfc_spin1: Sequence[float] = (),
-) -> Tuple[np.ndarray, np.ndarray]:
+    donor_hfc_spinhalf: float,
+    acceptor_hfc_spinhalf: float,
+    donor_hfc_spin1: float,
+    acceptor_hfc_spin1: float,
+) -> list[np.ndarray, np.ndarray]:
     """
     CIDNP polarisation vs field for a radical pair with S-T0 mixing only.
     Args:
