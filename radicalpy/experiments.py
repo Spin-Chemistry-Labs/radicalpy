@@ -17,8 +17,8 @@ from .simulation import (
 )
 from .utils import (
     anisotropy_check,
-    cidnp_polarisation_exponential_model,
     cidnp_polarisation_diffusion_model,
+    cidnp_polarisation_exponential_model,
     cidnp_polarisation_truncated_diffusion_model,
     enumerate_spin_states_from_base,
     mary_lorentzian,
