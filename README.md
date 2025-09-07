@@ -23,11 +23,10 @@ guide](https://github.com/Spin-Chemistry-Labs/radicalpy/tree/main/docs/quick-sta
 or the
 [examples](https://github.com/Spin-Chemistry-Labs/radicalpy/tree/main/examples).
 
-The package is still under development. Basic functionality is
-implemented, [documentation](https://radicalpy.readthedocs.io/) is
+The package is under constant development. [documentation](https://radicalpy.readthedocs.io/) is
 sparse, testing partial.
 
-If you would like to contact us, please visit the Spin Chemistry Community [Discord server](https://discord.io/spin-chemistry-community/).
+If you would like to contact us, please visit the Spin Chemistry Community [Discord server](https://discord.gg/NZdjhFS3Es).
 
 ## Installation
 
@@ -36,3 +35,20 @@ Install simply using `pip`:
 ```
 pip install radicalpy
 ```
+
+## Citation
+
+Please cite the following paper when using RadicalPy.
+
+<table>
+	<tr>
+		<td>
+			<p>
+				<a href="https://pubs.acs.org/doi/10.1021/acs.jctc.4c00887" target="_blank">
+					<b>RadicalPy: A Tool for Spin Dynamics Simulations</b>
+				</a><br />
+				Lewis M. Antill* and Emil Vatai*, <i>Journal of Chemical Theory and Computation </i> <b>20</b>, 21, 9488–9499, (2024)
+			</p>
+		</td>
+	</tr>
+</table>
