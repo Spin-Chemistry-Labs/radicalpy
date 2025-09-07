@@ -331,6 +331,86 @@ def cartesian_to_spherical(
     return r, theta, phi
 
 
+def cidnp_polarisation_diffusion_model(
+    omega_plus: np.ndarray, omega_minus: np.ndarray, alpha: float = 1.5
+) -> float:
+    """
+    Compute the CIDNP polarisation using the full diffusion model.
+
+    Parameters
+    ----------
+    omega_plus : np.ndarray
+        Array of ω+ frequencies (rad/s).
+    omega_minus : np.ndarray
+        Array of ω- frequencies (rad/s).
+    alpha : float
+        Dimensionless parameter for the Adrian diffusion model 2p/m.
+
+    Returns
+    -------
+    p : float
+        CIDNP polarisation.
+    """
+    T_to_angular_frequency = 2.8e10 * 2.0 * np.pi
+    op_T = omega_plus / T_to_angular_frequency
+    om_T = omega_minus / T_to_angular_frequency
+    r_op = np.sqrt(np.abs(op_T))
+    r_om = np.sqrt(np.abs(om_T))
+    a = float(alpha)
+    f = lambda r: 1.0 - np.exp(-a * r) * np.cos(a * r)
+    return np.sum(f(r_op) - f(r_om), dtype=np.float64)
+
+
+def cidnp_polarisation_exponential_model(
+    ks: float, omega_plus: np.ndarray, omega_minus: np.ndarray
+) -> float:
+    """
+    Compute the CIDNP polarisation using the exponential model.
+
+    Parameters
+    ----------
+    ks : float
+        Singlet recombination rate (s^-1).
+    omega_plus : np.ndarray
+        Array of ω+ frequencies (rad/s).
+    omega_minus : np.ndarray
+        Array of ω- frequencies (rad/s).
+
+    Returns
+    -------
+    p : float
+        CIDNP polarisation.
+    """
+    ks2 = float(ks) ** 2
+    term = (omega_plus**2) / (ks2 + 4.0 * omega_plus**2) - (omega_minus**2) / (
+        ks2 + 4.0 * omega_minus**2
+    )
+    return np.sum(term, dtype=np.float64)
+
+
+def cidnp_polarisation_truncated_diffusion_model(
+    omega_plus: np.ndarray, omega_minus: np.ndarray
+) -> float:
+    """
+    Compute the CIDNP polarisation using the truncated t^{-3/2} diffusion model.
+
+    Parameters
+    ----------
+    omega_plus : np.ndarray
+        Array of ω+ frequencies (rad/s).
+    omega_minus : np.ndarray
+        Array of ω- frequencies (rad/s).
+
+    Returns
+    -------
+    p : float
+        CIDNP polarisation.
+    """
+    return np.sum(
+        np.sqrt(np.abs(omega_plus)) - np.sqrt(np.abs(omega_minus)), dtype=np.float64
+    )
+
+
 def define_xyz(x1, x2, z1, z2, z3, z4):
     a = np.array(z1) - np.array(z2)
     b = np.array(z3) - np.array(z4)
@@ -340,6 +420,33 @@ def define_xyz(x1, x2, z1, z2, z3, z4):
     y = np.cross(z, x)
     x = np.cross(y, z)
     return x, y, z
+
+
+def enumerate_spin_states_from_base(base: int) -> np.ndarray:
+    """
+    Return all spin-state patterns for a mixed-radix 'base' (e.g. [2,2,3,...]).
+    Each row corresponds to one configuration. For base[i]=b, the digit d in [0..b-1]
+    maps to spin projection m = (b-1)/2 - d.
+    """
+    base = np.asarray(base, dtype=int)
+    size = len(base)
+    total = int(np.prod(base))
+
+    # Build digits for all states at once via mixed-radix division
+    # states: 0..total-1
+    n = np.arange(total, dtype=np.int64)[:, None]  # (total, 1)
+    digits = np.empty((total, size), dtype=np.int64)
+
+    # Least-significant position first
+    for i in range(size):
+        b = base[i]
+        digits[:, i] = n[:, 0] % b
+        n //= b
+
+    # Map digits -> spin projections m_i = (b-1)/2 - digit
+    m = (base.astype(np.float64) - 1.0) / 2.0
+    patterns = m[None, :] - digits.astype(np.float64)
+    return patterns  # shape: (total, size)
 
 
 def get_angle_between_plane(A, B):
@@ -1097,6 +1204,36 @@ def spherical_to_cartesian(
             np.cos(theta),
         ]
     ).T
+
+
+def s_t0_omega(
+    deltag: float, B0: float, hfc_star: float, onuc_all: np.ndarray
+) -> Tuple[float, float]:
+    """
+    Compute the two radical pair frequencies ω+ and ω- (in rad/s) for S-T0 mixing.
+
+    Parameters
+    ----------
+    deltag : float
+        Difference in g-factors of the two radicals.
+    b0 : float
+        External magnetic field strength (Tesla).
+    hfc_star : float
+        Hyperfine coupling constant (rad/s) of the nucleus of interest.
+    onuc_all : np.ndarray
+        Array of total hyperfine contributions from all other nuclei (rad/s).
+
+    Returns
+    -------
+    omega_plus : float
+        The ω+ frequency (rad/s).
+    omega_minus : float
+        The ω- frequency (rad/s).
+    """
+    base_omega = (deltag * C.mu_B * B0) / C.hbar  # Δg μB B0 / ħ
+    omega_plus = base_omega + 0.5 * hfc_star + onuc_all
+    omega_minus = base_omega - 0.5 * hfc_star + onuc_all
+    return omega_plus, omega_minus
 
 
 def write_pdb(mol, path):
