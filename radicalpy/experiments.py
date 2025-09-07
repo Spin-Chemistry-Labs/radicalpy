@@ -176,7 +176,7 @@ def cidnp(
     *,
     B0: np.ndarray,
     deltag: float,
-    cidnp_model: Literal["a", "b", "c"],
+    cidnp_model: str,
     ks: float | None = None,
     alpha: float | None = None,
     nucleus_of_interest: int,
