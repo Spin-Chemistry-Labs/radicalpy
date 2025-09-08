@@ -183,7 +183,7 @@ def cidnp(
     acceptor_hfc_spin1: float,
     ks: float | None = None,
     alpha: float | None = None,
-) -> list[np.ndarray, np.ndarray]:
+) -> (np.ndarray, np.ndarray):
     """
     CIDNP polarisation vs field for a radical pair with S-T0 mixing only.
     Args:
@@ -212,7 +212,7 @@ def cidnp(
 
     Returns:
         B0 (T)
-        cidnp (polarisation at each field point)
+        polarisation (polarisation at each field point)
     """
 
     # Constants
@@ -294,7 +294,7 @@ def cidnp(
         raise ValueError("Model 'c' requires alpha.")
 
     # Compute polarisation vs field (vectorised over states)
-    cidnp = np.empty_like(B0)
+    polarisation = np.empty_like(B0)
     for k, B in enumerate(B0):
         omega_plus, omega_minus = s_t0_omega(deltag, B, hfc_star, nuc_all)
 
@@ -307,9 +307,9 @@ def cidnp(
         else:  # model == "c"
             p = cidnp_polarisation_diffusion_model(omega_plus, omega_minus, alpha)
 
-        cidnp[k] = p / scale
+        polarisation[k] = p / scale
 
-    return B0, cidnp
+    return B0, polarisation
 
 
 def epr(

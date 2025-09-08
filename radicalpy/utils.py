@@ -340,9 +340,9 @@ def cidnp_polarisation_diffusion_model(
     Parameters
     ----------
     omega_plus : np.ndarray
-        Array of ω+ frequencies (rad/s).
+        Array of omega+ frequencies (rad/s).
     omega_minus : np.ndarray
-        Array of ω- frequencies (rad/s).
+        Array of omega- frequencies (rad/s).
     alpha : float
         Dimensionless parameter for the Adrian diffusion model 2p/m.
 
@@ -372,9 +372,9 @@ def cidnp_polarisation_exponential_model(
     ks : float
         Singlet recombination rate (s^-1).
     omega_plus : np.ndarray
-        Array of ω+ frequencies (rad/s).
+        Array of omega+ frequencies (rad/s).
     omega_minus : np.ndarray
-        Array of ω- frequencies (rad/s).
+        Array of omega- frequencies (rad/s).
 
     Returns
     -------
@@ -397,9 +397,9 @@ def cidnp_polarisation_truncated_diffusion_model(
     Parameters
     ----------
     omega_plus : np.ndarray
-        Array of ω+ frequencies (rad/s).
+        Array of omega+ frequencies (rad/s).
     omega_minus : np.ndarray
-        Array of ω- frequencies (rad/s).
+        Array of omega- frequencies (rad/s).
 
     Returns
     -------

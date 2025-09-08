@@ -35,8 +35,10 @@ def main(Bmax=20.0, dB=100):
         )
         plt.plot(B0, p)
 
-    plt.xlabel("$B_0$ /T")
-    plt.ylabel("CIDNP Intensity")
+    plt.xlabel("$B_0$ /T", size=8)
+    plt.ylabel("CIDNP Intensity", size=8)
+    plt.tick_params(labelsize=8)
+    plt.gcf().set_size_inches(5, 3)
     plt.show()
 
     # path = __file__[:-3] + f"_{0}.png"
