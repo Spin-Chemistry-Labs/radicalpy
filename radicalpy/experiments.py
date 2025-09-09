@@ -567,7 +567,7 @@ def omfe(
     B1: float,
     B1_freq: np.ndarray,
     B1_axis: str = "x",
-    B1_freq_axis: str = "x",
+    B1_freq_axis: str = "z",
     kinetics: list[HilbertIncoherentProcessBase] = [],
     relaxations: list[HilbertIncoherentProcessBase] = [],
     hfc_anisotropy: bool = False,
