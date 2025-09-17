@@ -28,7 +28,7 @@ MEASURE_TIME = False
 PARAMS = dict(
     B=np.random.uniform(size=20),
     J=np.random.uniform(),
-    D=np.random.uniform(),
+    D=-abs(np.random.uniform()),
 )
 
 RADICAL_PAIR = [
@@ -209,9 +209,7 @@ class HilbertTests(unittest.TestCase):
                 for ni, ei in enumerate(couplings)
             ]
         )
-        assert np.all(
-            self.sim.hyperfine_hamiltonian() == HH_true
-        ), "Hyperfine Hamiltonian not calculated properly."
+        np.testing.assert_almost_equal(HH_true, self.sim.hyperfine_hamiltonian())
 
     def test_HE(self):
         HE_true = radpy.HamiltonianExchange(
@@ -222,7 +220,7 @@ class HilbertTests(unittest.TestCase):
 
     def test_HD(self):
         HD_true = radpy.HamiltonianDipolar(
-            len(self.sim.particles), PARAMS["D"], self.gamma_mT
+            len(self.sim.particles), PARAMS["D"], abs(self.gamma_mT)
         )
         HD = self.sim.dipolar_hamiltonian(PARAMS["D"])
         np.testing.assert_almost_equal(HD, HD_true)

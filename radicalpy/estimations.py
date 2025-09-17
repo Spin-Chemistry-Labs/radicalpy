@@ -367,8 +367,42 @@ def dipolar_interaction_anisotropic(r: float | np.ndarray) -> np.ndarray:
     .. todo:: np.ndarray not implemented.  `dipolar * diag` fails.
     """
     dipolar1d = dipolar_interaction_isotropic(r)
+    assert dipolar1d <= 0.0, f"dipolar1d should be negative but got {dipolar1d}"
     dipolar = (2 / 3) * dipolar1d
-    return dipolar * np.diag([1, 1, -2])
+    return dipolar * np.diag([-1, -1, 2])
+
+
+def dipolar_interaction_point_dipole(r12: tuple[float, float, float]) -> np.ndarray:
+    """Dipolar interaction for point dipole approximation.
+
+    Args:
+            r12 (tuple[float, float, float]): The interradical separation (m).
+
+    Returns:
+            np.ndarray: The 3x3 dipolar coupling tensor in millitesla (mT)
+
+    Example:
+        >>> dipolar_interaction_point_dipole(r12=(1e-09, 0, 0))
+        array([[-3.71390565, -0.        , -0.        ],
+                [-0.        ,  1.85695282, -0.        ],
+                [-0.        , -0.        ,  1.85695282]])
+
+    """
+    assert len(r12) == 3, f"r12 should be a tuple of 3 floats but got {r12}"
+    r12 = np.array(r12)
+    r12_norm = np.linalg.norm(r12)
+    r12_unit = r12 / r12_norm
+    rx, ry, rz = r12_unit
+    mat = np.array(
+        [
+            [3 * rx * rx - 1.0, 2 * rx * ry, 2 * rx * rz],
+            [2 * ry * rx, 3 * ry * ry - 1.0, 2 * ry * rz],
+            [2 * rz * rx, 2 * rz * ry, 3 * rz * rz - 1.0],
+        ]
+    )
+    np.testing.assert_almost_equal(np.linalg.eigvals(mat), [2.0, -1.0, -1.0])
+    dipolar1d = dipolar_interaction_isotropic(r12_norm)
+    return (2 / 3) * dipolar1d * mat
 
 
 def dipolar_interaction_isotropic(r: float | np.ndarray) -> float | np.ndarray:
@@ -383,7 +417,7 @@ def dipolar_interaction_isotropic(r: float | np.ndarray) -> float | np.ndarray:
 
     Returns:
             (float or np.ndarray): The dipolar coupling constant in
-            millitesla (mT).
+            millitesla (mT), which is negative.
 
     .. _Santabarbara et al. Biochemistry, 44, 6, 2119–2128 (2005):
        https://pubs.acs.org/doi/10.1021/bi048445d

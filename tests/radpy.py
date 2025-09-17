@@ -181,7 +181,7 @@ def HamiltonianZeeman3D(spins, B, theta=0, phi=0, gamma=1.76e8):
 
 
 def HamiltonianHyperfine(spins, pos, pos2, HFC, gamma_mT):
-    omega = HFC * gamma_mT
+    omega = HFC * abs(gamma_mT)
     particles = prodop(pos, pos2, spins)
     return omega * particles
 
@@ -200,7 +200,7 @@ def ExchangeInteraction(r, model="solution"):
 
 
 def HamiltonianExchange(spins, J, gamma=1.76e8):
-    Jcoupling = gamma * J
+    Jcoupling = -abs(gamma) * J
     SASB = prodop(0, 1, spins)
     return Jcoupling * ((2 * SASB) + (0.5 * np.eye(len(SASB))))
 
