@@ -516,7 +516,7 @@ def nmr(
     linewidth: float,
     scale: float = 1.0,
 ) -> (np.ndarray, np.ndarray):
-    
+
     # Derived quantities
     spectralwidth_inv = 1.0 / spectral_width
     acquisition_time = number_of_points * spectralwidth_inv
@@ -524,15 +524,15 @@ def nmr(
     t2_relaxation_time = 1.0 / (np.pi * linewidth) if linewidth > 0 else 1e99
     reference_frequency = transmitter_frequency / (1.0 + carrier_position * 1.0e-6)
 
-    # Time array 
+    # Time array
     time = np.linspace(0.0, acquisition_time, number_of_points, endpoint=True)
 
     # Multiplet arrays
     if len(multiplets) > 0:
         arr = np.array(multiplets, dtype=float)
-        nnuc = arr[:, 0] 
-        f_hz = arr[:, 1] 
-        mult = arr[:, 2].astype(int) 
+        nnuc = arr[:, 0]
+        f_hz = arr[:, 1]
+        mult = arr[:, 2].astype(int)
         j_hz = arr[:, 3]  # J
     else:
         nnuc = np.zeros(0)
@@ -570,8 +570,8 @@ def nmr(
     # Frequency (MHz)
     i = np.arange(1, fft_number + 1, dtype=float)
     freq_mhz = (
-        (transmitter_frequency * 1.0e6) 
-        + (spectral_width / 2.0) 
+        (transmitter_frequency * 1.0e6)
+        + (spectral_width / 2.0)
         - ((i - 1.0) * spectral_width) / (fft_number - 1.0)
     ) / 1.0e6
     ppm = ((freq_mhz - reference_frequency) / reference_frequency) * 1.0e6

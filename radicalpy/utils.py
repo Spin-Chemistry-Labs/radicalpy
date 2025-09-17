@@ -575,22 +575,22 @@ def mT_to_angular_frequency(mT: float) -> float:
 
 
 def nmr_chemical_shift_imaginary_modulation(
-        freq_hz: np.ndarray, t: np.ndarray
-    ) -> np.ndarray:
+    freq_hz: np.ndarray, t: np.ndarray
+) -> np.ndarray:
     """Chemical-shift modulation (imag): sin(2π f t)."""
     return np.sin(2.0 * np.pi * np.multiply.outer(freq_hz, t))
 
 
 def nmr_chemical_shift_real_modulation(
-        freq_hz: np.ndarray, t: np.ndarray
-    ) -> np.ndarray:
+    freq_hz: np.ndarray, t: np.ndarray
+) -> np.ndarray:
     """Chemical-shift modulation (real): cos(2π f t)."""
     return np.cos(2.0 * np.pi * np.multiply.outer(freq_hz, t))
 
 
 def nmr_scalar_coupling_modulation(
-        j_hz: np.ndarray, t: np.ndarray, mult_minus_one: np.ndarray
-    ) -> np.ndarray:
+    j_hz: np.ndarray, t: np.ndarray, mult_minus_one: np.ndarray
+) -> np.ndarray:
     """J-modulation: cos(π J t) ** (mult - 1)."""
     base = np.cos(np.pi * np.multiply.outer(j_hz, t))
     return np.where(mult_minus_one[:, None] > 0, base ** mult_minus_one[:, None], 1.0)
