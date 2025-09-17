@@ -23,6 +23,10 @@ from .utils import (
     enumerate_spin_states_from_base,
     mary_lorentzian,
     modulated_signal,
+    nmr_chemical_shift_imaginary_modulation,
+    nmr_chemical_shift_real_modulation,
+    nmr_scalar_coupling_modulation,
+    nmr_t2_relaxation,
     reference_signal,
     s_t0_omega,
 )
@@ -500,6 +504,75 @@ def modulated_mary_brute_force(
                 sa = sa
                 S[i, j, k] = sa * np.sqrt(2)  # RMS signal
     return S
+
+
+def nmr(
+    multiplets: list,
+    spectral_width: float,
+    number_of_points: float,
+    fft_number: float,
+    transmitter_frequency: float,
+    carrier_position: float,
+    linewidth: float,
+    scale: float = 1.0
+) -> (np.ndarray, np.ndarray):
+    
+    # Derived quantities
+    spectralwidth_inv   = 1.0 / spectral_width
+    acquisition_time    = number_of_points * spectralwidth_inv
+    # digital_resolution  = spectral_width / fft_number
+    t2_relaxation_time  = 1.0 / (np.pi * linewidth) if linewidth > 0 else 1e99
+    reference_frequency = transmitter_frequency / (1.0 + carrier_position * 1.0e-6)
+
+    # Time array 
+    time = np.linspace(0.0, acquisition_time, number_of_points, endpoint=True)
+
+    # Multiplet arrays
+    if len(multiplets) > 0:
+        arr  = np.array(multiplets, dtype=float)
+        nnuc = arr[:, 0] 
+        f_hz = arr[:, 1] 
+        mult = arr[:, 2].astype(int) 
+        j_hz = arr[:, 3]  # J
+    else:
+        nnuc = np.zeros(0)
+        f_hz = np.zeros(0)
+        mult = np.zeros(0, dtype=int)
+        j_hz = np.zeros(0)
+
+    # Build FID (vectorised)
+    if len(multiplets) > 0:
+        cs_re = nmr_chemical_shift_real_modulation(f_hz, time)
+        cs_im = nmr_chemical_shift_imaginary_modulation(f_hz, time)
+        jpow  = nmr_scalar_coupling_modulation(j_hz, time, mult - 1)
+        decay = nmr_t2_relaxation(time, t2_relaxation_time)
+
+        rfid = np.sum(nnuc[:, None] * cs_re * jpow, axis=0) * decay
+        ifid = np.sum(nnuc[:, None] * cs_im * jpow, axis=0) * decay
+    else:
+        rfid = np.zeros(number_of_points)
+        ifid = np.zeros(number_of_points)
+
+    # Scale the first point
+    rfid[0] *= 0.5
+    ifid[0] *= 0.5
+
+    # Zero-fill
+    if fft_number > number_of_points:
+        pad_len = fft_number - number_of_points
+        rfid = np.concatenate([rfid, np.zeros(pad_len)])
+        ifid = np.concatenate([ifid, np.zeros(pad_len)])
+
+    # FFT
+    fid  = rfid + 1j * ifid
+    spectrum = np.fft.fft(fid, n=fft_number) * scale
+
+    # Frequency (MHz)
+    i = np.arange(1, fft_number + 1, dtype=float)
+    freq_mhz = ((transmitter_frequency * 1.0e6) + (spectral_width / 2.0) - 
+                ((i - 1.0) * spectral_width) / (fft_number - 1.0)) / 1.0e6
+    ppm = ((freq_mhz - reference_frequency) / reference_frequency) * 1.0e6
+    return ppm, spectrum
 
 
 def odmr(
