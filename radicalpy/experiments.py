@@ -514,14 +514,14 @@ def nmr(
     transmitter_frequency: float,
     carrier_position: float,
     linewidth: float,
-    scale: float = 1.0
+    scale: float = 1.0,
 ) -> (np.ndarray, np.ndarray):
     
     # Derived quantities
-    spectralwidth_inv   = 1.0 / spectral_width
-    acquisition_time    = number_of_points * spectralwidth_inv
+    spectralwidth_inv = 1.0 / spectral_width
+    acquisition_time = number_of_points * spectralwidth_inv
     # digital_resolution  = spectral_width / fft_number
-    t2_relaxation_time  = 1.0 / (np.pi * linewidth) if linewidth > 0 else 1e99
+    t2_relaxation_time = 1.0 / (np.pi * linewidth) if linewidth > 0 else 1e99
     reference_frequency = transmitter_frequency / (1.0 + carrier_position * 1.0e-6)
 
     # Time array 
@@ -529,7 +529,7 @@ def nmr(
 
     # Multiplet arrays
     if len(multiplets) > 0:
-        arr  = np.array(multiplets, dtype=float)
+        arr = np.array(multiplets, dtype=float)
         nnuc = arr[:, 0] 
         f_hz = arr[:, 1] 
         mult = arr[:, 2].astype(int) 
@@ -544,7 +544,7 @@ def nmr(
     if len(multiplets) > 0:
         cs_re = nmr_chemical_shift_real_modulation(f_hz, time)
         cs_im = nmr_chemical_shift_imaginary_modulation(f_hz, time)
-        jpow  = nmr_scalar_coupling_modulation(j_hz, time, mult - 1)
+        jpow = nmr_scalar_coupling_modulation(j_hz, time, mult - 1)
         decay = nmr_t2_relaxation(time, t2_relaxation_time)
 
         rfid = np.sum(nnuc[:, None] * cs_re * jpow, axis=0) * decay
@@ -564,13 +564,16 @@ def nmr(
         ifid = np.concatenate([ifid, np.zeros(pad_len)])
 
     # FFT
-    fid  = rfid + 1j * ifid
+    fid = rfid + 1j * ifid
     spectrum = np.fft.fft(fid, n=fft_number) * scale
 
     # Frequency (MHz)
     i = np.arange(1, fft_number + 1, dtype=float)
-    freq_mhz = ((transmitter_frequency * 1.0e6) + (spectral_width / 2.0) - 
-                ((i - 1.0) * spectral_width) / (fft_number - 1.0)) / 1.0e6
+    freq_mhz = (
+        (transmitter_frequency * 1.0e6) 
+        + (spectral_width / 2.0) 
+        - ((i - 1.0) * spectral_width) / (fft_number - 1.0)
+    ) / 1.0e6
     ppm = ((freq_mhz - reference_frequency) / reference_frequency) * 1.0e6
     return ppm, spectrum
 
