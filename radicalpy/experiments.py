@@ -15,7 +15,21 @@ from .simulation import (
     SemiclassicalSimulation,
     State,
 )
-from .utils import anisotropy_check, mary_lorentzian, modulated_signal, reference_signal
+from .utils import (
+    anisotropy_check,
+    cidnp_polarisation_diffusion_model,
+    cidnp_polarisation_exponential_model,
+    cidnp_polarisation_truncated_diffusion_model,
+    enumerate_spin_states_from_base,
+    mary_lorentzian,
+    modulated_signal,
+    nmr_chemical_shift_imaginary_modulation,
+    nmr_chemical_shift_real_modulation,
+    nmr_scalar_coupling_modulation,
+    nmr_t2_relaxation,
+    reference_signal,
+    s_t0_omega,
+)
 
 
 def anisotropy_loop(
@@ -160,6 +174,146 @@ def anisotropy(
         product_yields=product_yields,
         product_yield_sums=product_yield_sums,
     )
+
+
+def cidnp(
+    B0: np.ndarray,
+    deltag: float,
+    cidnp_model: str,
+    nucleus_of_interest: int,
+    donor_hfc_spinhalf: float,
+    acceptor_hfc_spinhalf: float,
+    donor_hfc_spin1: float,
+    acceptor_hfc_spin1: float,
+    ks: float | None = None,
+    alpha: float | None = None,
+) -> (np.ndarray, np.ndarray):
+    """
+    CIDNP polarisation vs field for a radical pair with S-T0 mixing only.
+    Args:
+
+        B0 (np.ndarray): External magnetic field (T).
+
+        deltag (float): Difference in g-value between the acceptor
+            and donor.
+
+        cidnp_model: Choose between CIDNP kinetic models. a) Exponential
+            model. b) Truncated diffusion model. c) Full diffusion model.
+
+        ks (float): Decay rate constant for the Exponential model (1/s).
+
+        alpha (float): Parameter for the full diffusion model.
+
+        nucleus_of_interest (int): The nucleus chosen for the simulation.
+
+        donor_hfc_spinhalf (float): spin 1/2 HFCs (1H) for the donor (mT).
+
+        acceptor_hfc_spinhalf (float): spin 1/2 HFCs (1H) for the acceptor (mT).
+
+        donor_hfc_spin1 (float): spin 1 HFCs (14N) for the donor (mT).
+
+        acceptor_hfc_spin1 (float): spin 1 HFCs (14N) for the acceptor (mT).
+
+    Returns:
+        B0 (T)
+        polarisation (polarisation at each field point)
+    """
+
+    # Constants
+    T_to_angular_frequency = (
+        2.8e10 * 2.0 * np.pi
+    )  # (T -> rad/s) for hyperfine conversion
+
+    dnuc, anuc, dnuc1, anuc1 = (
+        len(donor_hfc_spinhalf),
+        len(acceptor_hfc_spinhalf),
+        len(donor_hfc_spin1),
+        len(acceptor_hfc_spin1),
+    )
+    nnuc = dnuc + anuc  # total spin-1/2
+    nnuc1 = dnuc1 + anuc1  # total spin-1
+    nnuct = nnuc + nnuc1
+
+    # Spin-1/2 list, donor then acceptor, acceptor negated
+    hfc_half = np.empty(nnuc, dtype=np.float64)
+    if dnuc:
+        hfc_half[:dnuc] = np.asarray(donor_hfc_spinhalf, dtype=np.float64) / 1e3
+    if anuc:
+        hfc_half[dnuc:] = -np.asarray(acceptor_hfc_spinhalf, dtype=np.float64) / 1e3
+
+    # Spin-1 list
+    hfc_one = np.empty(nnuc1, dtype=np.float64)
+    if dnuc1:
+        hfc_one[:dnuc1] = np.asarray(donor_hfc_spin1, dtype=np.float64) / 1e3
+    if anuc1:
+        hfc_one[dnuc1:] = -np.asarray(acceptor_hfc_spin1, dtype=np.float64) / 1e3
+
+    # Convert to angular frequency
+    if nnuc:
+        hfc_half *= T_to_angular_frequency
+    if nnuc1:
+        hfc_one *= T_to_angular_frequency
+
+    # Build hfcmod = all HFCs except the spin-1/2 nucleus of interest, then append spin-1
+    assert (
+        1 <= nucleus_of_interest <= max(nnuc, 1)
+    ), "nucint out of range (1-based index into spin-1/2 list)"
+    if nnuc <= 0:
+        raise ValueError("At least one spin-1/2 nucleus is required.")
+
+    idx0 = nucleus_of_interest - 1  # convert to 0-based
+    hfcmod = np.empty(nnuct - 1, dtype=np.float64)
+    # All spin-1/2 except the interest nucleus
+    if idx0 > 0:
+        hfcmod[:idx0] = hfc_half[:idx0]
+    if idx0 < nnuc - 1:
+        hfcmod[idx0 : nnuc - 1] = hfc_half[idx0 + 1 :]
+    # append spin-1
+    if nnuc1:
+        hfcmod[nnuc - 1 :] = hfc_one
+
+    # Base vector for mixed-radix enumeration: 2 for remaining spin-1/2, 3 for spin-1
+    base = ([2] * (nnuc - 1)) + ([3] * nnuc1)  # length = nnuct - 1
+
+    # Aall spin state patterns (total_states x (nnuct-1))
+    if len(base) == 0:
+        # Corner case: only one spin-1/2 nucleus (the one of interest), no others
+        patterns = np.zeros((1, 0), dtype=np.float64)  # one "empty" pattern
+    else:
+        patterns = enumerate_spin_states_from_base(base)
+
+    # nuc for every state: dot(pattern, hfcmod)
+    nuc_all = patterns @ hfcmod  # shape: (total_states,)
+
+    # precompute scale factor 2^(N-1) * 3^M
+    scale = (2.0 ** max(nnuc - 1, 0)) * (3.0**nnuc1)
+
+    # the HFC of the nucleus of interest (angular frequency)
+    hfc_star = hfc_half[idx0]
+
+    # Model checks
+    if cidnp_model == "a" and ks is None:
+        raise ValueError("Model 'a' requires ks.")
+    if cidnp_model == "c" and alpha is None:
+        raise ValueError("Model 'c' requires alpha.")
+
+    # Compute polarisation vs field (vectorised over states)
+    polarisation = np.empty_like(B0)
+    for k, B in enumerate(B0):
+        omega_plus, omega_minus = s_t0_omega(deltag, B, hfc_star, nuc_all)
+
+        if cidnp_model == "a":
+            p = cidnp_polarisation_exponential_model(ks, omega_plus, omega_minus)
+
+        elif cidnp_model == "b":
+            p = cidnp_polarisation_truncated_diffusion_model(omega_plus, omega_minus)
+
+        else:  # model == "c"
+            p = cidnp_polarisation_diffusion_model(omega_plus, omega_minus, alpha)
+
+        polarisation[k] = p / scale
+
+    return B0, polarisation
 
 
 def epr(
@@ -352,6 +506,78 @@ def modulated_mary_brute_force(
     return S
 
 
+def nmr(
+    multiplets: list,
+    spectral_width: float,
+    number_of_points: float,
+    fft_number: float,
+    transmitter_frequency: float,
+    carrier_position: float,
+    linewidth: float,
+    scale: float = 1.0,
+) -> (np.ndarray, np.ndarray):
+
+    # Derived quantities
+    spectralwidth_inv = 1.0 / spectral_width
+    acquisition_time = number_of_points * spectralwidth_inv
+    # digital_resolution  = spectral_width / fft_number
+    t2_relaxation_time = 1.0 / (np.pi * linewidth) if linewidth > 0 else 1e99
+    reference_frequency = transmitter_frequency / (1.0 + carrier_position * 1.0e-6)
+
+    # Time array
+    time = np.linspace(0.0, acquisition_time, number_of_points, endpoint=True)
+
+    # Multiplet arrays
+    if len(multiplets) > 0:
+        arr = np.array(multiplets, dtype=float)
+        nnuc = arr[:, 0]
+        f_hz = arr[:, 1]
+        mult = arr[:, 2].astype(int)
+        j_hz = arr[:, 3]  # J
+    else:
+        nnuc = np.zeros(0)
+        f_hz = np.zeros(0)
+        mult = np.zeros(0, dtype=int)
+        j_hz = np.zeros(0)
+
+    # Build FID (vectorised)
+    if len(multiplets) > 0:
+        cs_re = nmr_chemical_shift_real_modulation(f_hz, time)
+        cs_im = nmr_chemical_shift_imaginary_modulation(f_hz, time)
+        jpow = nmr_scalar_coupling_modulation(j_hz, time, mult - 1)
+        decay = nmr_t2_relaxation(time, t2_relaxation_time)
+
+        rfid = np.sum(nnuc[:, None] * cs_re * jpow, axis=0) * decay
+        ifid = np.sum(nnuc[:, None] * cs_im * jpow, axis=0) * decay
+    else:
+        rfid = np.zeros(number_of_points)
+        ifid = np.zeros(number_of_points)
+
+    # Scale the first point
+    rfid[0] *= 0.5
+    ifid[0] *= 0.5
+
+    # Zero-fill
+    if fft_number > number_of_points:
+        pad_len = fft_number - number_of_points
+        rfid = np.concatenate([rfid, np.zeros(pad_len)])
+        ifid = np.concatenate([ifid, np.zeros(pad_len)])
+
+    # FFT
+    fid = rfid + 1j * ifid
+    spectrum = np.fft.fft(fid, n=fft_number) * scale
+
+    # Frequency (MHz)
+    i = np.arange(1, fft_number + 1, dtype=float)
+    freq_mhz = (
+        (transmitter_frequency * 1.0e6)
+        + (spectral_width / 2.0)
+        - ((i - 1.0) * spectral_width) / (fft_number - 1.0)
+    ) / 1.0e6
+    ppm = ((freq_mhz - reference_frequency) / reference_frequency) * 1.0e6
+    return ppm, spectrum
+
+
 def odmr(
     sim: HilbertSimulation,
     init_state: State,
@@ -417,7 +643,7 @@ def omfe(
     B1: float,
     B1_freq: np.ndarray,
     B1_axis: str = "x",
-    B1_freq_axis: str = "x",
+    B1_freq_axis: str = "z",
     kinetics: list[HilbertIncoherentProcessBase] = [],
     relaxations: list[HilbertIncoherentProcessBase] = [],
     hfc_anisotropy: bool = False,

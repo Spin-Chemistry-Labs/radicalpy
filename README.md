@@ -23,11 +23,10 @@ guide](https://github.com/Spin-Chemistry-Labs/radicalpy/tree/main/docs/quick-sta
 or the
 [examples](https://github.com/Spin-Chemistry-Labs/radicalpy/tree/main/examples).
 
-The package is still under development. Basic functionality is
-implemented, [documentation](https://radicalpy.readthedocs.io/) is
+The package is under constant development. [documentation](https://radicalpy.readthedocs.io/) is
 sparse, testing partial.
 
-If you would like to contact us, please visit the Spin Chemistry Community [Discord server](https://discord.io/spin-chemistry-community/).
+If you would like to contact us, please visit the Spin Chemistry Community [Discord server](https://discord.gg/NZdjhFS3Es).
 
 ## Installation
 
