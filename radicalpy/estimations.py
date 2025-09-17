@@ -395,9 +395,9 @@ def dipolar_interaction_point_dipole(r12: tuple[float, float, float]) -> np.ndar
     rx, ry, rz = r12_unit
     mat = np.array(
         [
-            [3 * rx * rx - 1.0, 2 * rx * ry, 2 * rx * rz],
-            [2 * ry * rx, 3 * ry * ry - 1.0, 2 * ry * rz],
-            [2 * rz * rx, 2 * rz * ry, 3 * rz * rz - 1.0],
+            [3 * rx * rx - 1.0, 3 * rx * ry, 3 * rx * rz],
+            [3 * ry * rx, 3 * ry * ry - 1.0, 3 * ry * rz],
+            [3 * rz * rx, 3 * rz * ry, 3 * rz * rz - 1.0],
         ]
     )
     np.testing.assert_almost_equal(np.linalg.eigvals(mat), [2.0, -1.0, -1.0])
