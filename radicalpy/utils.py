@@ -1,9 +1,99 @@
 #!/usr/bin/env python
-
-"""Utility functions.
-
-.. todo:: Add module docstring.
 """
+Utilities for spin dynamics, magnetic‐resonance and molecular simulations.
+
+This module collects small, reusable helpers used across the codebase:
+unit conversions, geometry on spheres, spectrum building blocks, I/O
+parsers for molecular files and quantum-chemistry outputs, and a few
+domain-specific utilities for MARY/NMR workflows.
+
+Main contents
+-------------
+Constants
+    - ``COVALENT_RADII``: Covalent radii (Å) for common elements; used by
+      bonding heuristics and label/element inference.
+
+CLI/testing
+    - ``is_fast_run()``: Check ``--fast`` CLI flag to run lighter examples/tests.
+
+Fitting & line shapes
+    - ``Bhalf_fit(B, MARY)``: Fit MARY data to a Lorentzian to obtain
+      :math:`B_{1/2}` and goodness-of-fit.
+    - ``Lorentzian(B, amplitude, Bhalf)``: MARY Lorentzian model.
+
+Unit conversions
+    - ``Gauss_to_mT/MHz/…``, ``MHz_to_mT/Gauss/…``,
+      ``mT_to_MHz/Gauss/…``,
+      ``angular_frequency_in_MHz``, ``*_to_angular_frequency``:
+      Consistent conversions between G, mT, MHz and rad·s⁻¹·T⁻¹.
+
+Angular grids & spherical geometry
+    - ``anisotropy_check(theta, phi)``: Validate angle grids and parity (θ odd/φ even).
+    - ``_check_full_sphere(theta, phi)``: Ensure full-sphere linspace grids.
+    - ``spherical_average(...)``: Weighted average over a θ/φ grid.
+    - ``cartesian_to_spherical(...)``, ``spherical_to_cartesian(...)``:
+      Coordinate transforms.
+
+Autocorrelation
+    - ``autocorrelation(data, factor=1)``: FFT-based trajectory autocorrelation.
+
+CIDNP helper models
+    - ``cidnp_polarisation_*``: Exponential, truncated diffusion, and full
+      diffusion models; see docstrings for details.
+    - ``s_t0_omega(deltag, B0, hfc_star, onuc_all)``: ω₊/ω₋ for S–T₀ mixing.
+
+NMR building blocks
+    - ``nmr_chemical_shift_real/im...``: cos/sin(2π f t) modulators.
+    - ``nmr_scalar_coupling_modulation``: J-modulation term.
+    - ``nmr_t2_relaxation``: exp(−t/T₂) envelope.
+
+Lock-in MARY helpers
+    - ``modulated_signal(...)``, ``reference_signal(...)``:
+      Time-domain modulation and reference waves.
+    - ``mary_lorentzian(mod_signal, lfe_magnitude)``: Simple MARY line shape.
+
+Molecular geometry & visualization
+    - ``define_xyz(...)``: Construct an orthonormal (x,y,z) basis from
+      atom/point triplets.
+    - ``get_angle_between_plane(A, B)``: Angle (deg) between plane normals.
+    - ``get_rotation_matrix_euler_angles(A, B)``: Rotation matrix and ZXZ
+      Euler angles mapping basis A→B.
+    - ``rodrigues_rotation(v, k, theta)``: Rotate vectors around axis k by θ.
+    - ``rotate_axes(A, x, y, z)``: Apply a rotation matrix to a basis.
+    - ``enumerate_spin_states_from_base(base)``: Mixed-radix enumeration of
+      spin projections (e.g., 2 for spin-½, 3 for spin-1).
+    - ``infer_bonds(elements, coords, ...)``: Heuristic covalent bonding.
+
+File I/O & parsing
+    - ``parse_xyz(path)``, ``parse_label_xyz_txt(path)``, ``parse_pdb(path, ...)``:
+      Read coordinates and optional bonds/labels for plotting.
+    - ``pdb_label(atom, scheme=...)``: Human-readable PDB atom labels.
+    - ``write_xyz/mol_to_plot_arrays/write_pdb/write_sdf``: Minimal writers and
+      plotting helpers.
+    - ``read_trajectory_files(dir, scale)``: Concatenate text trajectories from a folder.
+
+Quantum-chemistry integration (ORCA)
+    - ``read_orca_hyperfine(path, version=6)``: Dispatch to ORCA v6 parsers.
+    - Internal: ``_hyperfine_from_orca6_out`` / ``_hyperfine_from_orca6_property_txt``.
+      Return zero-based nucleus indices, isotope labels, and 3×3 HFC tensors (mT).
+    - ``read_lines_utf8_or_utf16le``: Robust text decoding for ORCA outputs.
+
+Chemistry utilities (RDKit)
+    - ``smiles_to_3d(smiles, add_h=True, opt='mmff')``: Generate a 3D conformer
+      (ETKDG) with optional MMFF/UFF optimisation.
+    - ``mol_to_plot_arrays(mol)``: Extract elements, labels, coords and bonds.
+
+Spectral density
+    - ``spectral_density(omega, tau_c)``: :math:`J(ω) = τ_c / (1 + ω^2 τ_c^2)`.
+
+Notes
+-----
+- Many routines are vectorised and expect NumPy arrays; see individual
+  docstrings for shapes and units.
+- Angle conventions use radians: ``theta ∈ [0, π]``, ``phi ∈ [0, 2π]``.
+- Unit conversions rely on physical constants from ``radicalpy.constants`` (``C``).
+"""
+
 import argparse
 import re
 from pathlib import Path
@@ -83,7 +173,6 @@ def is_fast_run():
     This function helps examples to be used as tests.  By running the
     example with the `--fast` option, a faster version of main can be
     called (e.g., by setting fewer number of time steps etc.).
-
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -114,7 +203,6 @@ def Bhalf_fit(
             - `fit_result` (np.ndarray): y-axis from fit.
             - `fit_error` (float): Standard error for the fit.
             - `R2` (float): R-squared value for the fit.
-
     """
     popt_MARY, pcov_MARY = curve_fit(
         Lorentzian,
@@ -187,7 +275,6 @@ def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
 
     Returns:
             np.ndarray: Lorentzian function for MARY spectrum.
-
     """
     return (amplitude / Bhalf**2) - (amplitude / (B**2 + Bhalf**2))
 
@@ -267,6 +354,30 @@ def angular_frequency_to_mT(ang_freq: float) -> float:
 def anisotropy_check(
     theta: float | np.ndarray, phi: float | np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
+    """Validate and normalise anisotropy angle grids.
+
+    Accepts scalar or array inputs for the polar (``theta``) and azimuthal
+    (``phi``) angles, promotes scalars to 1-element arrays, and enforces
+    domain and parity constraints that downstream integrators rely on.
+
+    Args:
+            theta (float or np.ndarray): Polar angle(s) in radians.
+                Must lie in ``[0, π]``. If an array is provided and
+                ``len(theta) > 1`` while ``len(phi) > 1``, then
+                ``len(theta)`` must be **odd**.
+            phi (float or np.ndarray): Azimuthal angle(s) in radians.
+                Must lie in ``[0, 2π]``. If an array is provided and
+                ``len(theta) > 1`` while ``len(phi) > 1``, then
+                ``len(phi)`` must be **even**.
+
+    Returns:
+            (np.ndarray, np.ndarray): The validated angle arrays
+            ``(theta, phi)`` (possibly promoted from scalars).
+
+    Raises:
+            ValueError: If angles are out of range or the grid parity
+                constraints are violated.
+    """
     if isinstance(theta, float):
         theta = np.array([theta])
     if isinstance(phi, float):
@@ -412,6 +523,23 @@ def cidnp_polarisation_truncated_diffusion_model(
 
 
 def define_xyz(x1, x2, z1, z2, z3, z4):
+    """Construct a right-handed orthonormal basis from atom/point triplets.
+
+    The z-axis is defined as the normal to the plane spanned by the
+    vectors ``(z1 − z2)`` and ``(z3 − z4)`` (right-hand rule).
+    The x-axis is the normalised direction from ``x2`` to ``x1``.
+    The y-axis completes the right-handed triad via ``y = z × x``,
+    and x is re-orthogonalised by ``x = y × z``.
+
+    Args:
+            x1, x2 (array-like): Points defining the x-axis direction.
+            z1, z2, z3, z4 (array-like): Points defining two in-plane
+                vectors whose cross product yields the z-axis.
+
+    Returns:
+            (np.ndarray, np.ndarray, np.ndarray): Unit vectors
+            ``(x, y, z)`` forming a right-handed orthonormal basis.
+    """
     a = np.array(z1) - np.array(z2)
     b = np.array(z3) - np.array(z4)
     z = np.cross(a, b)
@@ -450,12 +578,44 @@ def enumerate_spin_states_from_base(base: int) -> np.ndarray:
 
 
 def get_angle_between_plane(A, B):
+    """Angle between two plane normals in degrees.
+
+    Computes the angle between vectors ``A`` and ``B`` (interpreted as
+    plane normals). The result is within ``[0, 180]`` degrees.
+
+    Args:
+            A (array-like): First normal vector.
+            B (array-like): Second normal vector.
+
+    Returns:
+            float: Angle between ``A`` and ``B`` in degrees.
+    """
     tmp = np.linalg.norm(A) * np.linalg.norm(B)
     angle = np.arccos(np.dot(A, B) / tmp)
     return np.degrees(angle)
 
 
 def get_rotation_matrix_euler_angles(A, B):
+    """Rotation matrix and ZXZ Euler angles mapping basis A → basis B.
+
+    Forms the rotation matrix ``R = Aᵀ B`` that maps coordinates expressed
+    in the (column) basis ``A`` to the basis ``B``, and extracts the ZXZ
+    Euler angles ``(α, β, γ)`` in radians.
+
+    Args:
+            A (np.ndarray): 3×3 column-basis matrix of frame A.
+            B (np.ndarray): 3×3 column-basis matrix of frame B.
+
+    Returns:
+            (np.ndarray, float, float, float):
+            - ``R``: 3×3 rotation matrix.
+            - ``alpha`` (rad): First ZXZ angle.
+            - ``beta`` (rad): Second ZXZ angle.
+            - ``gamma`` (rad): Third ZXZ angle.
+
+    Notes:
+            Handles the gimbal-lock case ``|R[2,2]| = 1`` explicitly.
+    """
     R = np.dot(np.array(A).T, np.array(B))
     if np.abs(R[2, 2]) != 1:
         beta = np.arccos(R[2, 2])
@@ -478,6 +638,21 @@ def get_rotation_matrix_euler_angles(A, B):
 
 
 def infer_bonds(elements, coords, scale=1.20, max_dist=2.0):
+    """Heuristic covalent-bond detection from interatomic distances.
+
+    Bonds are inferred when the interatomic distance is less than
+    ``scale × (r_i + r_j)`` using covalent radii (fallback 0.77 Å) and
+    also less than ``max_dist`` to avoid spurious long bonds.
+
+    Args:
+            elements (list[str]): Atomic symbols per atom.
+            coords (np.ndarray): Cartesian coordinates, shape ``(N, 3)`` (Å).
+            scale (float): Multiplicative tolerance on summed covalent radii.
+            max_dist (float): Hard cutoff distance (Å).
+
+    Returns:
+            list[tuple[int, int]]: Pairs of atom indices ``(i, j)`` indicating bonds.
+    """
     bonds = []
     n = len(elements)
     for i in range(n):
@@ -602,6 +777,25 @@ def nmr_t2_relaxation(t: np.ndarray, t2: float) -> np.ndarray:
 
 
 def parse_pdb(path, use_rdkit_bonds=False, label_scheme="atom"):
+    """Load a PDB and return plotting arrays (labels, elements, coords, bonds).
+
+    Builds coordinates from an existing conformer or embeds one if missing.
+    Optionally uses RDKit’s bond topology.
+
+    Args:
+            path (str | Path): Path to a ``.pdb`` file.
+            use_rdkit_bonds (bool): If True, bonds are taken from RDKit
+                connectivity; otherwise an empty list is returned.
+            label_scheme (str): One of ``{"atom","res_atom","atom_serial","chain_res_atom"}``
+                passed to :func:`pdb_label`.
+
+    Returns:
+            (list[str], list[str], np.ndarray, list[tuple[int,int]]):
+            - ``labels``: Per-atom labels.
+            - ``elements``: Atomic symbols.
+            - ``coords``: Cartesian coordinates, shape ``(N, 3)`` (Å).
+            - ``bonds``: Pairs of atom indices (optional if ``use_rdkit_bonds=False``).
+    """
     mol = Chem.MolFromPDBFile(path, removeHs=False)
     if mol.GetNumConformers() == 0:
         AllChem.EmbedMolecule(mol, AllChem.ETKDGv3())
@@ -621,6 +815,23 @@ def parse_pdb(path, use_rdkit_bonds=False, label_scheme="atom"):
 
 
 def parse_label_xyz_txt(path):
+    """Parse a simple labeled XYZ-like text file.
+
+    Expected format per non-comment line: ``<label> <x> <y> <z>`` with
+    whitespace separation. Lines starting with ``#`` are ignored.
+
+    Args:
+            path (str | Path): Path to the labeled coordinate file.
+
+    Returns:
+            (list[str], list[str], np.ndarray):
+            - ``labels``: Raw labels from file.
+            - ``elements``: Guessed elements from label alphabetic prefix.
+            - ``coords``: Cartesian coordinates, shape ``(N, 3)`` (Å).
+
+    Raises:
+            ValueError: If a line cannot be parsed into 4 fields.
+    """
     labels, coords = [], []
     with open(path, "r", encoding="utf-8") as f:
         for raw in f:
@@ -641,6 +852,23 @@ def parse_label_xyz_txt(path):
 
 
 def parse_xyz(path):
+    """Parse a standard XYZ file (single frame).
+
+    The file must contain at least the header line with atom count, a comment
+    line, and ``N`` subsequent atom lines.
+
+    Args:
+            path (str | Path): Path to the ``.xyz`` file.
+
+    Returns:
+            (list[str], list[str], np.ndarray):
+            - ``labels``: Auto-generated labels ``<element><index>``.
+            - ``elements``: Atomic symbols.
+            - ``coords``: Cartesian coordinates, shape ``(N, 3)`` (Å).
+
+    Raises:
+            ValueError: If the file is too short or the atom count does not match.
+    """
     with open(path, "r", encoding="utf-8") as f:
         lines = [ln.rstrip() for ln in f]
     if len(lines) < 3:
@@ -661,6 +889,19 @@ def parse_xyz(path):
 
 
 def pdb_label(atom, scheme="chain_res_atom"):
+    """Create a human-readable atom label from PDB residue info.
+
+    Args:
+            atom (rdkit.Chem.Atom): RDKit atom with PDB residue info.
+            scheme (str): Labeling scheme:
+                - ``"atom"`` → atom name or element symbol.
+                - ``"res_atom"`` → ``RESN<resid>:ATOM``.
+                - ``"atom_serial"`` → ``ATOM(serial)``.
+                - ``"chain_res_atom"`` (default) → ``CHAIN:RESN<resid>:ATOM``.
+
+    Returns:
+            str: Formatted label; falls back to element symbol if fields are missing.
+    """
     info = atom.GetPDBResidueInfo()
     symbol = atom.GetSymbol()
     if info is None:
@@ -725,6 +966,20 @@ def read_orca_hyperfine(
 
 
 def read_lines_utf8_or_utf16le(path: Path) -> list[str]:
+    """Read text file as UTF-8 (with BOM) or UTF-16LE, returning lines.
+
+    Tries UTF-8 (BOM-aware) first, then UTF-16LE, which is common in
+    ORCA outputs on Windows.
+
+    Args:
+            path (Path): File path.
+
+    Returns:
+            list[str]: Lines of the decoded file (including newlines).
+
+    Raises:
+            UnicodeError: If the file is neither valid UTF-8 nor UTF-16LE.
+    """
     # Try UTF-8 first (with BOM support via -sig)
     # ORCA in Windows may have utf-16le
     for enc in ("utf-8-sig", "utf-16le"):
@@ -739,6 +994,24 @@ def read_lines_utf8_or_utf16le(path: Path) -> list[str]:
 def _hyperfine_from_orca6_out(
     path: Path,
 ) -> tuple[list[int], list[str], list[np.ndarray]]:
+    """Parse hyperfine data from an ORCA 6 ``.out`` file.
+
+    Extracts nucleus indices, isotopes, and total hyperfine coupling
+    (HFC) matrices (in mT) from the EPR/HFC sections.
+
+    Args:
+            path (Path): Path to the ORCA ``.out`` file.
+
+    Returns:
+            tuple[list[int], list[str], list[np.ndarray]]:
+            - ``indices``: Zero-based nucleus indices (as in ORCA).
+            - ``isotopes``: Isotope strings, e.g. ``"14N"``.
+            - ``hfc_matrices``: 3×3 HFC matrices (mT) per nucleus.
+
+    Raises:
+            ValueError: If the number of parsed nuclei, isotopes, or
+                matrices is inconsistent with the header.
+    """
     lines = read_lines_utf8_or_utf16le(path)
 
     is_epr_block = False
@@ -832,6 +1105,23 @@ def _hyperfine_from_orca6_out(
 def _hyperfine_from_orca6_property_txt(
     path: Path,
 ) -> tuple[list[int], list[str], list[np.ndarray]]:
+    """Parse hyperfine data from an ORCA 6 ``.property.txt`` file.
+
+    Reads the ``$SCF_A_Tensor`` block to obtain per-nucleus indices,
+    isotopes, and anisotropic A-tensors, converted to mT.
+
+    Args:
+            path (Path): Path to the ORCA ``.property.txt`` file.
+
+    Returns:
+            tuple[list[int], list[str], list[np.ndarray]]:
+            - ``indices``: Zero-based nucleus indices.
+            - ``isotopes``: Isotope strings, e.g. ``"14N"``.
+            - ``hfc_matrices``: 3×3 HFC matrices (mT) per nucleus.
+
+    Raises:
+            ValueError: If counts of nuclei/isotopes/matrices are inconsistent.
+    """
     lines = read_lines_utf8_or_utf16le(path)
     is_scf_a_tensor_block = False
     indices = []
@@ -1056,6 +1346,19 @@ def _hyperfine_from_orca6_property_txt(
 
 
 def read_trajectory_files(path: Path, scale=1e-10):
+    """Load and concatenate text trajectory files in a directory.
+
+    Each file under ``path`` is read with ``numpy.genfromtxt`` and
+    concatenated along the first axis; the result is multiplied by
+    ``scale`` (default converts Å → m if files are in Å).
+
+    Args:
+            path (Path): Directory containing trajectory fragments.
+            scale (float): Multiplicative scaling factor applied post-concat.
+
+    Returns:
+            np.ndarray: Concatenated (and scaled) trajectory array.
+    """
     data = [np.genfromtxt(file_path) for file_path in Path(path).glob("*")]
     return scale * np.concatenate(data, axis=0)
 
@@ -1080,6 +1383,19 @@ def reference_signal(
 
 
 def rodrigues_rotation(v, k, theta):
+    """Rotate vector(s) ``v`` about axis ``k`` by angle ``theta`` (Rodrigues’ formula).
+
+    Supports arrays of stacked row vectors ``v`` with shape ``(N, 3)`` or
+    column-major layout ``(3, N)``. The axis ``k`` is normalised internally.
+
+    Args:
+            v (np.ndarray): Vectors to rotate, shape ``(N, 3)`` or ``(3, N)``.
+            k (array-like): Rotation axis (length-3).
+            theta (float): Rotation angle (rad).
+
+    Returns:
+            np.ndarray: Rotated vectors with the same shape as ``v``.
+    """
     m, n = v.shape
 
     # Normalise rotation axis
@@ -1114,6 +1430,16 @@ def rodrigues_rotation(v, k, theta):
 
 
 def rotate_axes(A, x, y, z):
+    """Apply rotation matrix ``A`` to a basis ``(x, y, z)``.
+
+    Args:
+            A (np.ndarray): 3×3 rotation matrix.
+            x, y, z (np.ndarray): Input basis unit vectors (length-3).
+
+    Returns:
+            (np.ndarray, np.ndarray, np.ndarray): Rotated basis vectors
+            ``(x', y', z')``.
+    """
     x = np.dot(A, x)
     y = np.dot(A, y)
     z = np.dot(A, z)
@@ -1163,6 +1489,21 @@ def spectral_density(omega: float, tau_c: float) -> float:
 
 
 def _check_full_sphere(theta: np.ndarray, phi: np.ndarray) -> Tuple[int, int]:
+    """Verify that ``theta``/``phi`` form a full-sphere tensor grid.
+
+    Checks that ``theta`` equals ``linspace(0, π, len(theta))`` and
+    ``phi`` equals ``linspace(0, 2π, len(phi))`` (within numerical tolerance).
+
+    Args:
+            theta (np.ndarray): Polar grid (radians).
+            phi (np.ndarray): Azimuthal grid (radians).
+
+    Returns:
+            (int, int): ``(len(theta), len(phi))`` for convenience.
+
+    Raises:
+            ValueError: If either grid does not match the expected full-sphere linspace.
+    """
     nth, nph = len(theta), len(phi)
     if not np.all(np.isclose(theta, np.linspace(0, np.pi, nth))):
         raise ValueError(
@@ -1264,6 +1605,15 @@ def s_t0_omega(
 
 
 def write_pdb(mol, path):
+    """Write the current conformer to a PDB file.
+
+    Args:
+            mol (rdkit.Chem.Mol): Molecule to serialise.
+            path (str | Path): Destination ``.pdb`` filepath.
+
+    Side effects:
+            Prints a confirmation line with the saved path.
+    """
     block = Chem.MolToPDBBlock(mol)
     with open(path, "w", encoding="utf-8") as f:
         f.write(block)
@@ -1271,7 +1621,19 @@ def write_pdb(mol, path):
 
 
 def write_sdf(mol, path):
-    """Append the current conformer as an SDF record (retains bonds, charges, etc.)."""
+    """Write the molecule’s current conformer to an SDF file (one record).
+
+    Saves the active conformer of an RDKit `Mol` as a single SDF record,
+    preserving topology (bonds, charges, stereochemistry) and 3D coordinates.
+
+    Args:
+        mol: RDKit `Chem.Mol` instance containing the conformer to export.
+        path: Destination file path for the `.sdf` file.
+
+    Notes:
+        - Creates the file or overwrites it if it already exists.
+        - Prints a short confirmation message on success.
+    """
     writer = Chem.SDWriter(path)
     writer.write(mol)
     writer.flush()
@@ -1280,6 +1642,15 @@ def write_sdf(mol, path):
 
 
 def write_xyz(mol, path):
+    """Write the current conformer to an XYZ file (single frame).
+
+    Args:
+            mol (rdkit.Chem.Mol): Molecule to serialise.
+            path (str | Path): Destination ``.xyz`` filepath.
+
+    Notes:
+            Writes a minimal XYZ with a generated comment line.
+    """
     conf = mol.GetConformer()
     n = mol.GetNumAtoms()
     with open(path, "w", encoding="utf-8") as f:
@@ -1307,7 +1678,6 @@ def yield_anisotropy(
             (float, float):
             - delta_phi (float): Maximum yield - minimum yield.
             - gamma (float): delta_phi / spherical average.
-
     """
     delta_phi = product_yield.max() - product_yield.min()
     yield_av = spherical_average(product_yield, theta, phi)
