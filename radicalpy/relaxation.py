@@ -1,6 +1,89 @@
-"""Relaxation superoperators.
+"""Relaxation superoperators in Liouville space for radical-pair dynamics.
 
-.. todo:: Add module docstring.
+This module defines a family of incoherent (relaxational) processes as
+**Liouville-space superoperators** that act on vectorised density matrices.
+Each process contributes an additive term ``subH`` (a superoperator) that
+can be combined with coherent Liouvillians to evolve spin systems subject
+to stochastic environmental interactions.
+
+The implementations follow standard models in spin chemistry and magnetic
+resonance, including singlet–triplet dephasing, random local fields,
+triplet–triplet relaxation/dephasing, T₁/T₂ Bloch-type relaxation, and
+anisotropic g-tensor modulation under rotational diffusion.
+
+Classes:
+        - `LiouvilleRelaxationBase`: Common base for relaxation superoperators.
+        - `DipolarModulation`: Dipolar modulation model (Kattnig et al., 2016).
+        - `GTensorAnisotropy`: g-tensor anisotropy relaxation (Kivelson, 1960).
+        - `RandomFields`: Isotropic random-field model (Kattnig et al., 2016).
+        - `SingletTripletDephasing`: S–T dephasing channel (Shushin, 1991).
+        - `T1Relaxation`: Longitudinal (spin–lattice) relaxation (Bloch, 1946).
+        - `T2Relaxation`: Transverse (spin–spin) relaxation (Bloch, 1946).
+        - `TripletTripletDephasing`: Triplet–triplet dephasing (Gorelik et al., 2001).
+        - `TripletTripletRelaxation`: Triplet–triplet population relaxation (Miura et al., 2015).
+
+Helper functions:
+        - `_g_tensor_anisotropy_term`: Per-radical superoperator contribution for
+          g-anisotropy with Kivelson spectral densities.
+
+Key concepts:
+        - **Liouville space / superoperators**: Operators acting on vectorized
+          density matrices. Additive relaxation terms are represented by `subH`.
+        - **Projection operators**: `Q_S`, `Q_T`, `Q_{T+}`, `Q_{T0}`, `Q_{T-}`
+          select singlet/triplet subspaces and enter several models.
+        - **Spin operators**: Single-spin `S_x, S_y, S_z` per radical index, used
+          to build isotropic/anisotropic relaxation channels via Kronecker products.
+        - **Spectral density**: Frequency- and correlation-time–dependent scaling
+          (e.g., Kivelson form) for stochastic modulation processes.
+
+Usage pattern:
+        1) Instantiate a relaxation class with its parameters
+           (e.g., `rate_constant`, `tau_c`, `g` principal values, `omega`).
+        2) Call `.init(sim)` with a `LiouvilleSimulation` providing
+           `projection_operator(...)` and `spin_operator(radical_idx, axis)`.
+        3) Retrieve the superoperator via the instance’s `subH` attribute and
+           add it to your total Liouvillian.
+
+Args conventions (per-class):
+        - `rate_constant` (float, s⁻¹): Overall relaxation rate used in most models.
+        - `g1`, `g2` (list[float]): Principal components of the radicals’ g-tensors.
+        - `omega1`, `omega2` (float, rad·s⁻¹·mT⁻¹ × B): Larmor prefactors; the actual
+          frequency is typically `omega * B0`. See note below.
+        - `tau_c1`, `tau_c2` (float, s): Rotational correlation times.
+
+Notes:
+        - **Magnetic-field dependence**: For `GTensorAnisotropy`, the instantaneous
+          Larmor frequency is proportional to the applied field `B0`. If `B0` varies
+          (e.g., in MARY scans), compute `omega` dynamically from `B0` rather than
+          treating it as a fixed constant.
+        - **Vectorisation size**: Superoperators are built with Kronecker products
+          sized to the underlying Hilbert spaces of the radicals in `sim`.
+        - **Normalisation and units**: Rate-like parameters are in s⁻¹ unless noted.
+          Axis labels/units are not handled here (these are dynamical, not plotting
+          utilities).
+
+References:
+        - Kattnig et al., *New J. Phys.* **18**, 063007 (2016).
+        - Kivelson, *J. Chem. Phys.* **33**, 1094 (1960).
+        - Shushin, *Chem. Phys. Lett.* **181**(2–3), 274–278 (1991).
+        - Bloch, *Phys. Rev.* **70**, 460–474 (1946).
+        - Gorelik et al., *J. Phys. Chem. A* **105**, 8011–8017 (2001).
+        - Miura et al., *J. Phys. Chem. A* **119**, 5534–5544 (2015).
+
+Requirements:
+        - `numpy` for array/Kronecker algebra.
+        - A simulation object exposing:
+          `projection_operator(State.*)` and `spin_operator(idx, 'x'|'y'|'z')`,
+          as used in the `init` methods.
+
+Raises:
+        ValueError: May be raised upstream if the simulation object does not
+            support the required operators or radical indexing.
+
+See also:
+        `radicalpy.simulation.LiouvilleSimulation`,
+        `radicalpy.states.State`,
+        and the corresponding coherent Liouvillian construction in your codebase.
 """
 
 import numpy as np

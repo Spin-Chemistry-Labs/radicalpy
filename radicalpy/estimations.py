@@ -1,4 +1,97 @@
 #!/usr/bin/env python
+"""Estimation utilities for fields, rates, interactions, and transport.
+
+This module collects closed-form and semi-empirical estimators commonly
+used in spin chemistry and magnetic resonance modeling. Functions cover
+theoretical B₁/₂ values, T₁/T₂ relaxation rates (g-anisotropy and
+tumbling motion), diffusion/viscosity, dipolar and exchange interactions,
+kinetic rates (excitation, recombination, re-encounter, electron transfer),
+triplet relaxation, rotational correlation times, and helpers for fitting
+autocorrelation functions.
+
+Major groups:
+        B½ / field scales
+            - `Bhalf_theoretical_hyperfine(sim)`
+            - `Bhalf_theoretical_relaxation(kstd, krec)`
+            - `Bhalf_theoretical_relaxation_delay(kstd, krec, td)`
+        Relaxation (g-anisotropy / tumbling)
+            - `T1_relaxation_rate(g_tensors, B, tau_c)`
+            - `T1_relaxation_rate_tumbling_motion(tau_c, B0, r)`
+            - `T2_relaxation_rate(g_tensors, B, tau_c)`
+            - `T2_relaxation_rate_tumbling_motion(tau_c, B0, r)`
+            - `g_tensor_relaxation_rate(tau_c, g1, g2)`
+        Transport & correlation
+            - `diffusion_coefficient(radius, temperature, eta)`
+            - `autocorrelation_fit(ts, trajectory, tau_begin, tau_end, num_exp=100, normalise=False)`
+            - `rotational_correlation_time_for_molecule(radius, temp, eta=0.89e-3)`
+            - `rotational_correlation_time_for_protein(Mr, temp, eta=0.89e-3)`
+            - `aqueous_glycerol_viscosity(frac_glyc, temp)`
+        Spin interactions
+            - `dipolar_interaction_isotropic(r)`
+            - `dipolar_interaction_anisotropic(r)`
+            - `dipolar_interaction_MC(r, theta)`
+            - `exchange_interaction_in_protein(r, beta=14e9, J0=9.7e9)`
+            - `exchange_interaction_in_solution(r, beta=0.049e-9, J0rad=1.7e17)`
+            - `exchange_interaction_in_solution_MC(r, beta=2e10, J0=-570)`
+        Dephasing / mixing from trajectories & geometry
+            - `k_D(D, tau_c)`
+            - `k_STD(J, tau_c)`
+            - `k_STD_microreactor(D, V, d=5e-10, J0=1e11, alpha=2e10)`
+            - `k_ST_mixing(Bhalf)`
+            - `k_constant(r, gamma)`
+        Kinetics
+            - `k_electron_transfer(separation, driving_force=-1, reorganisation_energy=1)`
+            - `k_excitation(wavelength, beam_radius, absorbance, concentration, laser_power, path_length)`
+            - `k_recombination(MFE, k_escape)`
+            - `k_reencounter(encounter_dist, diff_coeff)`
+            - `k_triplet_relaxation(B0, tau_c, D, E)`
+
+Units & conventions:
+        - Fields: millitesla (mT) unless otherwise noted; some functions expect tesla (T).
+        - Rates: s⁻¹; angular frequencies in rad·s⁻¹ where specified.
+        - Distances: metres (m); protein electron-transfer `separation` is in Å as per literature fits.
+        - Temperatures: kelvin (K) unless otherwise noted (e.g., viscosity uses °C input).
+        - Time arrays (`ts`, `time`): seconds (s).
+        - g-tensor inputs: principal components per radical, dimensionless.
+        - Many expressions reuse physical constants from a shared `C` namespace and isotope
+          data via `Isotope("E")` (electron); see your codebase for those definitions.
+
+Notes:
+        - B½ estimators (`Weller`, `Golesworthy`) are empirical/approximate and assume
+          model conditions stated in the cited works.
+        - Tumbling-motion formulas (`Bloembergen–Purcell–Pound`) require a distance `r`
+          and correlation time `tau_c`; results scale as r⁻⁶.
+        - `autocorrelation_fit` uses a fixed set of τ values (log-spaced) with a
+          non-negative multi-exponential fit; the effective `tau_c` is the amplitude-weighted sum.
+        - Viscosity model (`Volk`) is accurate within stated temperature ranges; ensure
+          `frac_glyc` ∈ [0, 1].
+        - Some helpers accept scalars or NumPy arrays and broadcast accordingly.
+
+References (selection):
+        - Weller et al., *Chem. Phys. Lett.* **96**(1), 24–27 (1983).
+        - Golesworthy et al., *J. Chem. Phys.* **159**, 105102 (2023).
+        - Hayashi, *Introduction to Dynamic Spin Chemistry* (2004).
+        - Bloembergen, Purcell & Pound, *Phys. Rev.* **73**, 679 (1948).
+        - Volk et al., *Experiments in Fluids* **59**, 76 (2018).
+        - Einstein, *Ann. Physik* **17**, 549–560 (1905).
+        - Santabarbara et al., *Biochemistry* **44**(6), 2119–2128 (2005).
+        - Moser et al., *Nature* **355**, 796–802 (1992); *BBA Bioenerg.* **1797**, 1573–1586 (2010).
+        - McLauchlan et al., *Mol. Phys.* **73**(2), 241–263 (1991).
+        - Player et al., *J. Chem. Phys.* **153**, 084303 (2020).
+        - Kattnig et al., *New J. Phys.* **18**, 063007 (2016).
+        - Shushin, *Chem. Phys. Lett.* **181**(2–3), 274–278 (1991).
+        - Steiner & Ulrich, *Chem. Rev.* **89**(1), 51–147 (1989).
+        - Atkins et al., *Mol. Phys.* **27**(6) (1974).
+
+Requirements:
+        - `numpy`, `scipy` (for curve fitting in `autocorrelation_fit`), and project
+          constants/utilities (`C`, `Isotope`, `utils`) available in scope.
+
+See also:
+        - `relaxation.py`, `kinetics.py` for superoperators using several of these rates.
+        - `experiments.py` for simulations (MARY, EPR/ODMR/OMFE) that can consume these estimates.
+"""
+
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -100,7 +193,6 @@ def T1_relaxation_rate(
     .. _Hayashi, Introduction to Dynamic Spin Chemistry\: Magnetic
        Field Effects on Chemical and Biochemical Reactions (2004):
        https://doi.org/10.1142/9789812562654_0015
-
     """
     omega = Isotope("E").gamma_mT * B
     g_innerproduct = _relaxation_gtensor_term(g_tensors)
@@ -129,6 +221,8 @@ def T1_relaxation_rate_tumbling_motion(
     Returns:
             float or np.ndarray: The T1 relaxation rate (1/s).
 
+    .. _Bloembergen, Purcell, and Pound, Phys. Rev. 73, 679 (1948):
+       https://journals.aps.org/pr/abstract/10.1103/PhysRev.73.679
     """
     gamma = -Isotope("E").magnetogyric_ratio
     omega = gamma * B0
@@ -452,7 +546,6 @@ def exchange_interaction_in_solution_MC(
 
     Returns:
         np.ndarray: The exchange coupling constant in milli Tesla (mT).
-
     """
     return J0 * np.exp(-beta * (r - r.min()))
 
@@ -493,6 +586,9 @@ def k_D(D: np.ndarray, tau_c: float) -> float:
 
     Returns:
             float: The D-dephasing rate (1/s).
+
+    .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
+       https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007
     """
     D_var_MHz = np.var(utils.mT_to_MHz(D))
     return tau_c * D_var_MHz * 4 * np.pi**2 * 1e12
@@ -509,9 +605,6 @@ def k_STD(J: np.ndarray, tau_c: float) -> float:
 
     Returns:
             float: The ST-dephasing rate (1/s).
-
-    .. _Kattnig et al. New J. Phys., 18, 063007 (2016):
-       https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007
     """
     J_var_MHz = np.var(utils.mT_to_MHz(J))
     return 4 * tau_c * J_var_MHz * 4 * np.pi**2 * 1e12
@@ -574,11 +667,6 @@ def k_constant(r: float | np.ndarray, gamma: float) -> float | np.ndarray:
 
     Returns:
             float or np.ndarray: K constant (1/s).
-
-
-    .. _Bloembergen, Purcell, and Pound, Phys. Rev. 73, 679 (1948):
-       https://journals.aps.org/pr/abstract/10.1103/PhysRev.73.679
-
     """
     mu0 = C.mu_0
     hbar = C.hbar
@@ -606,7 +694,6 @@ def k_electron_transfer(
 
     .. _Moser et al. Biochim. Biophys. Acta Bioenerg. 1797, 1573‐1586 (2010):
        https://doi.org/10.1016/j.bbabio.2010.04.441
-
     """
     return 10 ** (
         13
@@ -680,7 +767,6 @@ def k_reencounter(encounter_dist: float, diff_coeff: float) -> float:
 
     .. _Salikhov, J. Magn. Reson., 63, 271-279 (1985):
        https://doi.org/10.1016/0022-2364(85)90316-6
-
     """
     return (encounter_dist**2 / diff_coeff) ** -1
 
