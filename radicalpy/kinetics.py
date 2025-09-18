@@ -1,4 +1,86 @@
-"""Kinetics classes."""
+"""Kinetics operators and superoperators for radical-pair dynamics.
+
+This module implements common incoherent **kinetic** processes acting on
+spin systems in either Hilbert space (operators) or Liouville space
+(superoperators). These terms model recombination, product formation,
+and phenomenological decay channels that act alongside coherent spin
+evolution.
+
+Classes:
+        - `HilbertKineticsBase`: Base class for Hilbert-space kinetics operators.
+        - `LiouvilleKineticsBase`: Base class for Liouville-space kinetics superoperators.
+        - `Exponential`: Simple exponential decay of product probabilities in Hilbert space
+          (Kaptein model).
+        - `Haberkorn`: Haberkorn singlet/triplet selective recombination superoperator.
+        - `HaberkornFree`: Haberkorn-style uniform decay (free radical / RP2 formation).
+        - `JonesHore`: Jones–Hore two-site kinetics with separate S/T rates.
+
+Usage pattern:
+        1) Instantiate a kinetics object with the desired rate parameters
+           (e.g., `rate_constant`, `singlet_rate`, `triplet_rate`, `target`).
+        2) Call `.init(sim)` with a simulation exposing the required API
+           (projection operators, sizes, and Liouville conversion).
+        3) Combine the returned term with your total generator:
+           - Hilbert space: use the operator’s effect where appropriate.
+           - Liouville space: add `subH` to the Liouvillian.
+
+Args conventions (per class):
+        - `Exponential(rate_constant)`: Scales product probabilities as
+          `exp(-rate * t)`.
+        - `Haberkorn(rate_constant, target)`: Selective S/T recombination where
+          `target` is one of `State.SINGLET`, `State.TRIPLET`, or specific
+          triplet substates supported by the code.
+        - `HaberkornFree(rate_constant)`: Uniform (state-independent) decay
+          proportional to identity in Liouville space.
+        - `JonesHore(singlet_rate, triplet_rate)`: Two-channel model with separate
+          S and T rates and a coupling term constructed from S/T projectors.
+
+Notes:
+        - **Hilbert vs Liouville**: Hilbert-space `Exponential` modifies product
+          probabilities directly; Liouville-space classes construct superoperators
+          (`subH`) via Kronecker products and projector conversions.
+        - **Projectors**: `QS`, `QT`, and triplet sublevel projectors are obtained
+          from the simulation (`sim.projection_operator(...)`); Haberkorn and
+          Jones–Hore rely on these for state selectivity.
+        - **Rates and units**: All rate parameters are in s⁻¹. Ensure time arrays
+          passed to `Exponential.adjust_product_probabilities` are in seconds.
+
+Examples:
+        >>> # Hilbert-space exponential kinetics
+        >>> kin = Exponential(rate_constant=1e6)
+        >>> kin.adjust_product_probabilities(prod_probs, time)
+
+        >>> # Liouville-space Haberkorn (singlet)
+        >>> kin = Haberkorn(rate_constant=1e6, target=State.SINGLET)
+        >>> kin.init(sim)
+        >>> L_kin = kin.subH
+
+        >>> # Jones–Hore with distinct S and T rates
+        >>> kin = JonesHore(1e7, 1e6)
+        >>> kin.init(sim)
+        >>> L_kin = kin.subH
+        >>> avg_rate = kin.rate_constant
+
+References:
+        - Kaptein et al., *Chem. Phys. Lett.* **4**(4), 195–197 (1969).
+        - Haberkorn, *Mol. Phys.* **32**(5), 1491–1493 (1976).
+        - Jones et al., *Chem. Phys. Lett.* **507**, 269–273 (2011).
+
+Requirements:
+        - `numpy` for array operations.
+        - A simulation object with:
+          `projection_operator(State.*)`, `hamiltonian_size`,
+          and a Liouville conversion method (e.g., `sim._convert(Q)`).
+
+Raises:
+        ValueError: `Haberkorn` validates that `target` is singlet or triplet
+            (or supported triplet sublevels) and will raise if unsupported.
+
+See also:
+        `radicalpy.simulation.HilbertIncoherentProcessBase`,
+        `radicalpy.simulation.LiouvilleIncoherentProcessBase`,
+        and related relaxation modules for non-kinetic incoherent processes.
+"""
 
 import numpy as np
 

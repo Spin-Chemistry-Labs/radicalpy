@@ -1,4 +1,70 @@
 #!/usr/bin/env python
+"""
+Simulation utilities for spin dynamics.
+
+This module provides classes and helpers to build quantum mechanical models in
+either **Hilbert** space (density matrices as square arrays) or **Liouville**
+space (vectorised densities / superoperators). It focuses on electron–nuclear
+spin systems typical of radical pairs and triplet pairs and supports common
+interactions and observables used in magnetic resonance and spin chemistry.
+
+Main classes
+------------
+- `State` :
+    Enumerates common initial/observable spin states (singlet/triplet manifold,
+    EPR observable, thermal equilibrium, etc.).
+- `Basis` :
+    Choice of electron-pair basis: Zeeman or singlet–triplet (S/T).
+- `HilbertSimulation` :
+    Core simulator that assembles Hamiltonians (Zeeman, hyperfine, exchange,
+    dipolar, optional zero-field splitting), prepares initial density matrices,
+    propagates them unitarily, and evaluates product probabilities/yields.
+- `LiouvilleSimulation` :
+    Extends `HilbertSimulation` with Liouville-space evolution (superoperators,
+    vectorised densities) for convenient inclusion of incoherent processes.
+- `HilbertIncoherentProcessBase` / `LiouvilleIncoherentProcessBase` :
+    Base hooks to augment Hamiltonians or measured probabilities with
+    phenomenological kinetics / relaxation.
+- `SparseCholeskyHilbertSimulation` :
+    Hilbert-space variant optimised for large systems via sparse algebra and a
+    Cholesky-factor time-stepping scheme.
+- `SemiclassicalSimulation` :
+    Generates random semiclassical Hamiltonians for ensemble treatments.
+
+Key features
+------------
+- Spin operators for arbitrary particles and bases.
+- Zeeman (1D/3D), hyperfine (isotropic/tensor), exchange (J), dipolar (1D/3D),
+  and ZFS Hamiltonians.
+- Initial states: projection-based (S, T, etc.) and thermal equilibrium.
+- Time evolution: Hilbert (ρ → U ρ U†) and Liouville (ρ → e^{Lt} ρ).
+- Observables: projection operators and product probabilities/yields.
+- Shape conventions:
+    - Hilbert density: `(dim, dim)`
+    - Liouville density (vectorised): `(dim**2, 1)`
+
+Units & conventions
+-------------------
+- Magnetic fields in mT; gyromagnetic ratios provided as `gamma_mT`.
+- Tensors follow x/y/z Cartesian ordering.
+- S/T transform from the Zeeman basis.
+
+Example
+-------
+>>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]), Molecule("Z")]
+>>> sim = HilbertSimulation(molecules, basis=Basis.ST)
+>>> H = sim.total_hamiltonian(B0=0.0, J=0.0, D=0.0)
+>>> t = np.arange(0, 2e-6, 5e-9)
+>>> rhos = sim.time_evolution(State.SINGLET, t, H)
+>>> P_S = sim.product_probability(State.SINGLET, rhos)
+
+See also
+--------
+- `utils.spherical_to_cartesian` for field orientation.
+- Module docstrings of related packages/classes for data structures (`Molecule`,
+  nuclei, radicals, hyperfine data).
+
+"""
 
 import enum
 from math import prod
@@ -14,6 +80,8 @@ from .shared import constants as C
 
 
 class State(enum.Enum):
+    """Enumeration of common spin/population states used as observables or initial conditions."""
+
     EQUILIBRIUM = "Eq"
     EPR = "EPR"
     SINGLET = "S"
@@ -26,21 +94,44 @@ class State(enum.Enum):
 
 
 class Basis(enum.Enum):
+    """Spin basis choices for electron pair subspace (Zeeman vs. singlet–triplet)."""
+
     ZEEMAN = "Zeeman"
     ST = "ST"
 
 
 class HilbertIncoherentProcessBase:
     def __init__(self, rate_constant: float):
+        """Base holder for an incoherent (phenomenological) process.
+
+        Args:
+            rate_constant: Process rate constant (s⁻¹) used by subclasses to
+                modify the Hamiltonian and/or product probabilities.
+        """
         self.rate = rate_constant
 
     def init(self, sim):
+        """Hook to (optionally) initialise process state with the simulation.
+
+        Subclasses may cache shapes, indices, or precomputed operators derived
+        from ``sim``. The default implementation does nothing.
+        """
         pass
 
     def adjust_hamiltonian(self, *args, **kwargs):
+        """Optionally modify the Hamiltonian in-place.
+
+        Subclasses can implement e.g. Redfield/Lindblad additions. The default
+        implementation is a no-op and returns ``None``.
+        """
         return
 
     def adjust_product_probabilities(self, *args, **kwargs):
+        """Optionally post-process simulated product probabilities.
+
+        Can be used to fold in kinetic schemes in Hilbert simulations. The
+        default implementation is a no-op and returns ``None``.
+        """
         return
 
     @property
@@ -49,9 +140,11 @@ class HilbertIncoherentProcessBase:
         return self.rate
 
     def _name(self) -> str:
+        """Return a short human-readable name for the process (class name)."""
         return str(type(self).__name__)
 
     def __repr__(self) -> str:
+        """Pretty, multi-line summary with the process name and rate."""
         lines = [
             self._name(),
             f"Rate constant: {self.rate}",
@@ -86,31 +179,46 @@ class HilbertSimulation:
         custom_gfactors: bool = False,
         basis: Basis = Basis.ST,
     ):
+        """Construct a Hilbert-space spin simulation.
+
+        Args:
+            molecules: List of radical‐containing molecules; each must provide a
+                single electron (``.radical``) and zero or more nuclei (``.nuclei``).
+            custom_gfactors: If ``True``, use per-particle g-factors rather than
+                default magnetogyric ratios.
+            basis: Electron subspace basis (``Basis.ST`` or ``Basis.ZEEMAN``).
+        """
         self.molecules = molecules
         self.custom_gfactors = custom_gfactors
         self.basis = basis
 
     @property
     def coupling(self):
+        """List mapping each nucleus to the index of its parent radical."""
         return sum([[i] * len(m.nuclei) for i, m in enumerate(self.molecules)], [])
 
     @property
     def radicals(self):
+        """List of electron spins (one per molecule)."""
         return [m.radical for m in self.molecules]
 
     @property
     def nuclei(self):
+        """Flattened list of all nuclei across molecules."""
         return sum([[n for n in m.nuclei] for m in self.molecules], [])
 
     @property
     def particles(self):
+        """Concatenated list of electron spins followed by nuclei."""
         return self.radicals + self.nuclei
 
     @property
     def hamiltonian_size(self):
+        """Dimension of the Hilbert space (product of particle multiplicities)."""
         return np.prod([p.multiplicity for p in self.particles])
 
     def __repr__(self) -> str:
+        """Human-readable simulation summary (counts, multiplicities, HFCs, etc.)."""
         return "\n".join(
             [
                 # "Simulation summary:",
@@ -128,6 +236,14 @@ class HilbertSimulation:
         )
 
     def ST_basis(self, M):
+        """Transform an operator from the Zeeman basis to the S/T basis.
+
+        Args:
+            M: Operator in the Zeeman basis.
+
+        Returns:
+            The operator expressed in the S/T basis.
+        """
         # T+  T0  S  T-
         ST = np.array(
             [
@@ -158,7 +274,6 @@ class HilbertSimulation:
                 Spin operator for a particle in the
                 `HilbertSimulation` system with indexing `idx` and
                 axis `axis`.
-
         """
         assert 0 <= idx and idx < len(self.particles)
         assert axis in "xyzpmu"
@@ -192,7 +307,6 @@ class HilbertSimulation:
 
                 Product operator for particles corresponding to `idx1`
                 and `idx2` with isotropic interaction constant `h`.
-
         """
         return h * sum(
             [
@@ -220,7 +334,6 @@ class HilbertSimulation:
 
                 Product operator for particles corresponding to `idx1`
                 and `idx2` with anisotropic interaction tensor `h`.
-
         """
         return sum(
             (
@@ -232,6 +345,7 @@ class HilbertSimulation:
         )
 
     def get_eye(self, shape: int) -> np.ndarray:
+        """Return an identity matrix of the requested dimension (dense)."""
         return np.eye(shape)
 
     def projection_operator(self, state: State, T: float = 298):
@@ -248,7 +362,6 @@ class HilbertSimulation:
 
                 Projection operator corresponding to the `State`
                 `state`.
-
         """
         # Spin operators
         SAx, SAy, SAz = [self.spin_operator(0, ax) for ax in "xyz"]
@@ -273,6 +386,10 @@ class HilbertSimulation:
         return result[state]
 
     def tp_singlet_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair singlet (TP-S) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
         # For radical triplet pair (RTP)
         E = self.get_eye(SAx.shape[0])
         SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
@@ -319,7 +436,6 @@ class HilbertSimulation:
                 described by the `HilbertSimulation` object and the
                 external magnetic field intensity `B0` and angles
                 `theta` and `phi`.
-
         """
         if theta is None and phi is None:
             return self.zeeman_hamiltonian_1d(B0, B_axis)
@@ -344,7 +460,6 @@ class HilbertSimulation:
                 The Zeeman Hamiltonian corresponding to the system
                 described by the `HilbertSimulation` object and the
                 external magnetic field intensity `B0`.
-
         """
         assert axis in "xyz", "`axis` can only be `x`, `y` or `z`"
         gammas = enumerate(p.gamma_mT for p in self.particles)
@@ -377,7 +492,6 @@ class HilbertSimulation:
                 described by the `HilbertSimulation` object and the
                 external magnetic field intensity `B0` and angles
                 `theta` and `phi`.
-
         """
         particles = [
             [p.gamma_mT * self.spin_operator(idx, axis) for axis in "xyz"]
@@ -412,7 +526,6 @@ class HilbertSimulation:
 
                 The Hyperfine Hamiltonian corresponding to the system
                 described by the `HilbertSimulation` object.
-
         """
         if hfc_anisotropy:
             for h in [n.hfc for n in self.nuclei]:
@@ -461,7 +574,6 @@ class HilbertSimulation:
                 The exchange (J-coupling) Hamiltonian corresponding to
                 the system described by the `HilbertSimulation` object
                 and the coupling constant `J`.
-
         """
         Jcoupling = J * self.radicals[0].gamma_mT
         SASB = self.product_operator(0, 1)
@@ -493,7 +605,6 @@ class HilbertSimulation:
                 described by the `HilbertSimulation` object and
                 dipolar coupling constant or dipolar interaction
                 tensor `D`.
-
         """
         if isinstance(D, np.ndarray):
             return self.dipolar_hamiltonian_3d(D)
@@ -519,7 +630,6 @@ class HilbertSimulation:
                 The 1D Dipolar Hamiltonian corresponding to the system
                 described by the `HilbertSimulation` object and
                 dipolar coupling constant `D`.
-
         """
         SASB = self.product_operator(0, 1)
         SAz = self.spin_operator(0, "z")
@@ -546,7 +656,6 @@ class HilbertSimulation:
                 The 3D Dipolar Hamiltonian corresponding to the system
                 described by the `HilbertSimulation` object and
                 dipolar interaction tensor `D`.
-
         """
         spinops = [
             [self.spin_operator(r, ax) for ax in "xyz"]
@@ -561,7 +670,31 @@ class HilbertSimulation:
         )
 
     def zero_field_splitting_hamiltonian(self, D, E) -> np.ndarray:
-        """Construct the Zero Field Splitting (ZFS) Hamiltonian."""
+        """Build the zero-field splitting (ZFS) Hamiltonian.
+
+        Constructs the second-rank ZFS contribution for (typically triplet, S=1)
+        spins using the conventional axial/rhombic parameters ``D`` and ``E``.
+        For each particle index ``idx``, the operator
+        :math:`D (S_z^2 - \\tfrac{1}{3} \\mathbf{S}^2) + E (S_x^2 - S_y^2)`
+        is formed and summed. The parameters are scaled into frequency units via
+        the first radical’s electron gyromagnetic ratio.
+
+        Args:
+            D: Axial ZFS parameter (in the same field/frequency units used
+            elsewhere; internally scaled by ``-radicals[0].gamma_mT``).
+            E: Rhombic ZFS parameter (scaled identically to ``D``).
+
+        Returns:
+            np.ndarray: The ZFS Hamiltonian matrix in the current simulation basis.
+
+        Notes:
+            - This implementation multiplies ``D`` and ``E`` by ``-gamma_mT`` of
+            the first radical to convert to angular frequency units consistent
+            with the rest of the Hamiltonian.
+            - The loop applies the operator to every particle index; in practice,
+            ZFS is only meaningful for S≥1 spins (e.g., an excited triplet).
+            Ensure your particle list reflects that physical situation.
+        """
         Dmod = D * -self.radicals[0].gamma_mT
         Emod = E * -self.radicals[0].gamma_mT
         result = complex(0.0)
@@ -606,7 +739,6 @@ class HilbertSimulation:
             np.ndarray:
 
                 The total Hamiltonian.
-
         """
         H = (
             self.zeeman_hamiltonian(B0, theta=theta, phi=phi)
@@ -655,7 +787,6 @@ class HilbertSimulation:
             >>> rhos = sim.time_evolution(State.SINGLET, time, H)
             >>> rhos.shape
             (400, 12, 12)
-
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
@@ -691,47 +822,82 @@ class HilbertSimulation:
         return product_yield, product_yield_sum
 
     def apply_liouville_hamiltonian_modifiers(self, H, modifiers):
+        """Apply (Hilbert) incoherent process modifiers to the Liouville Hamiltonian.
+
+        Each modifier is initialised with ``self`` once, then given the chance to
+        adjust ``H`` in place. This is a no-op for Hilbert simulations.
+        """
         for K in modifiers:  # skip in hilbert
             K.init(self)
             K.adjust_hamiltonian(H)
 
     @staticmethod
     def apply_hilbert_kinetics(time, product_probabilities, kinetics):
+        """Apply kinetic post-processing to product probabilities in Hilbert space.
+
+        Each object in ``kinetics`` may rescale or filter the probabilities as a
+        function of ``time`` (e.g., recombination channels).
+        """
         for K in kinetics:  # skip in liouville
             K.adjust_product_probabilities(product_probabilities, time)
 
     @staticmethod
     def _square_liouville_rhos(rhos):
+        """Hilbert helper: identity mapping (Liouville uses an override)."""
         return rhos
 
     @staticmethod
     def _get_rho_shape(dim):
+        """Return the array shape for a density matrix in this simulation space.
+
+        In Hilbert-space simulations the density is a square matrix, so the shape
+        is ``(dim, dim)``. (Liouville simulations override this to ``(dim**2, 1)``.)
+
+        Args:
+            dim (int): Dimension of the Hilbert space.
+
+        Returns:
+            tuple[int, int]: ``(dim, dim)``.
+        """
         return dim, dim
 
     @staticmethod
     def convert(H: np.ndarray) -> np.ndarray:
+        """Convert a Hilbert-space Hamiltonian to the simulator's working space.
+
+        In Hilbert simulations this is the identity; Liouville overrides it.
+        """
         return H
 
     @staticmethod
     def _convert(Q: np.ndarray) -> np.ndarray:
+        """Convert a Hilbert-space projector/observable to the working space.
+
+        Identity for Hilbert; Liouville overrides to build the superoperator.
+        """
         return Q
 
     def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
-        """Create an initial desity matrix.
+        """Construct the initial density matrix for time evolution.
 
-        Create an initial density matrix for time evolution of the
-        spin Hamiltonian density matrix.
+        Builds a properly normalised density operator in Hilbert space
+        corresponding to the chosen initial `state`.
+
+        - For most states (e.g. singlet, triplet), this is simply the
+        normalised projection operator.
+        - For the special case `State.EQUILIBRIUM`, the density is taken
+        as the thermal equilibrium state, approximated via
+        :math:`\\rho_0 \\propto e^{-i H \\beta}` where
+        :math:`\\beta = \\hbar / (k_B T)` is provided via
+        `projection_operator`.
 
         Args:
-            state (State): Spin state projection operator.
-
+            state (State): Target spin state (e.g., `SINGLET`, `TRIPLET`,
+                `EQUILIBRIUM`).
             H (np.ndarray): Spin Hamiltonian in Hilbert space.
 
         Returns:
-            np.ndarray:
-
-                A matrix in Hilbert space representing...
-
+            np.ndarray: Normalised density matrix in Hilbert space.
         """
         Pi = self.projection_operator(state)
 
@@ -778,7 +944,6 @@ class HilbertSimulation:
             >>> Up, Um = sim.unitary_propagator(H, 3e-9)
             >>> Up.shape, Um.shape
             ((12, 12), (12, 12))
-
         """
         Up = sp.sparse.linalg.expm(1j * H * dt)
         Um = sp.sparse.linalg.expm(-1j * H * dt)
@@ -807,12 +972,15 @@ class HilbertSimulation:
 
                 The new density matrix after the unitary operator was
                 applied to it.
-
         """
         Up, Um = propagator
         return Um @ rho @ Up
 
     def observable_projection_operator(self, state: State) -> np.ndarray:
+        """Projection operator used to compute observable expectation values.
+
+        Simply forwards to :meth:`projection_operator` in Hilbert space.
+        """
         return self.projection_operator(state)
 
 
@@ -826,27 +994,79 @@ class LiouvilleSimulation(HilbertSimulation):
 
     @staticmethod
     def _convert(Q: np.ndarray) -> np.ndarray:
+        """Lift a Hilbert-space observable to its Liouville-space superoperator.
+
+        Builds the symmetrised Kronecker sum ``Q ⊗ I + I ⊗ Q`` that represents
+        left- and right-multiplication by ``Q`` under this module's vectorisation
+        convention. The result acts on vectorised density matrices in Liouville
+        space to produce ``vec(Qρ + ρQ)``.
+
+        Args:
+            Q (np.ndarray): Square observable/projector in Hilbert space of size ``N×N``.
+
+        Returns:
+            np.ndarray: Liouville-space operator of size ``N²×N²`` implementing
+            left/right action by ``Q``.
+        """
         eye = np.eye(len(Q))
         return np.kron(Q, eye) + np.kron(eye, Q)
 
     @property
     def hamiltonian_size(self):
+        """Dimension of the Liouville space (Hilbert dimension squared)."""
         return super().hamiltonian_size ** 2
 
     @staticmethod
     def _square_liouville_rhos(rhos):
+        """Reshape vectorised Liouville densities back to square matrices.
+
+        Treats the second-to-last axis of ``rhos`` as a flattened square
+        dimension of size ``dim**2`` and reshapes the trailing ``(..., dim**2, 1)``
+        (or ``(..., dim**2,)``) into ``(..., dim, dim)``. The Hilbert-space
+        dimension ``dim`` is inferred as ``int(sqrt(rhos.shape[-2]))``.
+
+        Args:
+            rhos (np.ndarray): Array of vectorised density operators with shape
+                ``(..., dim**2, 1)`` or ``(..., dim**2)``.
+
+        Returns:
+            np.ndarray: Array with the same leading dimensions but final shape
+            ``(..., dim, dim)`` corresponding to square density matrices.
+
+        Notes:
+            This assumes ``rhos.shape[-2]`` is a perfect square; otherwise the
+            inferred ``dim`` will be incorrect.
+        """
         shape = rhos.shape
         dim = int(np.sqrt(shape[-2]))
         return rhos.reshape(*shape[:-2], dim, dim)
 
     @staticmethod
     def _get_rho_shape(dim):
+        """Return the array shape for a density matrix in Liouville space.
+
+        In Liouville-space simulations, the density operator is vectorised,
+        so it is represented as a column vector of shape ``(dim**2, 1)``.
+        This helper returns the correct shape for allocating such objects.
+
+        Args:
+            dim (int): Dimension of the underlying Hilbert space.
+
+        Returns:
+            tuple[int, int]: ``(dim, 1)``, the canonical Liouville density shape.
+        """
         return (dim, 1)
 
     def liouville_projection_operator(self, state: State) -> np.ndarray:
+        """Column-vectorised projector for Liouville space.
+
+        Flattens the Hilbert-space projector associated with ``state`` to shape
+        ``(N², 1)`` for use with Liouville evolution.
+        """
         return np.reshape(self.projection_operator(state), (-1, 1))
 
     def observable_projection_operator(self, state: State) -> np.ndarray:
+        """Row-vectorised observable (projectorᵀ) used for expectation values."""
         Q = self.liouville_projection_operator(state)
         return Q.T
 
@@ -905,7 +1125,6 @@ class LiouvilleSimulation(HilbertSimulation):
             >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
             >>> sim.unitary_propagator(H, 3e-9).shape
             (144, 144)
-
         """
         return sp.sparse.linalg.expm(H * dt)
 
@@ -938,6 +1157,10 @@ class LiouvilleSimulation(HilbertSimulation):
 
 class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
     def adjust_hamiltonian(self, H: np.ndarray):
+        """Subtract the prebuilt incoherent sub-Hamiltonian from ``H`` in Liouville space.
+
+        Expects subclasses to define ``self.subH`` with the correct shape.
+        """
         H -= self.subH
 
 
@@ -969,6 +1192,18 @@ class SemiclassicalSimulation(LiouvilleSimulation):
         self,
         num_samples: int,
     ) -> np.ndarray:
+        """Generate semiclassical electron–nuclear Hamiltonian samples.
+
+        Draws 3-component Gaussian fields per electron (using per-molecule
+        ``semiclassical_std`` values), contracts with electron spin operators,
+        and returns an array of Hamiltonians suitable for ensemble averaging.
+
+        Args:
+            num_samples: Number of independent Hamiltonians to generate.
+
+        Returns:
+            Array of shape ``(num_samples, N, N)`` with Hermitian samples.
+        """
         assert len(self.radicals) == 2
         assert self.radicals[0].multiplicity == 2
         assert self.radicals[1].multiplicity == 2
@@ -985,6 +1220,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
 
     @property
     def nuclei(self):
+        """Semiclassical model with no explicit nuclei (override returns empty list)."""
         return []
 
 
@@ -1007,6 +1243,11 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
     """
 
     def ST_basis(self, M: NDArray | sp.sparse.sparray) -> sp.sparse.sparray:
+        """Sparse S/T-basis transform of an operator.
+
+        Accepts dense or sparse input, converts to sparse as needed, and applies
+        the electron-only change-of-basis while preserving sparsity.
+        """
         if not sp.sparse.issparse(M):
             M = sp.sparse.csc_matrix(M)
         # T+  T0  S  T-
@@ -1042,7 +1283,6 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
                 Spin operator for a particle in the
                 `HilbertSimulation` system with indexing `idx` and
                 axis `axis`.
-
         """
         assert 0 <= idx and idx < len(self.particles)
         assert axis in "xyzpmu"
@@ -1058,6 +1298,7 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
             return spinop
 
     def get_eye(self, shape: int) -> sp.sparse.sparray:
+        """Return a sparse identity matrix of the requested dimension."""
         return sp.sparse.eye(shape)
 
     def time_evolution(
@@ -1105,7 +1346,6 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
             (12, 12)
             >>> rhos[0][1].shape
             (12, 12)
-
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
@@ -1141,6 +1381,18 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
     def unitary_propagator(
         self, H: sp.sparse.sparray, dt: float
     ) -> sp.sparse.sparray | np.ndarray:
+        """Sparse/dense unitary for one time step in Hilbert space.
+
+        Builds ``U = exp(-i H dt)`` as a sparse matrix; if the result becomes
+        too dense (fill > 50%), it is converted to a dense ndarray.
+
+        Args:
+            H: Sparse Hamiltonian (CSC preferred).
+            dt: Time step (s).
+
+        Returns:
+            Sparse or dense unitary matrix depending on fill ratio.
+        """
         if not isinstance(H, sp.sparse.csc_matrix):
             H = sp.sparse.csc_matrix(H)
         Um = sp.sparse.linalg.expm(-1j * H * dt)
@@ -1153,6 +1405,13 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
         propagator: sp.sparse.sparray,
         rho: tuple[sp.sparse.sparray | np.ndarray, sp.sparse.sparray | np.ndarray],
     ) -> tuple[sp.sparse.sparray | np.ndarray, sp.sparse.sparray | np.ndarray]:
+        """Propagate a Cholesky factorisation ``(X, Xᵀ)`` one step.
+
+        Uses ``Um @ X`` to advance the factor; the updated pair
+        ``(UmX, (UmX)ᴴ)`` represents the new density without forming
+        ``ρ = X Xᵀ`` explicitly. Automatically switches to dense math
+        when sparsity falls below a threshold (~30% zeros in factors).
+        """
         # if more than 30 % of the elements are non-zero, switch to dense
         X, Xt = rho
         if not sp.sparse.issparse(X) and not sp.sparse.issparse(propagator):

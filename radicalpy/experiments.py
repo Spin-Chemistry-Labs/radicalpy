@@ -1,4 +1,91 @@
 #!/usr/bin/env python
+"""Experimental simulation routines for spin chemistry and magnetic resonance.
+
+This module groups high-level experiment drivers and inner loops used to
+simulate anisotropy scans, magnetically affected reaction yields (MARY),
+EPR/ODMR/OMFE time-domain responses, RYDMR, steady-state signals, simple
+NMR lineshapes, OOP-ESEEM envelopes, and hybrid semiclassical/quantum
+MARY variants. Most functions assemble Hamiltonian/Liouvillian terms,
+apply kinetics/relaxation superoperators, propagate density matrices, and
+return structured results (dicts, arrays) ready for plotting and analysis.
+
+Functions (overview):
+        - `anisotropy_loop`: Inner loop over (θ, φ) orientations; propagates and returns product probabilities.
+        - `anisotropy`: Full anisotropy experiment wrapper; returns time evolutions and yields.
+        - `magnetic_field_loop`: Inner loop over swept field B; returns time-resolved density matrices.
+        - `mary_lfe_hfe`: Post-process product probabilities → MARY, low-/high-field effects (%).
+        - `mary`: MARY vs B (time-domain propagation + yields + normalised response).
+        - `epr`: CW/AC time-domain EPR vs B0 with B1 drive and frequency offset.
+        - `odmr`: ODMR vs RF frequency (B1_freq) at fixed B0.
+        - `omfe`: Oscillating magnetic field effect vs RF frequency in transverse field.
+        - `rydmr`: Reaction yield–detected magnetic resonance vs static field.
+        - `cidnp`: CIDNP polarisation vs field for S–T0 mixing (models a/b/c).
+        - `nmr`: Simple 1D NMR synthesiser (FID → FFT) with multiplets and T2 decay.
+        - `oop_eseem`: Out-of-phase ESEEM envelope via Gauss–Legendre quadrature.
+        - `kine_quantum_mary`: Hybrid kinetic+quantum MARY with stochastic hyperfine sampling.
+        - `semiclassical_mary`: Semiclassical MARY with explicit population channels.
+        - `steady_state_mary`: Steady state via linear solve of Liouvillian (with ZFS/exchange/Zeeman).
+
+Usage pattern:
+        1) Build Hamiltonian components from your `Simulation` object
+           (e.g., Zeeman, exchange J, dipolar D, hyperfine ± anisotropy).
+        2) (Optional) Assemble kinetics/relaxation terms and apply to the
+           Liouvillian via `apply_liouville_hamiltonian_modifiers(...)`.
+        3) Propagate using an inner loop (`anisotropy_loop`, `magnetic_field_loop`)
+           or a high-level routine (`mary`, `epr`, `odmr`, `omfe`, `rydmr`).
+        4) Post-process to yields, MARY/LFE/HFE, or spectra; the helpers
+           return a dict containing inputs, intermediates, and outputs.
+
+Args conventions (selected):
+        - `time` (np.ndarray): Uniform time grid (s).
+        - `B`, `B0`, `B1`, `B1_freq` (array/float): Fields in mT unless noted.
+        - `D`, `E`, `J` (float): Dipolar/ZFS/Exchange parameters (mT) for Zeeman-scaled forms,
+          or (rad/s) where indicated (e.g., `oop_eseem`).
+        - `theta`, `phi` (float or np.ndarray): Polar/azimuthal angles (rad) for anisotropy.
+        - `kinetics`, `relaxations` (list): Collections of (super)operators compatible
+          with the simulation API; applied in Liouville space.
+        - `multiplets` (NMR): `[n_nuc, chem_shift_Hz, multiplicity, J_Hz]` per line.
+
+Returns (typical):
+        - Dictionaries with keys such as:
+          `time`, `B`/`B0`/`B1_freq`, angles, `rhos`, `time_evolutions`
+          (product probabilities), `product_yields`, `product_yield_sums`,
+          and derived metrics (`MARY`, `LFE`, `HFE`).
+        - Arrays for specialised routines (e.g., `(ppm, spectrum)` for `nmr`,
+          MARY tensors for lock-in models, steady-state vectors for linear solves).
+
+Notes:
+        - **Spaces and shapes**: Propagation may occur in Liouville space; helpers such
+          as `_square_liouville_rhos` are used to reshape back to Hilbert `(N, N)`
+          for inspection. See each function’s docstring for shapes.
+        - **Units**: Field parameters are mT unless otherwise specified; NMR chemical
+          shifts are handled via Hz/MHz → ppm conversions; `oop_eseem` uses rad/s.
+        - **Performance**: Inner loops precompute unit-field Zeeman operators and reuse
+          sparse CSC matrices for repeated exponentials where possible.
+        - **CIDNP models**: `cidnp_model` ∈ {"a","b","c"} selects exponential, truncated
+          diffusion, or full diffusion variants and requires `ks` or `alpha` accordingly.
+        - **Lock-in MARY**: `modulated_mary_brute_force` performs phase randomisation,
+          envelope weighting, and numerical integration to estimate RMS harmonic responses.
+
+References:
+        - Konowalczyk et al., *PCCP* 23, 1273–1284 (2021) — lock-in detected MARY.
+        - Maeda et al., *Mol. Phys.* 104, 1779–1788 (2006) — semiclassical radical pairs.
+        - Antill & Vatai, *J. Chem. Theory Comput.* 20, 9488–9499 (2024) — hybrid K+Q MARY.
+
+Requirements:
+        - `numpy`, `scipy` (sparse algebra, matrix exponentials), and a simulation object
+          implementing APIs such as `zeeman_hamiltonian`, `exchange_hamiltonian`,
+          `dipolar_hamiltonian`, `hyperfine_hamiltonian`, `projection_operator`,
+          `convert`, `time_evolution`, `product_probability`, `product_yield`,
+          and modifier application hooks.
+
+See also:
+        - `plot.py` for visualization helpers.
+        - `kinetics.py`, `relaxation.py` for incoherent processes added to Liouvillians.
+        - Individual function docstrings within this module for precise signatures,
+          units, and return structures.
+
+"""
 
 import itertools
 from typing import Optional
@@ -77,7 +164,6 @@ def anisotropy_loop(
         angle `theta` and `phi` obtained by running
         `time_evolution` for each of them (with `time`
         time\-steps, `B0` magnetic intensity).
-
     """
     product_probabilities = np.zeros((len(theta), len(phi), len(time)), dtype=complex)
 
@@ -150,7 +236,6 @@ def anisotropy(
         - time_evolutions: product probabilities
         - product_yields: product yields
         - product_yield_sums: product yield sums
-
     """
     H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=True)
 

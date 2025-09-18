@@ -1,4 +1,82 @@
 #! /usr/bin/env python
+"""
+Data models and utilities for spin-system simulations.
+
+This module provides lightweight classes and helpers that describe the
+quantum‐mechanical ingredients used throughout the package (isotopes,
+nuclei, molecules) and common conversions between spin quantum numbers
+and multiplicities. It also includes accessors for bundled reference data
+and convenience builders for frequently used composite objects.
+
+Contents
+--------
+Conversions
+    - :func:`spin_to_multiplicity` – convert spin quantum number ``S`` to
+      multiplicity ``2S+1`` (validates half‐integer/integer input).
+    - :func:`multiplicity_to_spin` – invert the mapping, returning
+      ``S = (M-1)/2``.
+
+Data access
+    - :func:`get_data` – locate packaged data files (e.g. JSON databases).
+
+Core data structures
+    - :class:`Isotope` – look up an isotope’s spin multiplicity and
+      magnetogyric ratio from the bundled database (CODATA-style values),
+      with helpers like :py:meth:`Isotope.available`.
+    - :class:`Hfc` – hyperfine coupling container that supports either an
+      isotropic scalar value or a full 3×3 anisotropic tensor, and exposes
+      :pyattr:`Hfc.isotropic` and :pyattr:`Hfc.anisotropic`.
+    - :class:`Nucleus` – a nucleus within a molecule, defined by its
+      magnetogyric ratio, spin multiplicity, and hyperfine couplings; also
+      provides spin (Pauli) operator matrices via :pyattr:`Nucleus.pauli`.
+    - :class:`FuseNucleus` – an effective nucleus formed by fusing several
+      identical nuclei into a direct-sum representation to reduce Hilbert-space
+      dimension; includes utilities for validation and operator construction.
+    - :class:`Molecule` – collection of nuclei plus a radical (electron‐like
+      spin), with constructors for database-backed molecules
+      (:py:meth:`Molecule.fromdb`, :py:meth:`Molecule.all_nuclei`) and
+      ad-hoc assemblies (:py:meth:`Molecule.fromisotopes`).
+    - :class:`Triplet` – convenience molecule containing a single S=1
+      (multiplicity 3) radical and no nuclei.
+
+Units & conventions
+-------------------
+- Magnetogyric ratios are commonly expressed as ``rad/s/T`` in the database;
+  many class properties expose ``gamma_mT`` (``rad/s/mT``) for convenience.
+- Hyperfine couplings (HFCs) are in mT. When a 3×3 tensor is provided,
+  the isotropic value is computed as ``trace(D)/3``.
+- Spin operators follow the usual convention with raising (``p``),
+  lowering (``m``), and Cartesian components (``x``, ``y``, ``z``).
+
+Examples
+--------
+Look up an isotope and build a proton nucleus with an isotropic HFC::
+
+    >>> from package.data import Isotope, Nucleus, Hfc
+    >>> Isotope.available()[:3]
+    ['G', 'E', 'N']
+    >>> H = Nucleus.fromisotope("1H", 1.5)   # 1.5 mT
+    >>> H.multiplicity
+    2
+    >>> H.pauli['z'].shape
+    (2, 2)
+
+Create a database-backed molecule with selected nuclei::
+
+    >>> from package.data import Molecule
+    >>> m = Molecule.fromdb("flavin_anion", nuclei=["N5", "Hbeta1"])
+    >>> print(m.radical.multiplicity)
+    2
+
+Error handling
+--------------
+- :func:`spin_to_multiplicity` validates that ``S`` is integer or half-integer.
+- :class:`Isotope` raises ``ValueError`` for unknown symbols and provides
+  :py:meth:`Isotope.available` to enumerate valid options.
+- :class:`Hfc.anisotropic` raises ``ValueError`` when no tensor is available.
+
+"""
+
 from __future__ import annotations
 
 import json
@@ -22,7 +100,6 @@ def spin_to_multiplicity(spin: float) -> int:
 
     Returns:
         int: Spin multiplicity.
-
     """
     if int(2 * spin) != 2 * spin:
         raise ValueError("Spin needs to be half of an integer.")
@@ -37,7 +114,6 @@ def multiplicity_to_spin(multiplicity: int) -> float:
 
     Returns:
         float: Spin quantum number.
-
     """
     return float(multiplicity - 1) / 2.0
 
@@ -102,6 +178,12 @@ class Isotope:
 
     @classmethod
     def _ensure_isotope_data(cls):
+        """Lazily load the isotope database into the class cache.
+
+        Reads `spin_data.json` from the package data directory and stores
+        the parsed dictionary on `cls._isotope_data` if it has not been
+        loaded already.
+        """
         if cls._isotope_data is None:
             with open(get_data() / "spin_data.json", encoding="utf-8") as f:
                 cls._isotope_data = json.load(f)
@@ -202,6 +284,7 @@ class Hfc:
     _isotropic: float
 
     def __repr__(self) -> str:  # noqa D105
+        """Compact one-line summary: isotropic HFC and anisotropy availability."""
         available = "not " if self._anisotropic is None else ""
         return f"{self.isotropic:.4} <anisotropic {available}available>"
 
@@ -210,6 +293,16 @@ class Hfc:
     # ARGUMENT TYPE!
     @singledispatchmethod
     def __init__(self, hfc: list[list[float]]):  # noqa D105
+        """Construct from a 3×3 anisotropic hyperfine tensor.
+
+        Stores the full tensor and sets the isotropic part to trace/3.
+
+        Args:
+            hfc (list[list[float]]): 3×3 hyperfine tensor (mT).
+
+        Raises:
+            ValueError: If the input is not a 3×3 matrix.
+        """
         self._anisotropic = np.array(hfc)
         if self._anisotropic.shape != (3, 3):
             lines = [
@@ -222,6 +315,11 @@ class Hfc:
     # See the comment above the `singledispatchmethod` decorator.
     @__init__.register
     def _(self, hfc: float):  # noqa D105
+        """Construct from an isotropic scalar hyperfine coupling.
+
+        Args:
+            hfc (float): Isotropic HFC value (mT).
+        """
         self._anisotropic = None
         self._isotropic = hfc
 
@@ -272,6 +370,7 @@ class Nucleus:
     name: Optional[str]
 
     def __repr__(self) -> str:  # noqa D105
+        """Human-readable summary in the form 'Name(gamma_mT, multiplicity, hfc)'."""
         name = self.name if self.name else "Nucleus"
         return f"{name}({self.magnetogyric_ratio}, {self.multiplicity}, {self.hfc})"
 
@@ -522,6 +621,12 @@ class FuseNucleus(Nucleus):
         )
 
     def __iter__(self):
+        """Iterate over the direct-sum decomposition of the fused nucleus.
+
+        Yields:
+            tuple[float, Nucleus]: Pairs of (weight, component nucleus) for
+            each irreducible total-spin block in the fused representation.
+        """
         return iter(self._direct_sum_info)
 
     @staticmethod
@@ -800,6 +905,18 @@ class Molecule:
 
     @classmethod
     def load_molecule_json(cls, molecule: str) -> dict:
+        """Load a molecule definition from the bundled JSON database.
+
+        Args:
+            molecule (str): Molecule name (filename without `.json`).
+
+        Returns:
+            dict: Parsed JSON content with `info` and `data` sections.
+
+        Raises:
+            FileNotFoundError: If the molecule JSON file does not exist.
+            json.JSONDecodeError: If the file is not valid JSON.
+        """
         json_path = get_data(f"molecules/{molecule}.json")
         with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
@@ -822,6 +939,15 @@ class Molecule:
 
     @classmethod
     def _check_molecule_available(cls, name):
+        """Raise a helpful error if a molecule is not in the database.
+
+        Args:
+            name (str): Molecule name to look up.
+
+        Raises:
+            ValueError: If `name` is not among `Molecule.available()`. The
+                error message includes a list of available molecule names.
+        """
         if name not in cls.available():
             lines = [f"Molecule `{name}` not found in database."]
             lines += ["Available molecules:"]
@@ -996,6 +1122,11 @@ class Molecule:
 
 class Triplet(Molecule):
     def __init__(self):
+        """Construct a convenience `Molecule` representing an S=1 triplet.
+
+        Creates a molecule with no nuclei and a single electron-like radical
+        of multiplicity 3 (triplet), using the electron gyromagnetic ratio.
+        """
         gamma = Isotope("E").gamma_mT
         triplet = Nucleus(magnetogyric_ratio=gamma, multiplicity=3, hfc=0.0)
         super().__init__(name="Triplet", nuclei=[], radical=triplet)
