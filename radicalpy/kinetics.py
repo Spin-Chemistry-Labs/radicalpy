@@ -45,22 +45,6 @@ Notes:
         - **Rates and units**: All rate parameters are in s⁻¹. Ensure time arrays
           passed to `Exponential.adjust_product_probabilities` are in seconds.
 
-Examples:
-        >>> # Hilbert-space exponential kinetics
-        >>> kin = Exponential(rate_constant=1e6)
-        >>> kin.adjust_product_probabilities(prod_probs, time)
-
-        >>> # Liouville-space Haberkorn (singlet)
-        >>> kin = Haberkorn(rate_constant=1e6, target=State.SINGLET)
-        >>> kin.init(sim)
-        >>> L_kin = kin.subH
-
-        >>> # Jones–Hore with distinct S and T rates
-        >>> kin = JonesHore(1e7, 1e6)
-        >>> kin.init(sim)
-        >>> L_kin = kin.subH
-        >>> avg_rate = kin.rate_constant
-
 References:
         - Kaptein et al., *Chem. Phys. Lett.* **4**(4), 195–197 (1969).
         - Haberkorn, *Mol. Phys.* **32**(5), 1491–1493 (1976).

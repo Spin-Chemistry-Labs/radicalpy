@@ -18,26 +18,6 @@ physical constants from a JSON file while preserving rich metadata
 
 - ``constants``: the default namespace of constants loaded from
   ``DATA_DIR/constants.json``.
-
-Example
--------
->>> from .shared import constants
->>> float(constants.mu_B)               # use in numeric code
-9.2740100783e-24
->>> constants.mu_B.details.units
-'J/T'
->>> constants.mu_B.details.reference
-'CODATA 2018'
-
-JSON schema (per constant)
---------------------------
-{
-  "value": <float>,          # required numeric value
-  "units": "<str>",          # optional units string
-  "symbol": "<str>",         # optional display symbol
-  "reference": "<str>",      # optional citation or source
-  ...                        # any other metadata fields
-}
 """
 
 import json

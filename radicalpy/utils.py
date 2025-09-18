@@ -92,23 +92,6 @@ Notes
   docstrings for shapes and units.
 - Angle conventions use radians: ``theta ∈ [0, π]``, ``phi ∈ [0, 2π]``.
 - Unit conversions rely on physical constants from ``radicalpy.constants`` (``C``).
-
-Examples
---------
-Fit B1/2 from a MARY trace:
-
->>> Bhalf, fit, err, R2 = Bhalf_fit(B, MARY)
->>> Bhalf
-... # magnetic field at half of saturation (same units as B)
-
-Convert 1 mT to MHz:
-
->>> mT_to_MHz(1.0)
-... # ≈ 28.0 MHz for an electron (via g_e μ_B / h)
-
-Build labels/elements/coords from a PDB:
-
->>> labels, elements, coords, bonds = parse_pdb("model.pdb", use_rdkit_bonds=True)
 """
 
 import argparse

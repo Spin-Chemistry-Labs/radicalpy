@@ -45,23 +45,6 @@ Dependencies:
         - `matplotlib` (including `mpl_toolkits.mplot3d`, `cm`, and `colors`) for plotting.
         - `matplotlib.animation.FuncAnimation` for animated density-matrix plots.
 
-Example:
-        >>> # Energy levels vs field:
-        >>> B = np.linspace(0.0, 0.01, 200)  # Tesla
-        >>> energy_levels(sim, B, J=0.0, D=0.0)
-
-        >>> # Anisotropy surface:
-        >>> theta = np.linspace(0, np.pi, 60)
-        >>> phi = np.linspace(0, 2*np.pi, 120)
-        >>> Y = some_complex_field_on_grid(theta, phi)  # shape compatible with mesh
-        >>> anisotropy_surface(theta, phi, Y)
-
-        >>> # Density-matrix animation (returns FuncAnimation):
-        >>> anim = density_matrix_animation(rhos, frames=100,
-        ...                                 bar3d_kwargs={"alpha": 0.9},
-        ...                                 axes_kwargs={"zlim": (0, 1)})
-        >>> # anim.save("rho.gif", writer="pillow")
-
 Raises:
         ValueError: `spin_state_labels` raises if `sim` does not contain exactly
             two radicals (labels are defined for radical pairs).

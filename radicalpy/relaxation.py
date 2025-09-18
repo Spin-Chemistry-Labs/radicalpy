@@ -62,20 +62,6 @@ Notes:
           Axis labels/units are not handled here (these are dynamical, not plotting
           utilities).
 
-Examples:
-        >>> # Dipolar modulation with a single rate constant
-        >>> rlx = DipolarModulation(rate_constant=1e6)
-        >>> rlx.init(sim)          # requires LiouvilleSimulation-compatible `sim`
-        >>> L_relax = rlx.subH     # add to total Liouvillian
-
-        >>> # g-tensor anisotropy (Kivelson)
-        >>> g1 = [2.0032, 1.9975, 2.0014]
-        >>> g2 = [2.00429, 2.00389, 2.00216]
-        >>> rlx = GTensorAnisotropy(g1, g2, omega1=-1.5848e11, omega2=-1.5848e11,
-        ...                          tau_c1=5e-12, tau_c2=1e-10)
-        >>> rlx.init(sim)
-        >>> L_relax = rlx.subH
-
 References:
         - Kattnig et al., *New J. Phys.* **18**, 063007 (2016).
         - Kivelson, *J. Chem. Phys.* **33**, 1094 (1960).

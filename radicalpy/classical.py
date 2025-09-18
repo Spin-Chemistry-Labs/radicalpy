@@ -40,16 +40,6 @@ Key conventions
 - Time evolution assumes uniform spacing in `time` and advances via the matrix
   exponential of the rate matrix over Δt.
 
-Quick example
--------------
->>> # Define a simple A -> B with rate k
->>> k = Rate(1.0, "k_{AB}")
->>> req = {"A": {"A": -k}, "B": {"A": k}}
->>> net = RateEquations(req)
->>> t = np.linspace(0, 5.0, 501)
->>> res = net.time_evolution(t, {"A": 1.0, "B": 0.0})
->>> A_t, B_t = res["A"], res["B"]
-
 Dependencies
 ------------
 Relies on NumPy and SciPy (sparse) for numerics, graphviz + dot2tex for

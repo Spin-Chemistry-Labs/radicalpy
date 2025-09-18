@@ -48,33 +48,12 @@ Units & conventions
 - Spin operators follow the usual convention with raising (``p``),
   lowering (``m``), and Cartesian components (``x``, ``y``, ``z``).
 
-Examples
---------
-Look up an isotope and build a proton nucleus with an isotropic HFC::
-
-    >>> from package.data import Isotope, Nucleus, Hfc
-    >>> Isotope.available()[:3]
-    ['G', 'E', 'N']
-    >>> H = Nucleus.fromisotope("1H", 1.5)   # 1.5 mT
-    >>> H.multiplicity
-    2
-    >>> H.pauli['z'].shape
-    (2, 2)
-
-Create a database-backed molecule with selected nuclei::
-
-    >>> from package.data import Molecule
-    >>> m = Molecule.fromdb("flavin_anion", nuclei=["N5", "Hbeta1"])
-    >>> print(m.radical.multiplicity)
-    2
-
 Error handling
 --------------
 - :func:`spin_to_multiplicity` validates that ``S`` is integer or half-integer.
 - :class:`Isotope` raises ``ValueError`` for unknown symbols and provides
   :py:meth:`Isotope.available` to enumerate valid options.
 - :class:`Hfc.anisotropic` raises ``ValueError`` when no tensor is available.
-
 """
 
 from __future__ import annotations

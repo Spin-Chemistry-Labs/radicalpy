@@ -56,19 +56,6 @@ Units & conventions:
         - Many expressions reuse physical constants from a shared `C` namespace and isotope
           data via `Isotope("E")` (electron); see your codebase for those definitions.
 
-Typical usage:
-        >>> # B1/2 from hyperfine couplings stored in `sim`
-        >>> bhalf = Bhalf_theoretical_hyperfine(sim)
-        >>> # g-anisotropy T1/T2 at field B with rotational correlation time tau_c
-        >>> T1 = T1_relaxation_rate(g, B, tau_c)
-        >>> T2 = T2_relaxation_rate(g, B, tau_c)
-        >>> # Diffusion & rotational correlation time of a small molecule
-        >>> D = diffusion_coefficient(radius, temperature, eta)
-        >>> tau_c = rotational_correlation_time_for_molecule(radius, temperature, eta)
-        >>> # Exchange/dipolar interactions vs separation
-        >>> J_sol = exchange_interaction_in_solution(r)
-        >>> D_iso = dipolar_interaction_isotropic(r)
-
 Notes:
         - B½ estimators (`Weller`, `Golesworthy`) are empirical/approximate and assume
           model conditions stated in the cited works.

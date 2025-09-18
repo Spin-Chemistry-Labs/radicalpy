@@ -49,15 +49,6 @@ Units & conventions
 - Tensors follow x/y/z Cartesian ordering.
 - S/T transform from the Zeeman basis.
 
-Example
--------
->>> molecules = [Molecule.fromdb("flavin_anion", ["N5"]), Molecule("Z")]
->>> sim = HilbertSimulation(molecules, basis=Basis.ST)
->>> H = sim.total_hamiltonian(B0=0.0, J=0.0, D=0.0)
->>> t = np.arange(0, 2e-6, 5e-9)
->>> rhos = sim.time_evolution(State.SINGLET, t, H)
->>> P_S = sim.product_probability(State.SINGLET, rhos)
-
 See also
 --------
 - `utils.spherical_to_cartesian` for field orientation.
