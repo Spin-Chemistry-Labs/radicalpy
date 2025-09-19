@@ -534,7 +534,7 @@ class HilbertSimulation:
             hfcs = [n.hfc.isotropic for n in self.nuclei]
         return sum(
             (
-                self.particles[ei].gamma_mT
+                abs(self.particles[ei].gamma_mT)
                 * prodop(ei, len(self.radicals) + ni, hfcs[ni])
                 for ni, ei in enumerate(self.coupling)
             )
@@ -566,7 +566,7 @@ class HilbertSimulation:
                 the system described by the `HilbertSimulation` object
                 and the coupling constant `J`.
         """
-        Jcoupling = J * self.radicals[0].gamma_mT
+        Jcoupling = -J * abs(self.radicals[0].gamma_mT)
         SASB = self.product_operator(0, 1)
         E = self.get_eye(SASB.shape[0])
         return Jcoupling * (prod_coeff * SASB + 0.5 * E)
@@ -613,7 +613,7 @@ class HilbertSimulation:
 
         Args:
 
-            D (float): dipolar coupling constant.
+            D (float): dipolar coupling constant in mT.
 
         Returns:
             np.ndarray:
@@ -625,7 +625,11 @@ class HilbertSimulation:
         SASB = self.product_operator(0, 1)
         SAz = self.spin_operator(0, "z")
         SBz = self.spin_operator(1, "z")
-        omega = (2 / 3) * self.radicals[0].gamma_mT * D
+        if D > 0.0:
+            print(
+                f"WARNING: D is {D} mT, which is positive. In point dipole approximation, D should be negative."
+            )
+        omega = (2 / 3) * abs(self.radicals[0].gamma_mT) * D
         return omega * (3 * SAz @ SBz - SASB)
 
     def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
@@ -639,7 +643,7 @@ class HilbertSimulation:
 
         Args:
 
-            D (np.ndarray): dipolar interaction tensor.
+            dipolar_tensor (np.ndarray): dipolar interaction tensor in mT.
 
         Returns:
             np.ndarray:
@@ -654,7 +658,7 @@ class HilbertSimulation:
         ]
         return sum(
             (
-                dipolar_tensor[i, j] * (si @ sj)
+                dipolar_tensor[i, j] * (si @ sj) * abs(self.radicals[0].gamma_mT)
                 for i, si in enumerate(spinops[0])
                 for j, sj in enumerate(spinops[1])
             )
@@ -686,8 +690,8 @@ class HilbertSimulation:
             ZFS is only meaningful for S≥1 spins (e.g., an excited triplet).
             Ensure your particle list reflects that physical situation.
         """
-        Dmod = D * -self.radicals[0].gamma_mT
-        Emod = E * -self.radicals[0].gamma_mT
+        Dmod = D * abs(self.radicals[0].gamma_mT)
+        Emod = E * abs(self.radicals[0].gamma_mT)
         result = complex(0.0)
         for idx, p in enumerate(self.particles):
             Sx = self.spin_operator(idx, "x")
@@ -1207,7 +1211,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
             size=(num_samples, 3),
         )
         result = np.einsum("nam,axy->nxy", samples, spinops) * 2
-        return result * self.radicals[0].gamma_mT
+        return result * abs(self.radicals[0].gamma_mT)
 
     @property
     def nuclei(self):
