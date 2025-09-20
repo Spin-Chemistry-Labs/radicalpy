@@ -24,7 +24,7 @@ or the
 [examples](https://github.com/Spin-Chemistry-Labs/radicalpy/tree/main/examples).
 
 The package is under constant development. [documentation](https://radicalpy.readthedocs.io/) is
-sparse, testing partial.
+up-to-date, testing partial.
 
 If you would like to contact us, please visit the Spin Chemistry Community [Discord server](https://discord.gg/NZdjhFS3Es).
 
@@ -35,3 +35,9 @@ Install simply using `pip`:
 ```
 pip install radicalpy
 ```
+
+## Citation
+
+Please cite the following paper when using *RadicalPy*.
+
+[Lewis M. Antill and Emil Vatai, RadicalPy: A Tool for Spin Dynamics Simulations, *J. Chem. Theory Comput.*, **20**, 21, 9488–9499 (2024)](https://doi.org/10.1021/acs.jctc.4c00887)
