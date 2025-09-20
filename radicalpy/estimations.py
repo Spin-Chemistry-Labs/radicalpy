@@ -11,40 +11,41 @@ autocorrelation functions.
 
 Major groups:
         B½ / field scales
-            - `Bhalf_theoretical_hyperfine(sim)`
-            - `Bhalf_theoretical_relaxation(kstd, krec)`
-            - `Bhalf_theoretical_relaxation_delay(kstd, krec, td)`
+            - :func:`Bhalf_theoretical_hyperfine`
+            - :func:`Bhalf_theoretical_relaxation`
+            - :func:`Bhalf_theoretical_relaxation_delay`
         Relaxation (g-anisotropy / tumbling)
-            - `T1_relaxation_rate(g_tensors, B, tau_c)`
-            - `T1_relaxation_rate_tumbling_motion(tau_c, B0, r)`
-            - `T2_relaxation_rate(g_tensors, B, tau_c)`
-            - `T2_relaxation_rate_tumbling_motion(tau_c, B0, r)`
-            - `g_tensor_relaxation_rate(tau_c, g1, g2)`
+            - :func:`T1_relaxation_rate`
+            - :func:`T1_relaxation_rate_tumbling_motion`
+            - :func:`T2_relaxation_rate`
+            - :func:`T2_relaxation_rate_tumbling_motion`
+            - :func:`g_tensor_relaxation_rate`
         Transport & correlation
-            - `diffusion_coefficient(radius, temperature, eta)`
-            - `autocorrelation_fit(ts, trajectory, tau_begin, tau_end, num_exp=100, normalise=False)`
-            - `rotational_correlation_time_for_molecule(radius, temp, eta=0.89e-3)`
-            - `rotational_correlation_time_for_protein(Mr, temp, eta=0.89e-3)`
-            - `aqueous_glycerol_viscosity(frac_glyc, temp)`
+            - :func:`diffusion_coefficient`
+            - :func:`autocorrelation_fit`
+            - :func:`rotational_correlation_time_for_molecule`
+            - :func:`rotational_correlation_time_for_protein`
+            - :func:`aqueous_glycerol_viscosity`
         Spin interactions
-            - `dipolar_interaction_isotropic(r)`
-            - `dipolar_interaction_anisotropic(r)`
-            - `dipolar_interaction_MC(r, theta)`
-            - `exchange_interaction_in_protein(r, beta=14e9, J0=9.7e9)`
-            - `exchange_interaction_in_solution(r, beta=0.049e-9, J0rad=1.7e17)`
-            - `exchange_interaction_in_solution_MC(r, beta=2e10, J0=-570)`
+            - :func:`dipolar_interaction_isotropic`
+            - :func:`dipolar_interaction_anisotropic`
+            - :func:`dipolar_interaction_MC`
+            - :func:`dipolar_interaction_point_dipole`
+            - :func:`exchange_interaction_in_protein`
+            - :func:`exchange_interaction_in_solution`
+            - :func:`exchange_interaction_in_solution_MC`
         Dephasing / mixing from trajectories & geometry
-            - `k_D(D, tau_c)`
-            - `k_STD(J, tau_c)`
-            - `k_STD_microreactor(D, V, d=5e-10, J0=1e11, alpha=2e10)`
-            - `k_ST_mixing(Bhalf)`
-            - `k_constant(r, gamma)`
+            - :func:`k_D`
+            - :func:`k_STD`
+            - :func:`k_STD_microreactor`
+            - :func:`k_ST_mixing`
+            - :func:`k_constant`
         Kinetics
-            - `k_electron_transfer(separation, driving_force=-1, reorganisation_energy=1)`
-            - `k_excitation(wavelength, beam_radius, absorbance, concentration, laser_power, path_length)`
-            - `k_recombination(MFE, k_escape)`
-            - `k_reencounter(encounter_dist, diff_coeff)`
-            - `k_triplet_relaxation(B0, tau_c, D, E)`
+            - :func:`k_electron_transfer`
+            - :func:`k_excitation`
+            - :func:`k_recombination`
+            - :func:`k_reencounter`
+            - :func:`k_triplet_relaxation`
 
 Units & conventions:
         - Fields: millitesla (mT) unless otherwise noted; some functions expect tesla (T).
@@ -67,21 +68,27 @@ Notes:
           `frac_glyc` ∈ [0, 1].
         - Some helpers accept scalars or NumPy arrays and broadcast accordingly.
 
-References (selection):
-        - Weller et al., *Chem. Phys. Lett.* **96**(1), 24–27 (1983).
-        - Golesworthy et al., *J. Chem. Phys.* **159**, 105102 (2023).
-        - Hayashi, *Introduction to Dynamic Spin Chemistry* (2004).
-        - Bloembergen, Purcell & Pound, *Phys. Rev.* **73**, 679 (1948).
-        - Volk et al., *Experiments in Fluids* **59**, 76 (2018).
-        - Einstein, *Ann. Physik* **17**, 549–560 (1905).
-        - Santabarbara et al., *Biochemistry* **44**(6), 2119–2128 (2005).
-        - Moser et al., *Nature* **355**, 796–802 (1992); *BBA Bioenerg.* **1797**, 1573–1586 (2010).
-        - McLauchlan et al., *Mol. Phys.* **73**(2), 241–263 (1991).
-        - Player et al., *J. Chem. Phys.* **153**, 084303 (2020).
-        - Kattnig et al., *New J. Phys.* **18**, 063007 (2016).
-        - Shushin, *Chem. Phys. Lett.* **181**(2–3), 274–278 (1991).
-        - Steiner & Ulrich, *Chem. Rev.* **89**(1), 51–147 (1989).
-        - Atkins et al., *Mol. Phys.* **27**(6) (1974).
+References:
+        - [Atkins et al., *Mol. Phys.* **27** (6) (1974)](https://doi.org/10.1080/00268977400101361).
+        - [Bloembergen, Purcell & Pound, *Phys. Rev.* **73**, 679 (1948)](https://journals.aps.org/pr/abstract/10.1103/PhysRev.73.679).
+        - [Cavanagh et al. *Protein NMR Spectroscopy. Principles and Practice*, Elsevier Academic Press (2007)](https://doi.org/10.1016/B978-0-12-164491-8.X5000-3).
+        - [Einstein, *Ann. Physik* **17**, 549–560 (1905)](https://doi.org/10.1002/andp.19053220806).
+        - [Golesworthy et al., *J. Chem. Phys.* **159**, 105102 (2023)](https://doi.org/10.1063/5.0166675).
+        - [Hayashi, *Introduction to Dynamic Spin Chemistry* (2004)](https://doi.org/10.1142/9789812562654_0015).
+        - [Kattnig et al., *New J. Phys.* **18**, 063007 (2016)](https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007).
+        - [Maeda et al. *Mol. Phys.*, **117** (19), 2709-2718 (2019)](https://doi.org/10.1080/00268976.2019.1580779).
+        - [McLauchlan et al., *Mol. Phys.* **73** (2), 241–263 (1991)](https://doi.org/10.1080/00268979100101181).
+        - [Moser et al. *Biochim. Biophys. Acta Bioenerg.* **1797**, 1573‐1586 (2010)](https://doi.org/10.1016/j.bbabio.2010.04.441).
+        - [Miura et al. J. Phys. Chem. A, 119, 22, 5534-5544 (2015)](https://doi.org/10.1021/acs.jpca.5b02183).
+        - [Moser et al., *Nature* **355**, 796–802 (1992)](https://doi.org/10.1038/355796a0).
+        - [O'Dea et al. J. Phys. Chem. A, 109, 5, 869-873 (2005)](https://doi.org/10.1021/jp0456943).
+        - [Player et al., *J. Chem. Phys.* **153**, 084303 (2020)](https://doi.org/10.1063/5.0021643).
+        - [Santabarbara et al., *Biochemistry* **44** (6), 2119–2128 (2005)](https://pubs.acs.org/doi/10.1021/bi048445d).
+        - [Salikhov, *J. Magn. Reson.*, **63**, 271-279 (1985)](https://doi.org/10.1016/0022-2364(85)90316-6).
+        - [Shushin, *Chem. Phys. Lett.* **181** (2–3), 274–278 (1991)](https://doi.org/10.1016/0009-2614(91)90366-H).
+        - [Steiner & Ulrich, *Chem. Rev.* **89** (1), 51–147 (1989)](https://doi.org/10.1021/cr00091a003).
+        - [Volk et al., *Experiments in Fluids* **59**, 76 (2018)](https://doi.org/10.1007/s00348-018-2527-y).
+        - [Weller et al., *Chem. Phys. Lett.* **96** (1), 24–27 (1983)](https://doi.org/10.1016/0009-2614(83)80109-2).
 
 Requirements:
         - `numpy`, `scipy` (for curve fitting in `autocorrelation_fit`), and project
@@ -879,7 +886,7 @@ def rotational_correlation_time_for_protein(
     Returns:
             float: The rotational correlation time (s).
 
-    .. _Cavanagh et al. Protein NMR  Spectroscopy. Principles and Practice, Elsevier Academic Press (2007):
+    .. _Cavanagh et al. Protein NMR Spectroscopy. Principles and Practice, Elsevier Academic Press (2007):
        https://doi.org/10.1016/B978-0-12-164491-8.X5000-3
     """
     Rh = ((3 * C.V * Mr) / (4 * np.pi * C.N_A)) ** 0.33 + C.rw

@@ -46,9 +46,9 @@ Notes:
           passed to `Exponential.adjust_product_probabilities` are in seconds.
 
 References:
-        - Kaptein et al., *Chem. Phys. Lett.* **4**(4), 195–197 (1969).
-        - Haberkorn, *Mol. Phys.* **32**(5), 1491–1493 (1976).
-        - Jones et al., *Chem. Phys. Lett.* **507**, 269–273 (2011).
+        - [Haberkorn, *Mol. Phys.* **32** (5), 1491–1493 (1976)](http://dx.doi.org/10.1080/00268977600102851).
+        - [Kaptein et al., *Chem. Phys. Lett.* **4** (4), 195–197 (1969)](https://doi.org/10.1016/0009-2614(69)80098-9).
+        - [Jones et al., *Chem. Phys. Lett.* **507**, 269–273 (2011)](https://doi.org/10.1016/j.cplett.2011.03.082).
 
 Requirements:
         - `numpy` for array operations.

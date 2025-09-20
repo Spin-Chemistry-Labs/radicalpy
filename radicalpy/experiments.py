@@ -9,20 +9,21 @@ MARY variants. Most functions assemble Hamiltonian/Liouvillian terms,
 apply kinetics/relaxation superoperators, propagate density matrices, and
 return structured results (dicts, arrays) ready for plotting and analysis.
 
-Functions (overview):
-        - `anisotropy_loop`: Inner loop over (θ, φ) orientations; propagates and returns product probabilities.
+Functions:
         - `anisotropy`: Full anisotropy experiment wrapper; returns time evolutions and yields.
+        - `anisotropy_loop`: Inner loop over (θ, φ) orientations; propagates and returns product probabilities.
+        - `epr`: CW/AC time-domain EPR vs B0 with B1 drive and frequency offset.
+        - `cidnp`: CIDNP polarisation vs field for S–T0 mixing.
+        - `kine_quantum_mary`: Hybrid kinetic+quantum MARY with stochastic hyperfine sampling.
         - `magnetic_field_loop`: Inner loop over swept field B; returns time-resolved density matrices.
         - `mary_lfe_hfe`: Post-process product probabilities → MARY, low-/high-field effects (%).
         - `mary`: MARY vs B (time-domain propagation + yields + normalised response).
-        - `epr`: CW/AC time-domain EPR vs B0 with B1 drive and frequency offset.
+        - `modulated_mary_brute_force`: Lock-in MARY via phase randomisation and numerical integration.
+        - `nmr`: Simple 1D NMR synthesiser (FID → FFT) with multiplets and T2 decay.
         - `odmr`: ODMR vs RF frequency (B1_freq) at fixed B0.
         - `omfe`: Oscillating magnetic field effect vs RF frequency in transverse field.
-        - `rydmr`: Reaction yield–detected magnetic resonance vs static field.
-        - `cidnp`: CIDNP polarisation vs field for S–T0 mixing (models a/b/c).
-        - `nmr`: Simple 1D NMR synthesiser (FID → FFT) with multiplets and T2 decay.
         - `oop_eseem`: Out-of-phase ESEEM envelope via Gauss–Legendre quadrature.
-        - `kine_quantum_mary`: Hybrid kinetic+quantum MARY with stochastic hyperfine sampling.
+        - `rydmr`: Reaction yield–detected magnetic resonance vs static field.
         - `semiclassical_mary`: Semiclassical MARY with explicit population channels.
         - `steady_state_mary`: Steady state via linear solve of Liouvillian (with ZFS/exchange/Zeeman).
 
@@ -68,9 +69,9 @@ Notes:
           envelope weighting, and numerical integration to estimate RMS harmonic responses.
 
 References:
-        - Konowalczyk et al., *PCCP* 23, 1273–1284 (2021) — lock-in detected MARY.
-        - Maeda et al., *Mol. Phys.* 104, 1779–1788 (2006) — semiclassical radical pairs.
-        - Antill & Vatai, *J. Chem. Theory Comput.* 20, 9488–9499 (2024) — hybrid K+Q MARY.
+        - [Antill & Vatai, *J. Chem. Theory Comput.* **20**, 9488–9499 (2024)](https://doi.org/10.1021/acs.jctc.4c00887).
+        - [Konowalczyk et al., *PCCP* **23**, 1273–1284 (2021)](https://doi.org/10.1039/D0CP04814C).
+        - [Maeda et al., *Mol. Phys.* **104**, 1779–1788 (2006)](https://doi.org/10.1080/14767050600588106).
 
 Requirements:
         - `numpy`, `scipy` (sparse algebra, matrix exponentials), and a simulation object

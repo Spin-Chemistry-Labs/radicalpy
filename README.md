@@ -35,9 +35,3 @@ Install simply using `pip`:
 ```
 pip install radicalpy
 ```
-
-## Citation
-
-Please cite the following paper when using *RadicalPy*.
-
-[Lewis M. Antill and Emil Vatai, RadicalPy: A Tool for Spin Dynamics Simulations, *J. Chem. Theory Comput.*, **20**, 21, 9488–9499 (2024)](https://doi.org/10.1021/acs.jctc.4c00887)

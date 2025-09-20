@@ -63,12 +63,12 @@ Notes:
           utilities).
 
 References:
-        - Kattnig et al., *New J. Phys.* **18**, 063007 (2016).
-        - Kivelson, *J. Chem. Phys.* **33**, 1094 (1960).
-        - Shushin, *Chem. Phys. Lett.* **181**(2–3), 274–278 (1991).
-        - Bloch, *Phys. Rev.* **70**, 460–474 (1946).
-        - Gorelik et al., *J. Phys. Chem. A* **105**, 8011–8017 (2001).
-        - Miura et al., *J. Phys. Chem. A* **119**, 5534–5544 (2015).
+        - [Bloch, *Phys. Rev.* **70**, 460–474 (1946)](https://doi.org/10.1103/PhysRev.70.460).
+        - [Gorelik et al., *J. Phys. Chem. A* **105**, 8011–8017 (2001)](https://doi.org/10.1021/jp0109628).
+        - [Kattnig et al., *New J. Phys.* **18**, 063007 (2016)](https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007).
+        - [Kivelson, *J. Chem. Phys.* **33**, 1094 (1960)](https://doi.org/10.1063/1.1731340).
+        - [Miura et al., *J. Phys. Chem. A* **119**, 5534–5544 (2015)](https://doi.org/10.1021/acs.jpca.5b02183).
+        - [Shushin, *Chem. Phys. Lett.* **181** (2–3), 274–278 (1991)](https://doi.org/10.1016/0009-2614(91)90366-H).
 
 Requirements:
         - `numpy` for array/Kronecker algebra.
