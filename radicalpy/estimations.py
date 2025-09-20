@@ -78,8 +78,8 @@ References:
         - [Kattnig et al., *New J. Phys.* **18**, 063007 (2016)](https://iopscience.iop.org/article/10.1088/1367-2630/18/6/063007).
         - [Maeda et al. *Mol. Phys.*, **117** (19), 2709-2718 (2019)](https://doi.org/10.1080/00268976.2019.1580779).
         - [McLauchlan et al., *Mol. Phys.* **73** (2), 241–263 (1991)](https://doi.org/10.1080/00268979100101181).
-        - [Moser et al. *Biochim. Biophys. Acta Bioenerg.* **1797**, 1573‐1586 (2010)](https://doi.org/10.1016/j.bbabio.2010.04.441).
         - [Miura et al. J. Phys. Chem. A, 119, 22, 5534-5544 (2015)](https://doi.org/10.1021/acs.jpca.5b02183).
+        - [Moser et al. *Biochim. Biophys. Acta Bioenerg.* **1797**, 1573‐1586 (2010)](https://doi.org/10.1016/j.bbabio.2010.04.441).
         - [Moser et al., *Nature* **355**, 796–802 (1992)](https://doi.org/10.1038/355796a0).
         - [O'Dea et al. J. Phys. Chem. A, 109, 5, 869-873 (2005)](https://doi.org/10.1021/jp0456943).
         - [Player et al., *J. Chem. Phys.* **153**, 084303 (2020)](https://doi.org/10.1063/5.0021643).
