@@ -7,7 +7,7 @@ import radicalpy as rp
 
 
 def main():
-    np.random.seed(42)
+    np.random.default_rng(42)
 
     # t = np.arange(0, 8e-6, 40e-12)
     t = np.arange(0, 50e-9, 40e-12)
