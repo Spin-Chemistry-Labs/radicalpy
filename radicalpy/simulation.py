@@ -282,7 +282,13 @@ class HilbertSimulation:
             spinop = np.kron(np.eye(before_size), sigma)
             spinop = np.kron(spinop, np.eye(after_size))
         else:
-            spinop = sigma
+            # Only electronic states are kron-producted with the identity matrix
+            if idx == 0:
+                spinop = np.kron(sigma, np.eye(2))
+            elif idx == 1:
+                spinop = np.kron(np.eye(2), sigma)
+            else:
+                spinop = sigma
         if self.basis == Basis.ST:
             return self.ST_basis(spinop, kron_eye=kron_eye)
         else:
