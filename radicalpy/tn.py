@@ -478,7 +478,7 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
 
 
 # To pickle function, define here
-def spin_coherenet_state(pair, basis, nsite, ele_site, nuclei):
+def spin_coherent_state(pair, basis, nsite, ele_site, nuclei):
     """
     J. Chem. Phys. 154, 084121 (2021); doi: 10.1063/5.0040519
 
@@ -534,7 +534,7 @@ def process_pair(
     model = Model(basinfo=basinfo, operators=operators)
     model.m_aux_max = bond_dimension
     # Get initial Hartree product (rank-1) state
-    hp = spin_coherenet_state(pair, basis, nsite, ele_site, nuclei)
+    hp = spin_coherent_state(pair, basis, nsite, ele_site, nuclei)
     model.init_HartreeProduct = [hp]
 
     jobname = f"radicalpair_{i}"
@@ -668,7 +668,7 @@ class StochasticMPSSimulation(BaseMPSSimulation):
             basis.append(Exciton(nstate=nuc.multiplicity))
         return basis
 
-    def spin_coherenet_state(self, pair, basis):
+    def spin_coherent_state(self, pair, basis):
         """
         J. Chem. Phys. 154, 084121 (2021); doi: 10.1063/5.0040519
 
