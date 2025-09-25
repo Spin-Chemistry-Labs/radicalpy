@@ -1,3 +1,14 @@
+import os
+
+# Set number of thread before importing numpy, scipy, radicalpy, pytdscf, etc
+nthreads = 1  # number of threads
+max_workers = os.cpu_count() - 1  # number of processes
+os.environ["OMP_NUM_THREADS"] = f"{nthreads}"
+os.environ["OPENBLAS_NUM_THREADS"] = f"{nthreads}"
+os.environ["MKL_NUM_THREADS"] = f"{nthreads}"
+os.environ["VECLIB_MAXIMUM_THREADS"] = f"{nthreads}"
+os.environ["NUMEXPR_NUM_THREADS"] = f"{nthreads}"
+
 try:
     import pytdscf
 except ModuleNotFoundError:
@@ -6,15 +17,6 @@ except ModuleNotFoundError:
     import sys
 
     sys.exit(0)
-import os
-
-nthreads = 1  # number of threads
-max_workers = os.cpu_count() - 1  # number of processes
-os.environ["OMP_NUM_THREADS"] = f"{nthreads}"
-os.environ["OPENBLAS_NUM_THREADS"] = f"{nthreads}"
-os.environ["MKL_NUM_THREADS"] = f"{nthreads}"
-os.environ["VECLIB_MAXIMUM_THREADS"] = f"{nthreads}"
-os.environ["NUMEXPR_NUM_THREADS"] = f"{nthreads}"
 
 import numpy as np
 
