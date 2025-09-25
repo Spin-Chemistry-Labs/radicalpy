@@ -12,6 +12,7 @@ from . import (
     relaxation,
     shared,
     simulation,
+    tensornetwork,
     utils,
 )
 

@@ -76,6 +76,14 @@ radicalpy.simulation module
    :show-inheritance:
    :undoc-members:
 
+radicalpy.tensornetwork module
+---------------------------
+
+.. automodule:: radicalpy.tensornetwork
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 radicalpy.utils module
 ----------------------
 
