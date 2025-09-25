@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from itertools import chain
 from math import isqrt
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 import numpy as np
 from scipy.linalg import expm
@@ -67,6 +67,7 @@ try:
     IS_PYMPO_AVAILABLE = True
 except ModuleNotFoundError:
     IS_PYMPO_AVAILABLE = False
+    SumOfProducts = Any  # type: ignore[assignment]
 
 MSG_PYTDSCF_NOT_INSTALLED = """
 pytdscf is not installed. 
@@ -470,11 +471,15 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         self.Ir_ops = Ir_ops
 
     def clean_up(self, jobname: str):
-        os.remove(f"wf_{jobname}.pkl")
-        # rm jobname_prop/*.dat but keep jobname_prop/reduced_density.nc
-        for file in os.listdir(f"{jobname}_prop"):
-            if file.endswith(".dat"):
-                os.remove(f"{jobname}_prop/{file}")
+        try:
+            os.remove(f"wf_{jobname}.pkl")
+            # rm jobname_prop/*.dat but keep jobname_prop/reduced_density.nc
+            for file in os.listdir(f"{jobname}_prop"):
+                if file.endswith(".dat"):
+                    os.remove(f"{jobname}_prop/{file}")
+        except Exception:
+            # Some OS does not support removing open files
+            pass
 
 
 # To pickle function, define here
@@ -1014,7 +1019,7 @@ class LocallyPurifiedMPSSimulation(BaseMPSSimulation):
         model.m_aux_max = self.bond_dimension
         hp = self._purified_state()
         model.init_HartreeProduct = [hp]
-        jobname = f"radicalpair_pmps_r{self.bond_dimension}"
+        jobname = f"radicalpair_lpmps_r{self.bond_dimension}"
         simulator = Simulator(
             jobname=jobname, model=model, backend=self.backend, verbose=1
         )
