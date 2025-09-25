@@ -480,10 +480,13 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
 # To pickle function, define here
 def spin_coherent_state(pair, basis, nsite, ele_site, nuclei):
     """
-    J. Chem. Phys. 154, 084121 (2021); doi: 10.1063/5.0040519
+    Source: `Fay et al. J. Chem. Phys. 154, 084121 (2021)`_.
 
     Sample from spin coherent state
     |Ω⁽ᴵ⁾⟩ = cos(θ/2)²ᴵ exp(tan(θ/2)exp(iϕ)Î₋) |I,I⟩
+
+    _Fay et al. J. Chem. Phys. 154, 084121 (2021):
+    https://doi.org/10.1063/5.0040519
     """
     hp = []
     for isite in range(nsite):
@@ -670,7 +673,7 @@ class StochasticMPSSimulation(BaseMPSSimulation):
 
     def spin_coherent_state(self, pair, basis):
         """
-        J. Chem. Phys. 154, 084121 (2021); doi: 10.1063/5.0040519
+        JSource: `Fay et al. J. Chem. Phys. 154, 084121 (2021)`_.
 
         Sample from spin coherent state
         |Ω⁽ᴵ⁾⟩ = cos(θ/2)²ᴵ exp(tan(θ/2)exp(iϕ)Î₋) |I,I⟩

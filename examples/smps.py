@@ -19,7 +19,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = f"{nthreads}"
 import numpy as np
 
 import radicalpy as rp
-from radicalpy import tn
+import radicalpy.tensornetwork as tn
 
 B0 = 0.05  # in mT
 B = np.array((0.0, 0.0, 1.0)) * B0
