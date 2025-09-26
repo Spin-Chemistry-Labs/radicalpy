@@ -42,9 +42,9 @@ methyl = rp.data.Molecule.fromisotopes(
 )
 sim = tn.StochasticMPSSimulation(
     [methyl, methyl],
-    bond_dimension=32,
-    nsamples=128,
-    max_workers=4,
+    bond_dimension=16,
+    nsamples=256,
+    max_workers=6,
     integrator="lanczos" if kS == kT == 0 else "arnoldi",
 )
 ham = sim.total_hamiltonian(B0=B0, J=J, D=D)

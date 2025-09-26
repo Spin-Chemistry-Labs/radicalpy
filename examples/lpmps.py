@@ -31,13 +31,13 @@ methyl = rp.data.Molecule.fromisotopes(
 )
 sim = tn.LocallyPurifiedMPSSimulation(
     [methyl, methyl],
-    bond_dimension=16,
+    bond_dimension=24,
     integrator="lanczos" if kS == kT == 0 else "arnoldi",
 )
 ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
 time = np.arange(0, 2e-08, 1e-9)  # only 20 steps to save time
 reduced_rho_diag = sim.time_evolution(rp.simulation.State.SINGLET, time, ham)
-time_evol_mps = sim.product_probability(rp.simulation.State.SINGLET, reduced_rho_diag)
+time_evol_lpmps = sim.product_probability(rp.simulation.State.SINGLET, reduced_rho_diag)
 
 sim = rp.simulation.HilbertSimulation([methyl, methyl])
 ham = sim.total_hamiltonian(B0=B0, J=J, D=D)
@@ -48,7 +48,7 @@ time_evol = sim.product_probability(rp.simulation.State.SINGLET, rhos)
 import matplotlib.pyplot as plt
 
 plt.plot(time * 1e09, time_evol, label="RP")
-plt.plot(time * 1e09, time_evol_mps, label="MPS")
+plt.plot(time * 1e09, time_evol_lpmps, label="LPMPS")
 plt.legend()
 plt.xlabel("Time (ns)")
 plt.ylabel("Singlet Probability")
