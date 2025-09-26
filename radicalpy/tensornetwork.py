@@ -1,11 +1,25 @@
 """Tensor network simulations for radical pair dynamics.
 
-This module provides tensor network-based simulations for studying radical pair
-dynamics using various tensor network methods.
+This module provides comprehensive tensor network-based simulations for radical pair
+dynamics, implementing three different approaches:
+
+1. **Stochastic Matrix Product State (SMPS)**: Monte Carlo sampling approach in Hilbert space
+2. **Locally Purified Matrix Product State (LPMPS)**: Purification-based deterministic approach in Hilbert space
+3. **Vectorised Matrix Product Density Operator (VMPDO)**: Deterministic approach in Liouville space
 
 The simulations support quantum mechanical treatments of nuclear spins, allowing
-for accurate modeling of hyperfine interactions, exchange coupling, and dipolar
-interactions in radical pairs.
+for accurate modeling of:
+- Hyperfine interactions (isotropic and anisotropic)
+- Exchange coupling between radicals
+- Dipolar interactions
+- Zeeman effects
+- Haberkorn recombination terms
+
+Key Features:
+    - Support for both Hermitian and non-Hermitian Hamiltonians
+    - Multiple computational backends (NumPy, JAX)
+    - Parallel processing capabilities
+    - GPU acceleration support (via JAX)
 
 Example:
     Basic usage examples are available in:
@@ -14,15 +28,60 @@ Example:
     - :file:`examples/smps.py` - Stochastic MPS simulations
     - :file:`examples/vmpdo.py` - Vectorised MPDO simulations
 
-Note:
-    Install the tensor network simulation library:
+    .. code-block:: python
+
+        from radicalpy.data import Molecule
+        from radicalpy.simulation import State
+        import radicalpy.tensornetwork as tn
+
+        # Create radical pair molecules
+        molecules = [Molecule(...), Molecule(...)]
+
+        # Define system parameters
+        J, D, B0, kS, kT, anisotropy = ...
+
+        # Initialize simulation
+        sim = tn.LocallyPurifiedMPSSimulation(
+            molecules=molecules,
+            bond_dimension=16,
+            jobname="lpmps",
+        )
+
+        # Construct tensor network Hamiltonian
+        H = sim.total_hamiltonian(
+            B0=B0,
+            J=J,
+            D=D,
+            kS=kS,
+            kT=kT,
+            hfc_anisotropy=anisotropy,
+        )
+
+        # Run simulation
+        partial_trace = sim.time_evolution(
+            init_state=State.SINGLET,
+            time=np.linspace(0, 1e-6, 1000),
+            H=H
+        )
+
+        # Get population of singlet state
+        singlet_population = sim.product_probability(
+            obs=State.SINGLET,
+            rhos=partial_trace,
+        )
+
+
+Dependencies:
+    Install the required tensor network simulation libraries:
 
     .. code-block:: bash
 
         pip install git+https://github.com/QCLovers/PyTDSCF
 
+
 References:
     - `PyTDSCF <https://github.com/QCLovers/PyTDSCF>`_
+    - `PyMPO <https://github.com/KenHino/pympo>`_
     - `JAX installation <https://docs.jax.dev/en/latest/installation.html>`_
 """
 
@@ -86,7 +145,7 @@ Cargo, package manager for Rust, is required to install pympo.
 SCALE = 1e-09
 
 
-def get_vecB(
+def _get_vecB(
     B0: float,
     B_axis: str = "z",
     theta: Optional[float] = None,
@@ -108,8 +167,49 @@ def get_vecB(
 
 
 class BaseMPSSimulation(HilbertSimulation, ABC):
-    """
-    Abstract base class for matrix product state simulations.
+    """Abstract base class for matrix product state simulations.
+
+    This class provides the foundation for tensor network-based simulations of
+    radical pair dynamics. It implements common functionality for constructing
+    Hamiltonians and managing tensor network operations.
+
+    The class supports three concrete implementations:
+    - :class:`StochasticMPSSimulation`: Monte Carlo sampling approach
+    - :class:`LocallyPurifiedMPSSimulation`: Purification-based method
+    - :class:`MPDOSimulation`: Direct density operator approach
+
+    Key Features:
+        - Support for various Hamiltonian terms (Zeeman, hyperfine, exchange, dipolar)
+        - Automatic matrix product operator (MPO) construction
+        - Multiple computational backends (NumPy, JAX)
+
+    Args:
+        molecules (list[Molecule]): List of molecules in the radical pair.
+        custom_gfactors (bool): Whether to use custom g-factors. Default is False.
+        basis (Basis): Basis set for the simulation. Only ST basis is supported.
+        bond_dimension (int): Bond dimension for the matrix product state. Default is 16.
+        backend (Literal["numpy", "jax", "auto"]): Computational backend.
+            'auto' selects 'jax' for bond_dimension > 32, 'numpy' otherwise.
+        integrator (Literal["arnoldi", "lanczos"]): Integration method for time evolution.
+            Use 'lanczos' for Hermitian Hamiltonians, 'arnoldi' for non-Hermitian.
+        jobname (str): Job name for output files. Default is "tensornetwork".
+
+    Raises:
+        ModuleNotFoundError: If required dependencies (PyTDSCF, PyMPO) are not installed.
+        NotImplementedError: If basis other than ST is specified.
+
+    Note:
+        **Important differences from standard HilbertSimulation:**
+
+        - Nuclear spins are automatically sorted by hyperfine coupling strength
+          to reduce entanglement in the tensor network representation
+        - Only ST basis is supported (Zeeman basis not available)
+        - Each term of the Hamiltonian returns SumOfProducts objects instead of numpy arrays
+        - The total Hamiltonian returns a MPO (list of numpy arrays) instead of a single numpy array
+        - Time evolution returns diagonal elements of reduced density matrix (shape: nsteps, 4) or
+          full reduced density matrices (shape: nsteps, 4, 4) instead of full density matrices (shape: nsteps, dim, dim)
+        - Requires external dependencies (PyTDSCF, PyMPO) for tensor operations
+
     """
 
     def __init__(
@@ -120,6 +220,7 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         bond_dimension: int = 16,
         backend: Literal["numpy", "jax", "auto"] = "numpy",
         integrator: Literal["arnoldi", "lanczos"] = "arnoldi",
+        jobname: str = "tensornetwork",
     ):
         if not IS_PYTDSCF_AVAILABLE:
             raise ModuleNotFoundError(MSG_PYTDSCF_NOT_INSTALLED)
@@ -134,17 +235,18 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
 
         if basis != Basis.ST:
             raise NotImplementedError(
-                "Only ST basis is supported for StochasticMPSSimulation."
+                "Only ST basis is supported for tensor network method."
             )
         super().__init__(molecules, custom_gfactors, basis)
         # To reduce entanglement, sort nuclei by the absolute value of the HFC
-        self.sort_nuclei()
-        self.subs, self.g_ele_sym, self.g_nuc_sym = self.get_gyromagnetic_subs()
+        self._sort_nuclei()
+        self.subs, self.g_ele_sym, self.g_nuc_sym = self._get_gyromagnetic_subs()
         self.bond_dimension = bond_dimension
         self.backend = backend
         self.integrator = integrator
+        self.jobname = jobname
 
-    def sort_nuclei(self):
+    def _sort_nuclei(self):
         hf_abs = []
         nucs = self.molecules[0].nuclei
         if len(nucs) > 0:
@@ -165,11 +267,10 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
                 else:
                     eigvals = np.linalg.eigvals(nuc.hfc.anisotropic)
                     hf_abs.append(np.mean(np.abs(eigvals)))
-            print(nucs)
             nuclei = [nucs[i] for i in np.argsort(hf_abs)]
             self.molecules[1].nuclei = nuclei
 
-    def get_gyromagnetic_subs(self):
+    def _get_gyromagnetic_subs(self):
         g_ele_sym = [
             Symbol(r"\gamma_e^{(" + f"{i + 1}" + ")}")
             for i in range(len(self.radicals))
@@ -186,7 +287,7 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
             subs[gn] = self.molecules[i].nuclei[j].gamma_mT
         return subs, g_ele_sym, g_nuc_sym
 
-    def get_electron_ops(self):
+    def _get_electron_ops(self):
         sx_1 = self.spin_operator(0, "x", kron_eye=False)
         sy_1 = self.spin_operator(0, "y", kron_eye=False)
         sz_1 = self.spin_operator(0, "z", kron_eye=False)
@@ -205,9 +306,20 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         theta: Optional[float] = None,
         phi: Optional[float] = None,
     ) -> SumOfProducts:
+        """Construct the Zeeman Hamiltonian as a SumOfProducts.
+
+        Args:
+            B0 (float): Magnetic field strength in mT.
+            B_axis (str): Axis of the magnetic field ('x', 'y', or 'z'). Default is 'z'.
+            theta (float, optional): Polar angle of the magnetic field in radians.
+            phi (float, optional): Azimuthal angle of the magnetic field in radians.
+
+        Returns:
+            SumOfProducts: The Zeeman Hamiltonian as a sum of products of operators.
+        """
         zeeman = SumOfProducts()
         xyz = "xyz"
-        B = get_vecB(B0, B_axis, theta, phi)
+        B = _get_vecB(B0, B_axis, theta, phi)
         for a, (Sr_op, Ir_op) in enumerate(zip(self.Sr_ops, self.Ir_ops, strict=True)):
             if B[a] == 0.0:
                 continue
@@ -222,6 +334,15 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         return zeeman
 
     def hyperfine_hamiltonian(self, hfc_anisotropy: bool = False) -> SumOfProducts:
+        """Construct the hyperfine Hamiltonian as a SumOfProducts.
+
+        Args:
+            hfc_anisotropy (bool): Whether to include anisotropic hyperfine coupling.
+                Default is False.
+
+        Returns:
+            SumOfProducts: The hyperfine Hamiltonian as a sum of products of operators.
+        """
         hyperfine = SumOfProducts()
         xyz = "xyz"
         for i in range(len(self.radicals)):
@@ -249,9 +370,16 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         hyperfine = hyperfine.simplify()
         return hyperfine
 
-    def exchange_hamiltonian(
-        self, J: float, prod_coeff: float = 2, kron_eye: bool = True
-    ) -> np.ndarray:
+    def exchange_hamiltonian(self, J: float, prod_coeff: float = 2) -> SumOfProducts:
+        """Construct the exchange Hamiltonian as a SumOfProducts.
+
+        Args:
+            J (float): Exchange coupling constant in mT.
+            prod_coeff (float): Coefficient for the S1·S2 term. Default is 2.
+
+        Returns:
+            SumOfProducts: The exchange Hamiltonian as a sum of products of operators.
+        """
         exchange = SumOfProducts()
         Jsym = Symbol("J")
         self.subs[Jsym] = J * SCALE
@@ -261,9 +389,15 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         exchange = exchange.simplify()
         return exchange
 
-    def dipolar_hamiltonian(
-        self, D: float | np.ndarray, kron_eye: bool = True
-    ) -> np.ndarray:
+    def dipolar_hamiltonian(self, D: float | np.ndarray) -> SumOfProducts:
+        """Construct the dipolar Hamiltonian as a SumOfProducts.
+
+        Args:
+            D (float | np.ndarray): Dipolar coupling constant or tensor in mT.
+
+        Returns:
+            SumOfProducts: The dipolar Hamiltonian as a sum of products of operators.
+        """
         if isinstance(D, float):
             if D > 0.0:
                 print(
@@ -290,6 +424,16 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         return dipolar
 
     def haberkorn_hamiltonian(self, kS: float, kT: float) -> SumOfProducts:
+        """Construct the Haberkorn recombination term as a SumOfProducts.
+
+        Args:
+            kS (float): Singlet recombination rate in s^-1.
+            kT (float): Triplet recombination rate in s^-1.
+
+        Returns:
+            SumOfProducts: The Haberkorn recombination Hamiltonian as a sum
+                of products of operators.
+        """
         haberkorn = SumOfProducts()
         if kS != 0.0:
             kSsym = Symbol("k_S")
@@ -305,6 +449,9 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
     def zero_field_splitting_hamiltonian(
         self, D, E, kron_eye: bool = True
     ) -> np.ndarray:
+        """
+        Zero-field splitting Hamiltonian is not implemented.
+        """
         raise NotImplementedError("Zero-field splitting Hamiltonian is not implemented")
 
     def total_hamiltonian(
@@ -318,6 +465,22 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         kS: float = 0.0,
         kT: float = 0.0,
     ) -> list[np.ndarray]:
+        """Construct the total Hamiltonian as a matrix product operator.
+
+        Args:
+            B0 (float): Magnetic field strength in mT.
+            J (float): Exchange coupling constant in mT.
+            D (float | np.ndarray): Dipolar coupling constant or tensor in mT.
+            theta (float, optional): Polar angle of the magnetic field in radians.
+            phi (float, optional): Azimuthal angle of the magnetic field in radians.
+            hfc_anisotropy (bool): Whether to include anisotropic hyperfine coupling.
+                Default is False.
+            kS (float): Singlet recombination rate in s^-1. Default is 0.0.
+            kT (float): Triplet recombination rate in s^-1. Default is 0.0.
+
+        Returns:
+            list[np.ndarray]: Total Hamiltonian as a matrix product operator.
+        """
         zeeman = self.zeeman_hamiltonian(B0=B0, theta=theta, phi=phi)
         hyperfine = self.hyperfine_hamiltonian(hfc_anisotropy)
         exchange = self.exchange_hamiltonian(J)
@@ -341,6 +504,7 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         pass
 
     def product_probability(self, obs: State, rhos: np.ndarray) -> np.ndarray:
+        """Calculate the probability of the observable from the densities."""
         if obs == State.EQUILIBRIUM:
             raise ValueError("Observable state should not be EQUILIBRIUM")
         Q = self.observable_projection_operator(obs)
@@ -367,25 +531,33 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         return np.real(np.trace(Q @ rhos, axis1=-2, axis2=-1))
 
     def apply_liouville_hamiltonian_modifiers(self, H, modifiers):
-        """Apply (Hilbert) incoherent process modifiers to the Liouville Hamiltonian.
-
-        Each modifier is initialised with ``self`` once, then given the chance to
-        adjust ``H`` in place. This is a no-op for Hilbert simulations.
+        """
+        apply_liouville_hamiltonian_modifiers is not used for BaseMPSSimulation.
+        For Haberkorn term, include kS and kT for `total_hamiltonian()`.
         """
         raise NotImplementedError(
             "apply_liouville_hamiltonian_modifiers is not used for BaseMPSSimulation."
         )
 
     def initial_density_matrix(self, state: State, H: np.ndarray) -> np.ndarray:
+        """
+        Initial density matrix is not used for BaseMPSSimulation.
+        """
         raise NotImplementedError(
             "initial_density_matrix is not used for BaseMPSSimulation."
         )
 
     @staticmethod
     def unitary_propagator(H: np.ndarray, dt: float) -> tuple[np.ndarray, np.ndarray]:
-        raise ValueError("unitary_propagator is not used for StochasticMPSSimulation.")
+        """
+        Unitary propagator is not used for BaseMPSSimulation. Use `time_evolution()` instead.
+        """
+        raise ValueError("unitary_propagator is not used for BaseMPSSimulation.")
 
     def propagate(self, propagator: np.ndarray, rho: np.ndarray) -> np.ndarray:
+        """
+        Propagate is not used for BaseMPSSimulation. Use `time_evolution()` instead.
+        """
         raise ValueError(
             "propagate is not used for StochasticMPSSimulation. Use `time_evolution()` instead."
         )
@@ -394,7 +566,7 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         return self.projection_operator(state, kron_eye=False)
 
     def _set_ele_opsites(self):
-        sx_1, sy_1, sz_1, sx_2, sy_2, sz_2, Qs, Qt = self.get_electron_ops()
+        sx_1, sy_1, sz_1, sx_2, sy_2, sz_2, Qs, Qt = self._get_electron_ops()
         S1S2_op = OpSite(
             r"\hat{S}_1\cdot\hat{S}_2",
             self.ele_site,
@@ -470,7 +642,9 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         Ir_ops = [Ix_ops, Iy_ops, Iz_ops]
         self.Ir_ops = Ir_ops
 
-    def clean_up(self, jobname: str):
+    def _clean_up(self, jobname: str | None = None):
+        if jobname is None:
+            jobname = self.jobname
         try:
             os.remove(f"wf_{jobname}.pkl")
             # rm jobname_prop/*.dat but keep jobname_prop/reduced_density.nc
@@ -483,15 +657,35 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
 
 
 # To pickle function, define here
-def spin_coherent_state(pair, basis, nsite, ele_site, nuclei):
-    """
-    Source: `Fay et al. J. Chem. Phys. 154, 084121 (2021)`_.
+def _spin_coherent_state(pair, basis, nsite, ele_site, nuclei):
+    """Generate spin coherent state for nuclear spins.
 
-    Sample from spin coherent state
-    |Ω⁽ᴵ⁾⟩ = cos(θ/2)²ᴵ exp(tan(θ/2)exp(iϕ)Î₋) |I,I⟩
+    This function creates a spin coherent state for nuclear spins based on
+    the Fay et al. formulation. The spin coherent state is parameterized by
+    spherical coordinates (θ, φ) and has the form:
 
-    _Fay et al. J. Chem. Phys. 154, 084121 (2021):
-    https://doi.org/10.1063/5.0040519
+    |Ω^(I)⟩ = cos(θ/2)^(2I) exp(tan(θ/2)exp(iφ)Î₋) |I,I⟩
+
+    where I is the nuclear spin quantum number, θ and φ are the polar and
+    azimuthal angles, and Î₋ is the lowering operator.
+
+    Args:
+        pair (np.ndarray): Random numbers in [0,1] used to generate θ and φ
+            for each nuclear spin. Length should be 2 * (nsite - 1).
+        basis (list): List of basis objects for each site.
+        nsite (int): Total number of sites in the system.
+        ele_site (int): Index of the electronic site (singlet state).
+        nuclei (list): List of nuclear spin objects with Pauli matrices.
+
+    Returns:
+        list: Hartree product state coefficients for each site.
+            For nuclear sites, contains the spin coherent state coefficients.
+            For the electronic site, contains the singlet state [0, 0, 1, 0].
+
+    Note:
+        The function uses the random numbers in 'pair' to generate spherical
+        coordinates: θ = arccos(2*rand - 1), φ = 2π*rand.
+
     """
     hp = []
     for isite in range(nsite):
@@ -522,7 +716,7 @@ def spin_coherent_state(pair, basis, nsite, ele_site, nuclei):
     return hp
 
 
-def process_pair(
+def _process_pair(
     *,
     pair,
     i,
@@ -536,16 +730,15 @@ def process_pair(
     integrator,
     nsite,
     nuclei,
+    jobname,
 ):
     operators = {"hamiltonian": H}
     basinfo = BasInfo([basis], spf_info=None)
     model = Model(basinfo=basinfo, operators=operators)
     model.m_aux_max = bond_dimension
     # Get initial Hartree product (rank-1) state
-    hp = spin_coherent_state(pair, basis, nsite, ele_site, nuclei)
+    hp = _spin_coherent_state(pair, basis, nsite, ele_site, nuclei)
     model.init_HartreeProduct = [hp]
-
-    jobname = f"radicalpair_{i}"
     simulator = Simulator(jobname=jobname, model=model, backend=backend, verbose=0)
     # Save diagonal element of reduced density matrix every 1 steps
     ener, wf = simulator.propagate(
@@ -578,7 +771,27 @@ def process_pair(
     return density_data, time_data
 
 
-def get_nsteps_dt(time: np.ndarray):
+def _get_nsteps_dt(time: np.ndarray):
+    """Convert time array to simulation parameters.
+
+    This function converts a time array to the number of steps and time step
+    size required for the tensor network simulation. The time step is converted
+    from the input units to atomic units (au) used internally.
+
+    Args:
+        time (np.ndarray): Array of time points in seconds. Must be uniformly
+            spaced and have at least 2 elements.
+
+    Returns:
+        tuple: (nsteps, dt) where:
+            - nsteps (int): Number of time steps (length of time array)
+            - dt (float): Time step size in atomic units
+
+    Note:
+        The time step is calculated as dt = (time[1] - time[0]) / SCALE * units.au_in_fs
+        where SCALE is a unit conversion factor and units.au_in_fs converts
+        from femtoseconds to atomic units.
+    """
     dt = (time[1] - time[0]) / SCALE * units.au_in_fs
     nsteps = len(time)
     return nsteps, dt
@@ -588,28 +801,60 @@ class StochasticMPSSimulation(BaseMPSSimulation):
     """Stochastic matrix product state simulation for radical pair dynamics.
 
     This class implements stochastic matrix product state (SMPS) simulations
-    for studying radical pair recombination dynamics. It uses Monte Carlo
-    sampling to generate trajectories of radical pair states, allowing for
-    efficient simulation of large spin systems with many nuclear spins.
+    using Monte Carlo sampling to generate trajectories of radical pair states.
+    SMPS is particularly effective for high-dimensional quantum systems where
+    exact simulation becomes computationally prohibitive.
 
-    The simulation samples from spin coherent states and propagates them
-    using tensor network methods, providing a stochastic approach to
-    quantum dynamics that can handle systems with high-dimensional
-    Hilbert spaces.
+    The simulation works by:
+    1. Sampling from spin coherent states for nuclear spins
+    2. Propagating each sample using tensor network methods
+    3. Averaging over all samples to obtain ensemble properties
 
-    Args:
+    Attributes:
         nsamples (int): Number of Monte Carlo samples to generate.
         max_workers (int): Maximum number of parallel workers for sampling.
-        bond_dimension (int): Bond dimension for the matrix product state.
-        backend (str): Computational backend 'numpy' only.
-        integrator (str): Integration method for time evolution.
-            For Hermitian Hamiltonian, use 'lanczos' for fast convergence.
-            For non-Hermitian Hamiltonian, use 'arnoldi' for accurate results.
+
+    Args:
+        molecules (list[Molecule]): List of molecules in the radical pair.
+        custom_gfactors (bool): Whether to use custom g-factors. Default is False.
+        basis (Basis): Basis set for the simulation. Only ST basis is supported.
+        bond_dimension (int): Bond dimension for the matrix product state. Default is 16.
+        integrator (Literal["arnoldi", "lanczos"]): Integration method for time evolution.
+            Use 'lanczos' for Hermitian Hamiltonians, 'arnoldi' for non-Hermitian.
+        nsamples (int): Number of Monte Carlo samples to generate. Default is 128.
+        max_workers (int): Maximum number of parallel workers for sampling. Default is 8.
+        jobname (str): Job name for output files. Default is "smps".
+
+    Raises:
+        RuntimeError: If thread number environment variables are not set.
 
     Note:
-        This simulation method is particularly useful for systems with
-        many nuclear spins where exact diagonalization becomes
-        computationally prohibitive.
+        **Important differences from standard simulations:**
+
+        - Only State.SINGLET initial state is supported (other states raise NotImplementedError)
+        - Returns diagonal elements of reduced density matrix instead of full density matrices
+        - Uses Monte Carlo sampling with statistical averaging over nsamples trajectories
+        - Requires proper thread configuration. Set one of the following environment variables
+          before importing: OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, MKL_NUM_THREADS,
+          VECLIB_MAXIMUM_THREADS, or NUMEXPR_NUM_THREADS
+        - Uses multiprocessing with fork method for parallel execution
+
+    Example:
+        .. code-block:: python
+
+            import os
+            os.environ["OMP_NUM_THREADS"] = "1"
+
+            from radicalpy.tensornetwork import StochasticMPSSimulation
+
+            sim = StochasticMPSSimulation(
+                molecules=molecules,
+                bond_dimension=32,
+                nsamples=256,
+                max_workers=4
+            )
+
+            diagonal_elements = sim.time_evolution(init_state=State.SINGLET, time=time, H=H)
     """
 
     def __init__(
@@ -621,6 +866,7 @@ class StochasticMPSSimulation(BaseMPSSimulation):
         integrator: Literal["arnoldi", "lanczos"] = "arnoldi",
         nsamples: int = 128,
         max_workers: int = 8,
+        jobname: str = "smps",
     ):
         nthreads = None
         env_vars = [
@@ -654,6 +900,7 @@ class StochasticMPSSimulation(BaseMPSSimulation):
             bond_dimension=bond_dimension,
             backend="numpy",
             integrator=integrator,
+            jobname=jobname,
         )
         self.ele_site = len(self.molecules[0].nuclei)
         self.nsite = len(self.molecules[0].nuclei) + len(self.molecules[1].nuclei) + 1
@@ -676,65 +923,66 @@ class StochasticMPSSimulation(BaseMPSSimulation):
             basis.append(Exciton(nstate=nuc.multiplicity))
         return basis
 
-    def spin_coherent_state(self, pair, basis):
-        """
-        JSource: `Fay et al. J. Chem. Phys. 154, 084121 (2021)`_.
-
-        Sample from spin coherent state
-        |Ω⁽ᴵ⁾⟩ = cos(θ/2)²ᴵ exp(tan(θ/2)exp(iϕ)Î₋) |I,I⟩
-        """
-        hp = []
-        for isite in range(self.nsite):
-            if isite == self.ele_site:
-                hp.append([0, 0, 1, 0])  # Singlet
-            else:
-                mult = basis[isite].nstate
-                I = (mult - 1) / 2
-                nind = isite - int(self.ele_site <= isite)
-
-                theta = np.arccos(pair[2 * nind] * 2 - 1.0)
-                # same as
-                # theta = np.arcsin(pair[2*nind] * 2 - 1.0)
-                # if theta < 0:
-                #    theta += np.pi
-                phi = pair[2 * nind + 1] * 2 * np.pi
-                weights = np.zeros((mult, 1))
-                weights[0, 0] = 1.0
-                weights = (
-                    (np.cos(theta / 2) ** (2 * I))
-                    * expm(
-                        np.tan(theta / 2)
-                        * np.exp(1.0j * phi)
-                        * self.molecules[nind].nuclei[nind].pauli["m"]
-                    )
-                    @ weights
-                )
-                assert (
-                    abs((weights.conjugate().T @ weights).real[0, 0] - 1.0) < 1.0e-14
-                ), (weights.conjugate().T @ weights)[0, 0]
-                hp.append(weights.reshape(-1).tolist())
-        return hp
-
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: list[np.ndarray]
     ) -> np.ndarray:
-        """Evolve the system through time.
+        """Evolve the system through time using stochastic matrix product states.
+
+        This method performs time evolution using Monte Carlo sampling of spin
+        coherent states. Each sample is propagated independently using tensor
+        network methods, and the results are averaged to obtain ensemble properties.
+
+        The simulation process:
+        1. Generates random spin coherent states for nuclear spins
+        2. Propagates each sample using the provided Hamiltonian
+        3. Computes reduced density matrix for each sample
+        4. Averages over all samples to obtain ensemble properties
 
         Args:
-
-            init_state (State): Initial `State` of the density matrix
-                (see `projection_operator`).
-
-            time (np.ndarray): An sequence of (uniform) time points,
-                usually created using `np.arange` or `np.linspace`.
-
-            H (list[np.ndarray]): Hamiltonian matrix product operator.
+            init_state (State): Initial state of the system. Only State.SINGLET
+                is currently supported for stochastic simulations.
+            time (np.ndarray): Array of time points for the evolution, typically
+                created using np.linspace or np.arange. Must be uniformly spaced.
+            H (list[np.ndarray]): Hamiltonian as a matrix product operator.
+                Each element represents a tensor in the MPO.
 
         Returns:
-            np.ndarray: Diagonal elements of the reduced density matrix.
+            np.ndarray: Diagonal elements of the reduced density matrix with
+                shape (nsteps, 4) representing [T+, T0, S, T-] populations.
 
+        Raises:
+            NotImplementedError: If init_state is not State.SINGLET.
+
+        Note:
+            **Critical differences from standard time evolution:**
+
+            - Returns diagonal elements of reduced density matrix (shape: nsteps, 4)
+              instead of full density matrices (shape: nsteps, dim, dim)
+            - Only State.SINGLET initial state is supported
+            - Uses stochastic sampling over nuclear spin coherent states
+            - Requires statistical averaging over multiple Monte Carlo samples
+            - Uses parallel processing with multiprocessing for efficiency
+
+        Example:
+            .. code-block:: python
+
+                import numpy as np
+                from radicalpy import State
+
+                # Create time array
+                time = np.linspace(0, 1e-6, 1000)
+
+                # Run simulation
+                result = sim.time_evolution(
+                    init_state=State.SINGLET,
+                    time=time,
+                    H=hamiltonian
+                )
+
+                # result.shape is (1000, 4)
+                # result[:, 2] contains singlet population
         """
-        nsteps, dt = get_nsteps_dt(time)
+        nsteps, dt = _get_nsteps_dt(time)
         if init_state != State.SINGLET:
             raise NotImplementedError(
                 "Only singlet state is supported for StochasticMPSSimulation."
@@ -766,7 +1014,7 @@ class StochasticMPSSimulation(BaseMPSSimulation):
                     # Submit new jobs up to max_active
                     while len(active_futures) < self.max_workers and i < len(pairs):
                         future = executor.submit(
-                            process_pair,
+                            _process_pair,
                             pair=pairs[i],
                             i=i,
                             H=H,
@@ -779,6 +1027,7 @@ class StochasticMPSSimulation(BaseMPSSimulation):
                             integrator=self.integrator,
                             nsite=self.nsite,
                             nuclei=self.nuclei,
+                            jobname=f"{self.jobname}_{i}",
                         )
                         active_futures.append((future, i))
                         i += 1
@@ -830,32 +1079,50 @@ class StochasticMPSSimulation(BaseMPSSimulation):
 class LocallyPurifiedMPSSimulation(BaseMPSSimulation):
     """Locally purified matrix product state simulation for radical pair dynamics.
 
-    This class implements locally purified matrix product state (LPMPS)
-    simulations for studying radical pair recombination dynamics. LPMPS is
-    a tensor network method that combines the efficiency of matrix product
-    states with the ability to describe mixed quantum states through purification.
+    This class implements locally purified matrix product state (LPMPS) simulations
+    for mixed quantum states. LPMPS uses purification to represent mixed states
+    as pure states in an enlarged Hilbert space, enabling efficient simulation
+    of decoherence and relaxation processes.
 
-    The LPMPS method provides an efficient way to simulate open quantum systems
-    by representing density operators as purified states in an enlarged Hilbert
-    space, allowing for the simulation of decoherence and relaxation processes
-    while maintaining computational efficiency.
+    The purification approach works by:
+    1. Doubling the physical Hilbert space with auxiliary degrees of freedom
+    2. Representing mixed states as pure states in the enlarged space
+    3. Propagating the purified state using tensor network methods
+    4. Tracing out auxiliary degrees of freedom to obtain physical observables
 
     Args:
         molecules (list[Molecule]): List of molecules in the radical pair.
-        custom_gfactors (bool): Whether to use custom g-factors.
-        basis (str): Basis set for the simulation.
-        bond_dimension (int): Bond dimension for the matrix product state.
-        backend (str): Computational backend 'numpy' or 'jax'.
-            For large dimension or GPU acceleration, use 'jax'.
-        integrator (str): Integration method for time evolution.
-            For Hermitian Hamiltonian, use 'lanczos' for fast convergence.
-            For non-Hermitian Hamiltonian, use 'arnoldi' for accurate results.
+        custom_gfactors (bool): Whether to use custom g-factors. Default is False.
+        basis (Basis): Basis set for the simulation. Only ST basis is supported.
+        bond_dimension (int): Bond dimension for the matrix product state. Default is 16.
+        integrator (Literal["arnoldi", "lanczos"]): Integration method for time evolution.
+            Use 'lanczos' for Hermitian Hamiltonians, 'arnoldi' for non-Hermitian.
+        backend (Literal["numpy", "jax", "auto"]): Computational backend.
+            'auto' selects 'jax' for bond_dimension > 32, 'numpy' otherwise.
+        jobname (str): Job name for output files. Default is "lpmps".
 
     Note:
-        This simulation method is particularly useful for open quantum systems
-        where both computational efficiency and accurate description of
-        decoherence processes are important, such as radical pairs with
-        environmental interactions or in complex spin environments.
+        **Important differences from standard simulations:**
+
+        - Uses purification approach with auxiliary degrees of freedom (approximately
+          twice the computational resources compared to pure state simulations)
+        - Only State.SINGLET initial state is supported (other states raise NotImplementedError)
+        - Returns diagonal elements of reduced density matrix instead of full density matrices
+        - Requires proper site ordering for auxiliary degrees of freedom
+        - Uses Hilbert space formulation with doubled physical space
+
+    Example:
+        .. code-block:: python
+
+            from radicalpy.tensornetwork import LocallyPurifiedMPSSimulation
+
+            sim = LocallyPurifiedMPSSimulation(
+                molecules=molecules,
+                bond_dimension=64,
+                backend="jax"  # For GPU acceleration
+            )
+
+            result = sim.time_evolution(init_state=State.SINGLET, time=time, H=H)
     """
 
     def __init__(
@@ -866,6 +1133,7 @@ class LocallyPurifiedMPSSimulation(BaseMPSSimulation):
         bond_dimension: int = 16,
         integrator: Literal["arnoldi", "lanczos"] = "arnoldi",
         backend: Literal["numpy", "jax", "auto"] = "auto",
+        jobname: str = "lpmps",
     ):
         super().__init__(
             molecules,
@@ -874,6 +1142,7 @@ class LocallyPurifiedMPSSimulation(BaseMPSSimulation):
             bond_dimension=bond_dimension,
             backend=backend,
             integrator=integrator,
+            jobname=jobname,
         )
         self.ele_site = len(self.molecules[0].nuclei) * 2
         self.nsite = (
@@ -884,7 +1153,6 @@ class LocallyPurifiedMPSSimulation(BaseMPSSimulation):
             self.ele_site - 1 + (i + 1) * 2
             for i in range(len(self.molecules[1].nuclei))
         ]
-        print(isites)
         self._set_nuc_opsites(isites=isites)
 
     def total_hamiltonian(
@@ -988,7 +1256,7 @@ class LocallyPurifiedMPSSimulation(BaseMPSSimulation):
             np.ndarray: Diagonal elements of the reduced density matrix.
 
         """
-        nsteps, dt = get_nsteps_dt(time)
+        nsteps, dt = _get_nsteps_dt(time)
         if init_state != State.SINGLET:
             raise NotImplementedError(
                 "Only singlet state is supported for StochasticMPSSimulation."
@@ -1019,7 +1287,7 @@ class LocallyPurifiedMPSSimulation(BaseMPSSimulation):
         model.m_aux_max = self.bond_dimension
         hp = self._purified_state()
         model.init_HartreeProduct = [hp]
-        jobname = f"radicalpair_lpmps_r{self.bond_dimension}"
+        jobname = self.jobname
         simulator = Simulator(
             jobname=jobname, model=model, backend=self.backend, verbose=1
         )
@@ -1046,22 +1314,72 @@ class LocallyPurifiedMPSSimulation(BaseMPSSimulation):
 
         density_data = np.array(density_data_real)
         time_data = np.array(time_data)
-        self.clean_up(jobname)
+        self._clean_up(jobname)
 
         return density_data
 
 
 # Define linear operation
-def get_OE(op):
-    """
-    OT ⊗ 𝟙
+def _get_OE(op):
+    """Construct O^T ⊗ I operation for Liouville space.
+
+    This function creates the Kronecker product O^T ⊗ I, which represents
+    the action of operator O on the left side of a density matrix in
+    Liouville space vectorization: vec(O ρ) = (I ⊗ O^T) vec(ρ).
+
+    Args:
+        op (np.ndarray): Input operator matrix.
+
+    Returns:
+        np.ndarray: Kronecker product O^T ⊗ I for Liouville space operations.
+
+    Note:
+        This is used in the construction of superoperators for density
+        operator evolution in the VMPDO formalism.
+
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+
+            # Pauli X operator
+            sx = np.array([[0, 1], [1, 0]])
+
+            # Create O^T ⊗ I superoperator
+            sx_super = _get_OE(sx)
+            # sx_super.shape is (4, 4)
     """
     return np.kron(op.T, np.eye(op.shape[0], dtype=op.dtype))
 
 
-def get_EO(op):
-    """
-    𝟙 ⊗ O
+def _get_EO(op):
+    """Construct I ⊗ O operation for Liouville space.
+
+    This function creates the Kronecker product I ⊗ O, which represents
+    the action of operator O on the right side of a density matrix in
+    Liouville space vectorization: vec(ρ O) = (O^T ⊗ I) vec(ρ).
+
+    Args:
+        op (np.ndarray): Input operator matrix.
+
+    Returns:
+        np.ndarray: Kronecker product I ⊗ O for Liouville space operations.
+
+    Note:
+        This is used in the construction of superoperators for density
+        operator evolution in the VMPDO formalism.
+
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+
+            # Pauli X operator
+            sx = np.array([[0, 1], [1, 0]])
+
+            # Create I ⊗ O superoperator
+            sx_super = _get_EO(sx)
+            # sx_super.shape is (4, 4)
     """
     return np.kron(np.eye(op.shape[0], dtype=op.dtype), op)
 
@@ -1070,29 +1388,44 @@ class MPDOSimulation(BaseMPSSimulation):
     """Vectorised matrix product density operator simulation for radical pair dynamics.
 
     This class implements vectorised matrix product density operator (VMPDO)
-    simulations for studying radical pair recombination dynamics in open quantum
-    systems. It uses density operators to describe mixed quantum states,
-    allowing for the simulation of decoherence and relaxation processes.
+    simulations for mixed quantum states. VMPDO directly represents density
+    operators as matrix product operators, enabling efficient simulation
+    of decoherence, relaxation, and other open quantum system dynamics.
 
-    The VMPDO method provides an efficient way to simulate open quantum systems
-    with many degrees of freedom, making it particularly suitable for radical
-    pairs with complex nuclear spin environments and environmental interactions.
+    The VMPDO approach works by:
+    1. Reshape matrix product density operator into matrix product state
+    2. Propagating the density operator using Liouville space dynamics
+    3. Computing observables as traces of operator products
+    4. Supporting both Hermitian and non-Hermitian evolution
 
     Args:
         molecules (list[Molecule]): List of molecules in the radical pair.
-        custom_gfactors (bool): Whether to use custom g-factors.
-        basis (str): Basis set for the simulation.
-        bond_dimension (int): Bond dimension for the matrix product operator.
-        backend (str): Computational backend 'numpy' or 'jax'.
-            For large dimension or GPU acceleration, use 'jax'.
-        integrator (str): Integration method for time evolution.
-            For Hermitian Hamiltonian, use 'lanczos' for fast convergence.
-            For non-Hermitian Hamiltonian, use 'arnoldi' for accurate results.
+        custom_gfactors (bool): Whether to use custom g-factors. Default is False.
+        basis (Basis): Basis set for the simulation. Only ST basis is supported.
+        bond_dimension (int): Bond dimension for the matrix product operator. Default is 16.
+        integrator (Literal["arnoldi", "lanczos"]): Integration method for time evolution.
+            Use 'lanczos' for Hermitian Hamiltonians, 'arnoldi' for non-Hermitian.
+        backend (Literal["numpy", "jax", "auto"]): Computational backend.
+            'auto' selects 'jax' for bond_dimension > 32, 'numpy' otherwise.
+        jobname (str): Job name for output files. Default is "vmpdo".
 
     Note:
-        This simulation method is particularly useful for open quantum systems
-        where decoherence and relaxation processes are important, such as
-        radical pairs in solution or with environmental interactions.
+        - Returns reduced density matrix instead of full density matrice
+        - Trace preserving, positivity preserving, and completely positive
+          evolution is not guaranteed
+
+    Example:
+        .. code-block:: python
+
+            from radicalpy.tensornetwork import MPDOSimulation
+
+            sim = MPDOSimulation(
+                molecules=molecules,
+                bond_dimension=64,
+                backend="jax"  # For GPU acceleration
+            )
+
+            result = sim.time_evolution(init_state=State.SINGLET, time=time, H=H)
     """
 
     def __init__(
@@ -1103,9 +1436,16 @@ class MPDOSimulation(BaseMPSSimulation):
         bond_dimension: int = 16,
         integrator: Literal["arnoldi", "lanczos"] = "arnoldi",
         backend: Literal["numpy", "jax", "auto"] = "auto",
+        jobname: str = "vmpdo",
     ):
         super().__init__(
-            molecules, custom_gfactors, basis, bond_dimension, backend, integrator
+            molecules,
+            custom_gfactors,
+            basis,
+            bond_dimension=bond_dimension,
+            backend=backend,
+            integrator=integrator,
+            jobname=jobname,
         )
         self.ele_site = len(self.molecules[0].nuclei)
         self.nsite = len(self.molecules[0].nuclei) + len(self.molecules[1].nuclei) + 1
@@ -1113,7 +1453,7 @@ class MPDOSimulation(BaseMPSSimulation):
         self._set_nuc_opsites()
 
     def _set_ele_opsites(self):
-        sx_1, sy_1, sz_1, sx_2, sy_2, sz_2, Qs, Qt = self.get_electron_ops()
+        sx_1, sy_1, sz_1, sx_2, sy_2, sz_2, Qs, Qt = self._get_electron_ops()
         SxE_ops = []
         SyE_ops = []
         SzE_ops = []
@@ -1124,58 +1464,58 @@ class MPDOSimulation(BaseMPSSimulation):
         S1S2E_op = OpSite(
             r"(\hat{S}_1\cdot\hat{S}_2)^\ast ⊗ 𝟙",
             self.ele_site,
-            value=get_OE(sx_1 @ sx_2 + sy_1 @ sy_2 + sz_1 @ sz_2),
+            value=_get_OE(sx_1 @ sx_2 + sy_1 @ sy_2 + sz_1 @ sz_2),
         )
         ES1S2_op = OpSite(
             r"𝟙 ⊗ (\hat{S}_1\cdot\hat{S}_2)",
             self.ele_site,
-            value=get_EO(sx_1 @ sx_2 + sy_1 @ sy_2 + sz_1 @ sz_2),
+            value=_get_EO(sx_1 @ sx_2 + sy_1 @ sy_2 + sz_1 @ sz_2),
         )
         EE_op = OpSite(
-            r"\hat{E} ⊗ \hat{E}", self.ele_site, value=get_OE(np.eye(sx_1.shape[0]))
+            r"\hat{E} ⊗ \hat{E}", self.ele_site, value=_get_OE(np.eye(sx_1.shape[0]))
         )
 
-        QsE_op = OpSite(r"\hat{Q}_S ⊗ 𝟙", self.ele_site, value=get_OE(Qs))
-        EQs_op = OpSite(r"𝟙 ⊗ \hat{Q}_S", self.ele_site, value=get_EO(Qs))
-        QtE_op = OpSite(r"\hat{Q}_T ⊗ 𝟙", self.ele_site, value=get_OE(Qt))
-        EQt_op = OpSite(r"𝟙 ⊗ \hat{Q}_T", self.ele_site, value=get_EO(Qt))
+        QsE_op = OpSite(r"\hat{Q}_S ⊗ 𝟙", self.ele_site, value=_get_OE(Qs))
+        EQs_op = OpSite(r"𝟙 ⊗ \hat{Q}_S", self.ele_site, value=_get_EO(Qs))
+        QtE_op = OpSite(r"\hat{Q}_T ⊗ 𝟙", self.ele_site, value=_get_OE(Qt))
+        EQt_op = OpSite(r"𝟙 ⊗ \hat{Q}_T", self.ele_site, value=_get_EO(Qt))
 
         SxE_ops.append(
-            OpSite(r"\hat{S}_x^{(1)\ast} ⊗ 𝟙", self.ele_site, value=get_OE(sx_1))
+            OpSite(r"\hat{S}_x^{(1)\ast} ⊗ 𝟙", self.ele_site, value=_get_OE(sx_1))
         )
         SxE_ops.append(
-            OpSite(r"\hat{S}_x^{(2)\ast} ⊗ 𝟙", self.ele_site, value=get_OE(sx_2))
+            OpSite(r"\hat{S}_x^{(2)\ast} ⊗ 𝟙", self.ele_site, value=_get_OE(sx_2))
         )
         SyE_ops.append(
-            OpSite(r"\hat{S}_y^{(1)\ast} ⊗ 𝟙", self.ele_site, value=get_OE(sy_1))
+            OpSite(r"\hat{S}_y^{(1)\ast} ⊗ 𝟙", self.ele_site, value=_get_OE(sy_1))
         )
         SyE_ops.append(
-            OpSite(r"\hat{S}_y^{(2)\ast} ⊗ 𝟙", self.ele_site, value=get_OE(sy_2))
+            OpSite(r"\hat{S}_y^{(2)\ast} ⊗ 𝟙", self.ele_site, value=_get_OE(sy_2))
         )
         SzE_ops.append(
-            OpSite(r"\hat{S}_z^{(1)\ast} ⊗ 𝟙", self.ele_site, value=get_OE(sz_1))
+            OpSite(r"\hat{S}_z^{(1)\ast} ⊗ 𝟙", self.ele_site, value=_get_OE(sz_1))
         )
         SzE_ops.append(
-            OpSite(r"\hat{S}_z^{(2)\ast} ⊗ 𝟙", self.ele_site, value=get_OE(sz_2))
+            OpSite(r"\hat{S}_z^{(2)\ast} ⊗ 𝟙", self.ele_site, value=_get_OE(sz_2))
         )
 
         ESx_ops.append(
-            OpSite(r"𝟙 ⊗ \hat{S}_x^{(1)}", self.ele_site, value=get_EO(sx_1))
+            OpSite(r"𝟙 ⊗ \hat{S}_x^{(1)}", self.ele_site, value=_get_EO(sx_1))
         )
         ESx_ops.append(
-            OpSite(r"𝟙 ⊗ \hat{S}_x^{(2)}", self.ele_site, value=get_EO(sx_2))
+            OpSite(r"𝟙 ⊗ \hat{S}_x^{(2)}", self.ele_site, value=_get_EO(sx_2))
         )
         ESy_ops.append(
-            OpSite(r"𝟙 ⊗ \hat{S}_y^{(1)}", self.ele_site, value=get_EO(sy_1))
+            OpSite(r"𝟙 ⊗ \hat{S}_y^{(1)}", self.ele_site, value=_get_EO(sy_1))
         )
         ESy_ops.append(
-            OpSite(r"𝟙 ⊗ \hat{S}_y^{(2)}", self.ele_site, value=get_EO(sy_2))
+            OpSite(r"𝟙 ⊗ \hat{S}_y^{(2)}", self.ele_site, value=_get_EO(sy_2))
         )
         ESz_ops.append(
-            OpSite(r"𝟙 ⊗ \hat{S}_z^{(1)}", self.ele_site, value=get_EO(sz_1))
+            OpSite(r"𝟙 ⊗ \hat{S}_z^{(1)}", self.ele_site, value=_get_EO(sz_1))
         )
         ESz_ops.append(
-            OpSite(r"𝟙 ⊗ \hat{S}_z^{(2)}", self.ele_site, value=get_EO(sz_2))
+            OpSite(r"𝟙 ⊗ \hat{S}_z^{(2)}", self.ele_site, value=_get_EO(sz_2))
         )
 
         SrE_ops = [SxE_ops, SyE_ops, SzE_ops]
@@ -1205,34 +1545,34 @@ class MPDOSimulation(BaseMPSSimulation):
             IxE_ops[(0, j)] = OpSite(
                 r"\hat{I}_x^{" + f"{(1, j + 1)}" + r"\ast} ⊗ 𝟙",
                 j,
-                value=get_OE(val),
+                value=_get_OE(val),
             )
             EIx_ops[(0, j)] = OpSite(
                 r"𝟙 ⊗ \hat{I}_x^{" + f"{(1, j + 1)}" + "}",
                 j,
-                value=get_EO(val),
+                value=_get_EO(val),
             )
             val = nuc.pauli["y"]
             IyE_ops[(0, j)] = OpSite(
                 r"\hat{I}_y^{" + f"{(1, j + 1)}" + r"\ast} ⊗ 𝟙",
                 j,
-                value=get_OE(val),
+                value=_get_OE(val),
             )
             EIy_ops[(0, j)] = OpSite(
                 r"𝟙 ⊗ \hat{I}_y^{" + f"{(1, j + 1)}" + "}",
                 j,
-                value=get_EO(val),
+                value=_get_EO(val),
             )
             val = nuc.pauli["z"]
             IzE_ops[(0, j)] = OpSite(
                 r"\hat{I}_z^{" + f"{(1, j + 1)}" + r"\ast} ⊗ 𝟙",
                 j,
-                value=get_OE(val),
+                value=_get_OE(val),
             )
             EIz_ops[(0, j)] = OpSite(
                 r"𝟙 ⊗ \hat{I}_z^{" + f"{(1, j + 1)}" + "}",
                 j,
-                value=get_EO(val),
+                value=_get_EO(val),
             )
 
         for j, nuc in enumerate(self.molecules[1].nuclei):
@@ -1241,34 +1581,34 @@ class MPDOSimulation(BaseMPSSimulation):
             IxE_ops[(1, j)] = OpSite(
                 r"\hat{I}_x^{" + f"{(2, j + 1)}" + r"\ast} ⊗ 𝟙",
                 site,
-                value=get_OE(val),
+                value=_get_OE(val),
             )
             EIx_ops[(1, j)] = OpSite(
                 r"𝟙 ⊗ \hat{I}_x^{" + f"{(2, j + 1)}" + "}",
                 site,
-                value=get_EO(val),
+                value=_get_EO(val),
             )
             val = nuc.pauli["y"]
             IyE_ops[(1, j)] = OpSite(
                 r"\hat{I}_y^{" + f"{(2, j + 1)}" + r"\ast} ⊗ 𝟙",
                 site,
-                value=get_OE(val),
+                value=_get_OE(val),
             )
             EIy_ops[(1, j)] = OpSite(
                 r"𝟙 ⊗ \hat{I}_y^{" + f"{(2, j + 1)}" + "}",
                 self.ele_site + 1 + j,
-                value=get_EO(val),
+                value=_get_EO(val),
             )
             val = nuc.pauli["z"]
             IzE_ops[(1, j)] = OpSite(
                 r"\hat{I}_z^{" + f"{(2, j + 1)}" + r"\ast} ⊗ 𝟙",
                 site,
-                value=get_OE(val),
+                value=_get_OE(val),
             )
             EIz_ops[(1, j)] = OpSite(
                 r"𝟙 ⊗ \hat{I}_z^{" + f"{(2, j + 1)}" + "}",
                 site,
-                value=get_EO(val),
+                value=_get_EO(val),
             )
 
         IrE_ops = [IxE_ops, IyE_ops, IzE_ops]
@@ -1286,7 +1626,7 @@ class MPDOSimulation(BaseMPSSimulation):
     ) -> SumOfProducts:
         zeeman = SumOfProducts()
         xyz = "xyz"
-        B = get_vecB(B0, B_axis, theta, phi)
+        B = _get_vecB(B0, B_axis, theta, phi)
         for a, (SrE_op, ESr_op, IrE_op, EIr_op) in enumerate(
             zip(self.SrE_ops, self.ESr_ops, self.IrE_ops, self.EIr_ops, strict=True)
         ):
@@ -1339,9 +1679,7 @@ class MPDOSimulation(BaseMPSSimulation):
         hyperfine = hyperfine.simplify()
         return hyperfine
 
-    def exchange_hamiltonian(
-        self, J: float, prod_coeff: float = 2, kron_eye: bool = True
-    ) -> np.ndarray:
+    def exchange_hamiltonian(self, J: float, prod_coeff: float = 2) -> np.ndarray:
         exchange = SumOfProducts()
         Jsym = Symbol("J")
         self.subs[Jsym] = J * SCALE
@@ -1354,9 +1692,7 @@ class MPDOSimulation(BaseMPSSimulation):
         exchange = exchange.simplify()
         return exchange
 
-    def dipolar_hamiltonian(
-        self, D: float | np.ndarray, kron_eye: bool = True
-    ) -> np.ndarray:
+    def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
         if isinstance(D, float):
             if D > 0.0:
                 print(
@@ -1454,7 +1790,7 @@ class MPDOSimulation(BaseMPSSimulation):
             np.ndarray: Reduced density matrix with shape (nsteps, 4, 4).
 
         """
-        nsteps, dt = get_nsteps_dt(time)
+        nsteps, dt = _get_nsteps_dt(time)
         basis = self._get_basis()
         basinfo = BasInfo([basis], spf_info=None)
         op_dict = {
@@ -1471,8 +1807,7 @@ class MPDOSimulation(BaseMPSSimulation):
         model.m_aux_max = self.bond_dimension
         hp = self._initial_state(basis, init_state)
         model.init_HartreeProduct = [hp]
-
-        jobname = f"radicalpair_liouville_chi{self.bond_dimension}"
+        jobname = self.jobname
         simulator = Simulator(
             jobname=jobname,
             model=model,
@@ -1499,5 +1834,5 @@ class MPDOSimulation(BaseMPSSimulation):
         )
         time_data = data["time"]
         density_data = data[(self.ele_site, self.ele_site)]
-        self.clean_up(jobname)
+        self._clean_up(jobname)
         return density_data
