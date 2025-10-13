@@ -16,15 +16,15 @@ def main(Bmax=30, dB=0.5, tmax=20e-6, dt=10e-9):
     # Parameters
     time = np.arange(0, tmax, dt)
     Bs = np.arange(0, Bmax, dB)
-    num_samples = 400
-    scale_factor = 10
+    num_samples = 200
+    scale_factor = 1
     kr = 0  # 1.7e6  # radical pair relaxation rate
     relaxation = RandomFields(kr)  # relaxation model
 
     # Kinetic simulation of FAD at pH 2.1.
 
     # FAD kinetic parameters
-    kex = Rate(1e4, "k_{ex}")  # groundstate excitation rate
+    kex = Rate(0, "k_{ex}")  # groundstate excitation rate
     kfl = Rate(3.55e8, "k_{fl}")  # fluorescence rate
     kic = Rate(1.28e9, "k_{IC}")  # internal conversion rate
     kisc = Rate(3.64e8, "k_{ISC}")  # intersystem crossing rate
@@ -162,8 +162,8 @@ def main(Bmax=30, dB=0.5, tmax=20e-6, dt=10e-9):
     latex_equations = latex_eqlist_to_align(latexify(base))
     # print(latex_equations)
 
-    flavin = Molecule.all_nuclei("fad")
-    adenine = Molecule.all_nuclei("fad")
+    flavin = Molecule.all_nuclei("flavin_anion")
+    adenine = Molecule.all_nuclei("adenine_cation")
     sim = SemiclassicalSimulation([flavin, adenine])
 
     results = kine_quantum_mary(

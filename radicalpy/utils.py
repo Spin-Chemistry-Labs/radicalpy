@@ -223,6 +223,48 @@ def Bhalf_fit(
     return Bhalf, fit_result, fit_error, R2
 
 
+def Bhalf_LFEhalf_fit(
+    B: np.ndarray, MARY: np.ndarray, LFE_position: float = 1.0
+) -> Tuple[float, np.ndarray, float, float]:
+    """B_1/2 and LFE_1/2 fitting for MARY spectra.
+
+    Args:
+            B (np.ndarray): Magnetic field values (x-axis).
+            MARY (np.ndarray): Magnetic field effect data
+                (y-axis). Use the `MARY` entry in the result of
+                `radicalpy.simulation.HilbertSimulation.MARY`.
+            LFE_position (float): Initial guess for the low field effect position.
+
+    Returns:
+            (float, np.ndarray, float, float):
+            - `Bhalf` (float): The magnetic field strength at half the
+              saturation magnetic field.
+            - `LFEhalf` (float): The magnetic field strength at half the
+              low field effect magnetic field.
+            - `fit_result` (np.ndarray): y-axis from fit.
+            - `fit_error` (float): Standard error for the fit.
+            - `R2` (float): R-squared value for the fit.
+    """
+    popt_MARY, pcov_MARY = curve_fit(
+        double_Lorentzian,
+        B,
+        MARY,
+        p0=[MARY[-1], int(len(B) / 2), MARY[LFE_position], LFE_position],
+        maxfev=1000000,
+    )
+    fit_error = np.sqrt(np.diag(pcov_MARY))
+
+    A_opt_MARY, Bhalf_opt_MARY, A_opt_LFE, LFEhalf_opt_MARY = popt_MARY
+    fit_result = double_Lorentzian(B, *popt_MARY)
+    Bhalf = np.abs(Bhalf_opt_MARY)
+    LFEhalf = np.abs(LFEhalf_opt_MARY)
+
+    y_pred_MARY = double_Lorentzian(B, *popt_MARY)
+    R2 = r2_score(MARY, y_pred_MARY)
+
+    return Bhalf, LFEhalf, fit_result, fit_error, R2
+
+
 def Gauss_to_MHz(Gauss: float) -> float:
     """Convert Gauss to MHz.
 
@@ -277,6 +319,31 @@ def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
             np.ndarray: Lorentzian function for MARY spectrum.
     """
     return (amplitude / Bhalf**2) - (amplitude / (B**2 + Bhalf**2))
+
+
+def double_Lorentzian(
+    B: np.ndarray, amplitude: float, Bhalf: float, LFE_amplitude: float, LFEhalf: float
+) -> np.ndarray:
+    """Double Lorentzian function for MARY spectra.
+
+    More information in `radicalpy.utils.Bhalf_fit` (where this is
+    used).
+
+    Args:
+            B (np.ndarray): The x-axis magnetic field values.
+            amplitude (float): The amplitude of the saturation field value.
+            Bhalf (float): The magnetic field strength at half the
+                saturation field value.
+            LFE_amplitude (float): The amplitude of the LFE component.
+            LFEhalf (float): The magnetic field strength at half the
+                LFE field value.
+
+    Returns:
+            np.ndarray: Double Lorentzian function for MARY spectrum.
+    """
+    return -amplitude * (B**2 / (B**2 + Bhalf**2)) + LFE_amplitude * (
+        B**2 / (B**2 + LFEhalf**2)
+    )
 
 
 def MHz_in_angular_frequency(MHz: float) -> float:
