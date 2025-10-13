@@ -1159,23 +1159,25 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
         H -= self.subH
 
 
-    
 class SemiclassicalSimulation(LiouvilleSimulation):
     def semiclassical_HHs(self, num_samples: int) -> np.ndarray:
         """
         Generate semiclassical Hamiltonians for a radical pair system.
- 
+
+
         Each radical experiences a random, isotropic effective field
         sampled from a Gaussian distribution with standard deviation
         `m.semiclassical_std`. The field direction is uniformly random
         over the sphere, and its strength is scaled by the radical's
         gyromagnetic ratio.
- 
+
+
         Parameters
         ----------
         num_samples : int
             Number of random Hamiltonian realizations to generate.
- 
+
+
         Returns
         -------
         np.ndarray
@@ -1191,30 +1193,41 @@ class SemiclassicalSimulation(LiouvilleSimulation):
 
         # Spin operators Sx,Sy,Sz per radical -> (R,3,D,D)
         spinops = np.stack(
-            [[np.asarray(self.spin_operator(ri, ax)) for ax in "xyz"] for ri in range(R)],
-            axis=0
-        ).astype(complex)  # (2,3,D,D)
+            [
+                [np.asarray(self.spin_operator(ri, ax)) for ax in "xyz"]
+                for ri in range(R)
+            ],
+            axis=0,
+        ).astype(
+            complex
+        )  # (2,3,D,D)
         _, _, D, _ = spinops.shape
 
         # Per-radical hyperfine width and gyromagnetic ratio
-        stds   = np.array([m.semiclassical_std for m in self.molecules], dtype=float)   # (2,)
-        gammas = np.array([m.radical.gamma_mT for m in self.molecules], dtype=float)  # (2,)
+        stds = np.array(
+            [m.semiclassical_std for m in self.molecules], dtype=float
+        )  # (2,)
+        gammas = np.array(
+            [m.radical.gamma_mT for m in self.molecules], dtype=float
+        )  # (2,)
 
         # Draw 3D Gaussian components per radical: each component ~ N(0, std^2)
         fields = np.random.normal(
             loc=0.0,
             scale=stds[None, :, None],  # broadcast to (N,2,3)
-            size=(num_samples, R, 3)
+            size=(num_samples, R, 3),
         )  # (N,2,3)
 
         # Convert to Hamiltonian prefactors with γ (so γ*B · S)
         comps = fields * gammas[None, :, None]  # (N,2,3)
 
         # Contract (sum over radical and axis): comps[n,r,a] * S[r,a,:,:]
-        HHs = np.einsum("nra,raxy->nxy", comps, spinops, optimize=True)  # (N,D,D), complex
+        HHs = np.einsum(
+            "nra,raxy->nxy", comps, spinops, optimize=True
+        )  # (N,D,D), complex
 
         return HHs
-    
+
     @property
     def nuclei(self):
         """Semiclassical model with no explicit nuclei (override returns empty list)."""
