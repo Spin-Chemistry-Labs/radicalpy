@@ -25,10 +25,10 @@ Core data structures
       with helpers like :py:meth:`Isotope.available`.
     - :class:`Hfc` – hyperfine coupling container that supports either an
       isotropic scalar value or a full 3×3 anisotropic tensor, and exposes
-      :pyattr:`Hfc.isotropic` and :pyattr:`Hfc.anisotropic`.
+      :py:meth:`Hfc.isotropic` and :py:meth:`Hfc.anisotropic`.
     - :class:`Nucleus` – a nucleus within a molecule, defined by its
       magnetogyric ratio, spin multiplicity, and hyperfine couplings; also
-      provides spin (Pauli) operator matrices via :pyattr:`Nucleus.pauli`.
+      provides spin (Pauli) operator matrices via :py:meth:`Nucleus.pauli`.
     - :class:`FuseNucleus` – an effective nucleus formed by fusing several
       identical nuclei into a direct-sum representation to reduce Hilbert-space
       dimension; includes utilities for validation and operator construction.

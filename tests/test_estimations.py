@@ -33,7 +33,7 @@ class EstimationsTests(unittest.TestCase):
         g = [2.00429, 2.00389, 2.00216]
         B = 0.05
         tau_c = 1.3006195732809966e-07
-        t1 = rp.estimations.T1_relaxation_rate(g, B, tau_c)
+        t1 = rp.estimations.T1_relaxation_rate_g_tensor(g, B, tau_c)
         self.assertAlmostEqual(gold, t1)
 
     def test_T2_relaxation_rate(self):
@@ -41,7 +41,7 @@ class EstimationsTests(unittest.TestCase):
         g = [2.00429, 2.00389, 2.00216]
         B = 0.05
         tau_c = 1.3006195732809966e-07
-        t2 = rp.estimations.T2_relaxation_rate(g, B, tau_c)
+        t2 = rp.estimations.T2_relaxation_rate_g_tensor(g, B, tau_c)
         self.assertAlmostEqual(gold, t2)
 
     def test_aqueous_glycerol_viscosity(self):

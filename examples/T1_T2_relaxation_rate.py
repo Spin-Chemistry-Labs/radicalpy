@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from radicalpy.estimations import (
-    T1_relaxation_rate,
-    T2_relaxation_rate,
+    T1_relaxation_rate_g_tensor,
+    T2_relaxation_rate_g_tensor,
     aqueous_glycerol_viscosity,
     rotational_correlation_time_for_protein,
 )
@@ -66,8 +66,8 @@ def main():
 
     t1, t2 = {}, {}
     for t in temperatures:
-        t1[t] = T1_relaxation_rate(g, B, tau_c[t])
-        t2[t] = T2_relaxation_rate(g, B, tau_c[t])
+        t1[t] = T1_relaxation_rate_g_tensor(g, B, tau_c[t])
+        t2[t] = T2_relaxation_rate_g_tensor(g, B, tau_c[t])
 
     plt.clf()
     plt.grid(False)

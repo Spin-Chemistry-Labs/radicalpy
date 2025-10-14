@@ -24,7 +24,7 @@ or the
 [examples](https://github.com/Spin-Chemistry-Labs/radicalpy/tree/main/examples).
 
 The package is under constant development. [documentation](https://radicalpy.readthedocs.io/) is
-sparse, testing partial.
+up-to-date, testing partial.
 
 If you would like to contact us, please visit the Spin Chemistry Community [Discord server](https://discord.gg/NZdjhFS3Es).
 
