@@ -3,8 +3,8 @@
 
 This module collects closed-form and semi-empirical estimators commonly
 used in spin chemistry and magnetic resonance modeling. Functions cover
-theoretical B₁/₂ values, T₁/T₂ relaxation rates (g-anisotropy and
-tumbling motion), diffusion/viscosity, dipolar and exchange interactions,
+theoretical B₁/₂ values, T₁/T₂ relaxation rates (g-anisotropy, hyperfine tensor, 
+and tumbling motion), diffusion/viscosity, dipolar and exchange interactions,
 kinetic rates (excitation, recombination, re-encounter, electron transfer),
 triplet relaxation, rotational correlation times, and helpers for fitting
 autocorrelation functions.
@@ -15,9 +15,11 @@ Major groups:
             - :func:`Bhalf_theoretical_relaxation`
             - :func:`Bhalf_theoretical_relaxation_delay`
         Relaxation (g-anisotropy / tumbling)
-            - :func:`T1_relaxation_rate`
+            - :func:`T1_relaxation_rate_g_tensor`
+            - :func:`T1_relaxation_rate_hyperfine_tensor`
             - :func:`T1_relaxation_rate_tumbling_motion`
-            - :func:`T2_relaxation_rate`
+            - :func:`T2_relaxation_rate_g_tensor`
+            - :func:`T2_relaxation_rate_hyperfine_tensor`
             - :func:`T2_relaxation_rate_tumbling_motion`
             - :func:`g_tensor_relaxation_rate`
         Transport & correlation
@@ -179,10 +181,10 @@ def _relaxation_gtensor_term(g: list) -> float:
     return sum((gi - np.mean(g)) ** 2 for gi in g)
 
 
-def T1_relaxation_rate(
+def T1_relaxation_rate_g_tensor(
     g_tensors: list, B: float | np.ndarray, tau_c: float | np.ndarray
 ) -> float | np.ndarray:
-    r"""T1 relaxation rate.
+    """T1 relaxation rate.
 
     Estimate T1 relaxation rate based on tau_c and g-tensor anisotropy.
 
@@ -208,6 +210,37 @@ def T1_relaxation_rate(
         * ((C.mu_B * B) / C.hbar) ** 2
         * g_innerproduct
         * (tau_c / (1 + omega**2 * tau_c**2))
+    )
+
+
+def T1_relaxation_rate_hyperfine_tensor(
+    hyperfine_tensor: np.ndarray, B: float, tau_c: float
+) -> float:
+    """T1 relaxation rate.
+
+    Estimate T1 relaxation rate based on tau_c and hyperfine tensor anisotropy.
+
+    Source: `Carrington and McLachlan, Introduction to Magnetic Resonance with 
+    Applications to Chemistry and Chemical Physics (1967)`_.
+
+    Args:
+            hyperfine_tensor (np.ndarray): Hyperfine tensor (mT).
+            B (float): The external magnetic field strength (mT).
+            tau_c (float): The rotational correlation time (s).
+
+    Returns:
+            float: The T1 relaxation rate (1/s)
+
+    .. _Carrington and McLachlan, Introduction to Magnetic Resonance with 
+    Applications to Chemistry and Chemical Physics (1967):
+       https://pubs.acs.org/doi/10.1021/ed044p772.2
+    """
+    omega = Isotope("E").gamma_mT * B * 2 * np.pi
+    A_A = np.trace(mT_to_MHz(hyperfine_tensor**2) * 4 * np.pi * 1e12)
+    return (
+        (1 / 6) 
+        * (A_A * tau_c) 
+        / (1 + omega**2 * tau_c**2)
     )
 
 
@@ -240,7 +273,7 @@ def T1_relaxation_rate_tumbling_motion(
     )
 
 
-def T2_relaxation_rate(
+def T2_relaxation_rate_g_tensor(
     g_tensors: list, B: float | np.ndarray, tau_c: float | np.ndarray
 ) -> float | np.ndarray:
     """T2 relaxation rate.
@@ -265,6 +298,33 @@ def T2_relaxation_rate(
         * ((C.mu_B * B) / C.hbar) ** 2
         * g_innerproduct
         * (4 * tau_c + (3 * tau_c / (1 + omega**2 * tau_c**2)))
+    )
+
+
+def T2_relaxation_rate_hyperfine_tensor(
+    hyperfine_tensor: np.ndarray, B: float, tau_c: float
+) -> float:
+    """T2 relaxation rate.
+
+    Estimate T2 relaxation rate based on tau_c and hyperfine tensor anisotropy.
+
+    Source: `Carrington and McLachlan, Introduction to Magnetic Resonance with 
+    Applications to Chemistry and Chemical Physics (1967)`_.
+
+    Args:
+            hyperfine_tensor (np.ndarray): Hyperfine tensor (mT).
+            B (float): The external magnetic field strength (mT).
+            tau_c (float): The rotational correlation time (s).
+
+    Returns:
+            float: The T2 relaxation rate (1/s)
+    """
+    A_A = np.trace(mT_to_MHz(hyperfine_tensor**2) * 4 * np.pi * 1e12)
+    T1 = T1_relaxation_rate_hyperfine_tensor(hyperfine_tensor, B, tau_c)
+    return (
+        (T1 / 2) 
+        + (1 / 6) 
+        * (A_A * tau_c)
     )
 
 
