@@ -3,7 +3,7 @@
 
 This module collects closed-form and semi-empirical estimators commonly
 used in spin chemistry and magnetic resonance modeling. Functions cover
-theoretical B₁/₂ values, T₁/T₂ relaxation rates (g-anisotropy, hyperfine tensor, 
+theoretical B₁/₂ values, T₁/T₂ relaxation rates (g-anisotropy, hyperfine tensor,
 and tumbling motion), diffusion/viscosity, dipolar and exchange interactions,
 kinetic rates (excitation, recombination, re-encounter, electron transfer),
 triplet relaxation, rotational correlation times, and helpers for fitting
@@ -220,7 +220,7 @@ def T1_relaxation_rate_hyperfine_tensor(
 
     Estimate T1 relaxation rate based on tau_c and hyperfine tensor anisotropy.
 
-    Source: `Carrington and McLachlan, Introduction to Magnetic Resonance with 
+    Source: `Carrington and McLachlan, Introduction to Magnetic Resonance with
     Applications to Chemistry and Chemical Physics (1967)`_.
 
     Args:
@@ -231,7 +231,7 @@ def T1_relaxation_rate_hyperfine_tensor(
     Returns:
             float: The T1 relaxation rate (1/s)
 
-    .. _Carrington and McLachlan, Introduction to Magnetic Resonance with 
+    .. _Carrington and McLachlan, Introduction to Magnetic Resonance with
     Applications to Chemistry and Chemical Physics (1967):
        https://pubs.acs.org/doi/10.1021/ed044p772.2
     """
@@ -304,7 +304,7 @@ def T2_relaxation_rate_hyperfine_tensor(
 
     Estimate T2 relaxation rate based on tau_c and hyperfine tensor anisotropy.
 
-    Source: `Carrington and McLachlan, Introduction to Magnetic Resonance with 
+    Source: `Carrington and McLachlan, Introduction to Magnetic Resonance with
     Applications to Chemistry and Chemical Physics (1967)`_.
 
     Args:
