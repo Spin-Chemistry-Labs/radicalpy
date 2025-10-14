@@ -237,11 +237,7 @@ def T1_relaxation_rate_hyperfine_tensor(
     """
     omega = Isotope("E").gamma_mT * B * 2 * np.pi
     A_A = np.trace(mT_to_MHz(hyperfine_tensor**2) * 4 * np.pi * 1e12)
-    return (
-        (1 / 6) 
-        * (A_A * tau_c) 
-        / (1 + omega**2 * tau_c**2)
-    )
+    return (1 / 6) * (A_A * tau_c) / (1 + omega**2 * tau_c**2)
 
 
 def T1_relaxation_rate_tumbling_motion(
@@ -321,11 +317,7 @@ def T2_relaxation_rate_hyperfine_tensor(
     """
     A_A = np.trace(mT_to_MHz(hyperfine_tensor**2) * 4 * np.pi * 1e12)
     T1 = T1_relaxation_rate_hyperfine_tensor(hyperfine_tensor, B, tau_c)
-    return (
-        (T1 / 2) 
-        + (1 / 6) 
-        * (A_A * tau_c)
-    )
+    return (T1 / 2) + (1 / 6) * (A_A * tau_c)
 
 
 def T2_relaxation_rate_tumbling_motion(
