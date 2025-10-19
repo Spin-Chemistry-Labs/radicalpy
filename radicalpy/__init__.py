@@ -18,6 +18,17 @@ from . import (
 
 # pylint: disable=unused-import wildcard-import
 
+try:
+    from importlib.metadata import PackageNotFoundError, version
+except ImportError:
+    # Fallback for Python < 3.8 if importlib-metadata backport is installed
+    from importlib_metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("radicalpy")
+except PackageNotFoundError:
+    # Handle cases where the package is not installed or metadata is missing
+    __version__ = "unknown"
 
 ureg = UnitRegistry()
 Q_ = ureg.Quantity

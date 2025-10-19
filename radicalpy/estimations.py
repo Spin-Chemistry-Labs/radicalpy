@@ -184,7 +184,7 @@ def _relaxation_gtensor_term(g: list) -> float:
 def T1_relaxation_rate_g_tensor(
     g_tensors: list, B: float | np.ndarray, tau_c: float | np.ndarray
 ) -> float | np.ndarray:
-    """T1 relaxation rate.
+    r"""T1 relaxation rate.
 
     Estimate T1 relaxation rate based on tau_c and g-tensor anisotropy.
 
