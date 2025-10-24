@@ -664,7 +664,7 @@ def magnetic_field_loop_semiclassical(
     H_zee = sim.zeeman_hamiltonian(1.0, "z", theta, phi)
 
     HHs = sim.semiclassical_HHs(num_samples)
-    shape = sim._get_rho_shape(H_zee.shape[0]**2)
+    shape = sim._get_rho_shape(H_zee.shape[0] ** 2)
     average_rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
 
     for i, B0 in enumerate(tqdm(B)):
