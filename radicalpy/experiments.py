@@ -16,8 +16,10 @@ Functions:
         - `cidnp`: CIDNP polarisation vs field for S–T0 mixing.
         - `kine_quantum_mary`: Hybrid kinetic+quantum MARY with stochastic hyperfine sampling.
         - `magnetic_field_loop`: Inner loop over swept field B; returns time-resolved density matrices.
+        - `magnetic_field_loop_semiclassical`: Semiclassical inner loop over swept field B; returns time-resolved density matrices.
         - `mary_lfe_hfe`: Post-process product probabilities → MARY, low-/high-field effects (%).
         - `mary`: MARY vs B (time-domain propagation + yields + normalised response).
+        - `mary_semiclassical`: Semiclassical MARY vs B (time-domain propagation + yields + normalised response).
         - `modulated_mary_brute_force`: Lock-in MARY via phase randomisation and numerical integration.
         - `nmr`: Simple 1D NMR synthesiser (FID → FFT) with multiplets and T2 decay.
         - `odmr`: ODMR vs RF frequency (B1_freq) at fixed B0.
@@ -576,6 +578,110 @@ def magnetic_field_loop(
     return rhos
 
 
+def magnetic_field_loop_semiclassical(
+    sim: HilbertSimulation,
+    init_state: State,
+    time: np.ndarray,
+    B: np.ndarray,
+    H_base: np.ndarray,
+    kinetics: list[HilbertIncoherentProcessBase] = [],
+    relaxations: list[HilbertIncoherentProcessBase] = [],
+    theta: Optional[float] = None,
+    phi: Optional[float] = None,
+    num_samples: Optional[int] = None,
+) -> np.ndarray:
+    """Generate density matrices (rhos) for MARY using a semiclassical
+    ensemble of hyperfine realisations and incoherent processes.
+
+    Args:
+
+        sim (HilbertSimulation): Simulation object.
+
+        init_state (State): Initial `State` of the density matrix.
+
+        time (np.ndarray): A sequence of (uniform) time points,
+            usually created using `np.arange` or `np.linspace` (s).
+
+        B (np.ndarray): Magnetic-field sweep values (mT). Each value
+            scales a precomputed unit-field Zeeman operator summed over
+            all radicals on the laboratory `'z'` axis (after applying the
+            optional `theta/phi` rotation).
+
+        H_base (np.ndarray): A "base" Hamiltonian that does not include
+            the swept Zeeman term, e.g., the result of
+            `total_hamiltonian(...)` with `B0=0` plus any static terms.
+
+        kinetics (list[HilbertIncoherentProcessBase]): List of incoherent
+            kinetic processes (e.g., recombination, intersystem crossing)
+            to be added as Liouvillian modifiers. Defaults to `[]`.
+
+        relaxations (list[HilbertIncoherentProcessBase]): List of
+            relaxation/dephasing processes to be added as Liouvillian
+            modifiers. Defaults to `[]`.
+
+        theta (float, optional): Rotation (polar) angle between the
+            external magnetic field and the fixed molecular frame. See
+            `zeeman_hamiltonian_3d`.
+
+        phi (float, optional): Rotation (azimuth) angle between the
+            external magnetic field and the fixed molecular frame. See
+            `zeeman_hamiltonian_3d`.
+
+        num_samples (int, optional): Number of semiclassical hyperfine
+            realizations used for ensemble averaging. If `None`, the
+            simulator’s default is used by `sim.semiclassical_HHs(...)`.
+
+    Returns:
+        np.ndarray:
+
+        A tensor of density matrices with shape
+        `(len(B), len(time), *rho_shape)`, where `rho_shape` is
+        `(N, N)` for Hilbert-space propagation and `(N,)` for
+        Liouville-space propagation. For each field value `B[i]`,
+        the result is the **sample-average** over `num_samples`
+        semiclassical Hamiltonians `H_HH[k]` of the time evolution under
+
+        `H_t = H_base + B[i] * H_Z(1.0) + H_HH[k]`,
+
+        with incoherent `kinetics + relaxations` applied as Liouvillian
+        modifiers.
+
+    Notes:
+        - The unit-field Zeeman operator is constructed by summing the
+          per-radical contributions on the `'z'` axis (after rotation by
+          `theta/phi`) and is then scaled by each `B[i]`.
+        - An ensemble `HHs = sim.semiclassical_HHs(num_samples)` provides
+          the semiclassical hyperfine Hamiltonians used for averaging.
+        - `sim.convert(...)` maps the total Hamiltonian to the working
+          representation (Hilbert→Liouville if required); incoherent
+          processes are then added via
+          `sim.apply_liouville_hamiltonian_modifiers(...)`.
+        - Propagation uses a CSC sparse representation for efficiency, and
+          the final array at index `i` is the mean across all samples for
+          that field value.
+    """
+
+    H_zee = sim.zeeman_hamiltonian(1.0, "z", theta, phi)
+
+    HHs = sim.semiclassical_HHs(num_samples)
+    shape = sim._get_rho_shape(H_zee.shape[0]**2)
+    average_rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
+
+    for i, B0 in enumerate(tqdm(B)):
+        loop_rhos = np.zeros([len(HHs), len(time), *shape], dtype=complex)
+        Hz = B0 * H_zee
+        for k, HH in enumerate(HHs):
+            Ht = Hz + HH + H_base
+            L = sim.convert(Ht)
+            sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
+            L_sparse = sp.sparse.csc_matrix(L)
+            rhos = sim.time_evolution(init_state, time, L_sparse)
+            loop_rhos[k] = rhos
+        average_rhos[i] = loop_rhos.mean(axis=0)
+
+    return average_rhos
+
+
 def mary_lfe_hfe(
     obs_state: State,
     B: np.ndarray,
@@ -587,7 +693,7 @@ def mary_lfe_hfe(
     """Calculate MARY, LFE, HFE."""
     MARY = np.sum(product_probability_seq, axis=1) * dt * k
     idx = int(len(MARY) / 2) if B[0] != 0 else 0
-    minmax = max if obs_state == State.SINGLET else min
+    minmax = min if obs_state == State.SINGLET else max
     HFE = (MARY[-1] - MARY[idx]) / (MARY[idx] + c) * 100
     LFE = (minmax(MARY) - MARY[idx]) / (MARY[idx] + c) * 100
     MARY = (MARY - MARY[idx]) / (MARY[idx] + c) * 100
@@ -667,6 +773,63 @@ def mary(
 
     dt = time[1] - time[0]
     MARY, LFE, HFE = mary_lfe_hfe(obs_state, B, product_probabilities, dt, k)
+    rhos = sim._square_liouville_rhos(rhos)
+
+    return dict(
+        time=time,
+        B=B,
+        theta=theta,
+        phi=phi,
+        rhos=rhos,
+        time_evolutions=product_probabilities,
+        product_yields=product_yields,
+        product_yield_sums=product_yield_sums,
+        MARY=MARY,
+        LFE=LFE,
+        HFE=HFE,
+    )
+
+
+def mary_semiclassical(
+    sim: SemiclassicalSimulation,
+    init_state: State,
+    obs_state: State,
+    time: np.ndarray,
+    B: np.ndarray,
+    D: float,
+    J: float,
+    kinetics: list[HilbertIncoherentProcessBase] = [],
+    relaxations: list[HilbertIncoherentProcessBase] = [],
+    theta: Optional[float] = None,
+    phi: Optional[float] = None,
+    num_samples: Optional[int] = None,
+    c: Optional[float] = None,
+) -> dict:
+    HJ = sim.exchange_hamiltonian(J)
+    HD = sim.dipolar_hamiltonian(D)
+    H = HJ + HD
+
+    rhos = magnetic_field_loop_semiclassical(
+        sim,
+        init_state,
+        time,
+        B,
+        H,
+        kinetics,
+        relaxations,
+        theta=theta,
+        phi=phi,
+        num_samples=num_samples,
+    )
+    product_probabilities = sim.product_probability(obs_state, rhos)
+
+    k = kinetics[0].rate_constant if kinetics else 1.0
+    product_yields, product_yield_sums = sim.product_yield(
+        product_probabilities, time, k
+    )
+
+    dt = time[1] - time[0]
+    MARY, LFE, HFE = mary_lfe_hfe(obs_state, B, product_probabilities, dt, k, c)
     rhos = sim._square_liouville_rhos(rhos)
 
     return dict(

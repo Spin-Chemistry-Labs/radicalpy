@@ -1067,36 +1067,67 @@ class Molecule:
         hfcs_np = np.array([h.isotropic for h in hfcs])
         return np.sqrt((4 / 3) * sum((hfcs_np**2 * spns_np) * (spns_np + 1)))
 
-    @property  ############ TODO(calc only once)
-    def semiclassical_std(self) -> float:
-        r"""The standard deviation for the semiclassical HFCs.
+    @property
+    def semiclassical_std(
+        self, *, units: str = "omega", ak_units: str = "angular"
+    ) -> float:
+        r"""
+        Standard deviation σ of the Schulten–Wolynes (SW) effective hyperfine field.
 
-        Calculate the standard deviation :math:`\sigma` where
+        Definitions (SW isotropic case):
+            τ^{-2} = (1/6) Σ_k a_k^2 I_k (I_k + 1)
+            σ = √2 / τ  ⇒  σ^2 = (1/3) Σ_k a_k^2 I_k (I_k + 1)
 
-        .. math::
-           \sigma = \sqrt{\frac{2}{\tau^2}}
+        Parameters
+        ----------
+        units : {"omega", "mT"}, default "omega"
+            - "omega": return σ_ω in angular-frequency units (same units as a_k).
+            - "mT"   : return σ_B in millitesla, i.e., σ_B = σ_ω / γ, where
+                    γ = self.radical.gamma_mT (rad s^-1 mT^-1).
+        ak_units : {"angular", "Hz"}, default "angular"
+            - "angular": each n.hfc.isotropic is already in angular frequency units (e.g., rad s^-1).
+            - "Hz"     : each n.hfc.isotropic is in cycles per second; converted internally via 2π.
 
-        and
+        Returns
+        -------
+        float
+            σ in the requested units.
 
-        .. math::
-           \tau_i^{-2} = \frac{1}{6} \sum_k a_k^2 I_k (I_k + 1)
-
-        where :math:`a_k` is the hyperfine coupling and :math:`I_k`
-        the spin quantum number of each nucleus, respectively.
-
-        Examples:
-            >>> m = Molecule.fromdb("flavin_anion", nuclei=["N14"])
-            >>> m.semiclassical_std
-            7.663920853309001e-07
-
-        .. todo::
-           reference
+        Notes
+        -----
+        - This computes the *isotropic* SW width (scalar). For anisotropic A-tensors,
+        the isotropic equivalent variance is (1/3) Tr(Σ_ω), where
+            Σ_ω = (1/3) Σ_k I_k(I_k+1) A_k A_k^T.
+        If you need full anisotropic sampling, construct Σ_ω explicitly elsewhere.
         """
-        tau = 6 / sum(
-            n.spin_quantum_number * (n.spin_quantum_number + 1) * n.hfc.isotropic**2
-            for n in self.nuclei
-        )
-        return float(np.sqrt(2) / tau)
+        s = 0.0
+
+        for n in getattr(self, "nuclei", []):
+            Ik = float(n.spin_quantum_number)
+
+            # Pull isotropic hyperfine and normalise to angular frequency if needed
+            ak = float(n.hfc.isotropic)
+            if ak_units.lower() == "Hz":
+                ak = ak * 2.0 * np.pi  # convert Hz -> rad s^-1
+
+            s += Ik * (Ik + 1.0) * (ak**2)
+
+        if s == 0.0:
+            # No nuclei or zero couplings ⇒ zero width
+            return 0.0
+
+        # σ_ω^2 = (1/3) * s
+        sigma_omega = float(np.sqrt((1.0 / 3.0) * s))
+
+        if units.lower() == "omega":
+            return sigma_omega
+        elif units.lower() == "mT":
+            gamma = float(self.radical.gamma_mT)
+            if gamma == 0.0:
+                return 0.0
+            return sigma_omega / gamma
+        else:
+            raise ValueError('units must be "omega" or "mT"')
 
 
 class Triplet(Molecule):
