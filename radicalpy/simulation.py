@@ -1205,31 +1205,44 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):
-    def semiclassical_HHs(self, num_samples: int) -> np.ndarray:
+    # Expectations:
+    #   - self.radicals: list/tuple of two spin-1/2 radicals
+    #   - self.molecules: length-2 container aligned with radicals
+    #   - self.spin_operator(ri, ax): returns D×D operator for radical ri and axis in {"x","y","z"}
+    #   - External field accessor: self.external_field_mT() -> np.ndarray shape (3,) in mT (default zeros)
+
+    def external_field_mT(self) -> np.ndarray:
+        """Lab field B0 in mT as a 3-vector. Override if you have a field in the simulation."""
+        return np.zeros(3, dtype=float)
+
+    def semiclassical_HHs(
+        self,
+        num_samples: int,
+        *,
+        anisotropic: bool = False,
+    ) -> np.ndarray:
         """
-        Generate semiclassical Hamiltonians for a radical pair system.
+        Generate semiclassical Hamiltonians.
 
-
-        Each radical experiences a random, isotropic effective field
-        sampled from a Gaussian distribution with standard deviation
-        `m.semiclassical_std`. The field direction is uniformly random
-        over the sphere, and its strength is scaled by the radical's
-        gyromagnetic ratio.
-
+        For each radical r:
+            draw a static random hyperfine field B_hf,r (3D Gaussian),
+            add the external field B0, then convert to ω_r = γ_r * (B0 + B_hf,r),
+            and construct H = Σ_r ω_r · S_r. Repeat num_samples times.
 
         Parameters
         ----------
         num_samples : int
-            Number of random Hamiltonian realizations to generate.
-
+            Number of random Hamiltonian realisations.
+        anisotropic : bool, optional
+            If True, draws from a 3D Gaussian with covariance Σ_r determined by anisotropic A tensors.
+            If False (default), uses isotropic SW width.
 
         Returns
         -------
         np.ndarray
-            Array of shape (num_samples, dim, dim) containing
-            complex-valued semiclassical Hamiltonians.
+            Array (num_samples, D, D) of complex Hamiltonians.
         """
-        # Assumptions as before: two S=1/2 radicals
+        # two S=1/2 radicals
         assert len(self.radicals) == 2
         assert self.radicals[0].multiplicity == 2
         assert self.radicals[1].multiplicity == 2
@@ -1243,30 +1256,68 @@ class SemiclassicalSimulation(LiouvilleSimulation):
                 for ri in range(R)
             ],
             axis=0,
-        ).astype(
-            complex
-        )  # (2,3,D,D)
+        ).astype(complex)
         _, _, D, _ = spinops.shape
 
-        # Per-radical hyperfine width and gyromagnetic ratio
-        stds = np.array(
-            [m.semiclassical_std for m in self.molecules], dtype=float
-        )  # (2,)
+        # Per-radical gyromagnetic ratio in rad s^-1 mT^-1
         gammas = np.array(
             [m.radical.gamma_mT for m in self.molecules], dtype=float
         )  # (2,)
 
-        # Draw 3D Gaussian components per radical: each component ~ N(0, std^2)
-        fields = np.random.normal(
-            loc=0.0,
-            scale=stds[None, :, None],  # broadcast to (N,2,3)
-            size=(num_samples, R, 3),
-        )  # (N,2,3)
+        # External field (mT), broadcast to all samples and radicals
+        B0 = np.asarray(self.external_field_mT(), dtype=float)  # (3,)
+        if B0.shape != (3,):
+            raise ValueError("external_field_mT() must return shape (3,) in mT.")
 
-        # Convert to Hamiltonian prefactors with γ (so γ*B · S)
-        comps = fields * gammas[None, :, None]  # (N,2,3)
+        # --- Draw hyperfine fields ---
+        if not anisotropic:
+            # Isotropic SW width: per-radical σ_B from σ_ω / γ
+            stds_B = np.array(
+                [m.semiclassical_std for m in self.molecules], dtype=float
+            )  # (2,)
 
-        # Contract (sum over radical and axis): comps[n,r,a] * S[r,a,:,:]
+            # Random N(0, σ_B^2) for each component; shape (N,R,3)
+            hf_fields = np.random.normal(
+                loc=0.0,
+                scale=stds_B[None, :, None],  # broadcast to (N,2,3)
+                size=(num_samples, R, 3),
+            )
+        else:
+            # --- Anisotropic version ---
+            # Build per-radical 3x3 covariance matrices Σ_B,r in mT^2:
+            #   Σ_ω,r = (1/3) Σ_k I_k(I_k+1) A_{rk} A_{rk}^T   (angular-frequency)
+            #   Σ_B,r = Σ_ω,r / γ_r^2
+            covs_B = []
+            for r, m in enumerate(self.molecules):
+                Sigma_omega = np.zeros((3, 3), dtype=float)
+                for n in m.nuclei:
+                    Ik = float(n.spin_quantum_number)
+                    # n.hfc.anisotropic assumed to be a 3x3 Cartesian hyperfine tensor in angular-frequency units.
+                    # If you only store an axial tensor, convert to full 3×3 first.
+                    A = np.asarray(n.hfc.anisotropic, dtype=float)  # shape (3,3)
+                    Sigma_omega += (Ik * (Ik + 1.0) / 3.0) * (A @ A.T)
+                gamma = gammas[r]
+                if gamma == 0.0:
+                    covs_B.append(np.zeros((3, 3), dtype=float))
+                else:
+                    covs_B.append(Sigma_omega / (gamma**2))
+            covs_B = np.stack(covs_B, axis=0)  # (2,3,3)
+
+            # Draw from multivariate normal for each radical independently
+            hf_fields = np.empty((num_samples, R, 3), dtype=float)
+            for r in range(R):
+                # Factorisation (np.linalg.cholesky requires SPD; use eigh)
+                w, V = np.linalg.eigh(covs_B[r])
+                w = np.clip(w, a_min=0.0, a_max=None)
+                L = V @ np.diag(np.sqrt(w))
+                z = np.random.normal(size=(num_samples, 3))
+                hf_fields[:, r, :] = z @ L.T
+
+        # Total field per sample/radical in mT
+        B_tot = hf_fields + B0[None, None, :]  # (N,2,3)
+
+        # Convert to angular frequency (ω = γ B) and contract with S
+        comps = B_tot * gammas[None, :, None]  # (N,2,3) in angular frequency units
         HHs = np.einsum(
             "nra,raxy->nxy", comps, spinops, optimize=True
         )  # (N,D,D), complex
@@ -1275,7 +1326,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
 
     @property
     def nuclei(self):
-        """Semiclassical model with no explicit nuclei (override returns empty list)."""
+        """Semiclassical model replaces nuclei by random static fields; return empty list."""
         return []
 
 
