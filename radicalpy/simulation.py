@@ -788,6 +788,20 @@ class HilbertSimulation:
         )
         return self.convert(H)
 
+    def coherent_hamiltonian_hilbert(
+        self, *, B0=None, theta=None, phi=None, D=None, J=None, hfc_anisotropy=False
+    ):
+        N = int(self.hamiltonian_size)
+        H = np.zeros((N, N), dtype=complex)
+        if B0 is not None:
+            H += self.zeeman_hamiltonian(B0, theta=theta, phi=phi)
+        if J is not None:
+            H += self.exchange_hamiltonian(J)
+        if D is not None:
+            H += self.dipolar_hamiltonian(D)
+        H += self.hyperfine_hamiltonian(hfc_anisotropy=hfc_anisotropy)
+        return H
+
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:

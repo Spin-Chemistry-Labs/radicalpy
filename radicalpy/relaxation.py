@@ -87,9 +87,16 @@ See also:
 """
 
 import numpy as np
+from typing import Callable, Iterable, List, Tuple
 
 from .simulation import LiouvilleIncoherentProcessBase, LiouvilleSimulation, State
 from .utils import spectral_density
+
+# Type alias for BR channels:
+# Each channel is (A, S) where
+#   A: (dim x dim) Hermitian coupling operator (same basis/units as H)
+#   S: callable spectral density S(omega: float) -> float  (rate-like)
+BRChannel = Tuple[np.ndarray, Callable[[float], float]]
 
 
 class LiouvilleRelaxationBase(LiouvilleIncoherentProcessBase):
@@ -373,3 +380,127 @@ def _g_tensor_anisotropy_term(
     )
     H *= 1 / 15 * sum([((gj - giso) / giso) ** 2 for gj in g]) * omega**2
     return H
+
+
+def br_tensor(
+    H: np.ndarray,
+    a_ops: Iterable[BRChannel],
+    *,
+    secular: bool = True,
+    secular_cutoff: float = 0.01,
+) -> np.ndarray:
+    """
+    Construct the Bloch–Redfield superoperator R in the lab basis.
+
+    Args:
+        H: Hermitian Hamiltonian (dim x dim), in rad/s.
+        a_ops: iterable of (A, S) with A the coupling operator (dim x dim)
+               and S(ω) the scalar spectral density / noise power (>= 0).
+        secular: if True, apply a simple secular selection rule.
+        secular_cutoff: relative cutoff multiplier for secular test.
+
+    Returns:
+        R_lab: (dim^2 x dim^2) complex Redfield superoperator acting on vec(rho)
+               (column-stacking convention).
+    """
+    dim = H.shape[0]
+    evals, V = np.linalg.eigh(H)  # energy basis
+    a_ops_E = []
+    for A, S in a_ops:
+        A_E = V.conj().T @ A @ V
+        a_ops_E.append((A_E, S))
+
+    # (a,b) index pairs and Bohr frequencies ω_ab
+    idx_pairs = [(a, b) for a in range(dim) for b in range(dim)]
+    bohr = np.array([evals[a] - evals[b] for a, b in idx_pairs])
+
+    # Global magnitude for secular test (very conservative)
+    if secular:
+        grid = np.unique(np.abs(bohr))
+        grid_rates = []
+        for _, S in a_ops_E:
+            if grid.size:
+                # include ±ω for robustness
+                rates = [float(S(+w)) + float(S(-w)) for w in grid]
+                grid_rates.append(max(rates) if rates else 0.0)
+        gmax = max(grid_rates) if grid_rates else 0.0
+
+    # Allocate Redfield generator in energy basis
+    R = np.zeros((dim * dim, dim * dim), dtype=complex)
+
+    # Unitary part: -i [H, ·] → -i (E_a - E_b) δ_ac δ_bd on Liouville indices
+    for j, (a, b) in enumerate(idx_pairs):
+        R[j, j] += -1j * (evals[a] - evals[b])
+
+    # Dissipative part
+    for j, (a, b) in enumerate(idx_pairs):
+        for k, (c, d) in enumerate(idx_pairs):
+            Δ = (evals[a] - evals[b]) - (evals[c] - evals[d])
+            if secular and gmax > 0.0 and abs(Δ) > gmax * secular_cutoff:
+                continue
+            total = 0.0 + 0.0j
+            for A, S in a_ops_E:
+                term = 0.0 + 0.0j
+                if b == d:
+                    for n in range(dim):
+                        term += A[a, n] * A[n, c] * S(evals[c] - evals[n])
+                term -= A[a, c] * A[d, b] * S(evals[c] - evals[a])
+                if a == c:
+                    for n in range(dim):
+                        term += A[d, n] * A[n, b] * S(evals[d] - evals[n])
+                term -= A[a, c] * A[d, b] * S(evals[d] - evals[b])
+                total += (-0.5) * term
+            R[j, k] += total
+
+    # Transform back to lab basis:
+    # vec(ρ') = (V^T ⊗ V^†) vec(ρ)
+    T = np.kron(V.T, V.conj())
+    Tinv = np.linalg.inv(T)
+    R_lab = Tinv @ R @ T
+    return R_lab
+
+
+class BlochRedfield(LiouvilleRelaxationBase):
+    """
+    Bloch–Redfield relaxation superoperator (Liouville space).
+
+    Parameters
+    ----------
+    channels : list[tuple[np.ndarray, callable]]
+        List of (A, S) pairs: coupling operator and spectral density.
+    secular : bool, default True
+        Apply simple secular selection based on a global cutoff.
+    secular_cutoff : float, default 0.01
+        Relative threshold for the secular filter.
+
+    Notes
+    -----
+    - Call `rebuild(H)` whenever the coherent Hilbert-space Hamiltonian changes.
+    - Exposes `self.subH` (Liouville superoperator) for the framework to add.
+    """
+
+    expects_hilbert = True  # opt-in flag used by experiments to pass Hilbert H
+
+    def __init__(
+        self,
+        channels: List[BRChannel],
+        *,
+        secular: bool = True,
+        secular_cutoff: float = 0.01,
+    ):
+        super().__init__(rate_constant=0.0)  # placeholder; not used directly
+        self.channels = channels
+        self.secular = secular
+        self.secular_cutoff = secular_cutoff
+        self.subH = None
+
+    def init(self, sim):
+        """Optional cache of the simulation reference."""
+        self._sim = sim
+
+    def rebuild(self, H: np.ndarray):
+        """Recompute `subH` for the given Hilbert-space H (rad/s)."""
+        self.subH = br_tensor(
+            H, self.channels, secular=self.secular, secular_cutoff=self.secular_cutoff
+        )
+        return self.subH
