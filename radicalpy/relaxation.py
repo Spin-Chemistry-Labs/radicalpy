@@ -85,6 +85,7 @@ See also:
         `radicalpy.states.State`,
         and the corresponding coherent Liouvillian construction in your codebase.
 """
+
 from typing import Callable, Iterable, List, Tuple
 
 import numpy as np
