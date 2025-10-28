@@ -82,6 +82,16 @@ class State(enum.Enum):
     TRIPLET_PLUS_MINUS = "T_\\pm"
     TRIPLET_MINUS = "T_-"
     TP_SINGLET = "TP_S"
+    TP_TRIPLET = "TP_T"
+    TP_TRIPLET_ZERO = "TP_T0"
+    TP_TRIPLET_PLUS = "TP_T+"
+    TP_TRIPLET_MINUS = "TP_T-"
+    TP_QUINTET = "TP_Q"
+    TP_QUINTET_ZERO = "TP_Q0"
+    TP_QUINTET_PLUS_TWO = "TP_Q+2"
+    TP_QUINTET_PLUS_ONE = "TP_Q+1"
+    TP_QUINTET_MINUS_TWO = "TP_Q-2"
+    TP_QUINTET_MINUS_ONE = "TP_Q-1"
 
 
 class Basis(enum.Enum):
@@ -401,6 +411,32 @@ class HilbertSimulation:
             + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
             State.EQUILIBRIUM: C.hbar / (C.k_B * T),
             State.TP_SINGLET: self.tp_singlet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.TP_TRIPLET: self.tp_triplet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.TP_TRIPLET_ZERO: self.tp_triplet_zero_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_TRIPLET_PLUS: self.tp_triplet_plus_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_TRIPLET_MINUS: self.tp_triplet_minus_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET: self.tp_quintet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.TP_QUINTET_ZERO: self.tp_quintet_zero_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_PLUS_TWO: self.tp_quintet_plus_two_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_PLUS_ONE: self.tp_quintet_plus_one_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_MINUS_TWO: self.tp_quintet_minus_two_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_MINUS_ONE: self.tp_quintet_minus_one_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
             State.EPR: -(SAy + SBy),
         }
         return result[state]
@@ -416,6 +452,141 @@ class HilbertSimulation:
         SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
         Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
         return (1 / 12) * (Ssquared - (6 * E)) @ (Ssquared - (2 * E))
+
+    def tp_triplet_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair triplet (TP-T) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        return (1 / 8) * (-Ssquared @ Ssquared + 6 * Ssquared)
+
+    def tp_triplet_zero_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair triplet zero (TP-T0) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PT = (1 / 8) * (-Ssquared @ Ssquared + 6 * Ssquared)
+        return PT @ (-Sz @ Sz + E)
+
+    def tp_triplet_plus_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair triplet plus (TP-T+) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PT = (1 / 8) * (-Ssquared @ Ssquared + 6 * Ssquared)
+        return PT @ (Sz @ (Sz + E) / 2)
+
+    def tp_triplet_minus_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair triplet minus (TP-T-) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PT = (1 / 8) * (-Ssquared @ Ssquared + 6 * Ssquared)
+        return PT @ (Sz @ (Sz - E) / 2)
+
+    def tp_quintet_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet (TP-Q) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        return (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+
+    def tp_quintet_zero_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet zero (TP-Q0) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz**2 - E) @ (Sz**2 - 4 * E) / 4
+
+    def tp_quintet_plus_two_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet plus two (TP-Q+2) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz - E) @ Sz @ (Sz + E) @ (Sz + 2 * E) / 24
+
+    def tp_quintet_plus_one_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet plus one (TP-Q+1) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz + 2 * E) @ Sz @ (Sz + E) @ (Sz - 2 * E) / -6
+
+    def tp_quintet_minus_two_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet minus two (TP-Q-2) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz + E) @ Sz @ (Sz - E) @ (Sz - 2 * E) / 24
+
+    def tp_quintet_minus_one_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet minus one (TP-Q-1) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz + 2 * E) @ Sz @ (Sz + E) @ (Sz - 2 * E) / -6
 
     def zeeman_hamiltonian(
         self,

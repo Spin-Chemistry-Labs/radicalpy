@@ -111,7 +111,20 @@ class HilbertTests(unittest.TestCase):
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
-        self.skip_states = [rp.simulation.State.TP_SINGLET, rp.simulation.State.EPR]
+        self.skip_states = [
+            rp.simulation.State.TP_SINGLET,
+            rp.simulation.State.TP_TRIPLET,
+            rp.simulation.State.TP_TRIPLET_ZERO,
+            rp.simulation.State.TP_TRIPLET_PLUS,
+            rp.simulation.State.TP_TRIPLET_MINUS,
+            rp.simulation.State.TP_QUINTET,
+            rp.simulation.State.TP_QUINTET_ZERO,
+            rp.simulation.State.TP_QUINTET_PLUS_TWO,
+            rp.simulation.State.TP_QUINTET_PLUS_ONE,
+            rp.simulation.State.TP_QUINTET_MINUS_TWO,
+            rp.simulation.State.TP_QUINTET_MINUS_ONE,
+            rp.simulation.State.EPR,
+        ]
 
     def tearDown(self):
         if MEASURE_TIME:
@@ -723,7 +736,20 @@ class LiouvilleTests(unittest.TestCase):
         self.dt = 0.01
         self.t_max = 1.0
         self.time = np.arange(0, self.t_max, self.dt)
-        self.skip_states = [rp.simulation.State.TP_SINGLET, rp.simulation.State.EPR]
+        self.skip_states = [
+            rp.simulation.State.TP_SINGLET,
+            rp.simulation.State.TP_TRIPLET,
+            rp.simulation.State.TP_TRIPLET_ZERO,
+            rp.simulation.State.TP_TRIPLET_PLUS,
+            rp.simulation.State.TP_TRIPLET_MINUS,
+            rp.simulation.State.TP_QUINTET,
+            rp.simulation.State.TP_QUINTET_ZERO,
+            rp.simulation.State.TP_QUINTET_PLUS_TWO,
+            rp.simulation.State.TP_QUINTET_PLUS_ONE,
+            rp.simulation.State.TP_QUINTET_MINUS_TWO,
+            rp.simulation.State.TP_QUINTET_MINUS_ONE,
+            rp.simulation.State.EPR,
+        ]
 
     def test_initial_density_matrix(self):
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])

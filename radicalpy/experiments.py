@@ -122,28 +122,6 @@ from .utils import (
 )
 
 
-def _auto_rebuild_relaxations(
-    sim,
-    *,
-    H_liouville: np.ndarray,
-    H_hilbert: np.ndarray | None,
-    relaxations: list,
-):
-    """
-    For any relaxation exposing `.rebuild(H)`, call it with the
-    Hamiltonian it expects (Hilbert if `expects_hilbert`, else Liouville).
-    """
-    if not relaxations:
-        return
-    for r in relaxations:
-        if hasattr(r, "rebuild"):
-            wants_hilbert = getattr(r, "expects_hilbert", False)
-            H_to_pass = (
-                H_hilbert if (wants_hilbert and H_hilbert is not None) else H_liouville
-            )
-            r.rebuild(H_to_pass)
-
-
 def anisotropy_loop(
     sim: HilbertSimulation,
     init_state: State,
@@ -263,12 +241,6 @@ def anisotropy(
         - product_yield_sums: product yield sums
     """
     H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=True)
-
-    H_h = sim.coherent_hamiltonian_hilbert(B0=0, D=D, J=J, hfc_anisotropy=True)
-    _auto_rebuild_relaxations(
-        sim, H_liouville=H, H_hilbert=H_h, relaxations=relaxations
-    )
-
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     theta, phi = anisotropy_check(theta, phi)
     product_probabilities = anisotropy_loop(
@@ -505,11 +477,6 @@ def epr(
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
     H = sim.convert(H)
 
-    H_h = sim.coherent_hamiltonian_hilbert(B0=0, D=D, J=J, hfc_anisotropy=True)
-    _auto_rebuild_relaxations(
-        sim, H_liouville=H, H_hilbert=H_h, relaxations=relaxations
-    )
-
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     rhos = magnetic_field_loop(sim, init_state, time, H, B0, B_axis=B0_axis)
     product_probabilities = sim.product_probability(obs_state, rhos)
@@ -706,10 +673,6 @@ def magnetic_field_loop_semiclassical(
             Ht = Hz + HH + H_base
             L = sim.convert(Ht)
 
-            H_h = sim.coherent_hamiltonian_hilbert(B0=0, D=D, J=J, hfc_anisotropy=True)
-            _auto_rebuild_relaxations(
-                sim, H_liouville=L, H_hilbert=H_h, relaxations=relaxations
-            )
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
             L_sparse = sp.sparse.csc_matrix(L)
             rhos = sim.time_evolution(init_state, time, L_sparse)
@@ -794,17 +757,7 @@ def mary(
         - LFE: low field effect (%)
         - HFE: high field effect (%)
     """
-    # H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
-
-    H_h = sim.coherent_hamiltonian_hilbert(
-        B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy
-    )
-
-    H = sim.convert(H_h)
-
-    _auto_rebuild_relaxations(
-        sim, H_liouville=H, H_hilbert=H_h, relaxations=relaxations
-    )
+    H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
 
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     rhos = magnetic_field_loop(
@@ -1128,11 +1081,6 @@ def odmr(
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
     H = sim.convert(H)
 
-    H_h = sim.coherent_hamiltonian_hilbert(B0=0, D=D, J=J, hfc_anisotropy=True)
-    _auto_rebuild_relaxations(
-        sim, H_liouville=H, H_hilbert=H_h, relaxations=relaxations
-    )
-
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     rhos = magnetic_field_loop(sim, init_state, time, H, -B1_freq, B_axis=B0_axis)
     product_probabilities = sim.product_probability(obs_state, rhos)
@@ -1231,11 +1179,6 @@ def omfe(
     H += sim.exchange_hamiltonian(J=J)
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
     H = sim.convert(H)
-
-    H_h = sim.coherent_hamiltonian_hilbert(B0=0, D=D, J=J, hfc_anisotropy=True)
-    _auto_rebuild_relaxations(
-        sim, H_liouville=H, H_hilbert=H_h, relaxations=relaxations
-    )
 
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     rhos = magnetic_field_loop(sim, init_state, time, H, -B1_freq, B_axis=B1_freq_axis)
@@ -1372,10 +1315,6 @@ def kine_quantum_mary(
             Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
 
-            H_h = sim.coherent_hamiltonian_hilbert(B0=0, D=D, J=J, hfc_anisotropy=True)
-            _auto_rebuild_relaxations(
-                sim, H_liouville=L, H_hilbert=H_h, relaxations=relaxations
-            )
             sim.apply_liouville_hamiltonian_modifiers(L, relaxations)
             kinetic_matrix[
                 radical_pair[0] : radical_pair[1], radical_pair[0] : radical_pair[1]
@@ -1466,11 +1405,6 @@ def rydmr(
     H += sim.exchange_hamiltonian(J=J)
     H += sim.hyperfine_hamiltonian(hfc_anisotropy)
     H = sim.convert(H)
-
-    H_h = sim.coherent_hamiltonian_hilbert(B0=0, D=D, J=J, hfc_anisotropy=True)
-    _auto_rebuild_relaxations(
-        sim, H_liouville=H, H_hilbert=H_h, relaxations=relaxations
-    )
 
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     rhos = magnetic_field_loop(sim, init_state, time, H, B0, B_axis=B0_axis)
@@ -1573,10 +1507,6 @@ def semiclassical_mary(
             Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
 
-            H_h = sim.coherent_hamiltonian_hilbert(B0=0, D=D, J=J, hfc_anisotropy=True)
-            _auto_rebuild_relaxations(
-                sim, H_liouville=L, H_hilbert=H_h, relaxations=relaxations
-            )
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
             propagator = sp.sparse.linalg.expm(L * dt)
 
