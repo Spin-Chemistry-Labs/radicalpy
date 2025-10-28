@@ -85,9 +85,9 @@ See also:
         `radicalpy.states.State`,
         and the corresponding coherent Liouvillian construction in your codebase.
 """
+from typing import Callable, Iterable, List, Tuple
 
 import numpy as np
-from typing import Callable, Iterable, List, Tuple
 
 from .simulation import LiouvilleIncoherentProcessBase, LiouvilleSimulation, State
 from .utils import spectral_density
@@ -382,7 +382,7 @@ def _g_tensor_anisotropy_term(
     return H
 
 
-def br_tensor(
+def bloch_redfield_tensor(
     H: np.ndarray,
     a_ops: Iterable[BRChannel],
     *,
@@ -500,7 +500,7 @@ class BlochRedfield(LiouvilleRelaxationBase):
 
     def rebuild(self, H: np.ndarray):
         """Recompute `subH` for the given Hilbert-space H (rad/s)."""
-        self.subH = br_tensor(
+        self.subH = bloch_redfield_tensor(
             H, self.channels, secular=self.secular, secular_cutoff=self.secular_cutoff
         )
         return self.subH
