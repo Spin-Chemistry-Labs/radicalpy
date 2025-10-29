@@ -1367,12 +1367,21 @@ class LiouvilleSimulation(HilbertSimulation):
 
 
 class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
-    def adjust_hamiltonian(self, H: np.ndarray):
-        """Subtract the prebuilt incoherent sub-Hamiltonian from ``H`` in Liouville space.
+    # def adjust_hamiltonian(self, H: np.ndarray):
+    #     """Subtract the prebuilt incoherent sub-Hamiltonian from ``H`` in Liouville space.
 
-        Expects subclasses to define ``self.subH`` with the correct shape.
-        """
-        H -= self.subH
+    #     Expects subclasses to define ``self.subH`` with the correct shape.
+    #     """
+    #     H -= self.subH
+
+    def adjust_hamiltonian(self, H: np.ndarray):
+        sub = np.asarray(self.subH, dtype=H.dtype, order="C")   # <— fix dtype/object
+        if sub.shape != H.shape:
+            raise ValueError(
+                f"Incoherent subH has shape {sub.shape} but H has shape {H.shape}."
+                " Did you build BR in Hilbert and apply in Liouville with mismatched basis?"
+            )
+        H -= sub
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):

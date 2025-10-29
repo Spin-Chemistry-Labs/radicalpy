@@ -89,16 +89,13 @@ See also:
 from typing import Callable, Iterable, List, Tuple
 
 import numpy as np
+try:
+    import scipy.sparse as sps
+except Exception:
+    sps = None
 
 from .simulation import LiouvilleIncoherentProcessBase, LiouvilleSimulation, State
 from .utils import spectral_density
-
-# Type alias for BR channels:
-# Each channel is (A, S) where
-#   A: (dim x dim) Hermitian coupling operator (same basis/units as H)
-#   S: callable spectral density S(omega: float) -> float  (rate-like)
-BRChannel = Tuple[np.ndarray, Callable[[float], float]]
-
 
 class LiouvilleRelaxationBase(LiouvilleIncoherentProcessBase):
     """Base class for relaxation superoperators (Liouville space)."""
@@ -383,125 +380,178 @@ def _g_tensor_anisotropy_term(
     return H
 
 
-def bloch_redfield_tensor(
-    H: np.ndarray,
-    a_ops: Iterable[BRChannel],
-    *,
-    secular: bool = True,
-    secular_cutoff: float = 0.01,
-) -> np.ndarray:
+def _spectral_from(S_like):
+    """Return a callable S(ω) from either a callable or a numeric τc."""
+    if callable(S_like):
+        return S_like
+    tau_c = float(S_like)
+    def S_fn(omega):
+        w = float(omega)
+        return float(tau_c / (1.0 + (w * tau_c) * (w * tau_c)))
+    return S_fn
+
+
+def br_tensor_hilbert_energy_basis(H: np.ndarray,
+                                   a_ops: list[tuple[np.ndarray, callable]],
+                                   *,
+                                   secular: bool = True,
+                                   secular_cutoff: float = 0.01) -> np.ndarray:
     """
-    Construct the Bloch–Redfield superoperator R in the lab basis.
+    Bloch–Redfield tensor constructed in the eigenbasis of the Hilbert Hamiltonian H,
+    then returned in the *lab Hilbert basis* (NOT Liouville yet).
 
     Args:
-        H: Hermitian Hamiltonian (dim x dim), in rad/s.
-        a_ops: iterable of (A, S) with A the coupling operator (dim x dim)
-               and S(ω) the scalar spectral density / noise power (>= 0).
-        secular: if True, apply a simple secular selection rule.
-        secular_cutoff: relative cutoff multiplier for secular test.
+        H: (N x N) Hermitian Hilbert-space Hamiltonian in rad/s.
+        a_ops: list of (A, S_fn) where A is (N x N) coupling operator in Hilbert space,
+               and S_fn(ω) -> float is the noise power spectrum.
+        secular: enable secular filter.
+        secular_cutoff: relative cutoff factor vs. gmax, like in your reference code.
 
     Returns:
-        R_lab: (dim^2 x dim^2) complex Redfield superoperator acting on vec(rho)
-               (column-stacking convention).
+        R_E: (N^2 x N^2) complex Bloch–Redfield superoperator in the *energy basis*.
+             NOTE: Caller should transform to lab Liouville basis afterwards if needed.
     """
-    dim = H.shape[0]
-    evals, V = np.linalg.eigh(H)  # energy basis
+    H = np.asarray(H, dtype=np.complex128)
+    N = H.shape[0]
+
+    # Eigen-decompose (Hermitian)
+    evals, V = np.linalg.eigh(H)  # V columns are eigenkets
+
+    # Ensure strict ascending order (eigh already does, but make explicit)
+    perm = np.argsort(evals.real)
+    evals = evals[perm]
+    V = V[:, perm]
+
+    # Transform couplings to energy basis
     a_ops_E = []
-    for A, S in a_ops:
+    for (A, S_like) in a_ops:
+        if sps is not None and sps.issparse(A):
+            A = A.toarray()
+        A = np.asarray(A, dtype=np.complex128)
+        S_fn = _spectral_from(S_like)
         A_E = V.conj().T @ A @ V
-        a_ops_E.append((A_E, S))
+        a_ops_E.append((A_E, S_fn))
 
-    # (a,b) index pairs and Bohr frequencies ω_ab
-    idx_pairs = [(a, b) for a in range(dim) for b in range(dim)]
-    bohr = np.array([evals[a] - evals[b] for a, b in idx_pairs])
+    # Indices and Bohr frequencies
+    idx = [(a, b) for a in range(N) for b in range(N)]
+    bohr = np.array([evals[a] - evals[b] for a in range(N) for b in range(N)], dtype=np.complex128)
+    abs_bohr = np.unique(np.abs(bohr.real))
 
-    # Global magnitude for secular test (very conservative)
-    if secular:
-        grid = np.unique(np.abs(bohr))
-        grid_rates = []
-        for _, S in a_ops_E:
-            if grid.size:
-                # include ±ω for robustness
-                rates = [float(S(+w)) + float(S(-w)) for w in grid]
-                grid_rates.append(max(rates) if rates else 0.0)
-        gmax = max(grid_rates) if grid_rates else 0.0
+    # Allocate R in energy basis (Liouville stacked space)
+    R = np.zeros((N * N, N * N), dtype=np.complex128)
 
-    # Allocate Redfield generator in energy basis
-    R = np.zeros((dim * dim, dim * dim), dtype=complex)
-
-    # Unitary part: -i [H, ·] → -i (E_a - E_b) δ_ac δ_bd on Liouville indices
-    for j, (a, b) in enumerate(idx_pairs):
+    # Unitary (commutator) part: -i (E_a - E_b) on diagonal
+    for j, (a, b) in enumerate(idx):
         R[j, j] += -1j * (evals[a] - evals[b])
 
-    # Dissipative part
-    for j, (a, b) in enumerate(idx_pairs):
-        for k, (c, d) in enumerate(idx_pairs):
-            Δ = (evals[a] - evals[b]) - (evals[c] - evals[d])
-            if secular and gmax > 0.0 and abs(Δ) > gmax * secular_cutoff:
-                continue
+    # For secular cutoff, estimate gmax per channel over sampled Bohr ω
+    # (use positive and negative ω symmetrized via max(|S(±ω)|))
+    if secular and abs_bohr.size:
+        gmax_all = 0.0
+        for _, S_fn in a_ops_E:
+            # ensure float(S) to avoid dtype=object
+            vals = [max(abs(float(S_fn(+w))), abs(float(S_fn(-w)))) for w in abs_bohr]
+            if vals:
+                gmax_all = max(gmax_all, max(vals))
+    else:
+        gmax_all = 0.0
+
+    # Dissipator (reference logic, with dtype hygiene and ω usage)
+    for j, (a, b) in enumerate(idx):
+        for k, (c, d) in enumerate(idx):
+
+            # Secular filter on Δ = (E_a - E_b) - (E_c - E_d)
+            if secular and gmax_all > 0.0:
+                Δ = (evals[a] - evals[b]) - (evals[c] - evals[d])
+                if abs(Δ.real) > gmax_all * float(secular_cutoff):
+                    continue
+
             total = 0.0 + 0.0j
-            for A, S in a_ops_E:
+            for A, S_fn in a_ops_E:
                 term = 0.0 + 0.0j
+
                 if b == d:
-                    for n in range(dim):
-                        term += A[a, n] * A[n, c] * S(evals[c] - evals[n])
-                term -= A[a, c] * A[d, b] * S(evals[c] - evals[a])
+                    s1 = 0.0 + 0.0j
+                    for n in range(N):
+                        ω = float((evals[c] - evals[n]).real)
+                        s1 += A[a, n] * A[n, c] * float(S_fn(ω))
+                    term += s1
+
+                ω_ac = float((evals[c] - evals[a]).real)
+                term -= A[a, c] * A[d, b] * float(S_fn(ω_ac))
+
                 if a == c:
-                    for n in range(dim):
-                        term += A[d, n] * A[n, b] * S(evals[d] - evals[n])
-                term -= A[a, c] * A[d, b] * S(evals[d] - evals[b])
+                    s2 = 0.0 + 0.0j
+                    for n in range(N):
+                        ω = float((evals[d] - evals[n]).real)
+                        s2 += A[d, n] * A[n, b] * float(S_fn(ω))
+                    term += s2
+
+                ω_db = float((evals[d] - evals[b]).real)
+                term -= A[a, c] * A[d, b] * float(S_fn(ω_db))
+
                 total += (-0.5) * term
+
             R[j, k] += total
 
-    # Transform back to lab basis:
-    # vec(ρ') = (V^T ⊗ V^†) vec(ρ)
-    T = np.kron(V.T, V.conj())
-    Tinv = np.linalg.inv(T)
-    R_lab = Tinv @ R @ T
-    return R_lab
+    # Return R in the *energy* basis; caller can transform to lab Liouville if needed
+    return R
 
 
-class BlochRedfield(LiouvilleRelaxationBase):
+class BlochRedfield(LiouvilleIncoherentProcessBase):
     """
-    Bloch–Redfield relaxation superoperator (Liouville space).
+    Bloch–Redfield relaxation built from the Hilbert Hamiltonian (energy basis)
+    and returned as a Liouville superoperator in the *lab basis* so the simulation
+    can subtract it from the Liouvillian.
 
-    Parameters
-    ----------
-    channels : list[tuple[np.ndarray, callable]]
-        List of (A, S) pairs: coupling operator and spectral density.
-    secular : bool, default True
-        Apply simple secular selection based on a global cutoff.
-    secular_cutoff : float, default 0.01
-        Relative threshold for the secular filter.
-
-    Notes
-    -----
-    - Call `rebuild(H)` whenever the coherent Hilbert-space Hamiltonian changes.
-    - Exposes `self.subH` (Liouville superoperator) for the framework to add.
+    channels: list[(A, S_like)], with A as Hilbert operator, and S_like either
+              callable S(ω)->float or numeric tau_c (Lorentzian).
     """
+    expects_hilbert = True
 
-    expects_hilbert = True  # opt-in flag used by experiments to pass Hilbert H
+    def __init__(self, channels, *, secular: bool = True, secular_cutoff: float = 0.01):
+        super().__init__(rate_constant=0.0)
+        self.secular = bool(secular)
+        self.secular_cutoff = float(secular_cutoff)
 
-    def __init__(
-        self,
-        channels: List[BRChannel],
-        *,
-        secular: bool = True,
-        secular_cutoff: float = 0.01,
-    ):
-        super().__init__(rate_constant=0.0)  # placeholder; not used directly
-        self.channels = channels
-        self.secular = secular
-        self.secular_cutoff = secular_cutoff
+        normd = []
+        for A, S_like in channels:
+            if sps is not None and sps.issparse(A):
+                A = A.toarray()
+            A = np.asarray(A, dtype=np.complex128)
+            normd.append((A, _spectral_from(S_like)))
+        self.channels = normd
+
         self.subH = None
+        self._V = None  # cache last basis if helpful
 
     def init(self, sim):
-        """Optional cache of the simulation reference."""
         self._sim = sim
 
     def rebuild(self, H: np.ndarray):
-        """Recompute `subH` for the given Hilbert-space H (rad/s)."""
-        self.subH = bloch_redfield_tensor(
+        """
+        Build R in the energy basis of H, then transform to the lab Liouville basis.
+
+        Returns:
+            self.subH: (N^2 x N^2) complex128 Liouville superoperator in current lab basis.
+        """
+        H = np.asarray(H, dtype=np.complex128)
+        N = H.shape[0]
+
+        # Build R in the energy basis (Hilbert eigenbasis)
+        R_E = br_tensor_hilbert_energy_basis(
             H, self.channels, secular=self.secular, secular_cutoff=self.secular_cutoff
-        )
+        ).astype(np.complex128, copy=False)
+
+        # Compute the eigenbasis (again) for the explicit similarity transform
+        evals, V = np.linalg.eigh(H)
+        perm = np.argsort(evals.real)
+        V = V[:, perm]
+
+        # Liouville similarity to return to lab basis: vec convention vec(O ρ) = (I⊗O^T) vec(ρ)
+        # For a change-of-basis ρ_lab = V ρ_E V^†, the Liouville transform is T = kron(V.T, V.conj()).
+        T = np.kron(V.T, V.conj()).astype(np.complex128, copy=False)
+        Tinv = np.linalg.inv(T)
+
+        self.subH = (Tinv @ R_E @ T).astype(np.complex128, copy=False)
         return self.subH
