@@ -539,7 +539,7 @@ class BlochRedfield(LiouvilleIncoherentProcessBase):
         N = H.shape[0]
 
         # Build R in the energy basis (Hilbert eigenbasis)
-        R_E = br_tensor_hilbert_energy_basis(
+        R_E = -br_tensor_hilbert_energy_basis(
             H, self.channels, secular=self.secular, secular_cutoff=self.secular_cutoff
         ).astype(np.complex128, copy=False)
 

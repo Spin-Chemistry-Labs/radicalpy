@@ -917,6 +917,69 @@ class HilbertSimulation:
             result += Dmod * (Sz @ Sz - (1 / 3) * Ssquared)
             result += Emod * ((Sx @ Sx) - (Sy @ Sy))
         return result
+    
+    def linblad_hamiltonian(self, H: np.ndarray, Ls=[]):
+        """
+        Assemble the Liouville-space generator for coherent + Lindblad dynamics.
+
+        This builds the superoperator
+        :math:`\\mathcal{L} = -i\\,[H,\\cdot] + \\sum_k \\mathcal{D}[L_k]`
+        using the column–stacking (vec) convention. The coherent part is
+        implemented as
+
+        .. math::
+            -i[H,\\rho] \\;\\mapsto\\; -i\\,(I\\otimes H - H^{\\mathsf{T}}\\otimes I),
+
+        and each dissipator is
+
+        .. math::
+            \\mathcal{D}[L](\\rho)
+            = L\\,\\rho\\,L^{\\dagger}
+            - \\tfrac{1}{2}\\{L^{\\dagger}L,\\rho\\}
+            \\;\\mapsto\\;
+            L^{\\ast}\\otimes L
+            - \\tfrac{1}{2}\\Big( I\\otimes L^{\\dagger}L
+                            + (L^{\\mathsf{T}}L^{\\ast})\\otimes I \\Big).
+
+        Parameters
+        ----------
+        H : ndarray of shape (N, N), complex or float
+            Hilbert-space Hamiltonian. For Hermitian problems, a complex dtype
+            (e.g. ``np.complex128``) is recommended.
+        Ls : Sequence[ndarray], optional
+            Iterable of collapse operators ``L_k`` (each ``N×N``) defining the
+            Lindblad dissipators. If you have physical rates ``γ_k``, scale your
+            operators as ``L_k ← √γ_k · C_k`` before passing them.
+
+        Returns
+        -------
+        superop : ndarray of shape (N*N, N*N), complex
+            The full Liouville-space generator :math:`\\mathcal{L}` suitable for
+            acting on ``vec(ρ)`` with the column-stacking convention.
+
+        Notes
+        -----
+        - The mapping uses ``vec(O ρ) = (I ⊗ O^{\\mathsf{T}}) vec(ρ)`` and
+        ``vec(ρ O) = (O^{\\mathsf{T}} ⊗ I) vec(ρ)``.
+        - ``H`` enters only through the coherent commutator; the dissipator depends
+        solely on ``Ls``.
+        - All arrays are combined with NumPy ``kron``; performance-critical paths
+        may prefer sparse representations.
+        """
+        dim = len(H)
+        Hsuper = -1j * (np.kron(np.eye(dim), H) - np.kron(H.T, np.eye(dim)))  # Hamiltonian
+        Lsuper = sum(
+            [
+                np.kron(L.conjugate(), L)
+                - 0.5
+                * (
+                    np.kron(np.eye(dim), L.conjugate().T.dot(L))
+                    + np.kron(L.T.dot(L.conjugate()), np.eye(dim))
+                )
+                for L in Ls
+            ]
+        )  # Lindblad
+        return Hsuper + Lsuper
 
     def total_hamiltonian(
         self,
@@ -1193,7 +1256,7 @@ class HilbertSimulation:
         Simply forwards to :meth:`projection_operator` in Hilbert space.
         """
         return self.projection_operator(state)
-
+    
 
 class LiouvilleSimulation(HilbertSimulation):
     @staticmethod
@@ -1367,21 +1430,21 @@ class LiouvilleSimulation(HilbertSimulation):
 
 
 class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
-    # def adjust_hamiltonian(self, H: np.ndarray):
-    #     """Subtract the prebuilt incoherent sub-Hamiltonian from ``H`` in Liouville space.
-
-    #     Expects subclasses to define ``self.subH`` with the correct shape.
-    #     """
-    #     H -= self.subH
-
     def adjust_hamiltonian(self, H: np.ndarray):
-        sub = np.asarray(self.subH, dtype=H.dtype, order="C")   # <— fix dtype/object
-        if sub.shape != H.shape:
-            raise ValueError(
-                f"Incoherent subH has shape {sub.shape} but H has shape {H.shape}."
-                " Did you build BR in Hilbert and apply in Liouville with mismatched basis?"
-            )
-        H -= sub
+        """Subtract the prebuilt incoherent sub-Hamiltonian from ``H`` in Liouville space.
+
+        Expects subclasses to define ``self.subH`` with the correct shape.
+        """
+        H -= self.subH
+
+    # def adjust_hamiltonian(self, H: np.ndarray):
+    #     sub = np.asarray(self.subH, dtype=H.dtype, order="C")   # <— fix dtype/object
+    #     if sub.shape != H.shape:
+    #         raise ValueError(
+    #             f"Incoherent subH has shape {sub.shape} but H has shape {H.shape}."
+    #             " Did you build BR in Hilbert and apply in Liouville with mismatched basis?"
+    #         )
+    #     H -= sub
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):

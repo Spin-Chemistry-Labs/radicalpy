@@ -617,6 +617,73 @@ def define_xyz(x1, x2, z1, z2, z3, z4):
     return x, y, z
 
 
+def eigensorter(H, threshold=1e-12):
+    """
+    Diagonalise a square matrix and return eigenvalues in ascending order
+    together with the corresponding (row-stacked) eigenvectors.
+
+    This helper wraps :func:`numpy.linalg.eig`, sorts the eigenpairs by
+    ascending eigenvalue, and returns the eigenvectors **transposed** so that
+    each eigenvector appears as a row in the returned array. A simple
+    correctness check is performed by evaluating the residual norm
+    ``|| λ_k - v_k† H v_k ||`` over all eigenpairs. If this residual exceeds
+    ``threshold``, the function prints the error size and returns the scalar
+    error instead of the eigenpairs.
+
+    Parameters
+    ----------
+    H : ndarray of shape (N, N), complex or float
+        Matrix to diagonalise. For Hermitian inputs consider using
+        :func:`numpy.linalg.eigh` elsewhere for improved numerical stability,
+        but this routine intentionally uses ``eig`` to support non-Hermitian
+        cases.
+    threshold : float, optional
+        Maximum allowed residual norm before reporting failure. Default is
+        ``1e-12``.
+
+    Returns
+    -------
+    evals : ndarray of shape (N,)
+        Eigenvalues sorted in ascending order.
+    evecs : ndarray of shape (N, N)
+        Row-stacked eigenvectors corresponding to ``evals``. Each row ``k``
+        is the eigenvector ``v_k`` satisfying (approximately)
+        ``H @ v_k = evals[k] * v_k``.
+    error : float
+        If the residual norm exceeds ``threshold``, the function returns this
+        scalar error value instead of ``(evals, evecs)``.
+
+    Notes
+    -----
+    - Sorting is performed on the (possibly complex) eigenvalues using
+      :func:`numpy.argsort`, which orders by real part then imaginary part.
+    - The residual check computes
+      ``error = || [ λ_k − v_k† H v_k ]_k ||_2`` as a single aggregate
+      measure over all eigenpairs.
+    - For Hermitian ``H``, eigenvectors are expected to be orthonormal up to
+      numerical precision; for general ``H`` they need not be.
+    """
+    # calculate eigenvalues and eigenvectors
+    evals, evecs = np.linalg.eig(H)
+    # get the list of sorted indices from the eigenvalues
+    ids = np.argsort(evals)
+    # sort the eigenvalues
+    evals = evals[ids]
+    # sort the eigenvectors
+    evecs = evecs[:, ids]
+    # transpose the vectors (row-stack)
+    evecs = evecs.T
+    # test the result
+    error = np.linalg.norm(
+        [evals[k] - vec.conj().T @ H @ vec for k, vec in enumerate(evecs)]
+    )
+    if error > threshold:
+        print("Error size: ", error)
+        return error
+    else:
+        return evals, evecs
+
+
 def enumerate_spin_states_from_base(base: int) -> np.ndarray:
     """
     Return all spin-state patterns for a mixed-radix 'base' (e.g. [2,2,3,...]).

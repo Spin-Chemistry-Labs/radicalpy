@@ -530,6 +530,62 @@ def plot_molecule(
     set_equal_aspect(ax, X, Y, Z)
 
 
+def plot_sphere(ax, radius=1, color="black", alpha=0.05):
+    """
+    Plot a wire-framed, lightly shaded sphere on a Matplotlib 3D axis.
+
+    The surface is rendered via ``Axes3D.plot_surface`` using a spherical
+    parameterisation, and three faint coordinate axes (x, y, z) are
+    overlaid through the sphere’s center for orientation. A thin great-circle
+    outline is also drawn.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes._subplots.Axes3DSubplot or mpl_toolkits.mplot3d.Axes3D
+        A 3D Matplotlib axes object on which to draw.
+    radius : float, optional
+        Sphere radius. Default is ``1``.
+    color : str or tuple, optional
+        Base color for the sphere surface and outlines. Default is ``'black'``.
+    alpha : float, optional
+        Surface transparency in ``[0, 1]``. Default is ``0.05``.
+
+    Returns
+    -------
+    None
+        The function draws on ``ax`` in place and returns ``None``.
+
+    Notes
+    -----
+    - The sphere surface uses a ``50×50`` grid in spherical coordinates.
+    - Three coordinate axes are drawn with light red/green/blue lines along
+      the x/y/z directions, respectively.
+    - This helper assumes ``ax`` has 3D projection. Create one with:
+      ``fig.add_subplot(111, projection='3d')``.
+    """
+    # draw sphere
+    u, v = np.mgrid[0 : 2 * np.pi : 50j, 0 : np.pi : 50j]
+    x = radius * np.cos(u) * np.sin(v)
+    y = radius * np.sin(u) * np.sin(v)
+    z = radius * np.cos(v)
+    ax.plot_surface(x, y, z, color=color, alpha=alpha)
+
+    # great circle (equator)
+    u = np.linspace(0, 2 * np.pi, 100)
+    x = radius * np.cos(u) * np.sin(-np.pi / 2)
+    y = radius * np.sin(u) * np.sin(-np.pi / 2)
+    z = radius * np.cos(-np.pi / 2 * np.ones(len(u)))
+    ax.plot(x, y, z, lw=1, color=color, alpha=0.2)
+    ax.plot(z, y, x, lw=1, color=color, alpha=0.2)
+
+    # coordinate axes through the center
+    R, N, N = np.linspace(-radius, radius, 100), np.zeros(100), np.zeros(100)
+    ax.plot(R, N, N, lw=1, c="r", alpha=0.2)  # x-axis
+    ax.plot(N, R, N, lw=1, c="g", alpha=0.2)  # y-axis
+    ax.plot(N, N, R, lw=1, c="b", alpha=0.2)  # z-axis
+    return
+
+
 def set_equal_aspect(ax, X, Y, Z):
     """Equalise 3D aspect by data range.
 
