@@ -1057,6 +1057,41 @@ def pdb_label(atom, scheme="chain_res_atom"):
         return f"{left}:{name}" if left else (name or symbol)
 
 
+def purity(rho):
+    """
+    Compute the purity of a quantum state.
+
+    The purity is defined as
+
+    .. math::
+        P(\rho) = \mathrm{Tr}(\rho^2),
+
+    where :math:`\rho` is a density matrix. It measures the mixedness of
+    a quantum state: pure states satisfy :math:`P = 1`, while maximally
+    mixed states have :math:`P = 1/d`, where :math:`d` is the Hilbert-space
+    dimension.
+
+    Parameters
+    ----------
+    rho : ndarray of shape (N, N)
+        Density matrix of the quantum state. It should be Hermitian and
+        normalised (``Tr(rho) = 1``), although the function does not
+        explicitly enforce these conditions.
+
+    Returns
+    -------
+    float
+        The purity :math:`P(\rho)`, computed as ``Re(Tr(rho @ rho))``.
+
+    Notes
+    -----
+    - The result is real for any Hermitian ``rho``; the real part is
+      taken to suppress small imaginary numerical noise.
+    - Purity values range from ``1/d`` (maximally mixed) to ``1`` (pure).
+    """
+    return np.real(np.trace(rho @ rho))
+
+
 def read_orca_hyperfine(
     path: Path | str, version: int = 6
 ) -> tuple[list[int], list[str], list[np.ndarray]]:
@@ -1736,6 +1771,43 @@ def s_t0_omega(
     omega_plus = base_omega + 0.5 * hfc_star + onuc_all
     omega_minus = base_omega - 0.5 * hfc_star + onuc_all
     return omega_plus, omega_minus
+
+
+def von_neumann_entropy(rho):
+    """
+    Compute the von Neumann entropy of a quantum state.
+
+    The von Neumann entropy is defined as
+    :math:`S(\\rho) = -\\mathrm{Tr}\\,(\\rho\\,\\log \\rho)`,
+    which, in the eigenbasis of :math:`\\rho`, reduces to
+    :math:`S = -\\sum_i \\lambda_i \\log \\lambda_i`,
+    where :math:`\\{\\lambda_i\\}` are the eigenvalues of :math:`\\rho`.
+    This implementation uses the natural logarithm, so the entropy is
+    returned in **nats**.
+
+    Parameters
+    ----------
+    rho : ndarray of shape (N, N)
+        Density matrix. For physical states, ``rho`` should be Hermitian,
+        positive semidefinite, and trace-normalised (``Tr(rho)=1``), though
+        the function does not explicitly enforce these constraints.
+
+    Returns
+    -------
+    float
+        The von Neumann entropy :math:`S(\\rho)` in nats.
+
+    Notes
+    -----
+    - Eigenvalues that are numerically non-positive are **ignored** in the
+      sum to avoid evaluating ``log(0)``.
+    - To obtain entropy in **bits**, divide the returned value by ``np.log(2)``.
+    """
+    evals, evecs = np.linalg.eig(rho)
+    ids = evals.argsort()
+    evals = evals[ids]
+    evecs = evecs[:, ids]
+    return -np.real(np.sum([val * np.log(val) for val in evals if val > 0]))
 
 
 def write_pdb(mol, path):

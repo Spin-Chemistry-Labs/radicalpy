@@ -767,17 +767,17 @@ def mary(
             basis=getattr(sim, "basis", Basis.ST),
         )
         H_h = simH.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
-        for K in (kinetics + relaxations):
+        for K in kinetics + relaxations:
             if hasattr(K, "rebuild"):
                 K.rebuild(H_h)
     except Exception as e:
         # It’s better not to swallow silently; raise if BR is present and needs Hilbert H
-        for K in (kinetics + relaxations):
+        for K in kinetics + relaxations:
             if getattr(K, "expects_hilbert", False):
                 raise
 
     # optional hard guard (helps catch wiring issues early)
-    for K in (kinetics + relaxations):
+    for K in kinetics + relaxations:
         if getattr(K, "expects_hilbert", False) and getattr(K, "subH", None) is None:
             raise RuntimeError(
                 f"{K.__class__.__name__} requires rebuild(H) from Hilbert H but subH is None."
@@ -829,6 +829,67 @@ def mary_semiclassical(
     num_samples: Optional[int] = None,
     c: Optional[float] = None,
 ) -> dict:
+    """
+    Compute a MARY (Magnetically Affected Reaction Yield) curve using the
+    semiclassical simulation pipeline.
+
+    This routine constructs a field-independent base Hamiltonian
+    :math:`H = H_J + H_D` from the exchange and dipolar interactions, then
+    performs a semiclassical magnetic-field sweep, evolving the state from
+    ``init_state`` over the time grid for each field value in ``B``. Product
+    probabilities are converted to integrated yields and post-processed into
+    the standard MARY, low-field effect (LFE), and high-field effect (HFE)
+    metrics.
+
+    Parameters
+    ----------
+    sim : SemiclassicalSimulation
+        Semiclassical simulator providing Hamiltonian terms and evolution
+        back-ends (including stochastic sampling where applicable).
+    init_state : State
+        Initial state for time evolution (e.g., ``State.SINGLET``).
+    obs_state : State
+        Observable (product) state whose probability/yield is reported.
+    time : ndarray, shape (T,)
+        Monotonic time grid for propagation (units consistent with Hamiltonians).
+    B : ndarray, shape (NB,)
+        Magnetic-field grid for the sweep (scalar magnitude in the chosen axis).
+    D : float
+        Dipolar interaction strength used to build ``H_D``.
+    J : float
+        Exchange interaction strength used to build ``H_J``.
+    kinetics : list[HilbertIncoherentProcessBase], optional
+        Kinetic processes to apply during evolution (e.g., Haberkorn).
+    relaxations : list[HilbertIncoherentProcessBase], optional
+        Relaxation processes to apply during evolution (semiclassical variants).
+    theta : float, optional
+        Polar angle (radians) of the magnetic-field axis relative to the lab frame.
+        If ``None``, the simulator default is used.
+    phi : float, optional
+        Azimuthal angle (radians) of the magnetic-field axis.
+        If ``None``, the simulator default is used.
+    num_samples : int, optional
+        Number of stochastic samples/trajectories for the semiclassical averaging.
+        If ``None``, the simulator default is used.
+    c : float, optional
+        Normalisation/contrast parameter forwarded to ``mary_lfe_hfe`` for
+        MARY post-processing.
+
+    Returns
+    -------
+    dict
+        A results dictionary with keys:
+        - ``time`` : ndarray, the input time grid.
+        - ``B`` : ndarray, the field grid.
+        - ``theta`` / ``phi`` : angles used for the sweep.
+        - ``rhos`` : list/ndarray of density matrices (reshaped to square form).
+        - ``time_evolutions`` : ndarray, product probabilities vs. ``time`` and ``B``.
+        - ``product_yields`` : ndarray, integrated yields vs. ``B``.
+        - ``product_yield_sums`` : float or ndarray, sum.
+        - ``MARY`` : ndarray, normalised magnetoresponse vs. ``B``.
+        - ``LFE`` : float, low-field effect (%).
+        - ``HFE`` : float, high-field effect (%).
+    """
     HJ = sim.exchange_hamiltonian(J)
     HD = sim.dipolar_hamiltonian(D)
     H = HJ + HD
