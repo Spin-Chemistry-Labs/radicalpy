@@ -27,6 +27,10 @@ pip install radicalpy
 
 If you used this software in your work, please cite [our paper](https://pubs.acs.org/doi/full/10.1021/acs.jctc.4c00887) (see this [bib file](CITATION.bib)).
 
+## Reporting issues
+
+If you find errors, bugs, omissions in the code or the documentation, or if you'd like to request a feature, or just have feedback on how we could improve things, please don't hesitate to contact us by creating an [issue](https://github.com/Spin-Chemistry-Labs/radicalpy/issues) (pull requests are also welcome).
+
 # IMPORTANT NOTICE 2025-07-17
 
 MANUAL INTERVENTION REQUIRED. We had some large files in the GitHub history, and to delete them, we needed to do a `git push --force`. As a consequence, if you've cloned the repo, and try `git pull`, you'll get an error about divergent branches (or something similar). What you need to do is:
