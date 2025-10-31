@@ -760,29 +760,6 @@ def mary(
     """
     H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
 
-    try:
-        simH = HilbertSimulation(
-            sim.molecules,
-            custom_gfactors=getattr(sim, "custom_gfactors", False),
-            basis=getattr(sim, "basis", Basis.ST),
-        )
-        H_h = simH.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
-        for K in kinetics + relaxations:
-            if hasattr(K, "rebuild"):
-                K.rebuild(H_h)
-    except Exception as e:
-        # It’s better not to swallow silently; raise if BR is present and needs Hilbert H
-        for K in kinetics + relaxations:
-            if getattr(K, "expects_hilbert", False):
-                raise
-
-    # optional hard guard (helps catch wiring issues early)
-    for K in kinetics + relaxations:
-        if getattr(K, "expects_hilbert", False) and getattr(K, "subH", None) is None:
-            raise RuntimeError(
-                f"{K.__class__.__name__} requires rebuild(H) from Hilbert H but subH is None."
-            )
-
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     rhos = magnetic_field_loop(
         sim, init_state, time, H, B, B_axis="z", theta=theta, phi=phi
