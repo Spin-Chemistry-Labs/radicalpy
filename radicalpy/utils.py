@@ -883,6 +883,105 @@ def mT_to_angular_frequency(mT: float) -> float:
     return mT * (C.mu_B / C.hbar * C.g_e / 1e9)
 
 
+def negativity(
+    rho: np.ndarray, dims, subsys, method: str = "tracenorm", logarithmic: bool = False
+) -> float:
+    """
+    Compute the (logarithmic) negativity of a multipartite density matrix.
+
+    This is a RadicalPy-compatible reimplementation of QuTiP's `negativity`,
+    using plain NumPy arrays. The partial transpose is taken over the
+    subsystem(s) specified by `subsys`.
+
+    Parameters
+    ----------
+    rho : ndarray of shape (N, N)
+        Density matrix in the computational (lab) basis. Must be square with N = prod(dims).
+    dims : Sequence[int]
+        Local Hilbert-space dimensions for each subsystem, e.g. [2, 2] for two qubits,
+        or [2, 3, 2] for a 2×3×2 system. The product must equal N.
+    subsys : int or Sequence[int]
+        Index or indices of the subsystem(s) on which to perform the partial transpose.
+        For example, `subsys=0` on a bipartite [d0, d1] system transposes the first subsystem.
+    method : {"tracenorm", "eigenvalues"}, optional
+        • "tracenorm" (default): use ||ρ^{T_A}||_1 via SVD (stable).
+        • "eigenvalues": sum of negative eigenvalues of ρ^{T_A}.
+    logarithmic : bool, optional
+        If True, return the logarithmic negativity log2(2*N + 1). Otherwise return N.
+
+    Returns
+    -------
+    float
+        Negativity (or logarithmic negativity if `logarithmic=True`).
+
+    Notes
+    -----
+    - Partial transpose is implemented by reshaping ρ to a 2k-index tensor
+      with shape (d0,...,dk-1, d0,...,dk-1), swapping row/col indices for the
+      chosen subsystem(s), then reshaping back to (N, N).
+    - For Hermitian ρ, ρ^{T_A} is Hermitian but can be indefinite; negativity
+      measures the sum of absolute values of its negative eigenvalues.
+    """
+    rho = np.asarray(rho, dtype=np.complex128)
+    if rho.ndim != 2 or rho.shape[0] != rho.shape[1]:
+        raise ValueError(f"rho must be square; got shape {rho.shape}.")
+
+    dims = list(map(int, dims))
+    N = np.prod(dims, dtype=int)
+    if rho.shape != (N, N):
+        raise ValueError(
+            f"rho shape {rho.shape} incompatible with dims {dims} (N={N})."
+        )
+
+    # Normalise subsys into a sorted unique list of indices
+    if isinstance(subsys, (int, np.integer)):
+        subs = [int(subsys)]
+    else:
+        subs = sorted(set(int(i) for i in subsys))
+    if any(i < 0 or i >= len(dims) for i in subs):
+        raise ValueError(
+            f"subsys indices {subs} out of range for dims of length {len(dims)}."
+        )
+
+    # --- Partial transpose over chosen subsystems ---
+    # Reshape to (d0,...,dk-1, d0,...,dk-1):
+    k = len(dims)
+    rho_t = rho.reshape(*dims, *dims)  # row indices, then column indices
+
+    # For each subsystem i to transpose: swap axis i (row) with axis k+i (col)
+    # Do it in ascending order of i; axis indices change as we go, so recompute each time.
+    for i in subs:
+        # Bring current view to 2k axes and swap i with (k+i)
+        rho_t = np.swapaxes(rho_t, i, k + i)
+
+    # Back to (N, N)
+    rho_pt = rho_t.reshape(N, N)
+
+    # --- Negativity by chosen method ---
+    if method == "tracenorm":
+        # ||ρ^{T_A}||_1 = sum singular values; negativity = (||·||_1 - 1)/2
+        svals = np.linalg.svd(rho_pt, compute_uv=False)
+        Nval = 0.5 * (float(np.sum(svals)).real - 1.0)
+    elif method == "eigenvalues":
+        # Sum of |λ| - λ over eigenvalues (equivalent to twice the sum of negatives), /2
+        evals = np.linalg.eigvalsh(
+            (rho_pt + rho_pt.conj().T) / 2.0
+        )  # enforce Hermitian numerically
+        Nval = 0.5 * float(np.sum(np.abs(evals) - evals).real)
+    else:
+        raise ValueError(
+            f"Unknown method '{method}'; choose 'tracenorm' or 'eigenvalues'."
+        )
+
+    # Logarithmic negativity if requested
+    if logarithmic:
+        # Guard against tiny negative round-off
+        Npos = max(0.0, Nval)
+        return float(np.log2(2.0 * Npos + 1.0))
+    else:
+        return float(max(0.0, Nval))  # clip tiny negatives from numeric noise
+
+
 def nmr_chemical_shift_imaginary_modulation(
     freq_hz: np.ndarray, t: np.ndarray
 ) -> np.ndarray:
