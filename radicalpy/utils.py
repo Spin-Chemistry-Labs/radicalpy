@@ -617,6 +617,73 @@ def define_xyz(x1, x2, z1, z2, z3, z4):
     return x, y, z
 
 
+def eigensorter(H, threshold=1e-12):
+    """
+    Diagonalise a square matrix and return eigenvalues in ascending order
+    together with the corresponding (row-stacked) eigenvectors.
+
+    This helper wraps :func:`numpy.linalg.eig`, sorts the eigenpairs by
+    ascending eigenvalue, and returns the eigenvectors **transposed** so that
+    each eigenvector appears as a row in the returned array. A simple
+    correctness check is performed by evaluating the residual norm
+    ``|| λ_k - v_k† H v_k ||`` over all eigenpairs. If this residual exceeds
+    ``threshold``, the function prints the error size and returns the scalar
+    error instead of the eigenpairs.
+
+    Parameters
+    ----------
+    H : ndarray of shape (N, N), complex or float
+        Matrix to diagonalise. For Hermitian inputs consider using
+        :func:`numpy.linalg.eigh` elsewhere for improved numerical stability,
+        but this routine intentionally uses ``eig`` to support non-Hermitian
+        cases.
+    threshold : float, optional
+        Maximum allowed residual norm before reporting failure. Default is
+        ``1e-12``.
+
+    Returns
+    -------
+    evals : ndarray of shape (N,)
+        Eigenvalues sorted in ascending order.
+    evecs : ndarray of shape (N, N)
+        Row-stacked eigenvectors corresponding to ``evals``. Each row ``k``
+        is the eigenvector ``v_k`` satisfying (approximately)
+        ``H @ v_k = evals[k] * v_k``.
+    error : float
+        If the residual norm exceeds ``threshold``, the function returns this
+        scalar error value instead of ``(evals, evecs)``.
+
+    Notes
+    -----
+    - Sorting is performed on the (possibly complex) eigenvalues using
+      :func:`numpy.argsort`, which orders by real part then imaginary part.
+    - The residual check computes
+      ``error = || [ λ_k − v_k† H v_k ]_k ||_2`` as a single aggregate
+      measure over all eigenpairs.
+    - For Hermitian ``H``, eigenvectors are expected to be orthonormal up to
+      numerical precision; for general ``H`` they need not be.
+    """
+    # calculate eigenvalues and eigenvectors
+    evals, evecs = np.linalg.eig(H)
+    # get the list of sorted indices from the eigenvalues
+    ids = np.argsort(evals)
+    # sort the eigenvalues
+    evals = evals[ids]
+    # sort the eigenvectors
+    evecs = evecs[:, ids]
+    # transpose the vectors (row-stack)
+    evecs = evecs.T
+    # test the result
+    error = np.linalg.norm(
+        [evals[k] - vec.conj().T @ H @ vec for k, vec in enumerate(evecs)]
+    )
+    if error > threshold:
+        print("Error size: ", error)
+        return error
+    else:
+        return evals, evecs
+
+
 def enumerate_spin_states_from_base(base: int) -> np.ndarray:
     """
     Return all spin-state patterns for a mixed-radix 'base' (e.g. [2,2,3,...]).
@@ -816,6 +883,105 @@ def mT_to_angular_frequency(mT: float) -> float:
     return mT * (C.mu_B / C.hbar * C.g_e / 1e9)
 
 
+def negativity(
+    rho: np.ndarray, dims, subsys, method: str = "tracenorm", logarithmic: bool = False
+) -> float:
+    """
+    Compute the (logarithmic) negativity of a multipartite density matrix.
+
+    This is a RadicalPy-compatible reimplementation of QuTiP's `negativity`,
+    using plain NumPy arrays. The partial transpose is taken over the
+    subsystem(s) specified by `subsys`.
+
+    Parameters
+    ----------
+    rho : ndarray of shape (N, N)
+        Density matrix in the computational (lab) basis. Must be square with N = prod(dims).
+    dims : Sequence[int]
+        Local Hilbert-space dimensions for each subsystem, e.g. [2, 2] for two qubits,
+        or [2, 3, 2] for a 2×3×2 system. The product must equal N.
+    subsys : int or Sequence[int]
+        Index or indices of the subsystem(s) on which to perform the partial transpose.
+        For example, `subsys=0` on a bipartite [d0, d1] system transposes the first subsystem.
+    method : {"tracenorm", "eigenvalues"}, optional
+        • "tracenorm" (default): use ||ρ^{T_A}||_1 via SVD (stable).
+        • "eigenvalues": sum of negative eigenvalues of ρ^{T_A}.
+    logarithmic : bool, optional
+        If True, return the logarithmic negativity log2(2*N + 1). Otherwise return N.
+
+    Returns
+    -------
+    float
+        Negativity (or logarithmic negativity if `logarithmic=True`).
+
+    Notes
+    -----
+    - Partial transpose is implemented by reshaping ρ to a 2k-index tensor
+      with shape (d0,...,dk-1, d0,...,dk-1), swapping row/col indices for the
+      chosen subsystem(s), then reshaping back to (N, N).
+    - For Hermitian ρ, ρ^{T_A} is Hermitian but can be indefinite; negativity
+      measures the sum of absolute values of its negative eigenvalues.
+    """
+    rho = np.asarray(rho, dtype=np.complex128)
+    if rho.ndim != 2 or rho.shape[0] != rho.shape[1]:
+        raise ValueError(f"rho must be square; got shape {rho.shape}.")
+
+    dims = list(map(int, dims))
+    N = np.prod(dims, dtype=int)
+    if rho.shape != (N, N):
+        raise ValueError(
+            f"rho shape {rho.shape} incompatible with dims {dims} (N={N})."
+        )
+
+    # Normalise subsys into a sorted unique list of indices
+    if isinstance(subsys, (int, np.integer)):
+        subs = [int(subsys)]
+    else:
+        subs = sorted(set(int(i) for i in subsys))
+    if any(i < 0 or i >= len(dims) for i in subs):
+        raise ValueError(
+            f"subsys indices {subs} out of range for dims of length {len(dims)}."
+        )
+
+    # --- Partial transpose over chosen subsystems ---
+    # Reshape to (d0,...,dk-1, d0,...,dk-1):
+    k = len(dims)
+    rho_t = rho.reshape(*dims, *dims)  # row indices, then column indices
+
+    # For each subsystem i to transpose: swap axis i (row) with axis k+i (col)
+    # Do it in ascending order of i; axis indices change as we go, so recompute each time.
+    for i in subs:
+        # Bring current view to 2k axes and swap i with (k+i)
+        rho_t = np.swapaxes(rho_t, i, k + i)
+
+    # Back to (N, N)
+    rho_pt = rho_t.reshape(N, N)
+
+    # --- Negativity by chosen method ---
+    if method == "tracenorm":
+        # ||ρ^{T_A}||_1 = sum singular values; negativity = (||·||_1 - 1)/2
+        svals = np.linalg.svd(rho_pt, compute_uv=False)
+        Nval = 0.5 * (float(np.sum(svals)).real - 1.0)
+    elif method == "eigenvalues":
+        # Sum of |λ| - λ over eigenvalues (equivalent to twice the sum of negatives), /2
+        evals = np.linalg.eigvalsh(
+            (rho_pt + rho_pt.conj().T) / 2.0
+        )  # enforce Hermitian numerically
+        Nval = 0.5 * float(np.sum(np.abs(evals) - evals).real)
+    else:
+        raise ValueError(
+            f"Unknown method '{method}'; choose 'tracenorm' or 'eigenvalues'."
+        )
+
+    # Logarithmic negativity if requested
+    if logarithmic:
+        # Guard against tiny negative round-off
+        Npos = max(0.0, Nval)
+        return float(np.log2(2.0 * Npos + 1.0))
+    else:
+        return float(max(0.0, Nval))  # clip tiny negatives from numeric noise
+
+
 def nmr_chemical_shift_imaginary_modulation(
     freq_hz: np.ndarray, t: np.ndarray
 ) -> np.ndarray:
@@ -988,6 +1154,41 @@ def pdb_label(atom, scheme="chain_res_atom"):
     else:  # chain_res_atom
         left = f"{chain}:{res_tag}" if chain and res_tag else (res_tag or chain)
         return f"{left}:{name}" if left else (name or symbol)
+
+
+def purity(rho):
+    """
+    Compute the purity of a quantum state.
+
+    The purity is defined as
+
+    .. math::
+        P(\rho) = \mathrm{Tr}(\rho^2),
+
+    where :math:`\rho` is a density matrix. It measures the mixedness of
+    a quantum state: pure states satisfy :math:`P = 1`, while maximally
+    mixed states have :math:`P = 1/d`, where :math:`d` is the Hilbert-space
+    dimension.
+
+    Parameters
+    ----------
+    rho : ndarray of shape (N, N)
+        Density matrix of the quantum state. It should be Hermitian and
+        normalised (``Tr(rho) = 1``), although the function does not
+        explicitly enforce these conditions.
+
+    Returns
+    -------
+    float
+        The purity :math:`P(\rho)`, computed as ``Re(Tr(rho @ rho))``.
+
+    Notes
+    -----
+    - The result is real for any Hermitian ``rho``; the real part is
+      taken to suppress small imaginary numerical noise.
+    - Purity values range from ``1/d`` (maximally mixed) to ``1`` (pure).
+    """
+    return np.real(np.trace(rho @ rho))
 
 
 def read_orca_hyperfine(
@@ -1669,6 +1870,43 @@ def s_t0_omega(
     omega_plus = base_omega + 0.5 * hfc_star + onuc_all
     omega_minus = base_omega - 0.5 * hfc_star + onuc_all
     return omega_plus, omega_minus
+
+
+def von_neumann_entropy(rho):
+    """
+    Compute the von Neumann entropy of a quantum state.
+
+    The von Neumann entropy is defined as
+    :math:`S(\\rho) = -\\mathrm{Tr}\\,(\\rho\\,\\log \\rho)`,
+    which, in the eigenbasis of :math:`\\rho`, reduces to
+    :math:`S = -\\sum_i \\lambda_i \\log \\lambda_i`,
+    where :math:`\\{\\lambda_i\\}` are the eigenvalues of :math:`\\rho`.
+    This implementation uses the natural logarithm, so the entropy is
+    returned in **nats**.
+
+    Parameters
+    ----------
+    rho : ndarray of shape (N, N)
+        Density matrix. For physical states, ``rho`` should be Hermitian,
+        positive semidefinite, and trace-normalised (``Tr(rho)=1``), though
+        the function does not explicitly enforce these constraints.
+
+    Returns
+    -------
+    float
+        The von Neumann entropy :math:`S(\\rho)` in nats.
+
+    Notes
+    -----
+    - Eigenvalues that are numerically non-positive are **ignored** in the
+      sum to avoid evaluating ``log(0)``.
+    - To obtain entropy in **bits**, divide the returned value by ``np.log(2)``.
+    """
+    evals, evecs = np.linalg.eig(rho)
+    ids = evals.argsort()
+    evals = evals[ids]
+    evecs = evecs[:, ids]
+    return -np.real(np.sum([val * np.log(val) for val in evals if val > 0]))
 
 
 def write_pdb(mol, path):

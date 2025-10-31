@@ -99,6 +99,7 @@ from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
 from .simulation import (
+    Basis,
     HilbertIncoherentProcessBase,
     HilbertSimulation,
     LiouvilleSimulation,
@@ -241,7 +242,6 @@ def anisotropy(
         - product_yield_sums: product yield sums
     """
     H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=True)
-
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     theta, phi = anisotropy_check(theta, phi)
     product_probabilities = anisotropy_loop(
@@ -673,6 +673,7 @@ def magnetic_field_loop_semiclassical(
         for k, HH in enumerate(HHs):
             Ht = Hz + HH + H_base
             L = sim.convert(Ht)
+
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
             L_sparse = sp.sparse.csc_matrix(L)
             rhos = sim.time_evolution(init_state, time, L_sparse)
@@ -805,6 +806,67 @@ def mary_semiclassical(
     num_samples: Optional[int] = None,
     c: Optional[float] = None,
 ) -> dict:
+    """
+    Compute a MARY (Magnetically Affected Reaction Yield) curve using the
+    semiclassical simulation pipeline.
+
+    This routine constructs a field-independent base Hamiltonian
+    :math:`H = H_J + H_D` from the exchange and dipolar interactions, then
+    performs a semiclassical magnetic-field sweep, evolving the state from
+    ``init_state`` over the time grid for each field value in ``B``. Product
+    probabilities are converted to integrated yields and post-processed into
+    the standard MARY, low-field effect (LFE), and high-field effect (HFE)
+    metrics.
+
+    Parameters
+    ----------
+    sim : SemiclassicalSimulation
+        Semiclassical simulator providing Hamiltonian terms and evolution
+        back-ends (including stochastic sampling where applicable).
+    init_state : State
+        Initial state for time evolution (e.g., ``State.SINGLET``).
+    obs_state : State
+        Observable (product) state whose probability/yield is reported.
+    time : ndarray, shape (T,)
+        Monotonic time grid for propagation (units consistent with Hamiltonians).
+    B : ndarray, shape (NB,)
+        Magnetic-field grid for the sweep (scalar magnitude in the chosen axis).
+    D : float
+        Dipolar interaction strength used to build ``H_D``.
+    J : float
+        Exchange interaction strength used to build ``H_J``.
+    kinetics : list[HilbertIncoherentProcessBase], optional
+        Kinetic processes to apply during evolution (e.g., Haberkorn).
+    relaxations : list[HilbertIncoherentProcessBase], optional
+        Relaxation processes to apply during evolution (semiclassical variants).
+    theta : float, optional
+        Polar angle (radians) of the magnetic-field axis relative to the lab frame.
+        If ``None``, the simulator default is used.
+    phi : float, optional
+        Azimuthal angle (radians) of the magnetic-field axis.
+        If ``None``, the simulator default is used.
+    num_samples : int, optional
+        Number of stochastic samples/trajectories for the semiclassical averaging.
+        If ``None``, the simulator default is used.
+    c : float, optional
+        Normalisation/contrast parameter forwarded to ``mary_lfe_hfe`` for
+        MARY post-processing.
+
+    Returns
+    -------
+    dict
+        A results dictionary with keys:
+        - ``time`` : ndarray, the input time grid.
+        - ``B`` : ndarray, the field grid.
+        - ``theta`` / ``phi`` : angles used for the sweep.
+        - ``rhos`` : list/ndarray of density matrices (reshaped to square form).
+        - ``time_evolutions`` : ndarray, product probabilities vs. ``time`` and ``B``.
+        - ``product_yields`` : ndarray, integrated yields vs. ``B``.
+        - ``product_yield_sums`` : float or ndarray, sum.
+        - ``MARY`` : ndarray, normalised magnetoresponse vs. ``B``.
+        - ``LFE`` : float, low-field effect (%).
+        - ``HFE`` : float, high-field effect (%).
+    """
     HJ = sim.exchange_hamiltonian(J)
     HD = sim.dipolar_hamiltonian(D)
     H = HJ + HD
@@ -1314,6 +1376,7 @@ def kine_quantum_mary(
         for HH in HHs:
             Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
+
             sim.apply_liouville_hamiltonian_modifiers(L, relaxations)
             kinetic_matrix[
                 radical_pair[0] : radical_pair[1], radical_pair[0] : radical_pair[1]
@@ -1505,6 +1568,7 @@ def semiclassical_mary(
         for j, HH in enumerate(HHs):
             Ht = Hz + HH + HJ + HD
             L = sim.convert(Ht)
+
             sim.apply_liouville_hamiltonian_modifiers(L, kinetics + relaxations)
             propagator = sp.sparse.linalg.expm(L * dt)
 

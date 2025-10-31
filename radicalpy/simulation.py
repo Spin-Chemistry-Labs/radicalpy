@@ -82,6 +82,16 @@ class State(enum.Enum):
     TRIPLET_PLUS_MINUS = "T_\\pm"
     TRIPLET_MINUS = "T_-"
     TP_SINGLET = "TP_S"
+    TP_TRIPLET = "TP_T"
+    TP_TRIPLET_ZERO = "TP_T0"
+    TP_TRIPLET_PLUS = "TP_T+"
+    TP_TRIPLET_MINUS = "TP_T-"
+    TP_QUINTET = "TP_Q"
+    TP_QUINTET_ZERO = "TP_Q0"
+    TP_QUINTET_PLUS_TWO = "TP_Q+2"
+    TP_QUINTET_PLUS_ONE = "TP_Q+1"
+    TP_QUINTET_MINUS_TWO = "TP_Q-2"
+    TP_QUINTET_MINUS_ONE = "TP_Q-1"
 
 
 class Basis(enum.Enum):
@@ -401,6 +411,32 @@ class HilbertSimulation:
             + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
             State.EQUILIBRIUM: C.hbar / (C.k_B * T),
             State.TP_SINGLET: self.tp_singlet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.TP_TRIPLET: self.tp_triplet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.TP_TRIPLET_ZERO: self.tp_triplet_zero_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_TRIPLET_PLUS: self.tp_triplet_plus_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_TRIPLET_MINUS: self.tp_triplet_minus_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET: self.tp_quintet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.TP_QUINTET_ZERO: self.tp_quintet_zero_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_PLUS_TWO: self.tp_quintet_plus_two_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_PLUS_ONE: self.tp_quintet_plus_one_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_MINUS_TWO: self.tp_quintet_minus_two_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_MINUS_ONE: self.tp_quintet_minus_one_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
             State.EPR: -(SAy + SBy),
         }
         return result[state]
@@ -416,6 +452,141 @@ class HilbertSimulation:
         SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
         Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
         return (1 / 12) * (Ssquared - (6 * E)) @ (Ssquared - (2 * E))
+
+    def tp_triplet_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair triplet (TP-T) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        return (1 / 8) * (-Ssquared @ Ssquared + 6 * Ssquared)
+
+    def tp_triplet_zero_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair triplet zero (TP-T0) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PT = (1 / 8) * (-Ssquared @ Ssquared + 6 * Ssquared)
+        return PT @ (-Sz @ Sz + E)
+
+    def tp_triplet_plus_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair triplet plus (TP-T+) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PT = (1 / 8) * (-Ssquared @ Ssquared + 6 * Ssquared)
+        return PT @ (Sz @ (Sz + E) / 2)
+
+    def tp_triplet_minus_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair triplet minus (TP-T-) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PT = (1 / 8) * (-Ssquared @ Ssquared + 6 * Ssquared)
+        return PT @ (Sz @ (Sz - E) / 2)
+
+    def tp_quintet_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet (TP-Q) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        return (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+
+    def tp_quintet_zero_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet zero (TP-Q0) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz**2 - E) @ (Sz**2 - 4 * E) / 4
+
+    def tp_quintet_plus_two_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet plus two (TP-Q+2) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz - E) @ Sz @ (Sz + E) @ (Sz + 2 * E) / 24
+
+    def tp_quintet_plus_one_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet plus one (TP-Q+1) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz + 2 * E) @ Sz @ (Sz + E) @ (Sz - 2 * E) / -6
+
+    def tp_quintet_minus_two_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet minus two (TP-Q-2) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz + E) @ Sz @ (Sz - E) @ (Sz - 2 * E) / 24
+
+    def tp_quintet_minus_one_projop(self, SAx, SAy, SAz, SBx, SBy, SBz):
+        """Projection operator onto the triplet-pair quintet minus one (TP-Q-1) subspace.
+
+        Builds the projector from electron spin operators of radicals A and B.
+        """
+        # For radical triplet pair (RTP)
+        E = self.get_eye(SAx.shape[0])
+        Sz = SAz @ E + E @ SBz
+        SAsquared = SAx @ SAx + SAy @ SAy + SAz @ SAz
+        SBsquared = SBx @ SBx + SBy @ SBy + SBz @ SBz
+        Ssquared = SAsquared + SBsquared + 2 * (SAx @ SBx + SAy @ SBy + SAz @ SBz)
+        PQ = (1 / 24) * Ssquared @ (Ssquared - 2 * E)
+        return PQ @ (Sz + 2 * E) @ Sz @ (Sz + E) @ (Sz - 2 * E) / -6
 
     def zeeman_hamiltonian(
         self,
@@ -787,6 +958,219 @@ class HilbertSimulation:
             + self.dipolar_hamiltonian(D)
         )
         return self.convert(H)
+
+    def linblad_liouvillian(self, H: np.ndarray, Ls=[]):
+        """
+        Assemble the Liouville-space generator for coherent + Lindblad dynamics.
+
+        This builds the superoperator
+        :math:`\\mathcal{L} = -i\\,[H,\\cdot] + \\sum_k \\mathcal{D}[L_k]`
+        using the column–stacking (vec) convention. The coherent part is
+        implemented as
+
+        .. math::
+            -i[H,\\rho] \\;\\mapsto\\; -i\\,(I\\otimes H - H^{\\mathsf{T}}\\otimes I),
+
+        and each dissipator is
+
+        .. math::
+            \\mathcal{D}[L](\\rho)
+            = L\\,\\rho\\,L^{\\dagger}
+            - \\tfrac{1}{2}\\{L^{\\dagger}L,\\rho\\}
+            \\;\\mapsto\\;
+            L^{\\ast}\\otimes L
+            - \\tfrac{1}{2}\\Big( I\\otimes L^{\\dagger}L
+                            + (L^{\\mathsf{T}}L^{\\ast})\\otimes I \\Big).
+
+        Parameters
+        ----------
+        H : ndarray of shape (N, N), complex or float
+            Hilbert-space Hamiltonian. For Hermitian problems, a complex dtype
+            (e.g. ``np.complex128``) is recommended.
+        Ls : Sequence[ndarray], optional
+            Iterable of collapse operators ``L_k`` (each ``N×N``) defining the
+            Lindblad dissipators. If you have physical rates ``γ_k``, scale your
+            operators as ``L_k ← √γ_k · C_k`` before passing them.
+
+        Returns
+        -------
+        superop : ndarray of shape (N*N, N*N), complex
+            The full Liouville-space generator :math:`\\mathcal{L}` suitable for
+            acting on ``vec(ρ)`` with the column-stacking convention.
+
+        Notes
+        -----
+        - The mapping uses ``vec(O ρ) = (I ⊗ O^{\\mathsf{T}}) vec(ρ)`` and
+        ``vec(ρ O) = (O^{\\mathsf{T}} ⊗ I) vec(ρ)``.
+        - ``H`` enters only through the coherent commutator; the dissipator depends
+        solely on ``Ls``.
+        - All arrays are combined with NumPy ``kron``; performance-critical paths
+        may prefer sparse representations.
+        """
+        dim = len(H)
+        Hsuper = -1j * (
+            np.kron(np.eye(dim), H) - np.kron(H.T, np.eye(dim))
+        )  # Hamiltonian
+        Lsuper = sum(
+            [
+                np.kron(L.conjugate(), L)
+                - 0.5
+                * (
+                    np.kron(np.eye(dim), L.conjugate().T.dot(L))
+                    + np.kron(L.T.dot(L.conjugate()), np.eye(dim))
+                )
+                for L in Ls
+            ]
+        )  # Lindblad
+        return Hsuper + Lsuper
+
+    def bloch_redfield_liouvillian(
+        self,
+        H: np.ndarray,
+        channels,
+        *,
+        secular: bool = True,
+        secular_cutoff: float = 0.01,
+    ) -> np.ndarray:
+        """
+        Construct the Bloch–Redfield Liouvillian from a Hilbert–space Hamiltonian.
+
+        The generator returned acts on vec(ρ) (column-stacking convention) and
+        includes both the coherent commutator and the Redfield dissipator,
+        constructed in the energy basis of ``H`` and similarity-transformed
+        back to the current lab basis.
+
+        Parameters
+        ----------
+        H : ndarray of shape (N, N)
+            Hilbert-space Hamiltonian in angular-frequency units (rad/s).
+            Must be square; a complex dtype (e.g. complex128) is recommended.
+        channels : Sequence[Tuple[ndarray, Union[Callable[[float], float], float]]]
+            Iterable of ``(A, S_like)`` pairs where ``A`` is a Hilbert-space
+            coupling operator (N×N) and ``S_like`` is either:
+            • a callable ``S(ω) -> float`` giving the noise power spectrum
+                evaluated at the Bohr frequency ω (in rad/s), or
+            • a numeric correlation time ``τ_c``; in this case a Lorentzian
+                spectrum ``S(ω)=τ_c/(1+ω² τ_c²)`` is used.
+        secular : bool, optional
+            If True (default), apply a secular/Davies filter: matrix elements
+            coupling coherences whose frequency mismatch |Δ| exceeds
+            ``gmax * secular_cutoff`` are dropped, where ``gmax`` is the largest
+            sampled spectral value across channel spectra on the Bohr grid.
+        secular_cutoff : float, optional
+            Relative cutoff used by the secular filter. Default ``0.01``.
+
+        Returns
+        -------
+        L_lab : ndarray of shape (N*N, N*N), complex128
+            Bloch–Redfield Liouvillian in the lab basis, suitable for subtraction
+            from the working Liouvillian (i.e., it already includes the coherent
+            part ``-i(I⊗H − Hᵀ⊗I)``).
+        """
+        import numpy as _np
+
+        # --- helpers -------------------------------------------------------------
+        def _spectral_from(S_like):
+            if callable(S_like):
+                return S_like
+            tau_c = float(S_like)
+
+            def _S(w):
+                ww = float(w)
+                return float(tau_c / (1.0 + (ww * tau_c) * (ww * tau_c)))
+
+            return _S
+
+        # --- input hygiene -------------------------------------------------------
+        H = _np.asarray(H, dtype=_np.complex128)
+        if H.ndim != 2 or H.shape[0] != H.shape[1]:
+            raise ValueError(f"H must be square; got shape {H.shape}.")
+        N = H.shape[0]
+
+        # eigenbasis of H (Hermitian path preferred)
+        evals, V = _np.linalg.eigh(H)
+        # ensure ascending order explicitly
+        perm = _np.argsort(evals.real)
+        evals = evals[perm]
+        V = V[:, perm]
+
+        # transform coupling operators to energy basis, attach callable spectra
+        a_ops_E = []
+        for A, S_like in channels:
+            A = _np.asarray(A, dtype=_np.complex128)
+            if A.shape != (N, N):
+                raise ValueError(
+                    f"Coupling operator shape {A.shape} incompatible with H {(N, N)}."
+                )
+            S_fn = _spectral_from(S_like)
+            A_E = V.conj().T @ A @ V
+            a_ops_E.append((A_E, S_fn))
+
+        # index pairs and Bohr frequencies
+        pairs = [(a, b) for a in range(N) for b in range(N)]
+        bohr = _np.array(
+            [evals[a] - evals[b] for a in range(N) for b in range(N)],
+            dtype=_np.complex128,
+        )
+        abs_bohr = _np.unique(_np.abs(bohr.real))
+
+        # allocate R (energy basis) and add unitary part on the diagonal
+        R_E = _np.zeros((N * N, N * N), dtype=_np.complex128)
+        for j, (a, b) in enumerate(pairs):
+            R_E[j, j] += -1j * (evals[a] - evals[b])
+
+        # secular cutoff reference gmax across channels on Bohr grid
+        gmax = 0.0
+        if secular and abs_bohr.size:
+            for _, S_fn in a_ops_E:
+                vals = [max(0.0, abs(float(S_fn(+w)))) for w in abs_bohr]
+                if vals:
+                    gmax = max(gmax, max(vals))
+
+        # dissipator (energy basis)
+        for j, (a, b) in enumerate(pairs):
+            for k, (c, d) in enumerate(pairs):
+                if secular and gmax > 0.0:
+                    Delta = (evals[a] - evals[b]) - (evals[c] - evals[d])
+                    if abs(Delta.real) > gmax * float(secular_cutoff):
+                        continue
+
+                total = 0.0 + 0.0j
+                for A, S_fn in a_ops_E:
+                    term = 0.0 + 0.0j
+
+                    if b == d:
+                        s1 = 0.0 + 0.0j
+                        for n in range(N):
+                            w = float((evals[c] - evals[n]).real)
+                            r = max(0.0, float(S_fn(w)))
+                            s1 += A[a, n] * A[n, c] * r
+                        term += s1
+
+                    w_ac = float((evals[c] - evals[a]).real)
+                    term -= A[a, c] * A[d, b] * max(0.0, float(S_fn(w_ac)))
+
+                    if a == c:
+                        s2 = 0.0 + 0.0j
+                        for n in range(N):
+                            w = float((evals[d] - evals[n]).real)
+                            r = max(0.0, float(S_fn(w)))
+                            s2 += A[d, n] * A[n, b] * r
+                        term += s2
+
+                    w_db = float((evals[d] - evals[b]).real)
+                    term -= A[a, c] * A[d, b] * max(0.0, float(S_fn(w_db)))
+
+                    total += (-0.5) * term
+
+                R_E[j, k] += total
+
+        # similarity transform to lab Liouville basis:
+        # vec(ρ_lab) = (V̄ ⊗ V) vec(ρ_E)  ⇒  T = kron(V.T, V.conj())
+        T = _np.kron(V.T, V.conj()).astype(_np.complex128, copy=False)
+        Tinv = _np.linalg.inv(T)
+        L_lab = (Tinv @ R_E @ T).astype(_np.complex128, copy=False)
+        return L_lab
 
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
