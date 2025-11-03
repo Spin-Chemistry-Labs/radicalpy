@@ -94,10 +94,11 @@ Notes
 - Unit conversions rely on physical constants from ``radicalpy.constants`` (``C``).
 """
 
+from __future__ import annotations
 import argparse
 import re
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple, Iterable, Optional
 
 import numpy as np
 from rdkit import Chem
@@ -1907,6 +1908,304 @@ def von_neumann_entropy(rho):
     evals = evals[ids]
     evecs = evecs[:, ids]
     return -np.real(np.sum([val * np.log(val) for val in evals if val > 0]))
+
+
+_ELEMENT_RE = re.compile(r"^[A-Za-z]+")
+
+
+def _infer_element(atom_name: str) -> str:
+    m = _ELEMENT_RE.search(atom_name.strip())
+    if not m:
+        return "X"
+    s = m.group(0)
+    two = s[0].upper() + (s[1].lower() if len(s) > 1 else "")
+    two_set = {
+        "He",
+        "Li",
+        "Be",
+        "Ne",
+        "Na",
+        "Mg",
+        "Al",
+        "Si",
+        "Cl",
+        "Ar",
+        "Ca",
+        "Sc",
+        "Ti",
+        "Cr",
+        "Mn",
+        "Fe",
+        "Co",
+        "Ni",
+        "Cu",
+        "Zn",
+        "Ga",
+        "Ge",
+        "As",
+        "Se",
+        "Br",
+        "Kr",
+        "Rb",
+        "Sr",
+        "Zr",
+        "Nb",
+        "Mo",
+        "Tc",
+        "Ru",
+        "Rh",
+        "Pd",
+        "Ag",
+        "Cd",
+        "In",
+        "Sn",
+        "Sb",
+        "Te",
+        "Xe",
+        "Cs",
+        "Ba",
+        "La",
+        "Ce",
+        "Pr",
+        "Nd",
+        "Pm",
+        "Sm",
+        "Eu",
+        "Gd",
+        "Tb",
+        "Dy",
+        "Ho",
+        "Er",
+        "Tm",
+        "Yb",
+        "Lu",
+        "Hf",
+        "Ta",
+        "Re",
+        "Os",
+        "Ir",
+        "Pt",
+        "Au",
+        "Hg",
+        "Tl",
+        "Pb",
+        "Bi",
+        "Po",
+        "At",
+        "Rn",
+        "Fr",
+        "Ra",
+        "Ac",
+        "Th",
+        "Pa",
+        "Np",
+        "Pu",
+        "Am",
+        "Cm",
+        "Bk",
+        "Cf",
+        "Es",
+        "Fm",
+        "Md",
+        "No",
+        "Lr",
+        "Rf",
+        "Db",
+        "Sg",
+        "Bh",
+        "Hs",
+        "Mt",
+        "Ds",
+        "Rg",
+        "Cn",
+        "Nh",
+        "Fl",
+        "Mc",
+        "Lv",
+        "Ts",
+        "Og",
+    }
+    return two if two in two_set else s[0].upper()
+
+
+def _parse_pdb_atoms(pdb_path: Path) -> List[Tuple[str, float, float, float]]:
+    atoms: List[Tuple[str, float, float, float]] = []
+    with open(pdb_path, "r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            rec = line[0:6].strip().upper()
+            if rec not in ("ATOM", "HETATM"):
+                continue
+            try:
+                atom_name = line[12:16]
+                elem_col = line[76:78].strip()
+                x = float(line[30:38].strip())
+                y = float(line[38:46].strip())
+                z = float(line[46:54].strip())
+                elem = elem_col if elem_col else _infer_element(atom_name)
+                atoms.append((elem, x, y, z))
+            except Exception:
+                parts = line.split()
+                if len(parts) >= 9:
+                    x = float(parts[-6])
+                    y = float(parts[-5])
+                    z = float(parts[-4])
+                    elem = (
+                        parts[-1]
+                        if (len(parts) >= 12 and len(parts[-1]) <= 2)
+                        else _infer_element(parts[2])
+                    )
+                    atoms.append((elem, x, y, z))
+    if not atoms:
+        raise ValueError(f"No ATOM/HETATM records parsed in {pdb_path}")
+    return atoms
+
+
+def _block_output(print_basis: int, print_mos: int) -> List[str]:
+    return [
+        "%output",
+        f"\tPrint[ P_Basis ] {int(print_basis)}",
+        f"\tPrint[ P_MOs ] {int(print_mos)}",
+        "end",
+    ]
+
+
+def _block_scf(maxiter: int, cnvdiis: bool, cnvsoscf: bool) -> List[str]:
+    return [
+        "%scf",
+        f"\tMaxIter {int(maxiter)}",
+        f"\tCNVDIIS {1 if cnvdiis else 0}",
+        f"\tCNVSOSCF {1 if cnvsoscf else 0}",
+        "end",
+    ]
+
+
+def _line_opt_header(method: str, basis: str, flags: Iterable[str]) -> str:
+    # leading space after '!' matches your file (e.g. "! RHF OPT def2-TZVP NormalPrint NormalSCF ")
+    flags_str = " ".join(flags).strip()
+    return f"! {method} OPT {basis} {flags_str} ".rstrip()
+
+
+def _line_epr_header(method: str, basis: str, autoaux: bool) -> str:
+    # your file has no separating space after '!' ("!B3LYP EPR-II AUTOAUX")
+    return f"!{method} {basis}" + (" AUTOAUX" if autoaux else "")
+
+
+def _block_xyz_embed(
+    atoms: List[Tuple[str, float, float, float]], charge: int, mult: int
+) -> List[str]:
+    lines = [f"* xyz {charge} {mult}"]
+    for el, x, y, z in atoms:
+        lines.append(f"   {el:<2s}    {x:12.5f}    {y:12.5f}    {z:12.5f}")
+    lines.append("*")
+    return lines
+
+
+def _line_xyzfile(charge: int, mult: int, xyz_name: str) -> str:
+    # your file: "* XYZFile 1 2 TRPradCation.opt.xyz"
+    return f"* XYZFile {charge} {mult} {xyz_name}"
+
+
+def _block_eprnmr(
+    gtensor: bool, nuclei_elements: Iterable[str], props: Iterable[str]
+) -> List[str]:
+    lines = ["%EPRNMR"]
+    if gtensor:
+        lines.append("        GTENSOR   TRUE")
+    props_str = ", ".join(props)
+    # keep the spacing and per-element lines like your file
+    for el in nuclei_elements:
+        lines.append(f"        NUCLEI    = ALL {el} {{{props_str}}}")
+    lines.append("END")
+    return lines
+
+
+def write_orca_from_pdb(
+    pdb_path: str | Path,
+    out_dir: str | Path,
+    *,
+    title: str = "Tryptophan radical cation",
+    # charge/multiplicity used in both files
+    charge: int = 1,
+    multiplicity: int = 2,
+    # OPT file controls (TRPradCation.opt.inp)
+    opt_filename: Optional[str] = None,  # default: <stem>.opt.inp
+    opt_method: str = "RHF",
+    opt_basis: str = "def2-TZVP",
+    opt_flags: Iterable[str] = ("NormalPrint", "NormalSCF"),
+    scf_maxiter: int = 125,
+    scf_cnvdiis: bool = True,
+    scf_cnvsoscf: bool = True,
+    output_print_basis: int = 2,
+    output_print_mos: int = 1,
+    # XYZ sidecar to reference from EPR job
+    xyz_sidecar: Optional[str] = None,  # default: <stem>.opt.xyz
+    # EPR file controls (TRPradCation.EPRII.inp)
+    epr_filename: Optional[str] = None,  # default: <stem>.EPRII.inp
+    epr_method: str = "B3LYP",
+    epr_basis: str = "EPR-II",
+    epr_autoaux: bool = True,
+    epr_gtensor: bool = True,
+    epr_nuclei_elements: Iterable[str] = ("H", "N", "C", "O"),
+    epr_props: Iterable[str] = ("AISO", "ADIP"),
+    # Optional: include %pal (not present in your files; off by default)
+    pal_nprocs: Optional[int] = None,
+) -> list[Path]:
+    """
+    Create two ORCA inputs that *match your attached templates* while retaining
+    customisation knobs (methods, basis, SCF/output options, EPRNMR content).
+
+    Returns a list with paths to (opt_input, epr_input, xyz_file).
+    """
+    if isinstance(pdb_path, str):
+        pdb_path = Path(pdb_path)
+    if isinstance(out_dir, str):
+        out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    atoms = _parse_pdb_atoms(pdb_path)
+    stem = pdb_path.stem
+
+    opt_filename = opt_filename or f"{stem}.opt.inp"
+    epr_filename = epr_filename or f"{stem}.EPRII.inp"
+    xyz_sidecar = xyz_sidecar or f"{stem}.opt.xyz"
+
+    # --- write OPT .inp (embedded coords), honoring your exact block order/format ---
+    opt_lines: List[str] = []
+    opt_lines.append(f"# {title}")
+    opt_lines.append(_line_opt_header(opt_method, opt_basis, opt_flags))
+    opt_lines += _block_scf(scf_maxiter, scf_cnvdiis, scf_cnvsoscf)
+    opt_lines += _block_output(output_print_basis, output_print_mos)
+    if pal_nprocs is not None:
+        opt_lines += ["%pal", f"  nprocs {int(pal_nprocs)}", "end"]
+    opt_lines += _block_xyz_embed(atoms, charge, multiplicity)
+
+    opt_path = out_dir / opt_filename
+    with open(opt_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(opt_lines) + "\n")
+
+    # --- write XYZ sidecar as referenced in EPR job ---
+    xyz_path = out_dir / xyz_sidecar
+    with open(xyz_path, "w", encoding="utf-8") as xf:
+        xf.write(f"{len(atoms)}\n")
+        xf.write(f"{title}\n")
+        for el, x, y, z in atoms:
+            xf.write(f"{el:2s}  {x: .8f}  {y: .8f}  {z: .8f}\n")
+
+    # --- write EPR .inp (XYZFile reference + %EPRNMR block) ---
+    epr_lines: List[str] = []
+    epr_lines.append(f"# {title}")
+    epr_lines.append(_line_epr_header(epr_method, epr_basis, epr_autoaux))
+    epr_lines += _block_output(output_print_basis, output_print_mos)
+    if pal_nprocs is not None:
+        epr_lines += ["%pal", f"  nprocs {int(pal_nprocs)}", "end"]
+    epr_lines.append(_line_xyzfile(charge, multiplicity, xyz_path.name))
+    epr_lines += _block_eprnmr(epr_gtensor, epr_nuclei_elements, epr_props)
+
+    epr_path = out_dir / epr_filename
+    with open(epr_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(epr_lines) + "\n")
+
+    return [opt_path, epr_path, xyz_path]
 
 
 def write_pdb(mol, path):
