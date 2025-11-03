@@ -102,6 +102,8 @@ See also:
 """
 
 
+from __future__ import annotations
+
 import numpy as np
 from scipy.optimize import curve_fit
 
@@ -523,6 +525,100 @@ def dipolar_interaction_anisotropic(r: float | np.ndarray) -> np.ndarray:
     assert dipolar1d <= 0.0, f"dipolar1d should be negative but got {dipolar1d}"
     dipolar = (2 / 3) * dipolar1d
     return dipolar * np.diag([-1, -1, 2])
+
+
+default_dipolar_prefactor = (
+    (C.mu_0 / (4 * np.pi)) * C.hbar * (Isotope("E").gamma_mT * 1000) ** 2
+)
+
+
+def dipolar_interaction_anisotropic_from_dipolar_vector_without_prefactor(
+    dipolar_vector: np.ndarray,
+    *,
+    units: str = "Å",
+) -> np.ndarray:
+    """
+    Geometry-only dipolar tensor kernel (no physical prefactor).
+
+    Given a displacement vector **r** between two spins, returns the
+    3×3 geometric tensor
+
+        T_geom = [ (|r|^2 I) - 3 r rᵀ ] / |r|^5  =  (I - 3 r̂ r̂ᵀ) / |r|^3
+
+    Parameters
+    ----------
+    dipolar_vector : ndarray, shape (3,)
+        Displacement vector r from spin 2 to spin 1 (Cartesian).
+    units : {"Å","m"}, optional
+        Units of `dipolar_vector`. Default "Å" (Angstrom).
+
+    Returns
+    -------
+    ndarray, shape (3, 3)
+        Geometry-only tensor in SI length units (i.e. 1/m^3 factor embedded).
+
+    Thank you, Luca Gerhards!
+    """
+    r = np.asarray(dipolar_vector, dtype=float).reshape(3)
+    if units.lower() in {"å", "a", "ang", "angstrom", "angstroms"}:
+        r_m = r * 1.0e-10
+    elif units.lower() in {"m", "meter", "meters"}:
+        r_m = r
+    else:
+        raise ValueError(f"Unsupported length units '{units}'. Use 'Å' or 'm'.")
+
+    r2 = float(np.dot(r_m, r_m))
+    if r2 <= 0.0:
+        raise ValueError("Dipolar vector has zero length; tensor is undefined.")
+    rnorm = np.sqrt(r2)
+
+    I3 = np.eye(3, dtype=float)
+    rrT = np.outer(r_m, r_m)
+    # [(|r|^2) I - 3 r r^T] / |r|^5
+    T = ((r2 * I3) - 3.0 * rrT) / (rnorm**5)
+    return T
+
+
+def dipolar_interaction_anisotropic_from_dipolar_vector(
+    dipolar_vector: np.ndarray,
+    dipolar_prefactor: float = default_dipolar_prefactor,
+    *,
+    units: str = "Å",
+) -> np.ndarray:
+    """
+    Full electron–electron dipolar coupling tensor (angular frequency, rad/s).
+
+    Computes
+        D = prefactor * [ (|r|^2 I) - 3 r rᵀ ] / |r|^5
+
+    where the default `prefactor` is
+        (μ0 / 4π) * ħ * γ_e^2
+    with γ_e the electron gyromagnetic ratio (rad s⁻¹ T⁻¹).
+    The input displacement vector can be given in Å or m.
+
+    Parameters
+    ----------
+    dipolar_vector : ndarray, shape (3,)
+        Displacement vector r from spin 2 to spin 1 (Cartesian).
+    dipolar_prefactor : float, optional
+        Physical prefactor. Default corresponds to two electrons and returns
+        the tensor in angular frequency units (rad/s).
+    units : {"Å","m"}, optional
+        Units of `dipolar_vector`. Default "Å" (Angstrom).
+
+    Returns
+    -------
+    ndarray, shape (3, 3), complex128
+        Dipolar coupling tensor in angular frequency units (rad/s).
+
+    Thank you, Luca Gerhards!
+    """
+    T_geom = dipolar_interaction_anisotropic_from_dipolar_vector_without_prefactor(
+        dipolar_vector, units=units
+    )
+    D = float(dipolar_prefactor) * T_geom
+    # return complex dtype to match other Hamiltonian builders smoothly
+    return np.asarray(D, dtype=np.complex128)
 
 
 def dipolar_interaction_point_dipole(r12: tuple[float, float, float]) -> np.ndarray:
