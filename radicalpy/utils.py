@@ -95,10 +95,11 @@ Notes
 """
 
 from __future__ import annotations
+
 import argparse
 import re
 from pathlib import Path
-from typing import List, Tuple, Iterable, Optional
+from typing import Iterable, List, Optional, Tuple
 
 import numpy as np
 from rdkit import Chem
