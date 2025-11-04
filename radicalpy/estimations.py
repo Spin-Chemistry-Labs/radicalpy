@@ -458,7 +458,7 @@ def autocorrelation_fit(
     )
     fit = multiexponential(ts, *acf_popt)
     tau_c = sum(acf_popt * taus)  # * np.var(mT_to_MHz(trajectory)) / 1e6
-    return {"fit": fit, "tau_c": tau_c}
+    return {"fit": fit, "tau_c": tau_c, "taus": taus, "weights": acf_popt}
 
 
 def diffusion_coefficient(radius: float, temperature: float, eta: float):

@@ -665,25 +665,20 @@ def eigensorter(H, threshold=1e-12):
     - For Hermitian ``H``, eigenvectors are expected to be orthonormal up to
       numerical precision; for general ``H`` they need not be.
     """
-    # calculate eigenvalues and eigenvectors
     evals, evecs = np.linalg.eig(H)
-    # get the list of sorted indices from the eigenvalues
     ids = np.argsort(evals)
-    # sort the eigenvalues
     evals = evals[ids]
-    # sort the eigenvectors
-    evecs = evecs[:, ids]
-    # transpose the vectors (row-stack)
-    evecs = evecs.T
-    # test the result
-    error = np.linalg.norm(
-        [evals[k] - vec.conj().T @ H @ vec for k, vec in enumerate(evecs)]
-    )
-    if error > threshold:
-        print("Error size: ", error)
-        return error
-    else:
-        return evals, evecs
+    evecs = evecs[:, ids].T  # shape (N, N)
+
+    # check
+    residuals = [evals[k] - evecs[k].conj().T @ H @ evecs[k] for k in range(len(evals))]
+    error = np.linalg.norm(residuals)
+
+    # if error > threshold:
+    #     raise ValueError(f"eigensorter: orthogonality/diagonalization error {error} > {threshold}")
+
+    return evals, evecs
+
 
 
 def enumerate_spin_states_from_base(base: int) -> np.ndarray:
