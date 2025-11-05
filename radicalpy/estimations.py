@@ -540,6 +540,8 @@ def dipolar_interaction_anisotropic_from_dipolar_vector_without_prefactor(
     """
     Geometry-only dipolar tensor kernel (no physical prefactor).
 
+    Thank you, Luca Gerhards!
+
     Given a displacement vector **r** between two spins, returns the
     3×3 geometric tensor
 
@@ -556,8 +558,6 @@ def dipolar_interaction_anisotropic_from_dipolar_vector_without_prefactor(
     -------
     ndarray, shape (3, 3)
         Geometry-only tensor in SI length units (i.e. 1/m^3 factor embedded).
-
-    Thank you, Luca Gerhards!
     """
     r = np.asarray(dipolar_vector, dtype=float).reshape(3)
     if units.lower() in {"å", "a", "ang", "angstrom", "angstroms"}:
@@ -588,6 +588,8 @@ def dipolar_interaction_anisotropic_from_dipolar_vector(
     """
     Full electron–electron dipolar coupling tensor (angular frequency, rad/s).
 
+    Thank you, Luca Gerhards!
+
     Computes
         D = prefactor * [ (|r|^2 I) - 3 r rᵀ ] / |r|^5
 
@@ -610,8 +612,6 @@ def dipolar_interaction_anisotropic_from_dipolar_vector(
     -------
     ndarray, shape (3, 3), complex128
         Dipolar coupling tensor in angular frequency units (rad/s).
-
-    Thank you, Luca Gerhards!
     """
     T_geom = dipolar_interaction_anisotropic_from_dipolar_vector_without_prefactor(
         dipolar_vector, units=units

@@ -26,6 +26,7 @@ Unit conversions
       ``mT_to_MHz/Gauss/…``,
       ``angular_frequency_in_MHz``, ``*_to_angular_frequency``:
       Consistent conversions between G, mT, MHz and rad·s⁻¹·T⁻¹.
+      Consistent conversions between GHz, J, meV, mK.
 
 Angular grids & spherical geometry
     - ``anisotropy_check(theta, phi)``: Validate angle grids and parity (θ odd/φ even).
@@ -77,6 +78,13 @@ Quantum-chemistry integration (ORCA)
     - Internal: ``_hyperfine_from_orca6_out`` / ``_hyperfine_from_orca6_property_txt``.
       Return zero-based nucleus indices, isotope labels, and 3×3 HFC tensors (mT).
     - ``read_lines_utf8_or_utf16le``: Robust text decoding for ORCA outputs.
+    - ``write_orca_from_pdb``: Creates customisable ORCA input files.
+
+Quantum quantification methods
+    - ``negativity``: Computes the (logarithmic) negativity of a multipartite density matrix.
+        A measure of entanglement.
+    - ``purity``: Calculates the purity of a density matrix.
+    - ``von_neumann_entropy``: Computes the von Neumann entropy of a quantum state.
 
 Chemistry utilities (RDKit)
     - ``smiles_to_3d(smiles, add_h=True, opt='mmff')``: Generate a 3D conformer
@@ -303,6 +311,65 @@ def Gauss_to_mT(Gauss: float) -> float:
             (mT).
     """
     return Gauss / 10
+
+
+def GHz_to_meV(GHz: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy/frequency from GHz to meV.
+
+    Uses 1 GHz = 4.1357×10⁻³ meV.
+
+    Parameters
+    ----------
+    GHz : float or ndarray
+        Value(s) in GHz.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in meV.
+    """
+    return GHz * 4.1357e-3
+
+
+def GHz_to_mK(GHz: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert a frequency from GHz to mK using h ν = k_B T.
+
+    Relation:
+        h · (1e9 · ν_GHz) = k_B · (1e-3 · T_mK)
+        ⇒ T_mK = 1e12 · (h / k_B) · ν_GHz
+
+    Parameters
+    ----------
+    GHz : float or ndarray
+        Value(s) in GHz.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in mK.
+    """
+    return GHz * 1.0e12 * (C.h / C.k_B)
+
+
+def J_to_meV(J: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from Joule (J) to meV.
+
+    Uses 1 eV = 1.602176565×10⁻¹⁹ J.
+
+    Parameters
+    ----------
+    J : float or ndarray
+        Value(s) in Joule.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in meV.
+    """
+    return 1000.0 * J / C.e
 
 
 def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
@@ -680,7 +747,6 @@ def eigensorter(H, threshold=1e-12):
     return evals, evecs
 
 
-
 def enumerate_spin_states_from_base(base: int) -> np.ndarray:
     """
     Return all spin-state patterns for a mixed-radix 'base' (e.g. [2,2,3,...]).
@@ -810,6 +876,101 @@ def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
             np.ndarray: The modulated MARY signal.
     """
     return 1 / (1 + mod_signal**2) - lfe_magnitude / (0.1 + mod_signal**2)
+
+
+def meV_to_GHz(meV: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from meV to GHz.
+
+    Uses 1 meV = 1 / (4.1357×10⁻³) GHz.
+
+    Parameters
+    ----------
+    meV : float or ndarray
+        Value(s) in meV.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in GHz.
+    """
+    return meV / 4.1357e-3
+
+
+def meV_to_J(meV: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from meV to Joule (J).
+
+    Uses 1 eV = 1.602176565×10⁻¹⁹ J.
+
+    Parameters
+    ----------
+    meV : float or ndarray
+        Value(s) in meV.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in Joule.
+    """
+    return 1.0e-3 * meV * C.e
+
+
+def meV_to_mK(meV: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from meV to mK.
+
+    Uses 1 mK = 8.61740×10⁻⁵ meV.
+
+    Parameters
+    ----------
+    meV : float or ndarray
+        Value(s) in meV.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in mK.
+    """
+    return meV / 8.61740e-5
+
+
+def mK_to_GHz(mK: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert a temperature-like energy from mK to GHz using h ν = k_B T.
+
+    Inverse of :func:`convert_GHz_to_mK`.
+
+    Parameters
+    ----------
+    mK : float or ndarray
+        Value(s) in mK.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in GHz.
+    """
+    return mK * 1.0e-12 * (C.k_B / C.h)
+
+
+def mK_to_meV(mK: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from mK to meV.
+
+    Uses 1 mK = 8.61740×10⁻⁵ meV.
+
+    Parameters
+    ----------
+    mK : float or ndarray
+        Value(s) in mK.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in meV.
+    """
+    return mK * 8.61740e-5
 
 
 def modulated_signal(timeconstant: np.ndarray, theta: float, frequency: float):
@@ -1155,35 +1316,29 @@ def pdb_label(atom, scheme="chain_res_atom"):
 
 def purity(rho):
     """
-    Compute the purity of a quantum state.
+    Calculate the purity of a density matrix.
 
-    The purity is defined as
-
-    .. math::
-        P(\rho) = \mathrm{Tr}(\rho^2),
-
-    where :math:`\rho` is a density matrix. It measures the mixedness of
-    a quantum state: pure states satisfy :math:`P = 1`, while maximally
-    mixed states have :math:`P = 1/d`, where :math:`d` is the Hilbert-space
-    dimension.
+    The purity is defined as :math:`P(\\rho) = \\operatorname{Tr}(\\rho^2)`.
+    It quantifies how mixed a quantum state is: pure states have
+    :math:`P = 1`, while a maximally mixed state in a Hilbert space of
+    dimension :math:`d` has :math:`P = 1/d`.
 
     Parameters
     ----------
     rho : ndarray of shape (N, N)
-        Density matrix of the quantum state. It should be Hermitian and
-        normalised (``Tr(rho) = 1``), although the function does not
-        explicitly enforce these conditions.
+        Density matrix of the quantum state. The matrix is expected to be
+        square and (approximately) Hermitian, with unit trace, although these
+        conditions are not enforced inside the function.
 
     Returns
     -------
     float
-        The purity :math:`P(\rho)`, computed as ``Re(Tr(rho @ rho))``.
+        Purity of the state, computed as ``real(trace(rho @ rho))``.
 
     Notes
     -----
-    - The result is real for any Hermitian ``rho``; the real part is
-      taken to suppress small imaginary numerical noise.
-    - Purity values range from ``1/d`` (maximally mixed) to ``1`` (pure).
+    The real part of the trace is returned to suppress small imaginary
+    components that can arise from numerical round-off.
     """
     return np.real(np.trace(rho @ rho))
 
