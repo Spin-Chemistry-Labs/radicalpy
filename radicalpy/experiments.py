@@ -617,7 +617,6 @@ def field_switching(
         "ta_on": ta_on,
         "ta_off": ta_off,
         "ta_diff": ta_diff,
-        
         "field_switch": field_switch_result,
     }
 
