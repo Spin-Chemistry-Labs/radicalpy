@@ -96,6 +96,8 @@ from typing import Optional
 import numpy as np
 import scipy as sp
 from numpy.typing import ArrayLike, NDArray
+from scipy.linalg import expm
+import scipy.sparse as sps
 from tqdm import tqdm
 
 from .simulation import (
@@ -1657,3 +1659,112 @@ def steady_state_mary(
 
     Phi_s = rhos @ Q.flatten()
     return rhos, Phi_s
+
+
+def field_switching(
+    sim: HilbertSimulation,
+    init_state: State,
+    obs_state: State,
+    *,
+    time: np.ndarray,
+    B_on: float = 2.0,
+    B_off: float = 0.0,
+    D: float = 0.0,
+    J: float = 0.0,
+    kinetics: list = [],
+    relaxations: list = [],
+    theta: Optional[float] = None,
+    phi: Optional[float] = None,
+    hfc_anisotropy: bool = False,
+    n_offsets: int = 50,
+    offset_step: int = 10,
+    pulse_width_steps: int = 800,
+) -> dict:
+    """
+    Field-switching experiment: compare ON→OFF vs ON→ON evolutions
+    for many different switch steps.
+    """
+    H_on = sim.total_hamiltonian(
+        B0=B_on, D=D, J=J, hfc_anisotropy=hfc_anisotropy, theta=theta, phi=phi
+    )
+    H_off = sim.total_hamiltonian(
+        B0=B_off, D=D, J=J, hfc_anisotropy=hfc_anisotropy, theta=theta, phi=phi
+    )
+
+    sim.apply_liouville_hamiltonian_modifiers(H_on, kinetics + relaxations)
+    sim.apply_liouville_hamiltonian_modifiers(H_off, kinetics + relaxations)
+
+    dim = H_on.shape[0]
+    H_on_sp = sps.csc_matrix(H_on)
+    H_off_sp = sps.csc_matrix(H_off)
+
+    dt = time[1] - time[0]
+
+    # longest evolution we need
+    max_switch_steps = (n_offsets - 1) * offset_step
+    max_steps = max_switch_steps + pulse_width_steps
+    time_long = np.arange(max_steps, dtype=float) * dt
+
+    Up_on, Um_on = sim.unitary_propagator(H_on_sp, dt)
+    Up_off, Um_off = sim.unitary_propagator(H_off_sp, dt)
+
+    ta_on = np.zeros((n_offsets, max_steps), dtype=float)
+    ta_off = np.zeros((n_offsets, max_steps), dtype=float)
+
+    for i in range(n_offsets):
+        switch_steps = i * offset_step
+
+        # ---------- ON branch (H_on → H_off) ----------
+        if switch_steps > 0:
+            t_pre = np.arange(switch_steps, dtype=float) * dt
+            rhos_pre_on = sim.time_evolution(init_state, t_pre, H_on_sp)
+            rho_on = rhos_pre_on[-1]
+            probs_pre_on = sim.product_probability(obs_state, rhos_pre_on[None, ...])[0]
+            sim.apply_hilbert_kinetics(time, probs_pre_on, kinetics)
+            ta_on[i, :switch_steps] = probs_pre_on
+        else:
+            rho_on = sim.initial_density_matrix(init_state, H_on)
+
+        # second segment under H_off, starting from rho_on
+        rhos_pulse_on = np.zeros((pulse_width_steps, dim, dim), dtype=complex)
+        rhos_pulse_on[0] = rho_on
+        for k in range(1, pulse_width_steps):
+            rhos_pulse_on[k] = Up_on @ rhos_pulse_on[k - 1] @ Um_on
+        probs_pulse_on = sim.product_probability(obs_state, rhos_pulse_on[None, ...])[0]
+        sim.apply_hilbert_kinetics(time, probs_pulse_on, kinetics)
+        ta_on[i, switch_steps : switch_steps + pulse_width_steps] = probs_pulse_on
+
+        # ---------- REF branch (H_on → H_on) ----------
+        if switch_steps > 0:
+            rhos_pre_off = sim.time_evolution(init_state, t_pre, H_on_sp)
+            rho_off = rhos_pre_off[-1]
+            probs_pre_off = sim.product_probability(obs_state, rhos_pre_off[None, ...])[
+                0
+            ]
+            sim.apply_hilbert_kinetics(time, probs_pre_off, kinetics)
+            ta_off[i, :switch_steps] = probs_pre_off
+        else:
+            rho_off = sim.initial_density_matrix(init_state, H_on)
+
+        rhos_pulse_off = np.zeros((pulse_width_steps, dim, dim), dtype=complex)
+        rhos_pulse_off[0] = rho_off
+        for k in range(1, pulse_width_steps):
+            rhos_pulse_off[k] = Up_off @ rhos_pulse_off[k - 1] @ Um_off
+        probs_pulse_off = sim.product_probability(obs_state, rhos_pulse_off[None, ...])[
+            0
+        ]
+        sim.apply_hilbert_kinetics(time, probs_pulse_off, kinetics)
+        ta_off[i, switch_steps : switch_steps + pulse_width_steps] = probs_pulse_off
+
+    ta_diff = ta_on - ta_off
+    switch_times = (np.arange(n_offsets) * offset_step * dt).astype(float)
+    field_switch_result = np.sum(ta_diff, 1)
+
+    return {
+        "time": time_long,
+        "switch_times": switch_times,
+        "ta_on": ta_on,
+        "ta_off": ta_off,
+        "ta_diff": ta_diff,
+        "field_switch": field_switch_result
+    }
