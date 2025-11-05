@@ -95,9 +95,9 @@ from typing import Optional
 
 import numpy as np
 import scipy as sp
+import scipy.sparse as sps
 from numpy.typing import ArrayLike, NDArray
 from scipy.linalg import expm
-import scipy.sparse as sps
 from tqdm import tqdm
 
 from .simulation import (
