@@ -76,6 +76,7 @@ class State(enum.Enum):
     EQUILIBRIUM = "Eq"
     EPR = "EPR"
     CISS = "CISS"
+    SECOND_ORDER_POLARISATION = "2ndOrderPol"
     SINGLET = "S"
     TRIPLET = "T"
     TRIPLET_MINUS = "T_-"
@@ -417,6 +418,7 @@ class HilbertSimulation:
             State.EPR: SAy + SBy,
             State.CISS: np.cos(0.5 * chi) * ((1 / 4) * eye - SASB)
             + np.sin(0.5 * chi) * ((1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz),
+            State.SECOND_ORDER_POLARISATION: -4 * SAz @ SBz,
             State.SINGLET: (1 / 4) * eye - SASB,
             State.TRIPLET: (3 / 4) * eye + SASB,
             State.TRIPLET_MINUS: (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),

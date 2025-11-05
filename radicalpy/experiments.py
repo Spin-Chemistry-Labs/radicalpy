@@ -91,7 +91,7 @@ See also:
 """
 
 import itertools
-from typing import Optional
+from typing import Optional, Sequence
 
 import numpy as np
 import scipy as sp
@@ -1768,3 +1768,150 @@ def steady_state_mary(
 
     Phi_s = rhos @ Q.flatten()
     return rhos, Phi_s
+
+
+def coherent_control(
+    sim: HilbertSimulation,
+    *,
+    time: np.ndarray,
+    sticks_A_freq: Sequence[float],
+    sticks_A_int: Sequence[float],
+    sticks_B_freq: Sequence[float],
+    sticks_B_int: Sequence[float],
+    B1_G: float = 200.0,  # gauss
+    g_e: float = 2.0,
+    k_s: float = 2e6,
+    J: float = 0.0,
+    dt_override: Optional[float] = None,
+    u_max_factor: float = 1.0,  # cap: |u| <= u_max_factor * B1c
+    u_smooth: float = 0.2,  # 0 = no smoothing, 1 = fully prev
+) -> dict:
+    """Coherent-control / feedback with spike-safe feedback."""
+    mu_B = 9.274e-24
+    hbar = 1.05459e-34
+
+    if dt_override is not None:
+        dt = float(dt_override)
+    else:
+        if len(time) < 2:
+            raise ValueError("time needs >=2 points")
+        dt = float(time[1] - time[0])
+
+    # normalise sticks
+    sticks_A_int = np.asarray(sticks_A_int, float)
+    sticks_B_int = np.asarray(sticks_B_int, float)
+    sticks_A_int /= sticks_A_int.sum()
+    sticks_B_int /= sticks_B_int.sum()
+    sticks_A_freq = np.asarray(sticks_A_freq, float)
+    sticks_B_freq = np.asarray(sticks_B_freq, float)
+
+    SnumA = len(sticks_A_freq)
+    SnumB = len(sticks_B_freq)
+    Snum = SnumA * SnumB
+
+    # electron ops
+    SxA = sim.spin_operator(0, "x")
+    SzA = sim.spin_operator(0, "z")
+    SxB = sim.spin_operator(1, "x")
+    SzB = sim.spin_operator(1, "z")
+    V = SxA + SxB
+
+    # target |αβ><αβ| + |βα><βα|
+    Target = np.zeros((4, 4), complex)
+    Target[1, 1] = 1.0
+    Target[2, 2] = 1.0
+
+    P_S = sim.projection_operator(State.SINGLET)
+
+    def Lk(rho):
+        return -0.5 * k_s * (P_S @ rho + rho @ P_S)
+
+    # B1: gauss -> tesla
+    B1_T = B1_G * 1e-4
+    B1c = (g_e * mu_B * B1_T) / hbar  # rad/s
+    u_cap = u_max_factor * B1c
+
+    # static H for each configuration
+    if abs(J) > 0.0:
+        H_J = sim.exchange_hamiltonian(J)
+    else:
+        H_J = np.zeros_like(SxA)
+
+    H0_list = []
+    weights = []
+    for i in range(SnumA):
+        for j in range(SnumB):
+            H0 = sticks_A_freq[i] * SzA + sticks_B_freq[j] * SzB + H_J
+            H0_list.append(H0)
+            weights.append(sticks_A_int[i] * sticks_B_int[j])
+    weights = np.asarray(weights, float)
+
+    # initial ρ
+    lam = 0.001
+    P_T = sim.projection_operator(State.TRIPLET)
+    rho0 = (P_T + 3 * lam * V) / 3.0
+    rho_list = [rho0.copy() for _ in range(Snum)]
+
+    T = len(time)
+    u_arr = np.zeros(T, float)
+    target_arr = np.zeros(T, float)
+    each_target = np.zeros((Snum, T), float)
+
+    def drho_dt(H, u, rho):
+        Ht = H + u * V
+        comm = Ht @ rho - rho @ Ht
+        return -1j * comm + Lk(rho)
+
+    u_prev = 0.0
+    for t_idx, t in enumerate(time):
+        # feedback signal
+        signal = 0.0
+        for m, rho in enumerate(rho_list):
+            comm = V @ rho - rho @ V
+            s = np.imag(np.trace(Target @ comm))
+            signal += weights[m] * s
+        u_raw = B1c * signal
+
+        # clip
+        if u_raw > u_cap:
+            u_raw = u_cap
+        elif u_raw < -u_cap:
+            u_raw = -u_cap
+
+        # smooth
+        u_t = u_smooth * u_prev + (1.0 - u_smooth) * u_raw
+        u_prev = u_t
+        u_arr[t_idx] = u_t
+
+        # observables
+        for m, rho in enumerate(rho_list):
+            each_target[m, t_idx] = np.real(np.trace(Target @ rho))
+        target_arr[t_idx] = float(np.sum(weights * each_target[:, t_idx]))
+
+        if t_idx == T - 1:
+            break
+
+        new_rho_list = []
+        for m, rho in enumerate(rho_list):
+            H0 = H0_list[m]
+            # RK4
+            k1 = drho_dt(H0, u_t, rho)
+            k2 = drho_dt(H0, u_t, rho + 0.5 * dt * k1)
+            k3 = drho_dt(H0, u_t, rho + 0.5 * dt * k2)
+            k4 = drho_dt(H0, u_t, rho + dt * k3)
+            rho_next = rho + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+            # symmetrise and renormalize
+            rho_next = 0.5 * (rho_next + rho_next.conj().T)
+            tr = np.real(np.trace(rho_next))
+            if tr != 0.0:
+                rho_next /= tr
+            new_rho_list.append(rho_next)
+        rho_list = new_rho_list
+
+    return {
+        "time": time,
+        "u": u_arr,
+        "target": target_arr,
+        "each_target": each_target,
+        "weights": weights,
+    }
