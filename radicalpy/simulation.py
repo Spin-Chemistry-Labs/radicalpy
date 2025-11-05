@@ -75,23 +75,27 @@ class State(enum.Enum):
 
     EQUILIBRIUM = "Eq"
     EPR = "EPR"
+    CISS = "CISS"
     SINGLET = "S"
     TRIPLET = "T"
-    TRIPLET_ZERO = "T_0"
+    TRIPLET_MINUS = "T_-"
     TRIPLET_PLUS = "T_+"
     TRIPLET_PLUS_MINUS = "T_\\pm"
-    TRIPLET_MINUS = "T_-"
+    TRIPLET_ZERO = "T_0"
+    TRIPLET_X = "X"
+    TRIPLET_Y = "Y"
+    TRIPLET_Z = "Z"
     TP_SINGLET = "TP_S"
-    TP_TRIPLET = "TP_T"
-    TP_TRIPLET_ZERO = "TP_T0"
-    TP_TRIPLET_PLUS = "TP_T+"
-    TP_TRIPLET_MINUS = "TP_T-"
     TP_QUINTET = "TP_Q"
-    TP_QUINTET_ZERO = "TP_Q0"
-    TP_QUINTET_PLUS_TWO = "TP_Q+2"
-    TP_QUINTET_PLUS_ONE = "TP_Q+1"
-    TP_QUINTET_MINUS_TWO = "TP_Q-2"
     TP_QUINTET_MINUS_ONE = "TP_Q-1"
+    TP_QUINTET_MINUS_TWO = "TP_Q-2"
+    TP_QUINTET_PLUS_ONE = "TP_Q+1"
+    TP_QUINTET_PLUS_TWO = "TP_Q+2"
+    TP_QUINTET_ZERO = "TP_Q0"
+    TP_TRIPLET = "TP_T"
+    TP_TRIPLET_MINUS = "TP_T-"
+    TP_TRIPLET_PLUS = "TP_T+"
+    TP_TRIPLET_ZERO = "TP_T0"
 
 
 class Basis(enum.Enum):
@@ -376,7 +380,13 @@ class HilbertSimulation:
         """Return an identity matrix of the requested dimension (dense)."""
         return np.eye(shape)
 
-    def projection_operator(self, state: State, T: float = 298, kron_eye: bool = True):
+    def projection_operator(
+        self,
+        state: State,
+        T: float = 298,
+        chi: float = np.pi / 2,
+        kron_eye: bool = True,
+    ):
         """Construct the projection operator corresponding to a `state`.
 
         Args:
@@ -384,6 +394,7 @@ class HilbertSimulation:
             state (State): The target state which is projected out of
                 the density matrix.
             T (float): Temperature for the EQUILIBRIUM projection operator (K).
+            chi (float): Degree of polarisation for the CISS projection operator.
 
             kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
 
@@ -402,42 +413,47 @@ class HilbertSimulation:
         eye = self.get_eye(SASB.shape[0])
 
         result = {
+            State.EQUILIBRIUM: C.hbar / (C.k_B * T),
+            State.EPR: SAy + SBy,
+            State.CISS: np.cos(0.5 * chi) * ((1 / 4) * eye - SASB)
+            + np.sin(0.5 * chi) * ((1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz),
             State.SINGLET: (1 / 4) * eye - SASB,
             State.TRIPLET: (3 / 4) * eye + SASB,
-            State.TRIPLET_PLUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz),
             State.TRIPLET_MINUS: (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
-            State.TRIPLET_ZERO: (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz,
+            State.TRIPLET_PLUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz),
             State.TRIPLET_PLUS_MINUS: (2 * SAz**2 + SAz) * (2 * SBz**2 + SBz)
             + (2 * SAz**2 - SAz) * (2 * SBz**2 - SBz),
-            State.EQUILIBRIUM: C.hbar / (C.k_B * T),
+            State.TRIPLET_ZERO: (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz,
+            State.TRIPLET_X: (1 / 4) * eye + SAx @ SBx - SAy @ SBy + SAz @ SBz,
+            State.TRIPLET_Y: (1 / 4) * eye - SAx @ SBx + SAy @ SBy + SAz @ SBz,
+            State.TRIPLET_Z: (1 / 4) * eye + SAx @ SBx + SAy @ SBy - SAz @ SBz,
             State.TP_SINGLET: self.tp_singlet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
-            State.TP_TRIPLET: self.tp_triplet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
-            State.TP_TRIPLET_ZERO: self.tp_triplet_zero_projop(
-                SAx, SAy, SAz, SBx, SBy, SBz
-            ),
-            State.TP_TRIPLET_PLUS: self.tp_triplet_plus_projop(
-                SAx, SAy, SAz, SBx, SBy, SBz
-            ),
-            State.TP_TRIPLET_MINUS: self.tp_triplet_minus_projop(
-                SAx, SAy, SAz, SBx, SBy, SBz
-            ),
             State.TP_QUINTET: self.tp_quintet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
-            State.TP_QUINTET_ZERO: self.tp_quintet_zero_projop(
-                SAx, SAy, SAz, SBx, SBy, SBz
-            ),
-            State.TP_QUINTET_PLUS_TWO: self.tp_quintet_plus_two_projop(
-                SAx, SAy, SAz, SBx, SBy, SBz
-            ),
-            State.TP_QUINTET_PLUS_ONE: self.tp_quintet_plus_one_projop(
+            State.TP_QUINTET_MINUS_ONE: self.tp_quintet_minus_one_projop(
                 SAx, SAy, SAz, SBx, SBy, SBz
             ),
             State.TP_QUINTET_MINUS_TWO: self.tp_quintet_minus_two_projop(
                 SAx, SAy, SAz, SBx, SBy, SBz
             ),
-            State.TP_QUINTET_MINUS_ONE: self.tp_quintet_minus_one_projop(
+            State.TP_QUINTET_PLUS_ONE: self.tp_quintet_plus_one_projop(
                 SAx, SAy, SAz, SBx, SBy, SBz
             ),
-            State.EPR: -(SAy + SBy),
+            State.TP_QUINTET_PLUS_TWO: self.tp_quintet_plus_two_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_QUINTET_ZERO: self.tp_quintet_zero_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_TRIPLET: self.tp_triplet_projop(SAx, SAy, SAz, SBx, SBy, SBz),
+            State.TP_TRIPLET_MINUS: self.tp_triplet_minus_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_TRIPLET_PLUS: self.tp_triplet_plus_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
+            State.TP_TRIPLET_ZERO: self.tp_triplet_zero_projop(
+                SAx, SAy, SAz, SBx, SBy, SBz
+            ),
         }
         return result[state]
 

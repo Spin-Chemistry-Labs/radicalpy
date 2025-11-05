@@ -21,7 +21,7 @@ def main(Bmax=336, Bmin=333, dB=0.01, tmax=3e-6, dt=5e-9):
     print(B1_freq)
     D = 0
     J = (
-        -0.001
+        0.001
     )  # (np.sum((sim.projection_operator(state=State.SINGLET) - sim.projection_operator(state=State.TRIPLET))))
     krec = 1e7
     kesc = 1e7
