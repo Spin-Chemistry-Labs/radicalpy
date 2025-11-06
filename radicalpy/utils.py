@@ -26,6 +26,7 @@ Unit conversions
       ``mT_to_MHz/Gauss/…``,
       ``angular_frequency_in_MHz``, ``*_to_angular_frequency``:
       Consistent conversions between G, mT, MHz and rad·s⁻¹·T⁻¹.
+      Consistent conversions between GHz, J, meV, mK.
 
 Angular grids & spherical geometry
     - ``anisotropy_check(theta, phi)``: Validate angle grids and parity (θ odd/φ even).
@@ -77,6 +78,13 @@ Quantum-chemistry integration (ORCA)
     - Internal: ``_hyperfine_from_orca6_out`` / ``_hyperfine_from_orca6_property_txt``.
       Return zero-based nucleus indices, isotope labels, and 3×3 HFC tensors (mT).
     - ``read_lines_utf8_or_utf16le``: Robust text decoding for ORCA outputs.
+    - ``write_orca_from_pdb``: Creates customisable ORCA input files.
+
+Quantum quantification methods
+    - ``negativity``: Computes the (logarithmic) negativity of a multipartite density matrix.
+        A measure of entanglement.
+    - ``purity``: Calculates the purity of a density matrix.
+    - ``von_neumann_entropy``: Computes the von Neumann entropy of a quantum state.
 
 Chemistry utilities (RDKit)
     - ``smiles_to_3d(smiles, add_h=True, opt='mmff')``: Generate a 3D conformer
@@ -303,6 +311,65 @@ def Gauss_to_mT(Gauss: float) -> float:
             (mT).
     """
     return Gauss / 10
+
+
+def GHz_to_meV(GHz: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy/frequency from GHz to meV.
+
+    Uses 1 GHz = 4.1357×10⁻³ meV.
+
+    Parameters
+    ----------
+    GHz : float or ndarray
+        Value(s) in GHz.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in meV.
+    """
+    return GHz * 4.1357e-3
+
+
+def GHz_to_mK(GHz: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert a frequency from GHz to mK using h ν = k_B T.
+
+    Relation:
+        h · (1e9 · ν_GHz) = k_B · (1e-3 · T_mK)
+        ⇒ T_mK = 1e12 · (h / k_B) · ν_GHz
+
+    Parameters
+    ----------
+    GHz : float or ndarray
+        Value(s) in GHz.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in mK.
+    """
+    return GHz * 1.0e12 * (C.h / C.k_B)
+
+
+def J_to_meV(J: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from Joule (J) to meV.
+
+    Uses 1 eV = 1.602176565×10⁻¹⁹ J.
+
+    Parameters
+    ----------
+    J : float or ndarray
+        Value(s) in Joule.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in meV.
+    """
+    return 1000.0 * J / C.e
 
 
 def Lorentzian(B: np.ndarray, amplitude: float, Bhalf: float) -> np.ndarray:
@@ -665,25 +732,19 @@ def eigensorter(H, threshold=1e-12):
     - For Hermitian ``H``, eigenvectors are expected to be orthonormal up to
       numerical precision; for general ``H`` they need not be.
     """
-    # calculate eigenvalues and eigenvectors
     evals, evecs = np.linalg.eig(H)
-    # get the list of sorted indices from the eigenvalues
     ids = np.argsort(evals)
-    # sort the eigenvalues
     evals = evals[ids]
-    # sort the eigenvectors
-    evecs = evecs[:, ids]
-    # transpose the vectors (row-stack)
-    evecs = evecs.T
-    # test the result
-    error = np.linalg.norm(
-        [evals[k] - vec.conj().T @ H @ vec for k, vec in enumerate(evecs)]
-    )
-    if error > threshold:
-        print("Error size: ", error)
-        return error
-    else:
-        return evals, evecs
+    evecs = evecs[:, ids].T  # shape (N, N)
+
+    # check
+    residuals = [evals[k] - evecs[k].conj().T @ H @ evecs[k] for k in range(len(evals))]
+    error = np.linalg.norm(residuals)
+
+    # if error > threshold:
+    #     raise ValueError(f"eigensorter: orthogonality/diagonalization error {error} > {threshold}")
+
+    return evals, evecs
 
 
 def enumerate_spin_states_from_base(base: int) -> np.ndarray:
@@ -802,6 +863,86 @@ def infer_bonds(elements, coords, scale=1.20, max_dist=2.0):
     return bonds
 
 
+def make_resonance_sticks(
+    *,
+    bins: int = 1000,
+    freq: float = 9.373e9,  # microwave freq (Hz)
+    gval: float = 2.0023,  # g-factor
+    hfcH=(),
+    hfcN=(),
+):
+    """
+    Stick-field/intensity generator.
+
+    Returns
+    -------
+    fields_gauss : (M,) ndarray
+        Non-zero histogram bin centers, in GAUSS.
+    intensities  : (M,) ndarray
+        Corresponding normalized intensities (sum = 1).
+    """
+    # unpack
+    hfcH = np.asarray(hfcH, float)
+    hfcN = np.asarray(hfcN, float)
+
+    Hnumber = len(hfcH)  # 4
+    Nnumber = len(hfcN)  # 1
+
+    # base field (gauss), same as:
+    # Bvalue0 = planck * freq / gval / bohr * 10000;
+    # planck = C.h, bohr = C.mu_B
+    B0_gauss = C.h * freq / (gval * C.mu_B) * 1e4
+
+    # all proton configs: 2^Hnumber, written in binary
+    configH = 2**Hnumber
+    # all nitrogen configs: 3^Nnumber, written in base-3
+    configN = 3**Nnumber
+
+    # build all B-sticks
+    sticks = []
+
+    for idxN in range(configN):
+        # base-3 digits for nitrogen (rightmost digit is our only N)
+        # e.g. 0 -> "0", 1 -> "1", 2 -> "2"
+        confN = np.base_repr(idxN, base=3).zfill(Nnumber)
+
+        for idxH in range(configH):
+            # base-2 digits for protons
+            confH = np.base_repr(idxH, base=2).zfill(Hnumber)
+
+            Bval = B0_gauss
+
+            # proton shifts: mi = (0 or 1) - 0.5  -> {-0.5, +0.5}
+            for x in range(Hnumber):
+                mi = int(confH[x]) - 0.5
+                Bval = Bval - hfcH[x] * mi
+
+            # nitrogen shifts: mi = (0,1,2) - 1 -> {-1,0,+1}
+            for x in range(Nnumber):
+                mi = int(confN[x]) - 1
+                Bval = Bval - hfcN[x] * mi
+
+            sticks.append(Bval)
+
+    sticks = np.asarray(sticks, float)
+
+    # histogram
+    # numpy returns (counts, bin_edges), so we'll take midpoints as "fields"
+    counts, edges = np.histogram(sticks, bins=bins)
+    # bin centers
+    centers = 0.5 * (edges[:-1] + edges[1:])
+
+    # keep only nonzero bins
+    nonzero = counts != 0
+    fields = centers[nonzero]
+    intensities = counts[nonzero].astype(float)
+
+    # normalise intensities
+    intensities /= intensities.sum()
+
+    return fields, intensities
+
+
 def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
     """Lorentzian MARY spectral shape.
 
@@ -815,6 +956,101 @@ def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
             np.ndarray: The modulated MARY signal.
     """
     return 1 / (1 + mod_signal**2) - lfe_magnitude / (0.1 + mod_signal**2)
+
+
+def meV_to_GHz(meV: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from meV to GHz.
+
+    Uses 1 meV = 1 / (4.1357×10⁻³) GHz.
+
+    Parameters
+    ----------
+    meV : float or ndarray
+        Value(s) in meV.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in GHz.
+    """
+    return meV / 4.1357e-3
+
+
+def meV_to_J(meV: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from meV to Joule (J).
+
+    Uses 1 eV = 1.602176565×10⁻¹⁹ J.
+
+    Parameters
+    ----------
+    meV : float or ndarray
+        Value(s) in meV.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in Joule.
+    """
+    return 1.0e-3 * meV * C.e
+
+
+def meV_to_mK(meV: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from meV to mK.
+
+    Uses 1 mK = 8.61740×10⁻⁵ meV.
+
+    Parameters
+    ----------
+    meV : float or ndarray
+        Value(s) in meV.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in mK.
+    """
+    return meV / 8.61740e-5
+
+
+def mK_to_GHz(mK: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert a temperature-like energy from mK to GHz using h ν = k_B T.
+
+    Inverse of :func:`convert_GHz_to_mK`.
+
+    Parameters
+    ----------
+    mK : float or ndarray
+        Value(s) in mK.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in GHz.
+    """
+    return mK * 1.0e-12 * (C.k_B / C.h)
+
+
+def mK_to_meV(mK: float | np.ndarray) -> float | np.ndarray:
+    """
+    Convert an energy from mK to meV.
+
+    Uses 1 mK = 8.61740×10⁻⁵ meV.
+
+    Parameters
+    ----------
+    mK : float or ndarray
+        Value(s) in mK.
+
+    Returns
+    -------
+    float or ndarray
+        Value(s) in meV.
+    """
+    return mK * 8.61740e-5
 
 
 def modulated_signal(timeconstant: np.ndarray, theta: float, frequency: float):
@@ -1160,35 +1396,29 @@ def pdb_label(atom, scheme="chain_res_atom"):
 
 def purity(rho):
     """
-    Compute the purity of a quantum state.
+    Calculate the purity of a density matrix.
 
-    The purity is defined as
-
-    .. math::
-        P(\rho) = \mathrm{Tr}(\rho^2),
-
-    where :math:`\rho` is a density matrix. It measures the mixedness of
-    a quantum state: pure states satisfy :math:`P = 1`, while maximally
-    mixed states have :math:`P = 1/d`, where :math:`d` is the Hilbert-space
-    dimension.
+    The purity is defined as :math:`P(\\rho) = \\operatorname{Tr}(\\rho^2)`.
+    It quantifies how mixed a quantum state is: pure states have
+    :math:`P = 1`, while a maximally mixed state in a Hilbert space of
+    dimension :math:`d` has :math:`P = 1/d`.
 
     Parameters
     ----------
     rho : ndarray of shape (N, N)
-        Density matrix of the quantum state. It should be Hermitian and
-        normalised (``Tr(rho) = 1``), although the function does not
-        explicitly enforce these conditions.
+        Density matrix of the quantum state. The matrix is expected to be
+        square and (approximately) Hermitian, with unit trace, although these
+        conditions are not enforced inside the function.
 
     Returns
     -------
     float
-        The purity :math:`P(\rho)`, computed as ``Re(Tr(rho @ rho))``.
+        Purity of the state, computed as ``real(trace(rho @ rho))``.
 
     Notes
     -----
-    - The result is real for any Hermitian ``rho``; the real part is
-      taken to suppress small imaginary numerical noise.
-    - Purity values range from ``1/d`` (maximally mixed) to ``1`` (pure).
+    The real part of the trace is returned to suppress small imaginary
+    components that can arise from numerical round-off.
     """
     return np.real(np.trace(rho @ rho))
 
@@ -1784,6 +2014,48 @@ def _check_full_sphere(theta: np.ndarray, phi: np.ndarray) -> Tuple[int, int]:
             "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
         )
     return nth, nph
+
+
+def spin_character(state: np.ndarray, character: np.ndarray) -> float:
+    """
+    Compute the “character” (overlap/content) of a spin state with respect to
+    a chosen subspace, e.g. singlet, triplet, quintet, ...
+
+    The subspace is specified by a list of kets (column vectors). The function
+    builds the projector onto the span of those kets and evaluates the
+    expectation value of that projector in the given state.
+
+    The state may be given either as a pure state vector ``|ψ⟩`` or as a
+    density matrix ``ρ``:
+
+    - If ``state`` is a 1-D array, the function returns
+      :math:`⟨ψ|P|ψ⟩`, i.e. the probability that ``|ψ⟩`` lies in the
+      specified subspace.
+    - If ``state`` is a 2-D array, the function returns
+      :math:`\\mathrm{Tr}(P ρ)`, i.e. the population of the subspace in the
+      mixed state ``ρ``.
+
+    Parameters
+    ----------
+    state : ndarray
+        Either a state vector of shape ``(N,)`` or a density matrix of shape
+        ``(N, N)``. The dimension ``N`` must match that of the kets in
+        ``character``.
+    character : list of ndarray
+        List of basis kets (each of shape ``(N,)``) that span the subspace
+        whose character is to be measured.
+
+    Returns
+    -------
+    float
+        The subspace weight / character, in the range ``[0, 1]`` for
+        normalised inputs.
+    """
+    operator = sum(np.outer(ket, ket.conj().T) for ket in character)
+    if state.ndim == 1:
+        return float(np.real(state.conj().T @ operator @ state))
+    else:
+        return float(np.real(np.trace(operator @ state)))
 
 
 def spherical_average(

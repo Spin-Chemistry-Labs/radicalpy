@@ -124,6 +124,11 @@ class HilbertTests(unittest.TestCase):
             rp.simulation.State.TP_QUINTET_MINUS_TWO,
             rp.simulation.State.TP_QUINTET_MINUS_ONE,
             rp.simulation.State.EPR,
+            rp.simulation.State.CISS,
+            rp.simulation.State.TRIPLET_X,
+            rp.simulation.State.TRIPLET_Y,
+            rp.simulation.State.TRIPLET_Z,
+            rp.simulation.State.SECOND_ORDER_POLARISATION,
         ]
 
     def tearDown(self):
@@ -749,6 +754,11 @@ class LiouvilleTests(unittest.TestCase):
             rp.simulation.State.TP_QUINTET_MINUS_TWO,
             rp.simulation.State.TP_QUINTET_MINUS_ONE,
             rp.simulation.State.EPR,
+            rp.simulation.State.CISS,
+            rp.simulation.State.TRIPLET_X,
+            rp.simulation.State.TRIPLET_Y,
+            rp.simulation.State.TRIPLET_Z,
+            rp.simulation.State.SECOND_ORDER_POLARISATION,
         ]
 
     def test_initial_density_matrix(self):
