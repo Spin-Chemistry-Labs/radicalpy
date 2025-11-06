@@ -14,6 +14,7 @@ Functions:
         - `anisotropy_loop`: Inner loop over (θ, φ) orientations; propagates and returns product probabilities.
         - `epr`: CW/AC time-domain EPR vs B0 with B1 drive and frequency offset.
         - `cidnp`: CIDNP polarisation vs field for S–T0 mixing.
+        - `coherent_control`: Coherent control of radical pair spin dynamics.
         - `kine_quantum_mary`: Hybrid kinetic+quantum MARY with stochastic hyperfine sampling.
         - `magnetic_field_loop`: Inner loop over swept field B; returns time-resolved density matrices.
         - `magnetic_field_loop_semiclassical`: Semiclassical inner loop over swept field B; returns time-resolved density matrices.
@@ -74,6 +75,7 @@ References:
         - [Antill & Vatai, *J. Chem. Theory Comput.* **20**, 9488–9499 (2024)](https://doi.org/10.1021/acs.jctc.4c00887).
         - [Konowalczyk et al., *PCCP* **23**, 1273–1284 (2021)](https://doi.org/10.1039/D0CP04814C).
         - [Maeda et al., *Mol. Phys.* **104**, 1779–1788 (2006)](https://doi.org/10.1080/14767050600588106).
+        - [Masuzawa et al., *J. Chem. Phys.* **152**, 014301 (2020)](https://doi.org/10.1063/1.5131557).
 
 Requirements:
         - `numpy`, `scipy` (sparse algebra, matrix exponentials), and a simulation object
@@ -91,7 +93,7 @@ See also:
 """
 
 import itertools
-from typing import Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 import numpy as np
 import scipy as sp
@@ -108,6 +110,7 @@ from .simulation import (
     SemiclassicalSimulation,
     State,
 )
+from .shared import constants as C
 from .utils import (
     anisotropy_check,
     cidnp_polarisation_diffusion_model,
@@ -406,6 +409,276 @@ def cidnp(
     return B0, polarisation
 
 
+def coherent_control(
+    sim,
+    *,
+    init_state,
+    obs_state,
+    time: np.ndarray,
+    sticks_A_freq: Sequence[float],
+    sticks_A_int: Sequence[float],
+    sticks_B_freq: Sequence[float],
+    sticks_B_int: Sequence[float],
+    B1_G: float = 200.0,  # gauss
+    g_e: float = 2.0023,
+    k_s: float = 2e6,
+    J: float = 0.0,
+    dt_override: Optional[float] = None,
+    u_max_factor: float = 1.0,
+    u_smooth: float = 0.2,
+) -> Dict[str, np.ndarray]:
+    """
+    Coherent microwave-feedback simulation.
+
+    It treats the radical pair as an **ensemble** of frequency-configurations.
+    Each configuration (A-stick × B-stick) is propagated in Hilbert space under
+
+    .. math::
+
+        H_{ij}(t) = \omega_{A,i} S_{zA} + \omega_{B,j} S_{zB} + H_J + u(t)(S_{xA}+S_{xB})
+
+    where
+
+    - the frequencies :math:`\omega_{A,i}`, :math:`\omega_{B,j}` come from the
+      stick lists ``sticks_A_freq`` and ``sticks_B_freq`` (in rad/s),
+    - the weights of each configuration are the products of the normalised
+      stick intensities ``sticks_A_int`` and ``sticks_B_int``,
+    - ``u(t)`` is a *global* feedback field, common to all configurations,
+      built from the ensemble signal.
+
+    The feedback field is computed at every time step as
+
+    .. math::
+
+        u_\text{raw}(t)
+        = B_{1c}\, \sum_{ij} w_{ij} \, \Im \operatorname{Tr}
+            \left[ P_\text{target}( V \rho_{ij} - \rho_{ij} V ) \right],
+
+    then clipped to ``±u_max_factor * B1c`` and optionally smoothed in time by
+    an exponential smoother. Here
+
+    - ``V = S_xA + S_xB`` is the microwave operator,
+    - ``P_target = |αβ⟩⟨αβ| + |βα⟩⟨βα|`` is the “target” projector,
+    - ``B1c = g_e μ_B B1_T / ħ`` is the on-resonance Rabi frequency, with
+      ``B1_G`` given in gauss.
+
+    Time propagation is done configuration-by-configuration with an RK4 step
+    on the user-supplied time grid.
+
+    Parameters
+    ----------
+    sim : HilbertSimulation
+    init_state : State
+        Spin state used both for the initial density.
+    obs_state : State
+        Spin state to monitor as an observable population during the run.
+        A projector onto this state is evaluated on every configuration and
+        then averaged over the ensemble.
+    time : ndarray
+        1D array of time points (s). The integration advances along this grid.
+        If ``dt_override`` is not given, the step size is inferred from
+        ``time[1] - time[0]``.
+    sticks_A_freq, sticks_B_freq : sequence of float
+        Stick frequencies for radical A and radical B, respectively, in
+        **angular frequency** units (rad/s), e.g. ``2*pi*1e6*[ ... MHz ... ]``.
+    sticks_A_int, sticks_B_int : sequence of float
+        Corresponding intensities for the two stick sets. Each list is
+        normalised so that its entries sum to 1. The weight of configuration
+        (i, j) is then the product of the two normalised intensities.
+    B1_G : float, optional
+        Microwave amplitude in **gauss**. Default is ``200.0``.
+    g_e : float, optional
+        Electron g-value used in the Rabi-frequency conversion. Default 2.0023.
+    k_s : float, optional
+        Haberkorn recombination rate applied with respect to ``init_state``
+        (s⁻¹). Default ``2e6``.
+    J : float, optional
+        Exchange coupling (mT).
+    dt_override : float, optional
+        If provided, use this as the integration time step instead of
+        ``time[1] - time[0]``.
+    u_max_factor : float, optional
+        Hard clip on the feedback: ``|u(t)| ≤ u_max_factor * B1c``.
+        Useful to suppress large initial spikes. Default 1.0.
+    u_smooth : float, optional
+        Exponential smoothing factor for the feedback in (0, 1). Larger values
+        give smoother control fields. Default 0.2.
+
+    Returns
+    -------
+    dict of str -> ndarray
+        A dictionary with the following entries:
+
+        - ``"time"`` : (T,) time axis (s)
+        - ``"u"`` : (T,) feedback field (rad/s)
+        - ``"target"`` : (T,) ensemble-average target population
+        - ``"each_target"`` : (N_conf, T) target population per configuration
+        - ``"weights"`` : (N_conf,) configuration weights
+        - ``"obs"`` : (T,) ensemble-average population of ``obs_state``
+        - ``"each_obs"`` : (N_conf, T) per-configuration population of ``obs_state``
+        - ``"population"`` : (T,) ensemble-average trace of ρ
+        - ``"each_population"`` : (N_conf, T) per-configuration trace
+    """
+    mu_B = C.mu_B
+    hbar = C.hbar
+
+    # time step
+    if dt_override is not None:
+        dt = float(dt_override)
+    else:
+        if len(time) < 2:
+            raise ValueError("time needs >=2 points")
+        dt = float(time[1] - time[0])
+
+    # normalise stick intensities
+    sticks_A_int = np.asarray(sticks_A_int, float)
+    sticks_B_int = np.asarray(sticks_B_int, float)
+    sticks_A_int /= sticks_A_int.sum()
+    sticks_B_int /= sticks_B_int.sum()
+    sticks_A_freq = np.asarray(sticks_A_freq, float)
+    sticks_B_freq = np.asarray(sticks_B_freq, float)
+
+    SnumA = len(sticks_A_freq)
+    SnumB = len(sticks_B_freq)
+    Snum = SnumA * SnumB
+
+    # spin operators
+    SxA = sim.spin_operator(0, "x")
+    SzA = sim.spin_operator(0, "z")
+    SxB = sim.spin_operator(1, "x")
+    SzB = sim.spin_operator(1, "z")
+
+    # microwave operator
+    V = SxA + SxB
+
+    # target |αβ><αβ| + |βα><βα|
+    Target = np.zeros((4, 4), complex)
+    Target[1, 1] = 1.0
+    Target[2, 2] = 1.0
+
+    # projection for recombination
+    init_proj = sim.projection_operator(init_state)
+    obs_proj = sim.projection_operator(obs_state)
+
+    def Lk(rho):
+        # Haberkorn recombination superoperator
+        return -0.5 * k_s * (init_proj @ rho + rho @ init_proj)
+
+    # B1: gauss -> tesla
+    B1_T = B1_G * 1e-4
+    B1c = (g_e * mu_B * B1_T) / hbar  # rad/s
+    u_cap = u_max_factor * B1c
+
+    # exchange Hamiltonian
+    if abs(J) > 0.0:
+        H_J = sim.exchange_hamiltonian(J)
+    else:
+        H_J = np.zeros_like(SxA)
+
+    # static H for each configuration
+    H0_list = []
+    weights = []
+    for i in range(SnumA):
+        for j in range(SnumB):
+            H0 = sticks_A_freq[i] * SzA + sticks_B_freq[j] * SzB + H_J
+            H0_list.append(H0)
+            weights.append(sticks_A_int[i] * sticks_B_int[j])
+    weights = np.asarray(weights, float)
+
+    # initial density
+    lam = 0.001
+    rho0 = (obs_proj + 3.0 * lam * V) / 3.0  # trace = 1
+    rho_list = [rho0.copy() for _ in range(Snum)]
+
+    Tlen = len(time)
+    u_arr = np.zeros(Tlen, float)
+
+    target_arr = np.zeros(Tlen, float)
+    each_target = np.zeros((Snum, Tlen), float)
+
+    obs_arr = np.zeros(Tlen, float)
+    each_obs = np.zeros((Snum, Tlen), float)
+
+    population_arr = np.zeros(Tlen, float)
+    each_population = np.zeros((Snum, Tlen), float)
+
+    def drho_dt(H, u, rho):
+        Ht = H + u * V
+        comm = Ht @ rho - rho @ Ht
+        return -1j * comm + Lk(rho)
+
+    u_prev = 0.0
+    for t_idx, t in enumerate(time):
+        # ----- feedback signal -----
+        signal = 0.0
+        for m, rho in enumerate(rho_list):
+            comm = V @ rho - rho @ V
+            s = np.imag(np.trace(Target @ comm))
+            signal += weights[m] * s
+        u_raw = B1c * signal
+
+        # clip
+        if u_raw > u_cap:
+            u_raw = u_cap
+        elif u_raw < -u_cap:
+            u_raw = -u_cap
+
+        # first step: no smoothing, then smooth
+        if t_idx == 0:
+            u_t = u_raw
+        else:
+            u_t = u_smooth * u_prev + (1.0 - u_smooth) * u_raw
+        u_prev = u_t
+        u_arr[t_idx] = u_t
+
+        # ----- measure observables at this time -----
+        pop_t = 0.0
+        for m, rho in enumerate(rho_list):
+            # target
+            each_target[m, t_idx] = np.real(np.trace(Target @ rho))
+            # observable
+            each_obs[m, t_idx] = np.real(np.trace(obs_proj @ rho))
+            # population (trace)
+            tr_m = np.real(np.trace(rho))
+            each_population[m, t_idx] = tr_m
+            pop_t += weights[m] * tr_m
+
+        target_arr[t_idx] = float(np.sum(weights * each_target[:, t_idx]))
+        obs_arr[t_idx] = float(np.sum(weights * each_obs[:, t_idx]))
+        population_arr[t_idx] = pop_t
+
+        # ----- evolve to next time step -----
+        if t_idx == Tlen - 1:
+            break
+
+        new_rho_list = []
+        for m, rho in enumerate(rho_list):
+            H0 = H0_list[m]
+            # RK4
+            k1 = drho_dt(H0, u_t, rho)
+            k2 = drho_dt(H0, u_t, rho + 0.5 * dt * k1)
+            k3 = drho_dt(H0, u_t, rho + 0.5 * dt * k2)
+            k4 = drho_dt(H0, u_t, rho + dt * k3)
+            rho_next = rho + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+            # symmetrise
+            rho_next = 0.5 * (rho_next + rho_next.conj().T)
+
+            new_rho_list.append(rho_next)
+        rho_list = new_rho_list
+
+    return {
+        "time": time,
+        "u": u_arr,
+        "target": target_arr,
+        "each_target": each_target,
+        "weights": weights,
+        "obs": obs_arr,
+        "each_obs": each_obs,
+        "population": population_arr,
+        "each_population": each_population,
+    }
+
+
 def epr(
     sim: HilbertSimulation,
     init_state: State,
@@ -514,110 +787,116 @@ def epr(
 
 def field_switching(
     sim: HilbertSimulation,
-    init_state: State,
-    obs_state: State,
     *,
-    time: np.ndarray,
     B_on: float = 2.0,
     B_off: float = 0.0,
-    D: float = 0.0,
-    J: float = 0.0,
-    kinetics: list = [],
-    relaxations: list = [],
-    theta: Optional[float] = None,
-    phi: Optional[float] = None,
-    hfc_anisotropy: bool = False,
-    n_offsets: int = 50,
+    init_state: State = State.TRIPLET,
+    dt: float = 1e-9,
+    n_offsets: int = 100,
     offset_step: int = 10,
     pulse_width_steps: int = 800,
+    k_rec: float = 50e6,
+    k_esc: float = 2e6,
+    J: float = 0.0,
+    D: float = 0.0,
 ) -> dict:
     """
-    Field-switching experiment: compare ON→OFF vs ON→ON evolutions
-    for many different switch steps.
+    Nanosecond field-switching experiment. Switched External Magnetic Field (SEMF) simulation.
+
+    Parameters
+    ----------
+    sim : HilbertSimulation
+    B_on, B_off : float
+        Magnetic fields (mT) for the “before switch” part and the “after switch”
+        part, respectively.
+    dt : float
+        Time step (s).
+    n_offsets : int
+        Number of different switch times to scan.
+    offset_step : int
+        Number of time steps to increase the switch time by each iteration.
+    pulse_width_steps : int
+        Length (in steps) of the second part of the evolution (the “pulse”).
+    k_rec, k_esc : float
+        Haberkorn recombination and escape rates (s⁻¹).
+    J, D : float
+        Exchange and dipolar couplings.
+
+    Returns
+    -------
+    dict
+        {
+          "time": (T,),
+          "switch_times": (n_offsets,),
+          "TA_on": (T, n_offsets),
+          "TA_off": (T, n_offsets),
+          "TA_diff": (T, n_offsets),
+        }
     """
-    H_on = sim.total_hamiltonian(
-        B0=B_on, D=D, J=J, hfc_anisotropy=hfc_anisotropy, theta=theta, phi=phi
-    )
-    H_off = sim.total_hamiltonian(
-        B0=B_off, D=D, J=J, hfc_anisotropy=hfc_anisotropy, theta=theta, phi=phi
-    )
+    # base Hilbert Hamiltonians (Hermitian parts)
+    H_on = sim.total_hamiltonian(B0=B_on, J=J, D=D)
+    H_off = sim.total_hamiltonian(B0=B_off, J=J, D=D)
 
-    sim.apply_liouville_hamiltonian_modifiers(H_on, kinetics + relaxations)
-    sim.apply_liouville_hamiltonian_modifiers(H_off, kinetics + relaxations)
+    # singlet projector for the Haberkorn term
+    P_S = sim.projection_operator(State.SINGLET)
+    dim = P_S.shape[0]
+    I = np.eye(dim, dtype=complex)
 
-    dim = H_on.shape[0]
-    H_on_sp = sps.csc_matrix(H_on)
-    H_off_sp = sps.csc_matrix(H_off)
+    # non-Hermitian Haberkorn piece: -i/2 (k_rec P_S + k_esc I)
+    decay = -0.5j * (k_rec * P_S + k_esc * I)
 
-    dt = time[1] - time[0]
+    # full non-Hermitian Hamiltonians
+    H_on_NH = H_on + decay
+    H_off_NH = H_off + decay
 
-    # longest evolution we need
-    max_switch_steps = (n_offsets - 1) * offset_step
-    max_steps = max_switch_steps + pulse_width_steps
-    time_long = np.arange(max_steps, dtype=float) * dt
+    # one-step propagators
+    U_on = expm(-1j * H_on_NH * dt)
+    U_off = expm(-1j * H_off_NH * dt)
 
-    Up_on, Um_on = sim.unitary_propagator(H_on_sp, dt)
-    Up_off, Um_off = sim.unitary_propagator(H_off_sp, dt)
+    # initial density: triplet
+    rho0 = sim.projection_operator(init_state)
+    rho0 = rho0 / np.trace(rho0)
 
-    ta_on = np.zeros((n_offsets, max_steps), dtype=float)
-    ta_off = np.zeros((n_offsets, max_steps), dtype=float)
+    # maximum total steps we need
+    max_steps = (n_offsets - 1) * offset_step + pulse_width_steps
+    time = np.arange(max_steps, dtype=float) * dt
+
+    TA_on = np.zeros((max_steps, n_offsets), dtype=float)
+    TA_off = np.zeros((max_steps, n_offsets), dtype=float)
 
     for i in range(n_offsets):
+        # number of high-field steps before switching
         switch_steps = i * offset_step
 
-        # ---------- ON branch (H_on → H_off) ----------
-        if switch_steps > 0:
-            t_pre = np.arange(switch_steps, dtype=float) * dt
-            rhos_pre_on = sim.time_evolution(init_state, t_pre, H_on_sp)
-            rho_on = rhos_pre_on[-1]
-            probs_pre_on = sim.product_probability(obs_state, rhos_pre_on[None, ...])[0]
-            sim.apply_hilbert_kinetics(time, probs_pre_on, kinetics)
-            ta_on[i, :switch_steps] = probs_pre_on
-        else:
-            rho_on = sim.initial_density_matrix(init_state, H_on)
+        rho_on = rho0.copy()
+        rho_off = rho0.copy()
 
-        # second segment under H_off, starting from rho_on
-        rhos_pulse_on = np.zeros((pulse_width_steps, dim, dim), dtype=complex)
-        rhos_pulse_on[0] = rho_on
-        for k in range(1, pulse_width_steps):
-            rhos_pulse_on[k] = Up_on @ rhos_pulse_on[k - 1] @ Um_on
-        probs_pulse_on = sim.product_probability(obs_state, rhos_pulse_on[None, ...])[0]
-        sim.apply_hilbert_kinetics(time, probs_pulse_on, kinetics)
-        ta_on[i, switch_steps : switch_steps + pulse_width_steps] = probs_pulse_on
+        for k in range(max_steps):
+            # record traces
+            TA_on[k, i] = float(np.real(np.trace(rho_on)))
+            TA_off[k, i] = float(np.real(np.trace(rho_off)))
 
-        # ---------- REF branch (H_on → H_on) ----------
-        if switch_steps > 0:
-            rhos_pre_off = sim.time_evolution(init_state, t_pre, H_on_sp)
-            rho_off = rhos_pre_off[-1]
-            probs_pre_off = sim.product_probability(obs_state, rhos_pre_off[None, ...])[
-                0
-            ]
-            sim.apply_hilbert_kinetics(time, probs_pre_off, kinetics)
-            ta_off[i, :switch_steps] = probs_pre_off
-        else:
-            rho_off = sim.initial_density_matrix(init_state, H_on)
+            # step forward
+            if k < switch_steps:
+                # before switch: both see high field
+                rho_on = U_on @ rho_on @ U_on.conj().T
+                rho_off = U_on @ rho_off @ U_on.conj().T
+            else:
+                # after switch: ON branch moves to low field,
+                # OFF branch stays in high field
+                rho_on = U_off @ rho_on @ U_off.conj().T
+                rho_off = U_on @ rho_off @ U_on.conj().T
 
-        rhos_pulse_off = np.zeros((pulse_width_steps, dim, dim), dtype=complex)
-        rhos_pulse_off[0] = rho_off
-        for k in range(1, pulse_width_steps):
-            rhos_pulse_off[k] = Up_off @ rhos_pulse_off[k - 1] @ Um_off
-        probs_pulse_off = sim.product_probability(obs_state, rhos_pulse_off[None, ...])[
-            0
-        ]
-        sim.apply_hilbert_kinetics(time, probs_pulse_off, kinetics)
-        ta_off[i, switch_steps : switch_steps + pulse_width_steps] = probs_pulse_off
-
-    ta_diff = ta_on - ta_off
-    switch_times = (np.arange(n_offsets) * offset_step * dt).astype(float)
-    field_switch_result = np.sum(ta_diff, 1)
+    TA_diff = TA_on - TA_off
+    switch_times = np.arange(n_offsets, dtype=float) * offset_step * dt
 
     return {
-        "time": time_long,
+        "time": time,
         "switch_times": switch_times,
-        "ta_on": ta_on,
-        "ta_off": ta_off,
-        "ta_diff": ta_diff,
-        "field_switch": field_switch_result,
+        "TA_on": TA_on,
+        "TA_off": TA_off,
+        "TA_diff": TA_diff,
+        "SEMF": TA_diff.sum(axis=0),
     }
 
 
@@ -1768,150 +2047,3 @@ def steady_state_mary(
 
     Phi_s = rhos @ Q.flatten()
     return rhos, Phi_s
-
-
-def coherent_control(
-    sim: HilbertSimulation,
-    *,
-    time: np.ndarray,
-    sticks_A_freq: Sequence[float],
-    sticks_A_int: Sequence[float],
-    sticks_B_freq: Sequence[float],
-    sticks_B_int: Sequence[float],
-    B1_G: float = 200.0,  # gauss
-    g_e: float = 2.0,
-    k_s: float = 2e6,
-    J: float = 0.0,
-    dt_override: Optional[float] = None,
-    u_max_factor: float = 1.0,  # cap: |u| <= u_max_factor * B1c
-    u_smooth: float = 0.2,  # 0 = no smoothing, 1 = fully prev
-) -> dict:
-    """Coherent-control / feedback with spike-safe feedback."""
-    mu_B = 9.274e-24
-    hbar = 1.05459e-34
-
-    if dt_override is not None:
-        dt = float(dt_override)
-    else:
-        if len(time) < 2:
-            raise ValueError("time needs >=2 points")
-        dt = float(time[1] - time[0])
-
-    # normalise sticks
-    sticks_A_int = np.asarray(sticks_A_int, float)
-    sticks_B_int = np.asarray(sticks_B_int, float)
-    sticks_A_int /= sticks_A_int.sum()
-    sticks_B_int /= sticks_B_int.sum()
-    sticks_A_freq = np.asarray(sticks_A_freq, float)
-    sticks_B_freq = np.asarray(sticks_B_freq, float)
-
-    SnumA = len(sticks_A_freq)
-    SnumB = len(sticks_B_freq)
-    Snum = SnumA * SnumB
-
-    # electron ops
-    SxA = sim.spin_operator(0, "x")
-    SzA = sim.spin_operator(0, "z")
-    SxB = sim.spin_operator(1, "x")
-    SzB = sim.spin_operator(1, "z")
-    V = SxA + SxB
-
-    # target |αβ><αβ| + |βα><βα|
-    Target = np.zeros((4, 4), complex)
-    Target[1, 1] = 1.0
-    Target[2, 2] = 1.0
-
-    P_S = sim.projection_operator(State.SINGLET)
-
-    def Lk(rho):
-        return -0.5 * k_s * (P_S @ rho + rho @ P_S)
-
-    # B1: gauss -> tesla
-    B1_T = B1_G * 1e-4
-    B1c = (g_e * mu_B * B1_T) / hbar  # rad/s
-    u_cap = u_max_factor * B1c
-
-    # static H for each configuration
-    if abs(J) > 0.0:
-        H_J = sim.exchange_hamiltonian(J)
-    else:
-        H_J = np.zeros_like(SxA)
-
-    H0_list = []
-    weights = []
-    for i in range(SnumA):
-        for j in range(SnumB):
-            H0 = sticks_A_freq[i] * SzA + sticks_B_freq[j] * SzB + H_J
-            H0_list.append(H0)
-            weights.append(sticks_A_int[i] * sticks_B_int[j])
-    weights = np.asarray(weights, float)
-
-    # initial ρ
-    lam = 0.001
-    P_T = sim.projection_operator(State.TRIPLET)
-    rho0 = (P_T + 3 * lam * V) / 3.0
-    rho_list = [rho0.copy() for _ in range(Snum)]
-
-    T = len(time)
-    u_arr = np.zeros(T, float)
-    target_arr = np.zeros(T, float)
-    each_target = np.zeros((Snum, T), float)
-
-    def drho_dt(H, u, rho):
-        Ht = H + u * V
-        comm = Ht @ rho - rho @ Ht
-        return -1j * comm + Lk(rho)
-
-    u_prev = 0.0
-    for t_idx, t in enumerate(time):
-        # feedback signal
-        signal = 0.0
-        for m, rho in enumerate(rho_list):
-            comm = V @ rho - rho @ V
-            s = np.imag(np.trace(Target @ comm))
-            signal += weights[m] * s
-        u_raw = B1c * signal
-
-        # clip
-        if u_raw > u_cap:
-            u_raw = u_cap
-        elif u_raw < -u_cap:
-            u_raw = -u_cap
-
-        # smooth
-        u_t = u_smooth * u_prev + (1.0 - u_smooth) * u_raw
-        u_prev = u_t
-        u_arr[t_idx] = u_t
-
-        # observables
-        for m, rho in enumerate(rho_list):
-            each_target[m, t_idx] = np.real(np.trace(Target @ rho))
-        target_arr[t_idx] = float(np.sum(weights * each_target[:, t_idx]))
-
-        if t_idx == T - 1:
-            break
-
-        new_rho_list = []
-        for m, rho in enumerate(rho_list):
-            H0 = H0_list[m]
-            # RK4
-            k1 = drho_dt(H0, u_t, rho)
-            k2 = drho_dt(H0, u_t, rho + 0.5 * dt * k1)
-            k3 = drho_dt(H0, u_t, rho + 0.5 * dt * k2)
-            k4 = drho_dt(H0, u_t, rho + dt * k3)
-            rho_next = rho + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
-            # symmetrise and renormalize
-            rho_next = 0.5 * (rho_next + rho_next.conj().T)
-            tr = np.real(np.trace(rho_next))
-            if tr != 0.0:
-                rho_next /= tr
-            new_rho_list.append(rho_next)
-        rho_list = new_rho_list
-
-    return {
-        "time": time,
-        "u": u_arr,
-        "target": target_arr,
-        "each_target": each_target,
-        "weights": weights,
-    }

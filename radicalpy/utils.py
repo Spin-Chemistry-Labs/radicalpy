@@ -863,6 +863,86 @@ def infer_bonds(elements, coords, scale=1.20, max_dist=2.0):
     return bonds
 
 
+def make_resonance_sticks(
+    *,
+    bins: int = 1000,
+    freq: float = 9.373e9,  # microwave freq (Hz)
+    gval: float = 2.0023,  # g-factor
+    hfcH=(),
+    hfcN=(),
+):
+    """
+    Stick-field/intensity generator.
+
+    Returns
+    -------
+    fields_gauss : (M,) ndarray
+        Non-zero histogram bin centers, in GAUSS.
+    intensities  : (M,) ndarray
+        Corresponding normalized intensities (sum = 1).
+    """
+    # unpack
+    hfcH = np.asarray(hfcH, float)
+    hfcN = np.asarray(hfcN, float)
+
+    Hnumber = len(hfcH)  # 4
+    Nnumber = len(hfcN)  # 1
+
+    # base field (gauss), same as:
+    # Bvalue0 = planck * freq / gval / bohr * 10000;
+    # planck = C.h, bohr = C.mu_B
+    B0_gauss = C.h * freq / (gval * C.mu_B) * 1e4
+
+    # all proton configs: 2^Hnumber, written in binary
+    configH = 2**Hnumber
+    # all nitrogen configs: 3^Nnumber, written in base-3
+    configN = 3**Nnumber
+
+    # build all B-sticks
+    sticks = []
+
+    for idxN in range(configN):
+        # base-3 digits for nitrogen (rightmost digit is our only N)
+        # e.g. 0 -> "0", 1 -> "1", 2 -> "2"
+        confN = np.base_repr(idxN, base=3).zfill(Nnumber)
+
+        for idxH in range(configH):
+            # base-2 digits for protons
+            confH = np.base_repr(idxH, base=2).zfill(Hnumber)
+
+            Bval = B0_gauss
+
+            # proton shifts: mi = (0 or 1) - 0.5  -> {-0.5, +0.5}
+            for x in range(Hnumber):
+                mi = int(confH[x]) - 0.5
+                Bval = Bval - hfcH[x] * mi
+
+            # nitrogen shifts: mi = (0,1,2) - 1 -> {-1,0,+1}
+            for x in range(Nnumber):
+                mi = int(confN[x]) - 1
+                Bval = Bval - hfcN[x] * mi
+
+            sticks.append(Bval)
+
+    sticks = np.asarray(sticks, float)
+
+    # histogram
+    # numpy returns (counts, bin_edges), so we'll take midpoints as "fields"
+    counts, edges = np.histogram(sticks, bins=bins)
+    # bin centers
+    centers = 0.5 * (edges[:-1] + edges[1:])
+
+    # keep only nonzero bins
+    nonzero = counts != 0
+    fields = centers[nonzero]
+    intensities = counts[nonzero].astype(float)
+
+    # normalise intensities
+    intensities /= intensities.sum()
+
+    return fields, intensities
+
+
 def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
     """Lorentzian MARY spectral shape.
 
@@ -1934,6 +2014,48 @@ def _check_full_sphere(theta: np.ndarray, phi: np.ndarray) -> Tuple[int, int]:
             "Not a full sphere: `phi` should be `linspace(0, np.pi, nphi)`"
         )
     return nth, nph
+
+
+def spin_character(state: np.ndarray, character: np.ndarray) -> float:
+    """
+    Compute the “character” (overlap/content) of a spin state with respect to
+    a chosen subspace, e.g. singlet, triplet, quintet, ...
+
+    The subspace is specified by a list of kets (column vectors). The function
+    builds the projector onto the span of those kets and evaluates the
+    expectation value of that projector in the given state.
+
+    The state may be given either as a pure state vector ``|ψ⟩`` or as a
+    density matrix ``ρ``:
+
+    - If ``state`` is a 1-D array, the function returns
+      :math:`⟨ψ|P|ψ⟩`, i.e. the probability that ``|ψ⟩`` lies in the
+      specified subspace.
+    - If ``state`` is a 2-D array, the function returns
+      :math:`\\mathrm{Tr}(P ρ)`, i.e. the population of the subspace in the
+      mixed state ``ρ``.
+
+    Parameters
+    ----------
+    state : ndarray
+        Either a state vector of shape ``(N,)`` or a density matrix of shape
+        ``(N, N)``. The dimension ``N`` must match that of the kets in
+        ``character``.
+    character : list of ndarray
+        List of basis kets (each of shape ``(N,)``) that span the subspace
+        whose character is to be measured.
+
+    Returns
+    -------
+    float
+        The subspace weight / character, in the range ``[0, 1]`` for
+        normalised inputs.
+    """
+    operator = sum(np.outer(ket, ket.conj().T) for ket in character)
+    if state.ndim == 1:
+        return float(np.real(state.conj().T @ operator @ state))
+    else:
+        return float(np.real(np.trace(operator @ state)))
 
 
 def spherical_average(
