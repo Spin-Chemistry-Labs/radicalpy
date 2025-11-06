@@ -102,6 +102,7 @@ from numpy.typing import ArrayLike, NDArray
 from scipy.linalg import expm
 from tqdm import tqdm
 
+from .shared import constants as C
 from .simulation import (
     Basis,
     HilbertIncoherentProcessBase,
@@ -110,7 +111,6 @@ from .simulation import (
     SemiclassicalSimulation,
     State,
 )
-from .shared import constants as C
 from .utils import (
     anisotropy_check,
     cidnp_polarisation_diffusion_model,
