@@ -5,8 +5,8 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy.experiments import coherent_control
-from radicalpy.simulation import HilbertSimulation, State
 from radicalpy.shared import constants as C
+from radicalpy.simulation import HilbertSimulation, State
 from radicalpy.utils import is_fast_run, make_resonance_sticks
 
 
