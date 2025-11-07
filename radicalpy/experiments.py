@@ -12,9 +12,10 @@ return structured results (dicts, arrays) ready for plotting and analysis.
 Functions:
         - `anisotropy`: Full anisotropy experiment wrapper; returns time evolutions and yields.
         - `anisotropy_loop`: Inner loop over (θ, φ) orientations; propagates and returns product probabilities.
-        - `epr`: CW/AC time-domain EPR vs B0 with B1 drive and frequency offset.
         - `cidnp`: CIDNP polarisation vs field for S–T0 mixing.
         - `coherent_control`: Coherent control of radical pair spin dynamics.
+        - `epr`: CW/AC time-domain EPR vs B0 with B1 drive and frequency offset.
+        - `field_switching`: Nanosecond field switching experiment (SEMF).
         - `kine_quantum_mary`: Hybrid kinetic+quantum MARY with stochastic hyperfine sampling.
         - `magnetic_field_loop`: Inner loop over swept field B; returns time-resolved density matrices.
         - `magnetic_field_loop_semiclassical`: Semiclassical inner loop over swept field B; returns time-resolved density matrices.
@@ -610,7 +611,7 @@ def coherent_control(
         return -1j * comm + Lk(rho)
 
     u_prev = 0.0
-    for t_idx, t in enumerate(time):
+    for t_idx, t in enumerate(tqdm(time)):
         # ----- feedback signal -----
         signal = 0.0
         for m, rho in enumerate(rho_list):
