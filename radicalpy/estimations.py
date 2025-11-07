@@ -233,9 +233,10 @@ def T1_relaxation_rate_hyperfine_tensor(
     Returns:
             float: The T1 relaxation rate (1/s)
 
-    .. _Carrington and McLachlan, Introduction to Magnetic Resonance with
-    Applications to Chemistry and Chemical Physics (1967):
+    .. _Carrington and McLachlan, Introduction to Magnetic Resonance
+       with Applications to Chemistry and Chemical Physics (1967):
        https://pubs.acs.org/doi/10.1021/ed044p772.2
+
     """
     omega = Isotope("E").gamma_mT * B * 2 * np.pi
     A_A = np.trace(mT_to_MHz(hyperfine_tensor**2) * 4 * np.pi * 1e12)
@@ -515,10 +516,11 @@ def dipolar_interaction_anisotropic(r: float | np.ndarray) -> np.ndarray:
     Point dipole approximation is used.
 
     Args:
-            r (float or np.ndarray): The interradical separation (m).
+        r: The interradical separation (m).
 
     Returns:
-            np.ndarray: The dipolar coupling tensor in millitesla (mT).
+        The dipolar coupling tensor in millitesla (mT).
+
     .. todo:: np.ndarray not implemented.  `dipolar * diag` fails.
     """
     dipolar1d = dipolar_interaction_isotropic(r)
@@ -545,18 +547,17 @@ def dipolar_interaction_anisotropic_from_dipolar_vector_without_prefactor(
     Given a displacement vector **r** between two spins, returns the
     3×3 geometric tensor
 
-        T_geom = [ (|r|^2 I) - 3 r rᵀ ] / |r|^5  =  (I - 3 r̂ r̂ᵀ) / |r|^3
+    .. math::
+        T_{geom} = [ (|r|^2 I) - 3 r rᵀ ] / |r|^5  =  (I - 3 r̂ r̂ᵀ) / |r|^3
 
-    Parameters
-    ----------
-    dipolar_vector : ndarray, shape (3,)
-        Displacement vector r from spin 2 to spin 1 (Cartesian).
-    units : {"Å","m"}, optional
-        Units of `dipolar_vector`. Default "Å" (Angstrom).
+    Args:
 
-    Returns
-    -------
-    ndarray, shape (3, 3)
+        dipolar_vector: Displacement vector r from spin 2 to spin 1 (Cartesian).
+
+        units: Units of `dipolar_vector` "Å" or "m". Default "Å" (Angstrom).
+
+    Returns:
+
         Geometry-only tensor in SI length units (i.e. 1/m^3 factor embedded).
     """
     r = np.asarray(dipolar_vector, dtype=float).reshape(3)
@@ -585,33 +586,41 @@ def dipolar_interaction_anisotropic_from_dipolar_vector(
     *,
     units: str = "Å",
 ) -> np.ndarray:
-    """
-    Full electron–electron dipolar coupling tensor (angular frequency, rad/s).
+    """Full electron–electron dipolar coupling tensor (angular frequency, rad/s).
 
     Thank you, Luca Gerhards!
 
     Computes
+
+    .. math::
+
         D = prefactor * [ (|r|^2 I) - 3 r rᵀ ] / |r|^5
 
     where the default `prefactor` is
+
+    .. math::
+
         (μ0 / 4π) * ħ * γ_e^2
+
     with γ_e the electron gyromagnetic ratio (rad s⁻¹ T⁻¹).
     The input displacement vector can be given in Å or m.
 
-    Parameters
-    ----------
-    dipolar_vector : ndarray, shape (3,)
-        Displacement vector r from spin 2 to spin 1 (Cartesian).
-    dipolar_prefactor : float, optional
-        Physical prefactor. Default corresponds to two electrons and returns
-        the tensor in angular frequency units (rad/s).
-    units : {"Å","m"}, optional
-        Units of `dipolar_vector`. Default "Å" (Angstrom).
+    Args:
 
-    Returns
-    -------
-    ndarray, shape (3, 3), complex128
+        dipolar_vector: Displacement vector r from spin 2 to spin 1
+            (Cartesian).
+
+        dipolar_prefactor: Physical prefactor. Default corresponds to
+            two electrons and returns the tensor in angular frequency
+            units (rad/s).
+
+        units: Units of `dipolar_vector`. {"Å","m"}, optional. Default
+            "Å" (Angstrom).
+
+    Returns:
+
         Dipolar coupling tensor in angular frequency units (rad/s).
+
     """
     T_geom = dipolar_interaction_anisotropic_from_dipolar_vector_without_prefactor(
         dipolar_vector, units=units

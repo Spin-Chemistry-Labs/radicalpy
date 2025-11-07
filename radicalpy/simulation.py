@@ -59,7 +59,7 @@ See also
 
 import enum
 from math import prod
-from typing import Optional
+from typing import Optional, Sequence
 
 import numpy as np
 import scipy as sp
@@ -900,29 +900,38 @@ class HilbertSimulation:
     ) -> np.ndarray:
         """Build the zero-field splitting (ZFS) Hamiltonian.
 
-        Constructs the second-rank ZFS contribution for (typically triplet, S=1)
-        spins using the conventional axial/rhombic parameters ``D`` and ``E``.
-        For each particle index ``idx``, the operator
-        :math:`D (S_z^2 - \\tfrac{1}{3} \\mathbf{S}^2) + E (S_x^2 - S_y^2)`
-        is formed and summed. The parameters are scaled into frequency units via
-        the first radical’s electron gyromagnetic ratio.
+        Constructs the second-rank ZFS contribution for (typically
+        triplet, S=1) spins using the conventional axial/rhombic
+        parameters ``D`` and ``E``.  For each particle index ``idx``,
+        the operator :math:`D (S_z^2 - \\tfrac{1}{3} \\mathbf{S}^2) +
+        E (S_x^2 - S_y^2)` is formed and summed. The parameters are
+        scaled into frequency units via the first radical’s electron
+        gyromagnetic ratio.
 
         Args:
+
             D: Axial ZFS parameter (in the same field/frequency units used
-            elsewhere; internally scaled by ``-radicals[0].gamma_mT``).
+                elsewhere; internally scaled by ``-radicals[0].gamma_mT``).
+
             E: Rhombic ZFS parameter (scaled identically to ``D``).
-            kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
+
+            kron_eye: Whether to Kronecker-product of the identity
+                matrix is inserted.
 
         Returns:
-            np.ndarray: The ZFS Hamiltonian matrix in the current simulation basis.
+
+            The ZFS Hamiltonian matrix in the current simulation basis.
 
         Notes:
+
             - This implementation multiplies ``D`` and ``E`` by ``-gamma_mT`` of
-            the first radical to convert to angular frequency units consistent
-            with the rest of the Hamiltonian.
+              the first radical to convert to angular frequency units consistent
+              with the rest of the Hamiltonian.
+
             - The loop applies the operator to every particle index; in practice,
-            ZFS is only meaningful for S≥1 spins (e.g., an excited triplet).
-            Ensure your particle list reflects that physical situation.
+              ZFS is only meaningful for S≥1 spins (e.g., an excited triplet).
+              Ensure your particle list reflects that physical situation.
+
         """
         Dmod = D * abs(self.radicals[0].gamma_mT)
         Emod = E * abs(self.radicals[0].gamma_mT)
@@ -978,52 +987,55 @@ class HilbertSimulation:
         return self.convert(H)
 
     def linblad_liouvillian(self, H: np.ndarray, Ls=[]):
-        """
-        Assemble the Liouville-space generator for coherent + Lindblad dynamics.
+        r"""Assemble the Liouville-space generator for coherent + Lindblad dynamics.
 
         This builds the superoperator
-        :math:`\\mathcal{L} = -i\\,[H,\\cdot] + \\sum_k \\mathcal{D}[L_k]`
+        :math:`\mathcal{L} = -i\,[H,\cdot] + \sum_k \mathcal{D}[L_k]`
         using the column–stacking (vec) convention. The coherent part is
         implemented as
 
         .. math::
-            -i[H,\\rho] \\;\\mapsto\\; -i\\,(I\\otimes H - H^{\\mathsf{T}}\\otimes I),
+            -i[H,\rho] \;\mapsto\; -i\,(I\otimes H - H^{\mathsf{T}}\otimes I),
 
         and each dissipator is
 
         .. math::
-            \\mathcal{D}[L](\\rho)
-            = L\\,\\rho\\,L^{\\dagger}
-            - \\tfrac{1}{2}\\{L^{\\dagger}L,\\rho\\}
-            \\;\\mapsto\\;
-            L^{\\ast}\\otimes L
-            - \\tfrac{1}{2}\\Big( I\\otimes L^{\\dagger}L
-                            + (L^{\\mathsf{T}}L^{\\ast})\\otimes I \\Big).
+            \mathcal{D}[L](\rho)
+            = L\,\rho\,L^{\dagger}
+            - \tfrac{1}{2}\{L^{\dagger}L,\rho\}
+            \;\mapsto\;
+            L^{\ast}\otimes L
+            - \tfrac{1}{2}\Big( I\otimes L^{\dagger}L
+                            + (L^{\mathsf{T}}L^{\ast})\otimes I \Big).
 
-        Parameters
-        ----------
-        H : ndarray of shape (N, N), complex or float
-            Hilbert-space Hamiltonian. For Hermitian problems, a complex dtype
-            (e.g. ``np.complex128``) is recommended.
-        Ls : Sequence[ndarray], optional
-            Iterable of collapse operators ``L_k`` (each ``N×N``) defining the
-            Lindblad dissipators. If you have physical rates ``γ_k``, scale your
-            operators as ``L_k ← √γ_k · C_k`` before passing them.
+        Args:
 
-        Returns
-        -------
-        superop : ndarray of shape (N*N, N*N), complex
-            The full Liouville-space generator :math:`\\mathcal{L}` suitable for
-            acting on ``vec(ρ)`` with the column-stacking convention.
+            H: Hilbert-space Hamiltonian. For Hermitian problems, a
+                complex dtype (e.g. ``np.complex128``) is recommended.
 
-        Notes
-        -----
-        - The mapping uses ``vec(O ρ) = (I ⊗ O^{\\mathsf{T}}) vec(ρ)`` and
-        ``vec(ρ O) = (O^{\\mathsf{T}} ⊗ I) vec(ρ)``.
-        - ``H`` enters only through the coherent commutator; the dissipator depends
-        solely on ``Ls``.
-        - All arrays are combined with NumPy ``kron``; performance-critical paths
-        may prefer sparse representations.
+            Ls: Iterable of collapse operators ``L_k`` (each ``N×N``)
+                defining the Lindblad dissipators. If you have
+                physical rates ``γ_k``, scale your operators as ``L_k
+                ← √γ_k · C_k`` before passing them.
+
+        Returns:
+
+            The full Liouville-space generator :math:`\mathcal{L}`
+            suitable for acting on ``vec(ρ)`` with the column-stacking
+            convention.
+
+        Notes:
+
+        - The mapping uses ``vec(O ρ) = (I ⊗ O^{\mathsf{T}}) vec(ρ)``
+          and ``vec(ρ O) = (O^{\mathsf{T}} ⊗ I) vec(ρ)``.
+
+        - ``H`` enters only through the coherent commutator; the
+          dissipator depends solely on ``Ls``.
+
+        - All arrays are combined with NumPy ``kron``;
+          performance-critical paths may prefer sparse
+          representations.
+
         """
         dim = len(H)
         Hsuper = -1j * (
@@ -1045,45 +1057,54 @@ class HilbertSimulation:
     def bloch_redfield_liouvillian(
         self,
         H: np.ndarray,
-        channels,
+        channels: Sequence,
         *,
         secular: bool = True,
         secular_cutoff: float = 0.01,
     ) -> np.ndarray:
-        """
-        Construct the Bloch–Redfield Liouvillian from a Hilbert–space Hamiltonian.
+        r"""Construct the Bloch–Redfield Liouvillian from a Hilbert–space Hamiltonian.
 
         The generator returned acts on vec(ρ) (column-stacking convention) and
         includes both the coherent commutator and the Redfield dissipator,
         constructed in the energy basis of ``H`` and similarity-transformed
         back to the current lab basis.
 
-        Parameters
-        ----------
-        H : ndarray of shape (N, N)
-            Hilbert-space Hamiltonian in angular-frequency units (rad/s).
-            Must be square; a complex dtype (e.g. complex128) is recommended.
-        channels : Sequence[Tuple[ndarray, Union[Callable[[float], float], float]]]
-            Iterable of ``(A, S_like)`` pairs where ``A`` is a Hilbert-space
-            coupling operator (N×N) and ``S_like`` is either:
-            • a callable ``S(ω) -> float`` giving the noise power spectrum
-                evaluated at the Bohr frequency ω (in rad/s), or
-            • a numeric correlation time ``τ_c``; in this case a Lorentzian
-                spectrum ``S(ω)=τ_c/(1+ω² τ_c²)`` is used.
-        secular : bool, optional
-            If True (default), apply a secular/Davies filter: matrix elements
-            coupling coherences whose frequency mismatch |Δ| exceeds
-            ``gmax * secular_cutoff`` are dropped, where ``gmax`` is the largest
-            sampled spectral value across channel spectra on the Bohr grid.
-        secular_cutoff : float, optional
-            Relative cutoff used by the secular filter. Default ``0.01``.
+        Args:
 
-        Returns
-        -------
-        L_lab : ndarray of shape (N*N, N*N), complex128
-            Bloch–Redfield Liouvillian in the lab basis, suitable for subtraction
-            from the working Liouvillian (i.e., it already includes the coherent
-            part ``-i(I⊗H − Hᵀ⊗I)``).
+            H: Hilbert-space Hamiltonian in angular-frequency units
+                (rad/s).  Must be square; a complex dtype
+                (e.g. complex128) is recommended.
+
+            channels: Iterable of ``(A, S_like)`` pairs where ``A``
+                is a Hilbert-space coupling operator (N×N) and
+                ``S_like`` is either:
+
+                - a callable ``S(ω) -> float`` giving the noise power
+                  spectrum evaluated at the Bohr frequency ω (in
+                  rad/s), or
+
+                - a numeric correlation time ``τ_c``; in this case a
+                  Lorentzian spectrum ``S(ω)=τ_c/(1+ω² τ_c²)`` is
+                  used.
+
+            secular: If True (default), apply a secular/Davies filter:
+                matrix elements coupling coherences whose frequency
+                mismatch :math:`\lvert \Delta \rvert` exceeds ``gmax *
+                secular_cutoff`` are dropped, where ``gmax`` is the
+                largest sampled spectral value across channel spectra on
+                the Bohr grid.
+
+            secular_cutoff: Relative cutoff used by the secular
+                filter. Default ``0.01``.
+
+        Returns:
+
+            L_lab : ndarray of shape (N*N, N*N), complex128
+                Bloch–Redfield Liouvillian in the lab basis, suitable
+                for subtraction from the working Liouvillian (i.e., it
+                already includes the coherent part ``-i(I⊗H −
+                Hᵀ⊗I)``).
+
         """
         import numpy as _np
 
@@ -1326,20 +1347,23 @@ class HilbertSimulation:
         corresponding to the chosen initial `state`.
 
         - For most states (e.g. singlet, triplet), this is simply the
-        normalised projection operator.
-        - For the special case `State.EQUILIBRIUM`, the density is taken
-        as the thermal equilibrium state, approximated via
-        :math:`\\rho_0 \\propto e^{-i H \\beta}` where
-        :math:`\\beta = \\hbar / (k_B T)` is provided via
-        `projection_operator`.
+          normalised projection operator.
+
+        - For the special case `State.EQUILIBRIUM`, the density is
+          taken as the thermal equilibrium state, approximated via
+          :math:`\\rho_0 \\propto e^{-i H \\beta}` where :math:`\\beta
+          = \\hbar / (k_B T)` is provided via `projection_operator`.
 
         Args:
+
             state (State): Target spin state (e.g., `SINGLET`, `TRIPLET`,
                 `EQUILIBRIUM`).
+
             H (np.ndarray): Spin Hamiltonian in Hilbert space.
 
         Returns:
             np.ndarray: Normalised density matrix in Hilbert space.
+
         """
         Pi = self.projection_operator(state)
 

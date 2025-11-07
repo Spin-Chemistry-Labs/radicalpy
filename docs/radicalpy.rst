@@ -77,7 +77,7 @@ radicalpy.simulation module
    :undoc-members:
 
 radicalpy.tensornetwork module
----------------------------
+------------------------------
 
 .. automodule:: radicalpy.tensornetwork
    :members:

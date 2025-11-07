@@ -1071,34 +1071,41 @@ class Molecule:
     def semiclassical_std(
         self, *, units: str = "omega", ak_units: str = "angular"
     ) -> float:
-        r"""
-        Standard deviation σ of the Schulten–Wolynes (SW) effective hyperfine field.
+        r"""Standard deviation σ of the Schulten–Wolynes (SW)
+        effective hyperfine field.
 
         Definitions (SW isotropic case):
             τ^{-2} = (1/6) Σ_k a_k^2 I_k (I_k + 1)
             σ = √2 / τ  ⇒  σ^2 = (1/3) Σ_k a_k^2 I_k (I_k + 1)
 
-        Parameters
-        ----------
-        units : {"omega", "mT"}, default "omega"
+        Args:
+
+        units: {"omega", "mT"}, default "omega"
+
             - "omega": return σ_ω in angular-frequency units (same units as a_k).
+
             - "mT"   : return σ_B in millitesla, i.e., σ_B = σ_ω / γ, where
                     γ = self.radical.gamma_mT (rad s^-1 mT^-1).
+
         ak_units : {"angular", "Hz"}, default "angular"
+
             - "angular": each n.hfc.isotropic is already in angular frequency units (e.g., rad s^-1).
+
             - "Hz"     : each n.hfc.isotropic is in cycles per second; converted internally via 2π.
 
-        Returns
-        -------
-        float
+        Returns:
+
             σ in the requested units.
 
-        Notes
-        -----
+        Notes:
+
         - This computes the *isotropic* SW width (scalar). For anisotropic A-tensors,
-        the isotropic equivalent variance is (1/3) Tr(Σ_ω), where
+          the isotropic equivalent variance is (1/3) Tr(Σ_ω), where
+
             Σ_ω = (1/3) Σ_k I_k(I_k+1) A_k A_k^T.
-        If you need full anisotropic sampling, construct Σ_ω explicitly elsewhere.
+
+          If you need full anisotropic sampling, construct Σ_ω explicitly elsewhere.
+
         """
         s = 0.0
 

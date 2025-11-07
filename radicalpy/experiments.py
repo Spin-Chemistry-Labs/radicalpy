@@ -281,35 +281,37 @@ def cidnp(
     ks: float | None = None,
     alpha: float | None = None,
 ) -> (np.ndarray, np.ndarray):
-    """
-    CIDNP polarisation vs field for a radical pair with S-T0 mixing only.
+    """CIDNP polarisation vs field for a radical pair with S-T0
+    mixing only.
+
+
     Args:
 
-        B0 (np.ndarray): External magnetic field (T).
+        B0: External magnetic field (T).
 
-        deltag (float): Difference in g-value between the acceptor
-            and donor.
+        deltag: Difference in g-value between the acceptor and donor.
 
         cidnp_model: Choose between CIDNP kinetic models. a) Exponential
             model. b) Truncated diffusion model. c) Full diffusion model.
 
-        ks (float): Decay rate constant for the Exponential model (1/s).
+        ks: Decay rate constant for the Exponential model (1/s).
 
-        alpha (float): Parameter for the full diffusion model.
+        alpha: Parameter for the full diffusion model.
 
-        nucleus_of_interest (int): The nucleus chosen for the simulation.
+        nucleus_of_interest: The nucleus chosen for the simulation.
 
-        donor_hfc_spinhalf (float): spin 1/2 HFCs (1H) for the donor (mT).
+        donor_hfc_spinhalf: spin 1/2 HFCs (1H) for the donor (mT).
 
-        acceptor_hfc_spinhalf (float): spin 1/2 HFCs (1H) for the acceptor (mT).
+        acceptor_hfc_spinhalf: spin 1/2 HFCs (1H) for the acceptor (mT).
 
-        donor_hfc_spin1 (float): spin 1 HFCs (14N) for the donor (mT).
+        donor_hfc_spin1: spin 1 HFCs (14N) for the donor (mT).
 
-        acceptor_hfc_spin1 (float): spin 1 HFCs (14N) for the acceptor (mT).
+        acceptor_hfc_spin1: spin 1 HFCs (14N) for the acceptor (mT).
 
     Returns:
-        B0 (T)
-        polarisation (polarisation at each field point)
+
+        B0 (T) and polarisation (polarisation at each field point)
+
     """
 
     # Constants
@@ -361,7 +363,7 @@ def cidnp(
         hfcmod[:idx0] = hfc_half[:idx0]
     if idx0 < nnuc - 1:
         hfcmod[idx0 : nnuc - 1] = hfc_half[idx0 + 1 :]
-    # append spin-1
+        # append spin-1
     if nnuc1:
         hfcmod[nnuc - 1 :] = hfc_one
 
@@ -427,7 +429,7 @@ def coherent_control(
     u_max_factor: float = 1.0,
     u_smooth: float = 0.2,
 ) -> Dict[str, np.ndarray]:
-    """
+    r"""
     Coherent microwave-feedback simulation.
 
     It treats the radical pair as an **ensemble** of frequency-configurations.
@@ -800,38 +802,43 @@ def field_switching(
     J: float = 0.0,
     D: float = 0.0,
 ) -> dict:
-    """
-    Nanosecond field-switching experiment. Switched External Magnetic Field (SEMF) simulation.
+    """Nanosecond field-switching experiment. Switched External
+    Magnetic Field (SEMF) simulation.
 
-    Parameters
-    ----------
-    sim : HilbertSimulation
-    B_on, B_off : float
-        Magnetic fields (mT) for the “before switch” part and the “after switch”
-        part, respectively.
-    dt : float
-        Time step (s).
-    n_offsets : int
-        Number of different switch times to scan.
-    offset_step : int
-        Number of time steps to increase the switch time by each iteration.
-    pulse_width_steps : int
-        Length (in steps) of the second part of the evolution (the “pulse”).
-    k_rec, k_esc : float
-        Haberkorn recombination and escape rates (s⁻¹).
-    J, D : float
-        Exchange and dipolar couplings.
+    Args:
 
-    Returns
-    -------
-    dict
-        {
-          "time": (T,),
-          "switch_times": (n_offsets,),
-          "TA_on": (T, n_offsets),
-          "TA_off": (T, n_offsets),
-          "TA_diff": (T, n_offsets),
-        }
+        sim: Sim object.
+
+        B_on, B_off: Magnetic fields (mT) for the “before switch” part and the “after switch”
+            part, respectively.
+
+        dt: Time step (s).
+
+        n_offsets: Number of different switch times to scan.
+
+        offset_step: Number of time steps to increase the switch time by each iteration.
+
+        pulse_width_steps: Length (in steps) of the second part of the evolution (the “pulse”).
+
+        k_rec, k_esc: Haberkorn recombination and escape rates (s⁻¹).
+
+        J, D: Exchange and dipolar couplings.
+
+    Returns:
+
+            A `dict` with the following keys (dims):
+
+            - `time`: (T,),
+
+            - `switch_times`: (n_offsets,),
+
+            - `TA_on`: (T, n_offsets),
+
+            - `TA_off`: (T, n_offsets),
+
+            - `TA_diff`: (T, n_offsets),
+
+
     """
     # base Hilbert Hamiltonians (Hermitian parts)
     H_on = sim.total_hamiltonian(B0=B_on, J=J, D=D)

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Plotting utilities for spin dynamics, tensors, and Monte Carlo trajectories.
+r"""Plotting utilities for spin dynamics, tensors, and Monte Carlo trajectories.
 
 This module collects convenience routines for visualising common
 objects in spin chemistry and molecular simulations, including:
@@ -13,45 +13,70 @@ notebooks or scripts. Most functions draw directly to the active
 Matplotlib figure and return `None`, except where noted.
 
 Contents:
+
         - `anisotropy_surface`: 3D surface whose radius/color encodes Re(Y(θ,φ)).
-        - `density_matrix_animation`: Animated 3D bar plot of |ρ| over time.
+
+        - `density_matrix_animation`: Animated 3D bar plot of :math:`\lvert\rho\rvert` over time.
+
         - `linear_energy_levels`: Event-plot (vertical lines) of Hamiltonian eigenvalues.
+
         - `energy_levels`: Eigen-energies vs magnetic field for a `HilbertSimulation`.
+
         - `monte_carlo_free`: 3D trajectory of a free random walk (nm scaling).
+
         - `monte_carlo_caged`: 3D trajectory within a spherical cage of radius `r_max`.
+
         - `plot_3d_results`: Colored 3D surface z(x, y) with adjustable camera.
+
         - `plot_autocorrelation_fit`: Autocorrelation (log-x) with fitted curve.
+
         - `plot_bhalf_time`: Discrete B_{1/2} estimates vs time with error bars.
+
         - `plot_exchange_interaction_in_solution`: Separation and exchange (twin y-axes).
+
         - `plot_general`: Simple x–y line plot with labels/styles.
+
         - `plot_molecule`: Minimal 3D stick model from atom coords and bonds.
+
         - `set_equal_aspect`: Equalizes 3D axis scales to data range.
+
         - `spin_state_labels`: LaTeX-formatted ket labels for radical pairs.
+
         - `_format_label`: Helper that wraps text in a Dirac ket for LaTeX.
+
         - `visualise_tensor`: Rank-2 tensor surface on the sphere after rotation/shift.
 
 Notes:
+
         - Many plotting functions assume Matplotlib 3D axes; some create and
           manage figures/axes internally. To integrate into existing layouts,
           adapt the code to accept/use a provided `Axes3D` where appropriate.
+
         - Units are noted in axis labels (e.g., nm, mT, s). Some helpers apply
           scaling factors (e.g., 1e9) for visualization; inspect the source if
           absolute coordinates are required.
+
         - `energy_levels` assumes a `HilbertSimulation` API exposing
           `total_hamiltonian` and `zeeman_hamiltonian`. Replace or wrap as needed.
 
 Dependencies:
+
         - `numpy` for array operations.
+
         - `matplotlib` (including `mpl_toolkits.mplot3d`, `cm`, and `colors`) for plotting.
+
         - `matplotlib.animation.FuncAnimation` for animated density-matrix plots.
 
 Raises:
+
         ValueError: `spin_state_labels` raises if `sim` does not contain exactly
             two radicals (labels are defined for radical pairs).
 
 See also:
-        `matplotlib.pyplot`, `mpl_toolkits.mplot3d`, and domain-specific
-        simulation objects (e.g., `HilbertSimulation`) used by the energy-level routines.
+
+        `matplotlib.pyplot`, `mpl_toolkits.mplot3d`, and
+        domain-specific simulation objects (e.g., `HilbertSimulation`)
+        used by the energy-level routines.
 
 """
 
