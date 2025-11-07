@@ -608,7 +608,7 @@ def coherent_control(
         return -1j * comm + Lk(rho)
 
     u_prev = 0.0
-    for t_idx, t in enumerate(time):
+    for t_idx, t in enumerate(tqdm(time)):
         # ----- feedback signal -----
         signal = 0.0
         for m, rho in enumerate(rho_list):
