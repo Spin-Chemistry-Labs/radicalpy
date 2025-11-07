@@ -1106,7 +1106,6 @@ class HilbertSimulation:
                 Hᵀ⊗I)``).
 
         """
-        import numpy as _np
 
         # --- helpers -------------------------------------------------------------
         def _spectral_from(S_like):
@@ -1121,22 +1120,22 @@ class HilbertSimulation:
             return _S
 
         # --- input hygiene -------------------------------------------------------
-        H = _np.asarray(H, dtype=_np.complex128)
+        H = np.asarray(H, dtype=np.complex128)
         if H.ndim != 2 or H.shape[0] != H.shape[1]:
             raise ValueError(f"H must be square; got shape {H.shape}.")
         N = H.shape[0]
 
         # eigenbasis of H (Hermitian path preferred)
-        evals, V = _np.linalg.eigh(H)
+        evals, V = np.linalg.eigh(H)
         # ensure ascending order explicitly
-        perm = _np.argsort(evals.real)
+        perm = np.argsort(evals.real)
         evals = evals[perm]
         V = V[:, perm]
 
         # transform coupling operators to energy basis, attach callable spectra
         a_ops_E = []
         for A, S_like in channels:
-            A = _np.asarray(A, dtype=_np.complex128)
+            A = np.asarray(A, dtype=np.complex128)
             if A.shape != (N, N):
                 raise ValueError(
                     f"Coupling operator shape {A.shape} incompatible with H {(N, N)}."
@@ -1147,14 +1146,14 @@ class HilbertSimulation:
 
         # index pairs and Bohr frequencies
         pairs = [(a, b) for a in range(N) for b in range(N)]
-        bohr = _np.array(
+        bohr = np.array(
             [evals[a] - evals[b] for a in range(N) for b in range(N)],
-            dtype=_np.complex128,
+            dtype=np.complex128,
         )
-        abs_bohr = _np.unique(_np.abs(bohr.real))
+        abs_bohr = np.unique(np.abs(bohr.real))
 
         # allocate R (energy basis) and add unitary part on the diagonal
-        R_E = _np.zeros((N * N, N * N), dtype=_np.complex128)
+        R_E = np.zeros((N * N, N * N), dtype=np.complex128)
         for j, (a, b) in enumerate(pairs):
             R_E[j, j] += -1j * (evals[a] - evals[b])
 
@@ -1206,9 +1205,9 @@ class HilbertSimulation:
 
         # similarity transform to lab Liouville basis:
         # vec(ρ_lab) = (V̄ ⊗ V) vec(ρ_E)  ⇒  T = kron(V.T, V.conj())
-        T = _np.kron(V.T, V.conj()).astype(_np.complex128, copy=False)
-        Tinv = _np.linalg.inv(T)
-        L_lab = (Tinv @ R_E @ T).astype(_np.complex128, copy=False)
+        T = np.kron(V.T, V.conj()).astype(np.complex128, copy=False)
+        Tinv = np.linalg.inv(T)
+        L_lab = (Tinv @ R_E @ T).astype(np.complex128, copy=False)
         return L_lab
 
     def time_evolution(
