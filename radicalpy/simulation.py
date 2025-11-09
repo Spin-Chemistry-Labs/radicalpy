@@ -1112,6 +1112,17 @@ class HilbertSimulation:
         )  # Lindblad
         return Hsuper + Lsuper
 
+    def bloch_redfield_liouvillian(
+        self,
+        H: np.ndarray,
+        channels: Sequence,
+        *,
+        secular: bool = True,
+        secular_cutoff: float = 0.01,
+    ) -> np.ndarray:
+
+        return
+
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
@@ -1532,12 +1543,6 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):
-    # Expectations:
-    #   - self.radicals: list/tuple of two spin-1/2 radicals
-    #   - self.molecules: length-2 container aligned with radicals
-    #   - self.spin_operator(ri, ax): returns D×D operator for radical ri and axis in {"x","y","z"}
-    #   - External field accessor: self.external_field_mT() -> np.ndarray shape (3,) in mT (default zeros)
-
     def external_field_mT(self) -> np.ndarray:
         """Lab field B0 in mT as a 3-vector. Override if you have a field in the simulation."""
         return np.zeros(3, dtype=float)
@@ -1556,20 +1561,18 @@ class SemiclassicalSimulation(LiouvilleSimulation):
             add the external field B0, then convert to ω_r = γ_r * (B0 + B_hf,r),
             and construct H = Σ_r ω_r · S_r. Repeat num_samples times.
 
-        Parameters
-        ----------
-        num_samples : int
-            Number of random Hamiltonian realisations.
-        anisotropic : bool, optional
-            If True, draws from a 3D Gaussian with covariance Σ_r determined by anisotropic A tensors.
-            If False (default), uses isotropic SW width.
+        Args:
 
-        Returns
-        -------
-        np.ndarray
-            Array (num_samples, D, D) of complex Hamiltonians.
+                num_samples (int): Number of random Hamiltonian realisations.
+
+                anisotropic (bool, optional): If True, draws from a 3D Gaussian
+                with covariance Σ_r determined by anisotropic A tensors.
+                If False (default), uses isotropic SW width.
+
+        Returns:
+
+                np.ndarray: Array (num_samples, D, D) of complex Hamiltonians.
         """
-        # two S=1/2 radicals
         assert len(self.radicals) == 2
         assert self.radicals[0].multiplicity == 2
         assert self.radicals[1].multiplicity == 2
@@ -1596,7 +1599,6 @@ class SemiclassicalSimulation(LiouvilleSimulation):
         if B0.shape != (3,):
             raise ValueError("external_field_mT() must return shape (3,) in mT.")
 
-        # --- Draw hyperfine fields ---
         if not anisotropic:
             # Isotropic SW width: per-radical σ_B from σ_ω / γ
             stds_B = np.array(
@@ -1610,7 +1612,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
                 size=(num_samples, R, 3),
             )
         else:
-            # --- Anisotropic version ---
+            # Anisotropic
             # Build per-radical 3x3 covariance matrices Σ_B,r in mT^2:
             #   Σ_ω,r = (1/3) Σ_k I_k(I_k+1) A_{rk} A_{rk}^T   (angular-frequency)
             #   Σ_B,r = Σ_ω,r / γ_r^2
@@ -1633,7 +1635,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
             # Draw from multivariate normal for each radical independently
             hf_fields = np.empty((num_samples, R, 3), dtype=float)
             for r in range(R):
-                # Factorisation (np.linalg.cholesky requires SPD; use eigh)
+                # Factorisation
                 w, V = np.linalg.eigh(covs_B[r])
                 w = np.clip(w, a_min=0.0, a_max=None)
                 L = V @ np.diag(np.sqrt(w))
@@ -1648,7 +1650,6 @@ class SemiclassicalSimulation(LiouvilleSimulation):
         HHs = np.einsum(
             "nra,raxy->nxy", comps, spinops, optimize=True
         )  # (N,D,D), complex
-
         return HHs
 
     @property
