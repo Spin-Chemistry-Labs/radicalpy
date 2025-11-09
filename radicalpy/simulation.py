@@ -8,53 +8,52 @@ space (vectorised densities / superoperators). It focuses on electron–nuclear
 spin systems typical of radical pairs and triplet pairs and supports common
 interactions and observables used in magnetic resonance and spin chemistry.
 
-Main classes
-------------
-- `State` :
-    Enumerates common initial/observable spin states (singlet/triplet manifold,
-    EPR observable, thermal equilibrium, etc.).
-- `Basis` :
-    Choice of electron-pair basis: Zeeman or singlet–triplet (S/T).
-- `HilbertSimulation` :
-    Core simulator that assembles Hamiltonians (Zeeman, hyperfine, exchange,
-    dipolar, optional zero-field splitting), prepares initial density matrices,
-    propagates them unitarily, and evaluates product probabilities/yields.
-- `LiouvilleSimulation` :
-    Extends `HilbertSimulation` with Liouville-space evolution (superoperators,
-    vectorised densities) for convenient inclusion of incoherent processes.
-- `HilbertIncoherentProcessBase` / `LiouvilleIncoherentProcessBase` :
-    Base hooks to augment Hamiltonians or measured probabilities with
-    phenomenological kinetics / relaxation.
-- `SparseCholeskyHilbertSimulation` :
-    Hilbert-space variant optimised for large systems via sparse algebra and a
-    Cholesky-factor time-stepping scheme.
-- `SemiclassicalSimulation` :
-    Generates random semiclassical Hamiltonians for ensemble treatments.
+Main classes:
 
-Key features
-------------
-- Spin operators for arbitrary particles and bases.
-- Zeeman (1D/3D), hyperfine (isotropic/tensor), exchange (J), dipolar (1D/3D),
-  and ZFS Hamiltonians.
-- Initial states: projection-based (S, T, etc.) and thermal equilibrium.
-- Time evolution: Hilbert (ρ → U ρ U†) and Liouville (ρ → e^{Lt} ρ).
-- Observables: projection operators and product probabilities/yields.
-- Shape conventions:
-    - Hilbert density: `(dim, dim)`
-    - Liouville density (vectorised): `(dim**2, 1)`
+    - `State` :
+        Enumerates common initial/observable spin states (singlet/triplet manifold,
+        EPR observable, thermal equilibrium, etc.).
+    - `Basis` :
+        Choice of electron-pair basis: Zeeman or singlet–triplet (S/T).
+    - `HilbertSimulation` :
+        Core simulator that assembles Hamiltonians (Zeeman, hyperfine, exchange,
+        dipolar, optional zero-field splitting), prepares initial density matrices,
+        propagates them unitarily, and evaluates product probabilities/yields.
+    - `LiouvilleSimulation` :
+        Extends `HilbertSimulation` with Liouville-space evolution (superoperators,
+        vectorised densities) for convenient inclusion of incoherent processes.
+    - `HilbertIncoherentProcessBase` / `LiouvilleIncoherentProcessBase` :
+        Base hooks to augment Hamiltonians or measured probabilities with
+        phenomenological kinetics / relaxation.
+    - `SparseCholeskyHilbertSimulation` :
+        Hilbert-space variant optimised for large systems via sparse algebra and a
+        Cholesky-factor time-stepping scheme.
+    - `SemiclassicalSimulation` :
+        Generates random semiclassical Hamiltonians for ensemble treatments.
 
-Units & conventions
--------------------
-- Magnetic fields in mT; gyromagnetic ratios provided as `gamma_mT`.
-- Tensors follow x/y/z Cartesian ordering.
-- S/T transform from the Zeeman basis.
+Key features:
 
-See also
---------
-- `utils.spherical_to_cartesian` for field orientation.
-- Module docstrings of related packages/classes for data structures (`Molecule`,
-  nuclei, radicals, hyperfine data).
+    - Spin operators for arbitrary particles and bases.
+    - Zeeman (1D/3D), hyperfine (isotropic/tensor), exchange (J), dipolar (1D/3D),
+    and ZFS Hamiltonians.
+    - Initial states: projection-based (S, T, etc.) and thermal equilibrium.
+    - Time evolution: Hilbert (ρ → U ρ U†) and Liouville (ρ → e^{Lt} ρ).
+    - Observables: projection operators and product probabilities/yields.
+    - Shape conventions:
+        - Hilbert density: `(dim, dim)`
+        - Liouville density (vectorised): `(dim**2, 1)`
 
+Units & conventions:
+
+    - Magnetic fields in mT; gyromagnetic ratios provided as `gamma_mT`.
+    - Tensors follow x/y/z Cartesian ordering.
+    - S/T transform from the Zeeman basis.
+
+See also:
+
+    - `utils.spherical_to_cartesian` for field orientation.
+    - Module docstrings of related packages/classes for data structures (`Molecule`,
+    nuclei, radicals, hyperfine data).
 """
 
 import enum

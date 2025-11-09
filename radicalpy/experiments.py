@@ -468,64 +468,75 @@ def coherent_control(
     Time propagation is done configuration-by-configuration with an RK4 step
     on the user-supplied time grid.
 
-    Parameters
-    ----------
-    sim : HilbertSimulation
-    init_state : State
-        Spin state used both for the initial density.
-    obs_state : State
-        Spin state to monitor as an observable population during the run.
-        A projector onto this state is evaluated on every configuration and
-        then averaged over the ensemble.
-    time : ndarray
-        1D array of time points (s). The integration advances along this grid.
-        If ``dt_override`` is not given, the step size is inferred from
-        ``time[1] - time[0]``.
-    sticks_A_freq, sticks_B_freq : sequence of float
-        Stick frequencies for radical A and radical B, respectively, in
-        **angular frequency** units (rad/s), e.g. ``2*pi*1e6*[ ... MHz ... ]``.
-    sticks_A_int, sticks_B_int : sequence of float
-        Corresponding intensities for the two stick sets. Each list is
-        normalised so that its entries sum to 1. The weight of configuration
-        (i, j) is then the product of the two normalised intensities.
-    B1_G : float, optional
-        Microwave amplitude in **gauss**. Default is ``200.0``.
-    g_e : float, optional
-        Electron g-value used in the Rabi-frequency conversion. Default 2.0023.
-    k_s : float, optional
-        Haberkorn recombination rate applied with respect to ``init_state``
-        (s⁻¹). Default ``2e6``.
-    J : float, optional
-        Exchange coupling (mT).
-    dt_override : float, optional
-        If provided, use this as the integration time step instead of
-        ``time[1] - time[0]``.
-    u_max_factor : float, optional
-        Hard clip on the feedback: ``|u(t)| ≤ u_max_factor * B1c``.
-        Useful to suppress large initial spikes. Default 1.0.
-    u_smooth : float, optional
-        Exponential smoothing factor for the feedback in (0, 1). Larger values
-        give smoother control fields. Default 0.2.
+    Args:
 
-    Returns
-    -------
-    dict of str -> ndarray
-        A dictionary with the following entries:
+        sim : HilbertSimulation
 
-        - ``"time"`` : (T,) time axis (s)
-        - ``"u"`` : (T,) feedback field (rad/s)
-        - ``"target"`` : (T,) ensemble-average target population
-        - ``"each_target"`` : (N_conf, T) target population per configuration
-        - ``"weights"`` : (N_conf,) configuration weights
-        - ``"obs"`` : (T,) ensemble-average population of ``obs_state``
-        - ``"each_obs"`` : (N_conf, T) per-configuration population of ``obs_state``
-        - ``"population"`` : (T,) ensemble-average trace of ρ
-        - ``"each_population"`` : (N_conf, T) per-configuration trace
+        init_state : State
+            Spin state used both for the initial density.
+
+        obs_state : State
+            Spin state to monitor as an observable population during the run.
+            A projector onto this state is evaluated on every configuration and
+            then averaged over the ensemble.
+
+        time : ndarray
+            1D array of time points (s). The integration advances along this grid.
+            If ``dt_override`` is not given, the step size is inferred from
+            ``time[1] - time[0]``.
+
+        sticks_A_freq, sticks_B_freq : sequence of float
+            Stick frequencies for radical A and radical B, respectively, in
+            **angular frequency** units (rad/s), e.g. ``2*pi*1e6*[ ... MHz ... ]``.
+
+        sticks_A_int, sticks_B_int : sequence of float
+            Corresponding intensities for the two stick sets. Each list is
+            normalised so that its entries sum to 1. The weight of configuration
+            (i, j) is then the product of the two normalised intensities.
+
+        B1_G : float, optional
+            Microwave amplitude in **gauss**. Default is ``200.0``.
+
+        g_e : float, optional
+            Electron g-value used in the Rabi-frequency conversion. Default 2.0023.
+
+        k_s : float, optional
+            Haberkorn recombination rate applied with respect to ``init_state``
+            (s⁻¹). Default ``2e6``.
+
+        J : float, optional
+            Exchange coupling (mT).
+
+        dt_override : float, optional
+            If provided, use this as the integration time step instead of
+            ``time[1] - time[0]``.
+
+        u_max_factor : float, optional
+            Hard clip on the feedback: ``|u(t)| ≤ u_max_factor * B1c``.
+            Useful to suppress large initial spikes. Default 1.0.
+
+        u_smooth : float, optional
+            Exponential smoothing factor for the feedback in (0, 1). Larger values
+            give smoother control fields. Default 0.2.
+
+    Returns:
+
+        dict of str -> ndarray
+            A dictionary with the following entries:
+
+            - ``"time"``: Time axis (s)
+            - ``"u"``: Feedback field (rad/s)
+            - ``"target"``: nsemble-average target population
+            - ``"each_target"``: Target population per configuration
+            - ``"weights"``: Configuration weights
+            - ``"obs"``: Ensemble-average population of ``obs_state``
+            - ``"each_obs"``: Per-configuration population of ``obs_state``
+            - ``"population"``: Ensemble-average trace of ρ
+            - ``"each_population"``: Per-configuration trace
     """
     mu_B = C.mu_B
     hbar = C.hbar
 
-    # time step
     if dt_override is not None:
         dt = float(dt_override)
     else:
@@ -545,7 +556,6 @@ def coherent_control(
     SnumB = len(sticks_B_freq)
     Snum = SnumA * SnumB
 
-    # spin operators
     SxA = sim.spin_operator(0, "x")
     SzA = sim.spin_operator(0, "z")
     SxB = sim.spin_operator(1, "x")
@@ -554,31 +564,25 @@ def coherent_control(
     # microwave operator
     V = SxA + SxB
 
-    # target |αβ><αβ| + |βα><βα|
     Target = np.zeros((4, 4), complex)
     Target[1, 1] = 1.0
     Target[2, 2] = 1.0
 
-    # projection for recombination
     init_proj = sim.projection_operator(init_state)
     obs_proj = sim.projection_operator(obs_state)
 
     def Lk(rho):
-        # Haberkorn recombination superoperator
         return -0.5 * k_s * (init_proj @ rho + rho @ init_proj)
 
-    # B1: gauss -> tesla
     B1_T = B1_G * 1e-4
     B1c = (g_e * mu_B * B1_T) / hbar  # rad/s
     u_cap = u_max_factor * B1c
 
-    # exchange Hamiltonian
     if abs(J) > 0.0:
         H_J = sim.exchange_hamiltonian(J)
     else:
         H_J = np.zeros_like(SxA)
 
-    # static H for each configuration
     H0_list = []
     weights = []
     for i in range(SnumA):
@@ -588,9 +592,8 @@ def coherent_control(
             weights.append(sticks_A_int[i] * sticks_B_int[j])
     weights = np.asarray(weights, float)
 
-    # initial density
     lam = 0.001
-    rho0 = (obs_proj + 3.0 * lam * V) / 3.0  # trace = 1
+    rho0 = (obs_proj + 3.0 * lam * V) / 3.0
     rho_list = [rho0.copy() for _ in range(Snum)]
 
     Tlen = len(time)
@@ -612,7 +615,6 @@ def coherent_control(
 
     u_prev = 0.0
     for t_idx, t in enumerate(tqdm(time)):
-        # ----- feedback signal -----
         signal = 0.0
         for m, rho in enumerate(rho_list):
             comm = V @ rho - rho @ V
@@ -620,13 +622,11 @@ def coherent_control(
             signal += weights[m] * s
         u_raw = B1c * signal
 
-        # clip
         if u_raw > u_cap:
             u_raw = u_cap
         elif u_raw < -u_cap:
             u_raw = -u_cap
 
-        # first step: no smoothing, then smooth
         if t_idx == 0:
             u_t = u_raw
         else:
@@ -634,14 +634,10 @@ def coherent_control(
         u_prev = u_t
         u_arr[t_idx] = u_t
 
-        # ----- measure observables at this time -----
         pop_t = 0.0
         for m, rho in enumerate(rho_list):
-            # target
             each_target[m, t_idx] = np.real(np.trace(Target @ rho))
-            # observable
             each_obs[m, t_idx] = np.real(np.trace(obs_proj @ rho))
-            # population (trace)
             tr_m = np.real(np.trace(rho))
             each_population[m, t_idx] = tr_m
             pop_t += weights[m] * tr_m
@@ -650,7 +646,6 @@ def coherent_control(
         obs_arr[t_idx] = float(np.sum(weights * each_obs[:, t_idx]))
         population_arr[t_idx] = pop_t
 
-        # ----- evolve to next time step -----
         if t_idx == Tlen - 1:
             break
 
@@ -841,31 +836,24 @@ def field_switching(
 
 
     """
-    # base Hilbert Hamiltonians (Hermitian parts)
     H_on = sim.total_hamiltonian(B0=B_on, J=J, D=D)
     H_off = sim.total_hamiltonian(B0=B_off, J=J, D=D)
 
-    # singlet projector for the Haberkorn term
     P_S = sim.projection_operator(State.SINGLET)
     dim = P_S.shape[0]
     I = np.eye(dim, dtype=complex)
 
-    # non-Hermitian Haberkorn piece: -i/2 (k_rec P_S + k_esc I)
     decay = -0.5j * (k_rec * P_S + k_esc * I)
 
-    # full non-Hermitian Hamiltonians
     H_on_NH = H_on + decay
     H_off_NH = H_off + decay
 
-    # one-step propagators
     U_on = expm(-1j * H_on_NH * dt)
     U_off = expm(-1j * H_off_NH * dt)
 
-    # initial density: triplet
     rho0 = sim.projection_operator(init_state)
     rho0 = rho0 / np.trace(rho0)
 
-    # maximum total steps we need
     max_steps = (n_offsets - 1) * offset_step + pulse_width_steps
     time = np.arange(max_steps, dtype=float) * dt
 
@@ -873,25 +861,19 @@ def field_switching(
     TA_off = np.zeros((max_steps, n_offsets), dtype=float)
 
     for i in range(n_offsets):
-        # number of high-field steps before switching
         switch_steps = i * offset_step
 
         rho_on = rho0.copy()
         rho_off = rho0.copy()
 
         for k in range(max_steps):
-            # record traces
             TA_on[k, i] = float(np.real(np.trace(rho_on)))
             TA_off[k, i] = float(np.real(np.trace(rho_off)))
 
-            # step forward
             if k < switch_steps:
-                # before switch: both see high field
                 rho_on = U_on @ rho_on @ U_on.conj().T
                 rho_off = U_on @ rho_off @ U_on.conj().T
             else:
-                # after switch: ON branch moves to low field,
-                # OFF branch stays in high field
                 rho_on = U_off @ rho_on @ U_off.conj().T
                 rho_off = U_on @ rho_off @ U_on.conj().T
 
@@ -1216,54 +1198,66 @@ def mary_semiclassical(
     the standard MARY, low-field effect (LFE), and high-field effect (HFE)
     metrics.
 
-    Parameters
-    ----------
-    sim : SemiclassicalSimulation
-        Semiclassical simulator providing Hamiltonian terms and evolution
-        back-ends (including stochastic sampling where applicable).
-    init_state : State
-        Initial state for time evolution (e.g., ``State.SINGLET``).
-    obs_state : State
-        Observable (product) state whose probability/yield is reported.
-    time : ndarray, shape (T,)
-        Monotonic time grid for propagation (units consistent with Hamiltonians).
-    B : ndarray, shape (NB,)
-        Magnetic-field grid for the sweep (scalar magnitude in the chosen axis).
-    D : float
-        Dipolar interaction strength used to build ``H_D``.
-    J : float
-        Exchange interaction strength used to build ``H_J``.
-    kinetics : list[HilbertIncoherentProcessBase], optional
-        Kinetic processes to apply during evolution (e.g., Haberkorn).
-    relaxations : list[HilbertIncoherentProcessBase], optional
-        Relaxation processes to apply during evolution (semiclassical variants).
-    theta : float, optional
-        Polar angle (radians) of the magnetic-field axis relative to the lab frame.
-        If ``None``, the simulator default is used.
-    phi : float, optional
-        Azimuthal angle (radians) of the magnetic-field axis.
-        If ``None``, the simulator default is used.
-    num_samples : int, optional
-        Number of stochastic samples/trajectories for the semiclassical averaging.
-        If ``None``, the simulator default is used.
-    c : float, optional
-        Normalisation/contrast parameter forwarded to ``mary_lfe_hfe`` for
-        MARY post-processing.
+    Args:
 
-    Returns
-    -------
-    dict
-        A results dictionary with keys:
-        - ``time`` : ndarray, the input time grid.
-        - ``B`` : ndarray, the field grid.
-        - ``theta`` / ``phi`` : angles used for the sweep.
-        - ``rhos`` : list/ndarray of density matrices (reshaped to square form).
-        - ``time_evolutions`` : ndarray, product probabilities vs. ``time`` and ``B``.
-        - ``product_yields`` : ndarray, integrated yields vs. ``B``.
-        - ``product_yield_sums`` : float or ndarray, sum.
-        - ``MARY`` : ndarray, normalised magnetoresponse vs. ``B``.
-        - ``LFE`` : float, low-field effect (%).
-        - ``HFE`` : float, high-field effect (%).
+        sim : SemiclassicalSimulation
+            Semiclassical simulator providing Hamiltonian terms and evolution
+            back-ends (including stochastic sampling where applicable).
+
+        init_state : State
+            Initial state for time evolution (e.g., ``State.SINGLET``).
+
+        obs_state : State
+            Observable (product) state whose probability/yield is reported.
+
+        time : ndarray, shape (T,)
+            Monotonic time grid for propagation (units consistent with Hamiltonians).
+
+        B : ndarray, shape (NB,)
+            Magnetic-field grid for the sweep (scalar magnitude in the chosen axis).
+
+        D : float
+            Dipolar interaction strength used to build ``H_D``.
+
+        J : float
+            Exchange interaction strength used to build ``H_J``.
+
+        kinetics : list[HilbertIncoherentProcessBase], optional
+            Kinetic processes to apply during evolution (e.g., Haberkorn).
+
+        relaxations : list[HilbertIncoherentProcessBase], optional
+            Relaxation processes to apply during evolution (semiclassical variants).
+
+        theta : float, optional
+            Polar angle (radians) of the magnetic-field axis relative to the lab frame.
+            If ``None``, the simulator default is used.
+
+        phi : float, optional
+            Azimuthal angle (radians) of the magnetic-field axis.
+            If ``None``, the simulator default is used.
+
+        num_samples : int, optional
+            Number of stochastic samples/trajectories for the semiclassical averaging.
+            If ``None``, the simulator default is used.
+
+        c : float, optional
+            Normalisation/contrast parameter forwarded to ``mary_lfe_hfe`` for
+            MARY post-processing.
+
+    Returns:
+
+        dict
+            A results dictionary with keys:
+            - ``time`` : ndarray, the input time grid.
+            - ``B`` : ndarray, the field grid.
+            - ``theta`` / ``phi`` : angles used for the sweep.
+            - ``rhos`` : list/ndarray of density matrices (reshaped to square form).
+            - ``time_evolutions`` : ndarray, product probabilities vs. ``time`` and ``B``.
+            - ``product_yields`` : ndarray, integrated yields vs. ``B``.
+            - ``product_yield_sums`` : float or ndarray, sum.
+            - ``MARY`` : ndarray, normalised magnetoresponse vs. ``B``.
+            - ``LFE`` : float, low-field effect (%).
+            - ``HFE`` : float, high-field effect (%).
     """
     HJ = sim.exchange_hamiltonian(J)
     HD = sim.dipolar_hamiltonian(D)
@@ -1407,14 +1401,12 @@ def nmr(
         - ppm: Chemical shift axis (ppm).
         - spectrum: Complex spectrum after FFT (same length as `fft_number`).
     """
-    # Derived quantities
     spectralwidth_inv = 1.0 / spectral_width
     acquisition_time = number_of_points * spectralwidth_inv
     # digital_resolution  = spectral_width / fft_number
     t2_relaxation_time = 1.0 / (np.pi * linewidth) if linewidth > 0 else 1e99
     reference_frequency = transmitter_frequency / (1.0 + carrier_position * 1.0e-6)
 
-    # Time array
     time = np.linspace(0.0, acquisition_time, number_of_points, endpoint=True)
 
     # Multiplet arrays
@@ -1430,7 +1422,7 @@ def nmr(
         mult = np.zeros(0, dtype=int)
         j_hz = np.zeros(0)
 
-    # Build FID (vectorised)
+    # Build FID
     if len(multiplets) > 0:
         cs_re = nmr_chemical_shift_real_modulation(f_hz, time)
         cs_im = nmr_chemical_shift_imaginary_modulation(f_hz, time)
@@ -1447,17 +1439,14 @@ def nmr(
     rfid[0] *= 0.5
     ifid[0] *= 0.5
 
-    # Zero-fill
     if fft_number > number_of_points:
         pad_len = fft_number - number_of_points
         rfid = np.concatenate([rfid, np.zeros(pad_len)])
         ifid = np.concatenate([ifid, np.zeros(pad_len)])
 
-    # FFT
     fid = rfid + 1j * ifid
     spectrum = np.fft.fft(fid, n=fft_number) * scale
 
-    # Frequency (MHz)
     i = np.arange(1, fft_number + 1, dtype=float)
     freq_mhz = (
         (transmitter_frequency * 1.0e6)

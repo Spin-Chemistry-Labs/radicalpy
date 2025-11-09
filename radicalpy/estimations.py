@@ -575,7 +575,6 @@ def dipolar_interaction_anisotropic_from_dipolar_vector_without_prefactor(
 
     I3 = np.eye(3, dtype=float)
     rrT = np.outer(r_m, r_m)
-    # [(|r|^2) I - 3 r r^T] / |r|^5
     T = ((r2 * I3) - 3.0 * rrT) / (rnorm**5)
     return T
 
@@ -626,7 +625,6 @@ def dipolar_interaction_anisotropic_from_dipolar_vector(
         dipolar_vector, units=units
     )
     D = float(dipolar_prefactor) * T_geom
-    # return complex dtype to match other Hamiltonian builders smoothly
     return np.asarray(D, dtype=np.complex128)
 
 
@@ -918,7 +916,6 @@ def k_excitation(
             laser_power (float): The excitation laser power (W).
             pathlength (float): The path length of the sample cell
                 (m).
-
 
     Returns:
             float: The excitation rate (1/s).

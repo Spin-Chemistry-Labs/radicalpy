@@ -7,58 +7,55 @@ estimates, LaTeX formatting helpers, and basic 3D random-walk
 sampling.
 
 
-Contents
---------
+Contents:
 
-- Diffusion:
+    - Diffusion:
 
-  - get_delta_r(D, dt): RMS relative displacement √(6 D Δt).
+    - get_delta_r(D, dt): RMS relative displacement √(6 D Δt).
 
-- LaTeX utilities:
+    - LaTeX utilities:
 
-  - latexify(rate_equations): Build d[Xi]/dt = … strings from a rate map.
+    - latexify(rate_equations): Build d[Xi]/dt = … strings from a rate map.
 
-  - latex_eqlist_to_align(eqs): Wrap equations in an `align*` environment.
+    - latex_eqlist_to_align(eqs): Wrap equations in an `align*` environment.
 
-- Kinetics:
+    - Kinetics:
 
-  - Rate: Numeric value + LaTeX label with operator overloading that carries
-    symbolic expressions through +, −, ×, ÷.
+    - Rate: Numeric value + LaTeX label with operator overloading that carries
+        symbolic expressions through +, −, ×, ÷.
 
-  - RateEquations: Sparse representation and time evolution (matrix exponential)
-    for first-order networks; returns EquationRateResult for easy access.
+    - RateEquations: Sparse representation and time evolution (matrix exponential)
+        for first-order networks; returns EquationRateResult for easy access.
 
-  - EquationRateResult: Convenience accessor to sum populations of one or more
-    states over time.
+    - EquationRateResult: Convenience accessor to sum populations of one or more
+        states over time.
 
-- Visualization:
+    - Visualization:
 
-  - reaction_scheme(path, rate_equations): Generate a LaTeX (dot2tex) diagram
-    of the reaction network.
+    - reaction_scheme(path, rate_equations): Generate a LaTeX (dot2tex) diagram
+        of the reaction network.
 
-- Random sampling:
+    - Random sampling:
 
-  - random_theta_phi(n): Uniform sampling on the unit sphere.
+    - random_theta_phi(n): Uniform sampling on the unit sphere.
 
-  - randomwalk_3d(...): Monte-Carlo 3D random walk with min/ max-distance
-    constraints (solution or spherical microreactor).
-
-
-Key conventions
----------------
-
-- Rate maps use:  sink_state -> { source_state: Rate|float, ... }
-  The resulting sparse matrix M stores rates at (sink, source), so dP/dt = M P.
-
-- Time evolution assumes uniform spacing in `time` and advances via the matrix
-  exponential of the rate matrix over Δt.
+    - randomwalk_3d(...): Monte-Carlo 3D random walk with min/ max-distance
+        constraints (solution or spherical microreactor).
 
 
-Dependencies
-------------
+Key conventions:
 
-Relies on NumPy and SciPy (sparse) for numerics, graphviz + dot2tex for
-LaTeX diagram generation.
+    - Rate maps use:  sink_state -> { source_state: Rate|float, ... }
+    The resulting sparse matrix M stores rates at (sink, source), so dP/dt = M P.
+
+    - Time evolution assumes uniform spacing in `time` and advances via the matrix
+    exponential of the rate matrix over Δt.
+
+
+Dependencies:
+
+    Relies on NumPy and SciPy (sparse) for numerics, graphviz + dot2tex for
+    LaTeX diagram generation.
 
 """
 

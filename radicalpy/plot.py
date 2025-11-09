@@ -211,12 +211,14 @@ def linear_energy_levels(H, B, linecolour, title):
             None: Displays a vertical event plot of eigenvalues.
     """
     # todo(vatai): clean up
-    eigval = np.linalg.eigh(H)  # try eig(H)
-    E = np.real(eigval[0])  # 0 = eigenvalues, 1 = eigenvectors
+    # eigval = np.linalg.eigh(H)  # try eig(H)
+    # E = np.real(eigval[0])  # 0 = eigenvalues, 1 = eigenvectors
+    evals, _ = np.linalg.eig(H)
+    evals = np.sort(evals)
 
     fig = plt.figure(figsize=(4, 8))
     ax = fig.add_axes([0, 0, 1, 1])
-    ax.eventplot(E, orientation="vertical", color=linecolour, linewidth=3)
+    ax.eventplot(evals, orientation="vertical", color=linecolour, linewidth=3)
     ax.set_title(title, size=18)
     ax.set_ylabel("Spin state energy / J", size=14)
     plt.tick_params(labelsize=14)
@@ -243,18 +245,26 @@ def energy_levels(sim: HilbertSimulation, B: np.ndarray, J=0, D=0):
         type(sim) == HilbertSimulation
     ), "plot.energy_levels assumes Hilbert space simulation"
     H_base = sim.total_hamiltonian(0, J, D)
-    H_zee = sim.zeeman_hamiltonian(1)
+    # H_zee = sim.zeeman_hamiltonian(1)
 
-    E = np.zeros([len(B), len(H_base)], dtype=np.complex128)
+    # E = np.zeros([len(B), len(H_base)], dtype=np.complex128)
+    data = []
 
     for i, B0 in enumerate(B):
-        H = H_base + B0 * H_zee
-        eigval = np.linalg.eig(H)
-        E[i] = eigval[0]  # 0 = eigenvalues, 1 = eigenvectors
+        # H = H_base + B0 * H_zee
+        # eigval = np.linalg.eig(H)
+        # E[i] = eigval[0]  # 0 = eigenvalues, 1 = eigenvectors
+        temp = H_base + sim.zeeman_hamiltonian(B)
+        evals, _ = np.linalg.eig(temp)
+        evals = np.sort(evals)
+        # append results in
+        data.append(evals)
 
     fig = plt.figure()
     ax = fig.add_axes([0, 0, 1, 1])
-    ax.plot(B, np.real(E[:, ::-1]), linewidth=2)
+    for evals in np.array(data).T:
+        ax.plot(B, evals, "k-", linewidth=2)
+    # ax.plot(B, np.real(E[:, ::-1]), linewidth=2)
     # ax.set_title(title, size=18)
     ax.set_xlabel("$B_0 / T$", size=14)
     ax.set_ylabel("Spin state energy / J", size=14)
@@ -564,29 +574,23 @@ def plot_sphere(ax, radius=1, color="black", alpha=0.05):
     overlaid through the sphere’s center for orientation. A thin great-circle
     outline is also drawn.
 
-    Parameters
-    ----------
-    ax : matplotlib.axes._subplots.Axes3DSubplot or mpl_toolkits.mplot3d.Axes3D
-        A 3D Matplotlib axes object on which to draw.
-    radius : float, optional
-        Sphere radius. Default is ``1``.
-    color : str or tuple, optional
-        Base color for the sphere surface and outlines. Default is ``'black'``.
-    alpha : float, optional
-        Surface transparency in ``[0, 1]``. Default is ``0.05``.
+    Args:
 
-    Returns
-    -------
-    None
-        The function draws on ``ax`` in place and returns ``None``.
+        ax : matplotlib.axes._subplots.Axes3DSubplot or mpl_toolkits.mplot3d.Axes3D
+            A 3D Matplotlib axes object on which to draw.
 
-    Notes
-    -----
-    - The sphere surface uses a ``50×50`` grid in spherical coordinates.
-    - Three coordinate axes are drawn with light red/green/blue lines along
-      the x/y/z directions, respectively.
-    - This helper assumes ``ax`` has 3D projection. Create one with:
-      ``fig.add_subplot(111, projection='3d')``.
+        radius : float, optional
+            Sphere radius. Default is ``1``.
+
+        color : str or tuple, optional
+            Base color for the sphere surface and outlines. Default is ``'black'``.
+
+        alpha : float, optional
+            Surface transparency in ``[0, 1]``. Default is ``0.05``.
+
+    Returns:
+        None
+            The function draws on ``ax`` in place and returns ``None``.
     """
     # draw sphere
     u, v = np.mgrid[0 : 2 * np.pi : 50j, 0 : np.pi : 50j]
