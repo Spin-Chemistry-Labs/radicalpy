@@ -945,6 +945,65 @@ class HilbertSimulation:
             result += Emod * ((Sx @ Sx) - (Sy @ Sy))
         return result
 
+    def spin_orbit_hamiltonian(
+        self,
+        soc_vectors,
+        electron_spins=None,
+        sparse: bool = False,
+    ):
+        """
+        Spin–orbit interaction Hamiltonian.
+
+        H_SO = sum_i (Lx_i * S_i,x + Ly_i * S_i,y + Lz_i * S_i,z)
+
+        Args:
+
+            soc_vectors: list[int], optional
+                Which electrons (0-based) to include. Default: all.
+            sparse: Return sparse CSR if True, else dense ndarray.
+
+        Returns:
+
+            H_SO: ndarray or csr_matrix
+        """
+        dim = int(self.hamiltonian_size)
+        n_electrons = len(self.radicals)
+
+        soc_vectors = np.asarray(soc_vectors, dtype=float) * abs(
+            self.radicals[0].gamma_mT
+        )
+        if soc_vectors.ndim == 1:
+            # one vector for all electrons
+            soc_vectors = np.repeat(soc_vectors[np.newaxis, :], n_electrons, axis=0)
+        elif soc_vectors.shape[0] != n_electrons:
+            raise ValueError("soc_vectors must be (3,) or (n_electrons, 3)")
+
+        if electron_spins is None:
+            electron_spins = list(range(n_electrons))
+
+        if sparse:
+            H = sp.csr_matrix((dim, dim), dtype=complex)
+        else:
+            H = np.zeros((dim, dim), dtype=complex)
+
+        for e_idx in electron_spins:
+            Lx, Ly, Lz = soc_vectors[e_idx]
+            if Lx == Ly == Lz == 0:
+                continue
+
+            Sx = self.spin_operator(e_idx, "x", kron_eye=True)
+            Sy = self.spin_operator(e_idx, "y", kron_eye=True)
+            Sz = self.spin_operator(e_idx, "z", kron_eye=True)
+
+            term = Lx * Sx + Ly * Sy + Lz * Sz
+
+            if sparse:
+                H = H + sp.csr_matrix(term)
+            else:
+                H = H + term
+
+        return H
+
     def total_hamiltonian(
         self,
         B0: float,
@@ -1053,162 +1112,6 @@ class HilbertSimulation:
             ]
         )  # Lindblad
         return Hsuper + Lsuper
-
-    def bloch_redfield_liouvillian(
-        self,
-        H: np.ndarray,
-        channels: Sequence,
-        *,
-        secular: bool = True,
-        secular_cutoff: float = 0.01,
-    ) -> np.ndarray:
-        r"""Construct the Bloch–Redfield Liouvillian from a Hilbert–space Hamiltonian.
-
-        The generator returned acts on vec(ρ) (column-stacking convention) and
-        includes both the coherent commutator and the Redfield dissipator,
-        constructed in the energy basis of ``H`` and similarity-transformed
-        back to the current lab basis.
-
-        Args:
-
-            H: Hilbert-space Hamiltonian in angular-frequency units
-                (rad/s).  Must be square; a complex dtype
-                (e.g. complex128) is recommended.
-
-            channels: Iterable of ``(A, S_like)`` pairs where ``A``
-                is a Hilbert-space coupling operator (N×N) and
-                ``S_like`` is either:
-
-                - a callable ``S(ω) -> float`` giving the noise power
-                  spectrum evaluated at the Bohr frequency ω (in
-                  rad/s), or
-
-                - a numeric correlation time ``τ_c``; in this case a
-                  Lorentzian spectrum ``S(ω)=τ_c/(1+ω² τ_c²)`` is
-                  used.
-
-            secular: If True (default), apply a secular/Davies filter:
-                matrix elements coupling coherences whose frequency
-                mismatch :math:`\lvert \Delta \rvert` exceeds ``gmax *
-                secular_cutoff`` are dropped, where ``gmax`` is the
-                largest sampled spectral value across channel spectra on
-                the Bohr grid.
-
-            secular_cutoff: Relative cutoff used by the secular
-                filter. Default ``0.01``.
-
-        Returns:
-
-            L_lab : ndarray of shape (N*N, N*N), complex128
-                Bloch–Redfield Liouvillian in the lab basis, suitable
-                for subtraction from the working Liouvillian (i.e., it
-                already includes the coherent part ``-i(I⊗H −
-                Hᵀ⊗I)``).
-
-        """
-
-        # --- helpers -------------------------------------------------------------
-        def _spectral_from(S_like):
-            if callable(S_like):
-                return S_like
-            tau_c = float(S_like)
-
-            def _S(w):
-                ww = float(w)
-                return float(tau_c / (1.0 + (ww * tau_c) * (ww * tau_c)))
-
-            return _S
-
-        # --- input hygiene -------------------------------------------------------
-        H = np.asarray(H, dtype=np.complex128)
-        if H.ndim != 2 or H.shape[0] != H.shape[1]:
-            raise ValueError(f"H must be square; got shape {H.shape}.")
-        N = H.shape[0]
-
-        # eigenbasis of H (Hermitian path preferred)
-        evals, V = np.linalg.eigh(H)
-        # ensure ascending order explicitly
-        perm = np.argsort(evals.real)
-        evals = evals[perm]
-        V = V[:, perm]
-
-        # transform coupling operators to energy basis, attach callable spectra
-        a_ops_E = []
-        for A, S_like in channels:
-            A = np.asarray(A, dtype=np.complex128)
-            if A.shape != (N, N):
-                raise ValueError(
-                    f"Coupling operator shape {A.shape} incompatible with H {(N, N)}."
-                )
-            S_fn = _spectral_from(S_like)
-            A_E = V.conj().T @ A @ V
-            a_ops_E.append((A_E, S_fn))
-
-        # index pairs and Bohr frequencies
-        pairs = [(a, b) for a in range(N) for b in range(N)]
-        bohr = np.array(
-            [evals[a] - evals[b] for a in range(N) for b in range(N)],
-            dtype=np.complex128,
-        )
-        abs_bohr = np.unique(np.abs(bohr.real))
-
-        # allocate R (energy basis) and add unitary part on the diagonal
-        R_E = np.zeros((N * N, N * N), dtype=np.complex128)
-        for j, (a, b) in enumerate(pairs):
-            R_E[j, j] += -1j * (evals[a] - evals[b])
-
-        # secular cutoff reference gmax across channels on Bohr grid
-        gmax = 0.0
-        if secular and abs_bohr.size:
-            for _, S_fn in a_ops_E:
-                vals = [max(0.0, abs(float(S_fn(+w)))) for w in abs_bohr]
-                if vals:
-                    gmax = max(gmax, max(vals))
-
-        # dissipator (energy basis)
-        for j, (a, b) in enumerate(pairs):
-            for k, (c, d) in enumerate(pairs):
-                if secular and gmax > 0.0:
-                    Delta = (evals[a] - evals[b]) - (evals[c] - evals[d])
-                    if abs(Delta.real) > gmax * float(secular_cutoff):
-                        continue
-
-                total = 0.0 + 0.0j
-                for A, S_fn in a_ops_E:
-                    term = 0.0 + 0.0j
-
-                    if b == d:
-                        s1 = 0.0 + 0.0j
-                        for n in range(N):
-                            w = float((evals[c] - evals[n]).real)
-                            r = max(0.0, float(S_fn(w)))
-                            s1 += A[a, n] * A[n, c] * r
-                        term += s1
-
-                    w_ac = float((evals[c] - evals[a]).real)
-                    term -= A[a, c] * A[d, b] * max(0.0, float(S_fn(w_ac)))
-
-                    if a == c:
-                        s2 = 0.0 + 0.0j
-                        for n in range(N):
-                            w = float((evals[d] - evals[n]).real)
-                            r = max(0.0, float(S_fn(w)))
-                            s2 += A[d, n] * A[n, b] * r
-                        term += s2
-
-                    w_db = float((evals[d] - evals[b]).real)
-                    term -= A[a, c] * A[d, b] * max(0.0, float(S_fn(w_db)))
-
-                    total += (-0.5) * term
-
-                R_E[j, k] += total
-
-        # similarity transform to lab Liouville basis:
-        # vec(ρ_lab) = (V̄ ⊗ V) vec(ρ_E)  ⇒  T = kron(V.T, V.conj())
-        T = np.kron(V.T, V.conj()).astype(np.complex128, copy=False)
-        Tinv = np.linalg.inv(T)
-        L_lab = (Tinv @ R_E @ T).astype(np.complex128, copy=False)
-        return L_lab
 
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
