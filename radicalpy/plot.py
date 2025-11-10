@@ -239,8 +239,6 @@ def energy_levels(sim: HilbertSimulation, B: np.ndarray, J=0, D=0):
     Returns:
             None: Displays a Matplotlib line plot of energy levels vs field.
     """
-    # TODO(VATAI): DO THIS PROPERLY
-    # TODO(VATAI): use tick labels
     assert (
         type(sim) == HilbertSimulation
     ), "plot.energy_levels assumes Hilbert space simulation"
