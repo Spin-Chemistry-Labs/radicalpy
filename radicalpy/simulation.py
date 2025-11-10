@@ -1115,11 +1115,11 @@ class HilbertSimulation:
         return Hsuper + Lsuper
 
     def bloch_redfield_liouvillian(
-        self, 
-        H: np.ndarray, 
-        bath: list[np.ndarray], 
-        noise: list[np.ndarray], 
-        secular: bool=True,
+        self,
+        H: np.ndarray,
+        bath: list[np.ndarray],
+        noise: list[np.ndarray],
+        secular: bool = True,
     ):
         """
         Bloch-Redfield tensor builder.
@@ -1182,10 +1182,9 @@ class HilbertSimulation:
                     if abs(W[a, b] - W[c, d]) < dw_min / 10.0:
                         candidate_J.append((J, c, d))
             else:
-                candidate_J = [(J,)+idx_map[J] for J in range(N*N)]
+                candidate_J = [(J,) + idx_map[J] for J in range(N * N)]
 
-
-            for (J, c, d) in candidate_J:
+            for J, c, d in candidate_J:
                 elem = 0.0 + 0.0j
                 elem += 0.5 * np.sum(
                     A[:, a, c] * A[:, d, b] * (Jw[:, c, a] + Jw[:, d, b])
@@ -1204,15 +1203,14 @@ class HilbertSimulation:
         L = L + R
         return L, eigvecs
 
-
     def bloch_redfield_solver(
-        self, 
-        L_e: np.ndarray, 
-        eigvecs: np.ndarray, 
-        rho0: np.ndarray, 
-        time: np.ndarray, 
-        obs: list[np.ndarray]=None, 
-        rtol=1e-7, 
+        self,
+        L_e: np.ndarray,
+        eigvecs: np.ndarray,
+        rho0: np.ndarray,
+        time: np.ndarray,
+        obs: list[np.ndarray] = None,
+        rtol=1e-7,
         atol=1e-7,
     ):
         """
@@ -1240,7 +1238,6 @@ class HilbertSimulation:
         # transform initial state to energy basis: rho_e = V† rho V
         V = eigvecs
         rho_e = V.conj().T @ rho0 @ V
-        
 
         y0 = utils.matrix_to_vector(rho_e).ravel()
         # transform obs to energy basis
@@ -1248,8 +1245,8 @@ class HilbertSimulation:
         e_ops_e = [V.conj().T @ E @ V for E in obs]
 
         def rhs(t, y):
-            
-            return (L_e @ y)
+
+            return L_e @ y
 
         solver = ode(rhs).set_integrator("zvode", method="bdf", rtol=rtol, atol=atol)
         solver.set_initial_value(y0, time[0])
@@ -1274,16 +1271,15 @@ class HilbertSimulation:
         else:
             return {"states": out_states}
 
-
     def bloch_redfield_time_evolution(
-        self, 
-        H: np.ndarray, 
-        rho0: np.ndarray, 
-        time: np.ndarray, 
-        bath: list[np.ndarray], 
-        noise: list[np.ndarray]=None, 
-        obs: list[np.ndarray]=None,
-        secular: bool=True, 
+        self,
+        H: np.ndarray,
+        rho0: np.ndarray,
+        time: np.ndarray,
+        bath: list[np.ndarray],
+        noise: list[np.ndarray] = None,
+        obs: list[np.ndarray] = None,
+        secular: bool = True,
         **kwargs,
     ):
         """

@@ -28,7 +28,7 @@ def main():
     Sxyz = sigmax + sigmay + sigmaz
 
     def S(omega: float, tau_c: float) -> float:
-        omega= float(omega)
+        omega = float(omega)
         return tau_c / (1.0 + (omega * tau_c) * (omega * tau_c))
 
     tau_c = 1e7
@@ -39,7 +39,7 @@ def main():
     L = sim.bloch_redfield_time_evolution(
         H, rho0, time, bath=[Sxyz], noise=[NPS], obs=[obs]
     )
-    L_result = L['expect'][0] / np.trace(rho0)
+    L_result = L["expect"][0] / np.trace(rho0)
 
     fig = plt.figure(1)
     plt.plot(time * 1e6, L_result)
