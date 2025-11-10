@@ -1114,7 +1114,13 @@ class HilbertSimulation:
         )  # Lindblad
         return Hsuper + Lsuper
 
-    def bloch_redfield_liouvillian(self, H: np.ndarray, bath: list[np.ndarray], noise: list[np.ndarray], secular: bool=True,):
+    def bloch_redfield_liouvillian(
+            self, 
+            H: np.ndarray, 
+            bath: list[np.ndarray], 
+            noise: list[np.ndarray], 
+            secular: bool=True,
+    ):
         """
         Bloch-Redfield tensor builder.
 
@@ -1198,7 +1204,16 @@ class HilbertSimulation:
         return L, eigvecs
 
 
-    def bloch_redfield_solver(self, L_e: np.ndarray, eigvecs: np.ndarray, rho0: np.ndarray, time: np.ndarray, obs: list[np.ndarray]=None, rtol=1e-7, atol=1e-7,):
+    def bloch_redfield_solver(
+            self, 
+            L_e: np.ndarray, 
+            eigvecs: np.ndarray, 
+            rho0: np.ndarray, 
+            time: np.ndarray, 
+            obs: list[np.ndarray]=None, 
+            rtol=1e-7, 
+            atol=1e-7,
+    ):
         """
         Evolve Bloch-Redfield master equation in the **energy basis**.
 
@@ -1225,6 +1240,7 @@ class HilbertSimulation:
         V = eigvecs
         rho_e = V.conj().T @ rho0 @ V
         
+
         y0 = utils.matrix_to_vector(rho_e).ravel()
         # transform obs to energy basis
         obs = obs or []
@@ -1233,9 +1249,7 @@ class HilbertSimulation:
         def rhs(t, y):
             return (L_e @ y)
 
-        solver = ode(rhs).set_integrator(
-            "zvode", method="bdf", rtol=rtol, atol=atol
-        )
+        solver = ode(rhs).set_integrator("zvode", method="bdf", rtol=rtol, atol=atol)
         solver.set_initial_value(y0, time[0])
 
         out_expect = [np.zeros(len(time), dtype=complex) for _ in obs]
@@ -1259,8 +1273,17 @@ class HilbertSimulation:
             return {"states": out_states}
 
 
-    def bloch_redfield_time_evolution(self, H: np.ndarray, rho0: np.ndarray, time: np.ndarray, bath: list[np.ndarray], noise: list[np.ndarray]=None, obs: list[np.ndarray]=None,
-                secular: bool=True, **kwargs,):
+    def bloch_redfield_time_evolution(
+            self, 
+            H: np.ndarray, 
+            rho0: np.ndarray, 
+            time: np.ndarray, 
+            bath: list[np.ndarray], 
+            noise: list[np.ndarray]=None, 
+            obs: list[np.ndarray]=None,
+            secular: bool=True, 
+            **kwargs,
+    ):
         """
         Bloch-Redfield Liouvillian time evolution solver.
         """
