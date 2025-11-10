@@ -62,8 +62,8 @@ from typing import Optional, Sequence
 
 import numpy as np
 import scipy as sp
-from scipy.integrate import ode
 from numpy.typing import NDArray
+from scipy.integrate import ode
 from tqdm import tqdm
 
 from . import utils
