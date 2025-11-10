@@ -792,6 +792,16 @@ def get_rotation_matrix_euler_angles(A, B):
     return R, alpha, beta, gamma
 
 
+def hilbert_to_liouville(H: np.ndarray):
+    """
+    Liouvillian for unitary part in the basis of H (H is already in that basis):
+    L[rho] = -i [H, rho]  -> vec form: -i (I ⊗ H - H.T ⊗ I)
+    """
+    N = H.shape[0]
+    I = np.eye(N, dtype=complex)
+    return -1j * (np.kron(I, H) - np.kron(H.T, I))
+
+
 def infer_bonds(elements, coords, scale=1.20, max_dist=2.0):
     """Heuristic covalent-bond detection from interatomic distances.
 
@@ -895,6 +905,11 @@ def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
             np.ndarray: The modulated MARY signal.
     """
     return 1 / (1 + mod_signal**2) - lfe_magnitude / (0.1 + mod_signal**2)
+
+
+def matrix_to_vector(M: np.ndarray):
+    """Convert a matrix into a column vector."""
+    return M.reshape((-1, 1), order="F")
 
 
 def meV_to_GHz(meV: float | np.ndarray) -> float | np.ndarray:
@@ -1995,7 +2010,6 @@ def spherical_average(
         for i in range(nth)
         for j in range(nph)
     )
-
     return spherical_avg * theta[1] * phi[1] / (4 * np.pi) / 9
 
 
@@ -2045,6 +2059,11 @@ def s_t0_omega(
     omega_plus = base_omega + 0.5 * hfc_star + onuc_all
     omega_minus = base_omega - 0.5 * hfc_star + onuc_all
     return omega_plus, omega_minus
+
+
+def vector_to_matrix(v: np.ndarray, N: int):
+    """Convert a column vector into a matrix."""
+    return v.reshape((N, N), order="F")
 
 
 def von_neumann_entropy(rho):
@@ -2336,7 +2355,6 @@ def write_orca_from_pdb(
     epr_filename = epr_filename or f"{stem}.EPRII.inp"
     xyz_sidecar = xyz_sidecar or f"{stem}.opt.xyz"
 
-    # --- write OPT .inp (embedded coords), honoring your exact block order/format ---
     opt_lines: List[str] = []
     opt_lines.append(f"# {title}")
     opt_lines.append(_line_opt_header(opt_method, opt_basis, opt_flags))
@@ -2350,7 +2368,6 @@ def write_orca_from_pdb(
     with open(opt_path, "w", encoding="utf-8") as f:
         f.write("\n".join(opt_lines) + "\n")
 
-    # --- write XYZ sidecar as referenced in EPR job ---
     xyz_path = out_dir / xyz_sidecar
     with open(xyz_path, "w", encoding="utf-8") as xf:
         xf.write(f"{len(atoms)}\n")
@@ -2358,7 +2375,6 @@ def write_orca_from_pdb(
         for el, x, y, z in atoms:
             xf.write(f"{el:2s}  {x: .8f}  {y: .8f}  {z: .8f}\n")
 
-    # --- write EPR .inp (XYZFile reference + %EPRNMR block) ---
     epr_lines: List[str] = []
     epr_lines.append(f"# {title}")
     epr_lines.append(_line_epr_header(epr_method, epr_basis, epr_autoaux))
@@ -2371,7 +2387,6 @@ def write_orca_from_pdb(
     epr_path = out_dir / epr_filename
     with open(epr_path, "w", encoding="utf-8") as f:
         f.write("\n".join(epr_lines) + "\n")
-
     return [opt_path, epr_path, xyz_path]
 
 

@@ -62,7 +62,9 @@ from typing import Optional, Sequence
 
 import numpy as np
 import scipy as sp
+from scipy.integrate import ode
 from numpy.typing import NDArray
+from tqdm import tqdm
 
 from . import utils
 from .data import Molecule
@@ -1112,16 +1114,161 @@ class HilbertSimulation:
         )  # Lindblad
         return Hsuper + Lsuper
 
-    def bloch_redfield_liouvillian(
-        self,
-        H: np.ndarray,
-        channels: Sequence,
-        *,
-        secular: bool = True,
-        secular_cutoff: float = 0.01,
-    ) -> np.ndarray:
+    def bloch_redfield_liouvillian(self, H: np.ndarray, bath: list[np.ndarray], noise: list[np.ndarray], secular: bool=True,):
+        """
+        Bloch-Redfield tensor builder.
 
-        return
+        Args:
+
+                H (np.ndarray): Hamiltonian (time-independent).
+
+                bath (list[np.ndarray]): System operators coupling to the bath.
+
+                noise (list[np.ndarray]): spectra[k](w) gives noise power at frequency w, for bath[k].
+
+                secular (bool): If True, use the dw_min/10 frequency matching.
+
+        Returns:
+
+                L (np.ndarray): Bloch-Redfield Liouvillian in the **energy basis**.
+                eigvecs (np.ndarray): Columns are eigenkets of H.
+        """
+        H = np.asarray(H, dtype=complex)
+        N = H.shape[0]
+        K = len(bath)
+
+        evals, eigvecs = np.linalg.eigh(H)
+        H_e = np.diag(evals)
+
+        if K == 0:
+            L = utils.hilbert_to_liouville(H_e)
+            return L, eigvecs
+
+        A = np.zeros((K, N, N), dtype=complex)
+        for k, Ak in enumerate(bath):
+            Ak = np.asarray(Ak, dtype=complex)
+            A[k] = eigvecs.conj().T @ Ak @ eigvecs
+
+        W = np.real(evals[:, None] - evals[None, :])
+        Jw = np.zeros((K, N, N), dtype=complex)
+        for k in range(K):
+            f = noise[k]
+            for n in range(N):
+                for m in range(N):
+                    Jw[k, n, m] = f(W[n, m])
+
+        nonzero = W[np.nonzero(W)]
+        dw_min = np.abs(nonzero).min() if nonzero.size else 0.0
+
+        L = utils.hilbert_to_liouville(H_e)
+        R = np.zeros((N * N, N * N), dtype=complex)
+
+        idx_map = []
+        for a in range(N):
+            for b in range(N):
+                idx_map.append((a, b))
+
+        for I, (a, b) in enumerate(idx_map):
+            if secular and dw_min > 0.0:
+                # |W[a,b] - W[c,d]| < dw_min / 10
+                candidate_J = []
+                for J, (c, d) in enumerate(idx_map):
+                    if abs(W[a, b] - W[c, d]) < dw_min / 10.0:
+                        candidate_J.append((J, c, d))
+            else:
+                candidate_J = [(J,)+idx_map[J] for J in range(N*N)]
+
+            for (J, c, d) in candidate_J:
+                elem = 0.0 + 0.0j
+                elem += 0.5 * np.sum(
+                    A[:, a, c] * A[:, d, b] * (Jw[:, c, a] + Jw[:, d, b])
+                )
+                if b == d:
+                    elem -= 0.5 * np.sum(
+                        A[:, a, :] * A[:, :, c] * Jw[:, c, :], axis=(0, 1)
+                    )
+                if a == c:
+                    elem -= 0.5 * np.sum(
+                        A[:, d, :] * A[:, :, b] * Jw[:, d, :], axis=(0, 1)
+                    )
+                if elem != 0.0:
+                    R[I, J] += elem
+
+        L = L + R
+        return L, eigvecs
+
+
+    def bloch_redfield_solver(self, L_e: np.ndarray, eigvecs: np.ndarray, rho0: np.ndarray, time: np.ndarray, obs: list[np.ndarray]=None, rtol=1e-7, atol=1e-7,):
+        """
+        Evolve Bloch-Redfield master equation in the **energy basis**.
+
+        Args:
+
+                L_e (np.ndarray): Liouvillian in energy basis.
+
+                eigvecs (np.ndarray): Energy eigenvectors.
+
+                rho0 (np.ndarray): Initial density matrix in **lab** basis.
+
+                time (np.ndarray): Time in seconds.
+
+                obs (list[np.ndarray]): Expectation operator in **lab** basis.
+
+        Returns:
+
+                results (dict): {'states': [...]} or {'expect': [arrays...]}
+        """
+        N = rho0.shape[0]
+        rho0 = np.asarray(rho0, dtype=complex)
+
+        # transform initial state to energy basis: rho_e = V† rho V
+        V = eigvecs
+        rho_e = V.conj().T @ rho0 @ V
+        
+        y0 = utils.matrix_to_vector(rho_e).ravel()
+        # transform obs to energy basis
+        obs = obs or []
+        e_ops_e = [V.conj().T @ E @ V for E in obs]
+
+        def rhs(t, y):
+            return (L_e @ y)
+
+        solver = ode(rhs).set_integrator(
+            "zvode", method="bdf", rtol=rtol, atol=atol
+        )
+        solver.set_initial_value(y0, time[0])
+
+        out_expect = [np.zeros(len(time), dtype=complex) for _ in obs]
+        out_states = []
+
+        for it, t in enumerate(tqdm(time)):
+            if it > 0:
+                solver.integrate(t)
+            y = solver.y
+            rho_e_t = utils.vector_to_matrix(y, N)
+            if obs:
+                for m, E in enumerate(e_ops_e):
+                    out_expect[m][it] = np.trace(E @ rho_e_t)
+            else:
+                rho_lab = V @ rho_e_t @ V.conj().T
+                out_states.append(rho_lab)
+
+        if obs:
+            return {"expect": out_expect}
+        else:
+            return {"states": out_states}
+
+
+    def bloch_redfield_time_evolution(self, H: np.ndarray, rho0: np.ndarray, time: np.ndarray, bath: list[np.ndarray], noise: list[np.ndarray]=None, obs: list[np.ndarray]=None,
+                secular: bool=True, **kwargs,):
+        """
+        Bloch-Redfield Liouvillian time evolution solver.
+        """
+        noise_callables = noise or [lambda omega: 1.0 for _ in bath]
+        L_e, eigvecs = self.bloch_redfield_liouvillian(
+            H, bath, noise_callables, secular=secular
+        )
+        return self.bloch_redfield_solver(L_e, eigvecs, rho0, time, obs=obs, **kwargs)
 
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
