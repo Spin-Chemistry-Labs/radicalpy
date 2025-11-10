@@ -14,46 +14,37 @@ from radicalpy.utils import is_fast_run
 def main():
     m1 = Molecule.fromdb("flavin_anion", ["N5"])
     m2 = Molecule.fromdb("tryptophan_cation", [])
-    simH = HilbertSimulation([m1, m2])
-    sim = LiouvilleSimulation([m1, m2])
-    H = simH.total_hamiltonian(B0=0, J=0, D=0)
+    sim = HilbertSimulation([m1, m2])
+    H = sim.total_hamiltonian(B0=0, J=0, D=0)
 
-    sigmax = simH.spin_operator(0, "x") + simH.spin_operator(1, "x")
+    rho0 = sim.projection_operator(State.SINGLET)
+    obs = sim.projection_operator(State.SINGLET)
 
-    S = 3e6
-    BRs = sigmax
-    blochredfield = sim.bloch_redfield_liouvillian(
-        H, channels=[(BRs, S)], secular=True, secular_cutoff=0.01
+    sigmax = sim.spin_operator(0, "x") + sim.spin_operator(1, "x")
+    sigmay = sim.spin_operator(0, "y") + sim.spin_operator(1, "y")
+    sigmaz = sim.spin_operator(0, "z") + sim.spin_operator(1, "z")
+
+    Sxyz = sigmax + sigmay + sigmaz
+
+    def S(omega: float, tau_c: float) -> float:
+        omega = float(omega)
+        return tau_c / (1.0 + (omega * tau_c) * (omega * tau_c))
+
+    tau_c = 1e7
+    NPS = lambda omega: S(omega, tau_c)
+
+    time = np.arange(0, 5e-6, 1e-9)
+
+    L = sim.bloch_redfield_time_evolution(
+        H, rho0, time, bath=[Sxyz], noise=[NPS], obs=[obs]
     )
-
-    dB = 0.5
-    B0 = np.arange(0.0, 20.0 + 1e-9, dB)
-    time = np.arange(0, 3e-6, 10e-9)
-    kinetics = [Haberkorn(3e6, State.SINGLET), HaberkornFree(1e6)]
-    relaxations = [SingletTripletDephasing(1e7)]
-
-    init_state = State.SINGLET
-    obs_state = State.SINGLET
-
-    sim.apply_liouville_hamiltonian_modifiers(blochredfield, kinetics + relaxations)
-    rhos = magnetic_field_loop(sim, init_state, time, blochredfield, B0, B_axis="z")
-    product_probabilities = sim.product_probability(obs_state, rhos)
-
-    sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)
-    k = kinetics[0].rate_constant if kinetics else 1.0
-    product_yields, product_yield_sums = sim.product_yield(
-        product_probabilities, time, k
-    )
-
-    x = time * 1e6
-    n = 0
+    L_result = L["expect"][0] / np.trace(rho0)
 
     fig = plt.figure(1)
-    plt.plot(x, product_probabilities[n, :], linewidth=2, label=r"$P_i(t)$")
-    plt.fill_between(x, product_yields[n, :], alpha=0.2, label=r"$\Phi_i$")
+    plt.plot(time * 1e6, L_result)
     plt.xlabel("Time / $\mu s$", size=14)
     plt.ylabel("Probability", size=14)
-    # plt.ylim([0, 1])
+    plt.ylim([0, 1])
     plt.legend(fontsize=14)
     fig.set_size_inches([7, 4])
     plt.show()

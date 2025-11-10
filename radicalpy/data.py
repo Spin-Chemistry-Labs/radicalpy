@@ -8,52 +8,52 @@ nuclei, molecules) and common conversions between spin quantum numbers
 and multiplicities. It also includes accessors for bundled reference data
 and convenience builders for frequently used composite objects.
 
-Contents
---------
-Conversions
-    - :func:`spin_to_multiplicity` – convert spin quantum number ``S`` to
-      multiplicity ``2S+1`` (validates half‐integer/integer input).
-    - :func:`multiplicity_to_spin` – invert the mapping, returning
-      ``S = (M-1)/2``.
+Contents:
 
-Data access
-    - :func:`get_data` – locate packaged data files (e.g. JSON databases).
+    Conversions
+        - :func:`spin_to_multiplicity` – convert spin quantum number ``S`` to
+        multiplicity ``2S+1`` (validates half‐integer/integer input).
+        - :func:`multiplicity_to_spin` – invert the mapping, returning
+        ``S = (M-1)/2``.
 
-Core data structures
-    - :class:`Isotope` – look up an isotope’s spin multiplicity and
-      magnetogyric ratio from the bundled database (CODATA-style values),
-      with helpers like :py:meth:`Isotope.available`.
-    - :class:`Hfc` – hyperfine coupling container that supports either an
-      isotropic scalar value or a full 3×3 anisotropic tensor, and exposes
-      :py:meth:`Hfc.isotropic` and :py:meth:`Hfc.anisotropic`.
-    - :class:`Nucleus` – a nucleus within a molecule, defined by its
-      magnetogyric ratio, spin multiplicity, and hyperfine couplings; also
-      provides spin (Pauli) operator matrices via :py:meth:`Nucleus.pauli`.
-    - :class:`FuseNucleus` – an effective nucleus formed by fusing several
-      identical nuclei into a direct-sum representation to reduce Hilbert-space
-      dimension; includes utilities for validation and operator construction.
-    - :class:`Molecule` – collection of nuclei plus a radical (electron‐like
-      spin), with constructors for database-backed molecules
-      (:py:meth:`Molecule.fromdb`, :py:meth:`Molecule.all_nuclei`) and
-      ad-hoc assemblies (:py:meth:`Molecule.fromisotopes`).
-    - :class:`Triplet` – convenience molecule containing a single S=1
-      (multiplicity 3) radical and no nuclei.
+    Data access
+        - :func:`get_data` – locate packaged data files (e.g. JSON databases).
 
-Units & conventions
--------------------
-- Magnetogyric ratios are commonly expressed as ``rad/s/T`` in the database;
-  many class properties expose ``gamma_mT`` (``rad/s/mT``) for convenience.
-- Hyperfine couplings (HFCs) are in mT. When a 3×3 tensor is provided,
-  the isotropic value is computed as ``trace(D)/3``.
-- Spin operators follow the usual convention with raising (``p``),
-  lowering (``m``), and Cartesian components (``x``, ``y``, ``z``).
+    Core data structures
+        - :class:`Isotope` – look up an isotope’s spin multiplicity and
+        magnetogyric ratio from the bundled database (CODATA-style values),
+        with helpers like :py:meth:`Isotope.available`.
+        - :class:`Hfc` – hyperfine coupling container that supports either an
+        isotropic scalar value or a full 3×3 anisotropic tensor, and exposes
+        :py:meth:`Hfc.isotropic` and :py:meth:`Hfc.anisotropic`.
+        - :class:`Nucleus` – a nucleus within a molecule, defined by its
+        magnetogyric ratio, spin multiplicity, and hyperfine couplings; also
+        provides spin (Pauli) operator matrices via :py:meth:`Nucleus.pauli`.
+        - :class:`FuseNucleus` – an effective nucleus formed by fusing several
+        identical nuclei into a direct-sum representation to reduce Hilbert-space
+        dimension; includes utilities for validation and operator construction.
+        - :class:`Molecule` – collection of nuclei plus a radical (electron‐like
+        spin), with constructors for database-backed molecules
+        (:py:meth:`Molecule.fromdb`, :py:meth:`Molecule.all_nuclei`) and
+        ad-hoc assemblies (:py:meth:`Molecule.fromisotopes`).
+        - :class:`Triplet` – convenience molecule containing a single S=1
+        (multiplicity 3) radical and no nuclei.
 
-Error handling
---------------
-- :func:`spin_to_multiplicity` validates that ``S`` is integer or half-integer.
-- :class:`Isotope` raises ``ValueError`` for unknown symbols and provides
-  :py:meth:`Isotope.available` to enumerate valid options.
-- :class:`Hfc.anisotropic` raises ``ValueError`` when no tensor is available.
+Units & conventions:
+
+    - Magnetogyric ratios are commonly expressed as ``rad/s/T`` in the database;
+    many class properties expose ``gamma_mT`` (``rad/s/mT``) for convenience.
+    - Hyperfine couplings (HFCs) are in mT. When a 3×3 tensor is provided,
+    the isotropic value is computed as ``trace(D)/3``.
+    - Spin operators follow the usual convention with raising (``p``),
+    lowering (``m``), and Cartesian components (``x``, ``y``, ``z``).
+
+Error handling:
+
+    - :func:`spin_to_multiplicity` validates that ``S`` is integer or half-integer.
+    - :class:`Isotope` raises ``ValueError`` for unknown symbols and provides
+    :py:meth:`Isotope.available` to enumerate valid options.
+    - :class:`Hfc.anisotropic` raises ``ValueError`` when no tensor is available.
 """
 
 from __future__ import annotations

@@ -7,99 +7,99 @@ unit conversions, geometry on spheres, spectrum building blocks, I/O
 parsers for molecular files and quantum-chemistry outputs, and a few
 domain-specific utilities for MARY/NMR workflows.
 
-Main contents
--------------
-Constants
-    - ``COVALENT_RADII``: Covalent radii (Å) for common elements; used by
-      bonding heuristics and label/element inference.
+Main contents:
 
-CLI/testing
-    - ``is_fast_run()``: Check ``--fast`` CLI flag to run lighter examples/tests.
+    Constants
+        - ``COVALENT_RADII``: Covalent radii (Å) for common elements; used by
+        bonding heuristics and label/element inference.
 
-Fitting & line shapes
-    - ``Bhalf_fit(B, MARY)``: Fit MARY data to a Lorentzian to obtain
-      :math:`B_{1/2}` and goodness-of-fit.
-    - ``Lorentzian(B, amplitude, Bhalf)``: MARY Lorentzian model.
+    CLI/testing
+        - ``is_fast_run()``: Check ``--fast`` CLI flag to run lighter examples/tests.
 
-Unit conversions
-    - ``Gauss_to_mT/MHz/…``, ``MHz_to_mT/Gauss/…``,
-      ``mT_to_MHz/Gauss/…``,
-      ``angular_frequency_in_MHz``, ``*_to_angular_frequency``:
-      Consistent conversions between G, mT, MHz and rad·s⁻¹·T⁻¹.
-      Consistent conversions between GHz, J, meV, mK.
+    Fitting & line shapes
+        - ``Bhalf_fit(B, MARY)``: Fit MARY data to a Lorentzian to obtain
+        :math:`B_{1/2}` and goodness-of-fit.
+        - ``Lorentzian(B, amplitude, Bhalf)``: MARY Lorentzian model.
 
-Angular grids & spherical geometry
-    - ``anisotropy_check(theta, phi)``: Validate angle grids and parity (θ odd/φ even).
-    - ``_check_full_sphere(theta, phi)``: Ensure full-sphere linspace grids.
-    - ``spherical_average(...)``: Weighted average over a θ/φ grid.
-    - ``cartesian_to_spherical(...)``, ``spherical_to_cartesian(...)``:
-      Coordinate transforms.
+    Unit conversions
+        - ``Gauss_to_mT/MHz/…``, ``MHz_to_mT/Gauss/…``,
+        ``mT_to_MHz/Gauss/…``,
+        ``angular_frequency_in_MHz``, ``*_to_angular_frequency``:
+        Consistent conversions between G, mT, MHz and rad·s⁻¹·T⁻¹.
+        Consistent conversions between GHz, J, meV, mK.
 
-Autocorrelation
-    - ``autocorrelation(data, factor=1)``: FFT-based trajectory autocorrelation.
+    Angular grids & spherical geometry
+        - ``anisotropy_check(theta, phi)``: Validate angle grids and parity (θ odd/φ even).
+        - ``_check_full_sphere(theta, phi)``: Ensure full-sphere linspace grids.
+        - ``spherical_average(...)``: Weighted average over a θ/φ grid.
+        - ``cartesian_to_spherical(...)``, ``spherical_to_cartesian(...)``:
+        Coordinate transforms.
 
-CIDNP helper models
-    - ``cidnp_polarisation_*``: Exponential, truncated diffusion, and full
-      diffusion models; see docstrings for details.
-    - ``s_t0_omega(deltag, B0, hfc_star, onuc_all)``: ω₊/ω₋ for S–T₀ mixing.
+    Autocorrelation
+        - ``autocorrelation(data, factor=1)``: FFT-based trajectory autocorrelation.
 
-NMR building blocks
-    - ``nmr_chemical_shift_real/im...``: cos/sin(2π f t) modulators.
-    - ``nmr_scalar_coupling_modulation``: J-modulation term.
-    - ``nmr_t2_relaxation``: exp(−t/T₂) envelope.
+    CIDNP helper models
+        - ``cidnp_polarisation_*``: Exponential, truncated diffusion, and full
+        diffusion models; see docstrings for details.
+        - ``s_t0_omega(deltag, B0, hfc_star, onuc_all)``: ω₊/ω₋ for S–T₀ mixing.
 
-Lock-in MARY helpers
-    - ``modulated_signal(...)``, ``reference_signal(...)``:
-      Time-domain modulation and reference waves.
-    - ``mary_lorentzian(mod_signal, lfe_magnitude)``: Simple MARY line shape.
+    NMR building blocks
+        - ``nmr_chemical_shift_real/im...``: cos/sin(2π f t) modulators.
+        - ``nmr_scalar_coupling_modulation``: J-modulation term.
+        - ``nmr_t2_relaxation``: exp(−t/T₂) envelope.
 
-Molecular geometry & visualization
-    - ``define_xyz(...)``: Construct an orthonormal (x,y,z) basis from
-      atom/point triplets.
-    - ``get_angle_between_plane(A, B)``: Angle (deg) between plane normals.
-    - ``get_rotation_matrix_euler_angles(A, B)``: Rotation matrix and ZXZ
-      Euler angles mapping basis A→B.
-    - ``rodrigues_rotation(v, k, theta)``: Rotate vectors around axis k by θ.
-    - ``rotate_axes(A, x, y, z)``: Apply a rotation matrix to a basis.
-    - ``enumerate_spin_states_from_base(base)``: Mixed-radix enumeration of
-      spin projections (e.g., 2 for spin-½, 3 for spin-1).
-    - ``infer_bonds(elements, coords, ...)``: Heuristic covalent bonding.
+    Lock-in MARY helpers
+        - ``modulated_signal(...)``, ``reference_signal(...)``:
+        Time-domain modulation and reference waves.
+        - ``mary_lorentzian(mod_signal, lfe_magnitude)``: Simple MARY line shape.
 
-File I/O & parsing
-    - ``parse_xyz(path)``, ``parse_label_xyz_txt(path)``, ``parse_pdb(path, ...)``:
-      Read coordinates and optional bonds/labels for plotting.
-    - ``pdb_label(atom, scheme=...)``: Human-readable PDB atom labels.
-    - ``write_xyz/mol_to_plot_arrays/write_pdb/write_sdf``: Minimal writers and
-      plotting helpers.
-    - ``read_trajectory_files(dir, scale)``: Concatenate text trajectories from a folder.
+    Molecular geometry & visualization
+        - ``define_xyz(...)``: Construct an orthonormal (x,y,z) basis from
+        atom/point triplets.
+        - ``get_angle_between_plane(A, B)``: Angle (deg) between plane normals.
+        - ``get_rotation_matrix_euler_angles(A, B)``: Rotation matrix and ZXZ
+        Euler angles mapping basis A→B.
+        - ``rodrigues_rotation(v, k, theta)``: Rotate vectors around axis k by θ.
+        - ``rotate_axes(A, x, y, z)``: Apply a rotation matrix to a basis.
+        - ``enumerate_spin_states_from_base(base)``: Mixed-radix enumeration of
+        spin projections (e.g., 2 for spin-½, 3 for spin-1).
+        - ``infer_bonds(elements, coords, ...)``: Heuristic covalent bonding.
 
-Quantum-chemistry integration (ORCA)
-    - ``read_orca_hyperfine(path, version=6)``: Dispatch to ORCA v6 parsers.
-    - Internal: ``_hyperfine_from_orca6_out`` / ``_hyperfine_from_orca6_property_txt``.
-      Return zero-based nucleus indices, isotope labels, and 3×3 HFC tensors (mT).
-    - ``read_lines_utf8_or_utf16le``: Robust text decoding for ORCA outputs.
-    - ``write_orca_from_pdb``: Creates customisable ORCA input files.
+    File I/O & parsing
+        - ``parse_xyz(path)``, ``parse_label_xyz_txt(path)``, ``parse_pdb(path, ...)``:
+        Read coordinates and optional bonds/labels for plotting.
+        - ``pdb_label(atom, scheme=...)``: Human-readable PDB atom labels.
+        - ``write_xyz/mol_to_plot_arrays/write_pdb/write_sdf``: Minimal writers and
+        plotting helpers.
+        - ``read_trajectory_files(dir, scale)``: Concatenate text trajectories from a folder.
 
-Quantum quantification methods
-    - ``negativity``: Computes the (logarithmic) negativity of a multipartite density matrix.
-        A measure of entanglement.
-    - ``purity``: Calculates the purity of a density matrix.
-    - ``von_neumann_entropy``: Computes the von Neumann entropy of a quantum state.
+    Quantum-chemistry integration (ORCA)
+        - ``read_orca_hyperfine(path, version=6)``: Dispatch to ORCA v6 parsers.
+        - Internal: ``_hyperfine_from_orca6_out`` / ``_hyperfine_from_orca6_property_txt``.
+        Return zero-based nucleus indices, isotope labels, and 3×3 HFC tensors (mT).
+        - ``read_lines_utf8_or_utf16le``: Robust text decoding for ORCA outputs.
+        - ``write_orca_from_pdb``: Creates customisable ORCA input files.
 
-Chemistry utilities (RDKit)
-    - ``smiles_to_3d(smiles, add_h=True, opt='mmff')``: Generate a 3D conformer
-      (ETKDG) with optional MMFF/UFF optimisation.
-    - ``mol_to_plot_arrays(mol)``: Extract elements, labels, coords and bonds.
+    Quantum quantification methods
+        - ``negativity``: Computes the (logarithmic) negativity of a multipartite density matrix.
+            A measure of entanglement.
+        - ``purity``: Calculates the purity of a density matrix.
+        - ``von_neumann_entropy``: Computes the von Neumann entropy of a quantum state.
 
-Spectral density
-    - ``spectral_density(omega, tau_c)``: :math:`J(ω) = τ_c / (1 + ω^2 τ_c^2)`.
+    Chemistry utilities (RDKit)
+        - ``smiles_to_3d(smiles, add_h=True, opt='mmff')``: Generate a 3D conformer
+        (ETKDG) with optional MMFF/UFF optimisation.
+        - ``mol_to_plot_arrays(mol)``: Extract elements, labels, coords and bonds.
 
-Notes
------
-- Many routines are vectorised and expect NumPy arrays; see individual
-  docstrings for shapes and units.
-- Angle conventions use radians: ``theta ∈ [0, π]``, ``phi ∈ [0, 2π]``.
-- Unit conversions rely on physical constants from ``radicalpy.constants`` (``C``).
+    Spectral density
+        - ``spectral_density(omega, tau_c)``: :math:`J(ω) = τ_c / (1 + ω^2 τ_c^2)`.
+
+Notes:
+
+    - Many routines are vectorised and expect NumPy arrays; see individual
+    docstrings for shapes and units.
+    - Angle conventions use radians: ``theta ∈ [0, π]``, ``phi ∈ [0, 2π]``.
+    - Unit conversions rely on physical constants from ``radicalpy.constants`` (``C``).
 """
 
 from __future__ import annotations
@@ -319,15 +319,13 @@ def GHz_to_meV(GHz: float | np.ndarray) -> float | np.ndarray:
 
     Uses 1 GHz = 4.1357×10⁻³ meV.
 
-    Parameters
-    ----------
-    GHz : float or ndarray
-        Value(s) in GHz.
+    Args:
 
-    Returns
-    -------
-    float or ndarray
-        Value(s) in meV.
+            GHz (float): Value(s) in GHz.
+
+    Returns:
+
+            float: Value(s) in meV.
     """
     return GHz * 4.1357e-3
 
@@ -340,15 +338,13 @@ def GHz_to_mK(GHz: float | np.ndarray) -> float | np.ndarray:
         h · (1e9 · ν_GHz) = k_B · (1e-3 · T_mK)
         ⇒ T_mK = 1e12 · (h / k_B) · ν_GHz
 
-    Parameters
-    ----------
-    GHz : float or ndarray
-        Value(s) in GHz.
+    Args:
 
-    Returns
-    -------
-    float or ndarray
-        Value(s) in mK.
+            GHz (float or ndarray): Value(s) in GHz.
+
+    Returns:
+
+            float or ndarray: Value(s) in mK.
     """
     return GHz * 1.0e12 * (C.h / C.k_B)
 
@@ -359,15 +355,13 @@ def J_to_meV(J: float | np.ndarray) -> float | np.ndarray:
 
     Uses 1 eV = 1.602176565×10⁻¹⁹ J.
 
-    Parameters
-    ----------
-    J : float or ndarray
-        Value(s) in Joule.
+    Args:
 
-    Returns
-    -------
-    float or ndarray
-        Value(s) in meV.
+            J (float or ndarray): Value(s) in Joule.
+
+    Returns:
+
+            float or ndarray: Value(s) in meV.
     """
     return 1000.0 * J / C.e
 
@@ -584,19 +578,17 @@ def cidnp_polarisation_diffusion_model(
     """
     Compute the CIDNP polarisation using the full diffusion model.
 
-    Parameters
-    ----------
-    omega_plus : np.ndarray
-        Array of omega+ frequencies (rad/s).
-    omega_minus : np.ndarray
-        Array of omega- frequencies (rad/s).
-    alpha : float
-        Dimensionless parameter for the Adrian diffusion model 2p/m.
+    Args:
 
-    Returns
-    -------
-    p : float
-        CIDNP polarisation.
+            omega_plus (np.ndarray): Array of omega+ frequencies (rad/s).
+
+            omega_minus (np.ndarray): Array of omega- frequencies (rad/s).
+
+            alpha (float): Dimensionless parameter for the Adrian diffusion model 2p/m.
+
+    Returns:
+
+            p (float): CIDNP polarisation.
     """
     T_to_angular_frequency = 2.8e10 * 2.0 * np.pi
     op_T = omega_plus / T_to_angular_frequency
@@ -614,19 +606,17 @@ def cidnp_polarisation_exponential_model(
     """
     Compute the CIDNP polarisation using the exponential model.
 
-    Parameters
-    ----------
-    ks : float
-        Singlet recombination rate (s^-1).
-    omega_plus : np.ndarray
-        Array of omega+ frequencies (rad/s).
-    omega_minus : np.ndarray
-        Array of omega- frequencies (rad/s).
+    Args:
 
-    Returns
-    -------
-    p : float
-        CIDNP polarisation.
+            ks (float): Singlet recombination rate (s^-1).
+
+            omega_plus (np.ndarray): Array of omega+ frequencies (rad/s).
+
+            omega_minus (np.ndarray): Array of omega- frequencies (rad/s).
+
+    Returns:
+
+            p (float): CIDNP polarisation.
     """
     ks2 = float(ks) ** 2
     term = (omega_plus**2) / (ks2 + 4.0 * omega_plus**2) - (omega_minus**2) / (
@@ -641,17 +631,15 @@ def cidnp_polarisation_truncated_diffusion_model(
     """
     Compute the CIDNP polarisation using the truncated t^{-3/2} diffusion model.
 
-    Parameters
-    ----------
-    omega_plus : np.ndarray
-        Array of omega+ frequencies (rad/s).
-    omega_minus : np.ndarray
-        Array of omega- frequencies (rad/s).
+    Args:
 
-    Returns
-    -------
-    p : float
-        CIDNP polarisation.
+            omega_plus (np.ndarray): Array of omega+ frequencies (rad/s).
+
+            omega_minus (np.ndarray): Array of omega- frequencies (rad/s).
+
+    Returns:
+
+            p (float): CIDNP polarisation.
     """
     return np.sum(
         np.sqrt(np.abs(omega_plus)) - np.sqrt(np.abs(omega_minus)), dtype=np.float64
@@ -686,64 +674,34 @@ def define_xyz(x1, x2, z1, z2, z3, z4):
     return x, y, z
 
 
-def eigensorter(H, threshold=1e-12):
+def eigensorter(H):
     """
     Diagonalise a square matrix and return eigenvalues in ascending order
     together with the corresponding (row-stacked) eigenvectors.
 
     This helper wraps :func:`numpy.linalg.eig`, sorts the eigenpairs by
     ascending eigenvalue, and returns the eigenvectors **transposed** so that
-    each eigenvector appears as a row in the returned array. A simple
-    correctness check is performed by evaluating the residual norm
-    ``|| λ_k - v_k† H v_k ||`` over all eigenpairs. If this residual exceeds
-    ``threshold``, the function prints the error size and returns the scalar
-    error instead of the eigenpairs.
+    each eigenvector appears as a row in the returned array.
 
-    Parameters
-    ----------
-    H : ndarray of shape (N, N), complex or float
-        Matrix to diagonalise. For Hermitian inputs consider using
-        :func:`numpy.linalg.eigh` elsewhere for improved numerical stability,
-        but this routine intentionally uses ``eig`` to support non-Hermitian
-        cases.
-    threshold : float, optional
-        Maximum allowed residual norm before reporting failure. Default is
-        ``1e-12``.
+    Args:
 
-    Returns
-    -------
-    evals : ndarray of shape (N,)
-        Eigenvalues sorted in ascending order.
-    evecs : ndarray of shape (N, N)
-        Row-stacked eigenvectors corresponding to ``evals``. Each row ``k``
-        is the eigenvector ``v_k`` satisfying (approximately)
-        ``H @ v_k = evals[k] * v_k``.
-    error : float
-        If the residual norm exceeds ``threshold``, the function returns this
-        scalar error value instead of ``(evals, evecs)``.
+            H (ndarray of shape (N, N), complex or float): Matrix to diagonalise.
+            For Hermitian inputs consider using :func:`numpy.linalg.eigh`
+            elsewhere for improved numerical stability, but this routine
+            intentionally uses ``eig`` to support non-Hermitian cases.
 
-    Notes
-    -----
-    - Sorting is performed on the (possibly complex) eigenvalues using
-      :func:`numpy.argsort`, which orders by real part then imaginary part.
-    - The residual check computes
-      ``error = || [ λ_k − v_k† H v_k ]_k ||_2`` as a single aggregate
-      measure over all eigenpairs.
-    - For Hermitian ``H``, eigenvectors are expected to be orthonormal up to
-      numerical precision; for general ``H`` they need not be.
+    Returns:
+
+            evals (ndarray of shape (N,)): Eigenvalues sorted in ascending order.
+
+            evecs (ndarray of shape (N, N)): Row-stacked eigenvectors corresponding
+            to ``evals``. Each row ``k`` is the eigenvector ``v_k`` satisfying
+            (approximately) ``H @ v_k = evals[k] * v_k``.
     """
     evals, evecs = np.linalg.eig(H)
     ids = np.argsort(evals)
     evals = evals[ids]
-    evecs = evecs[:, ids].T  # shape (N, N)
-
-    # check
-    residuals = [evals[k] - evecs[k].conj().T @ H @ evecs[k] for k in range(len(evals))]
-    error = np.linalg.norm(residuals)
-
-    # if error > threshold:
-    #     raise ValueError(f"eigensorter: orthogonality/diagonalization error {error} > {threshold}")
-
+    evecs = evecs[:, ids].T
     return evals, evecs
 
 
@@ -834,6 +792,16 @@ def get_rotation_matrix_euler_angles(A, B):
     return R, alpha, beta, gamma
 
 
+def hilbert_to_liouville(H: np.ndarray):
+    """
+    Liouvillian for unitary part in the basis of H (H is already in that basis):
+    L[rho] = -i [H, rho]  -> vec form: -i (I ⊗ H - H.T ⊗ I)
+    """
+    N = H.shape[0]
+    I = np.eye(N, dtype=complex)
+    return -1j * (np.kron(I, H) - np.kron(H.T, I))
+
+
 def infer_bonds(elements, coords, scale=1.20, max_dist=2.0):
     """Heuristic covalent-bond detection from interatomic distances.
 
@@ -881,43 +849,31 @@ def make_resonance_sticks(
     intensities  : (M,) ndarray
         Corresponding normalized intensities (sum = 1).
     """
-    # unpack
     hfcH = np.asarray(hfcH, float)
     hfcN = np.asarray(hfcN, float)
 
-    Hnumber = len(hfcH)  # 4
-    Nnumber = len(hfcN)  # 1
+    Hnumber = len(hfcH)
+    Nnumber = len(hfcN)
 
-    # base field (gauss), same as:
-    # Bvalue0 = planck * freq / gval / bohr * 10000;
-    # planck = C.h, bohr = C.mu_B
     B0_gauss = C.h * freq / (gval * C.mu_B) * 1e4
 
-    # all proton configs: 2^Hnumber, written in binary
     configH = 2**Hnumber
-    # all nitrogen configs: 3^Nnumber, written in base-3
     configN = 3**Nnumber
 
-    # build all B-sticks
     sticks = []
 
     for idxN in range(configN):
-        # base-3 digits for nitrogen (rightmost digit is our only N)
-        # e.g. 0 -> "0", 1 -> "1", 2 -> "2"
         confN = np.base_repr(idxN, base=3).zfill(Nnumber)
 
         for idxH in range(configH):
-            # base-2 digits for protons
             confH = np.base_repr(idxH, base=2).zfill(Hnumber)
 
             Bval = B0_gauss
 
-            # proton shifts: mi = (0 or 1) - 0.5  -> {-0.5, +0.5}
             for x in range(Hnumber):
                 mi = int(confH[x]) - 0.5
                 Bval = Bval - hfcH[x] * mi
 
-            # nitrogen shifts: mi = (0,1,2) - 1 -> {-1,0,+1}
             for x in range(Nnumber):
                 mi = int(confN[x]) - 1
                 Bval = Bval - hfcN[x] * mi
@@ -926,20 +882,13 @@ def make_resonance_sticks(
 
     sticks = np.asarray(sticks, float)
 
-    # histogram
-    # numpy returns (counts, bin_edges), so we'll take midpoints as "fields"
     counts, edges = np.histogram(sticks, bins=bins)
-    # bin centers
     centers = 0.5 * (edges[:-1] + edges[1:])
 
-    # keep only nonzero bins
     nonzero = counts != 0
     fields = centers[nonzero]
     intensities = counts[nonzero].astype(float)
-
-    # normalise intensities
     intensities /= intensities.sum()
-
     return fields, intensities
 
 
@@ -958,40 +907,41 @@ def mary_lorentzian(mod_signal: np.ndarray, lfe_magnitude: float):
     return 1 / (1 + mod_signal**2) - lfe_magnitude / (0.1 + mod_signal**2)
 
 
+def matrix_to_vector(M: np.ndarray):
+    """Convert a matrix into a column vector."""
+    return M.reshape((-1, 1), order="F")
+
+
 def meV_to_GHz(meV: float | np.ndarray) -> float | np.ndarray:
     """
     Convert an energy from meV to GHz.
 
     Uses 1 meV = 1 / (4.1357×10⁻³) GHz.
 
-    Parameters
-    ----------
-    meV : float or ndarray
-        Value(s) in meV.
+    Args:
 
-    Returns
-    -------
-    float or ndarray
-        Value(s) in GHz.
+            meV (float or ndarray): Value(s) in meV.
+
+    Returns:
+
+            float or ndarray: Value(s) in GHz.
     """
     return meV / 4.1357e-3
 
 
 def meV_to_J(meV: float | np.ndarray) -> float | np.ndarray:
     """
-    Convert an energy from meV to Joule (J).
+    Convert an energy from meV to Joules (J).
 
     Uses 1 eV = 1.602176565×10⁻¹⁹ J.
 
-    Parameters
-    ----------
-    meV : float or ndarray
-        Value(s) in meV.
+    Args:
 
-    Returns
-    -------
-    float or ndarray
-        Value(s) in Joule.
+            meV (float or ndarray): Value(s) in meV.
+
+    Returns:
+
+            float or ndarray: Value(s) in Joules.
     """
     return 1.0e-3 * meV * C.e
 
@@ -1002,15 +952,13 @@ def meV_to_mK(meV: float | np.ndarray) -> float | np.ndarray:
 
     Uses 1 mK = 8.61740×10⁻⁵ meV.
 
-    Parameters
-    ----------
-    meV : float or ndarray
-        Value(s) in meV.
+    Args:
 
-    Returns
-    -------
-    float or ndarray
-        Value(s) in mK.
+            meV (float or ndarray): Value(s) in meV.
+
+    Returns:
+
+            float or ndarray: Value(s) in mK.
     """
     return meV / 8.61740e-5
 
@@ -1021,15 +969,13 @@ def mK_to_GHz(mK: float | np.ndarray) -> float | np.ndarray:
 
     Inverse of :func:`convert_GHz_to_mK`.
 
-    Parameters
-    ----------
-    mK : float or ndarray
-        Value(s) in mK.
+    Args:
 
-    Returns
-    -------
-    float or ndarray
-        Value(s) in GHz.
+            mK (float or ndarray): Value(s) in mK.
+
+    Returns:
+
+            float or ndarray: Value(s) in GHz.
     """
     return mK * 1.0e-12 * (C.k_B / C.h)
 
@@ -1040,15 +986,13 @@ def mK_to_meV(mK: float | np.ndarray) -> float | np.ndarray:
 
     Uses 1 mK = 8.61740×10⁻⁵ meV.
 
-    Parameters
-    ----------
-    mK : float or ndarray
-        Value(s) in mK.
+    Args:
 
-    Returns
-    -------
-    float or ndarray
-        Value(s) in meV.
+            mK (float or ndarray): Value(s) in mK.
+
+    Returns:
+
+            float or ndarray: Value(s) in meV.
     """
     return mK * 8.61740e-5
 
@@ -1131,34 +1075,29 @@ def negativity(
     using plain NumPy arrays. The partial transpose is taken over the
     subsystem(s) specified by `subsys`.
 
-    Parameters
-    ----------
-    rho : ndarray of shape (N, N)
-        Density matrix in the computational (lab) basis. Must be square with N = prod(dims).
-    dims : Sequence[int]
-        Local Hilbert-space dimensions for each subsystem, e.g. [2, 2] for two qubits,
-        or [2, 3, 2] for a 2×3×2 system. The product must equal N.
-    subsys : int or Sequence[int]
-        Index or indices of the subsystem(s) on which to perform the partial transpose.
-        For example, `subsys=0` on a bipartite [d0, d1] system transposes the first subsystem.
-    method : {"tracenorm", "eigenvalues"}, optional
-        • "tracenorm" (default): use ||ρ^{T_A}||_1 via SVD (stable).
-        • "eigenvalues": sum of negative eigenvalues of ρ^{T_A}.
-    logarithmic : bool, optional
-        If True, return the logarithmic negativity log2(2*N + 1). Otherwise return N.
+    Args:
 
-    Returns
-    -------
-    float
-        Negativity (or logarithmic negativity if `logarithmic=True`).
+            rho (ndarray of shape (N, N)): Density matrix in the computational (lab)
+            basis. Must be square with N = prod(dims).
 
-    Notes
-    -----
-    - Partial transpose is implemented by reshaping ρ to a 2k-index tensor
-      with shape (d0,...,dk-1, d0,...,dk-1), swapping row/col indices for the
-      chosen subsystem(s), then reshaping back to (N, N).
-    - For Hermitian ρ, ρ^{T_A} is Hermitian but can be indefinite; negativity
-      measures the sum of absolute values of its negative eigenvalues.
+            dims (Sequence[int]): Local Hilbert-space dimensions for each subsystem,
+            e.g. [2, 2] for two qubits, or [2, 3, 2] for a 2×3×2 system.
+            The product must equal N.
+
+            subsys (int or Sequence[int]): Index or indices of the subsystem(s)
+            on which to perform the partial transpose. For example, `subsys=0`
+            on a bipartite [d0, d1] system transposes the first subsystem.
+
+            method ({"tracenorm", "eigenvalues"}, optional):
+                • "tracenorm" (default): use ||ρ^{T_A}||_1 via SVD (stable).
+                • "eigenvalues": sum of negative eigenvalues of ρ^{T_A}.
+
+            logarithmic (bool, optional): If True, return the logarithmic
+            negativity log2(2*N + 1). Otherwise return N.
+
+    Returns:
+
+            float: Negativity (or logarithmic negativity if `logarithmic=True`).
     """
     rho = np.asarray(rho, dtype=np.complex128)
     if rho.ndim != 2 or rho.shape[0] != rho.shape[1]:
@@ -1171,7 +1110,6 @@ def negativity(
             f"rho shape {rho.shape} incompatible with dims {dims} (N={N})."
         )
 
-    # Normalise subsys into a sorted unique list of indices
     if isinstance(subsys, (int, np.integer)):
         subs = [int(subsys)]
     else:
@@ -1181,43 +1119,32 @@ def negativity(
             f"subsys indices {subs} out of range for dims of length {len(dims)}."
         )
 
-    # --- Partial transpose over chosen subsystems ---
-    # Reshape to (d0,...,dk-1, d0,...,dk-1):
     k = len(dims)
-    rho_t = rho.reshape(*dims, *dims)  # row indices, then column indices
+    rho_t = rho.reshape(*dims, *dims)
 
-    # For each subsystem i to transpose: swap axis i (row) with axis k+i (col)
-    # Do it in ascending order of i; axis indices change as we go, so recompute each time.
     for i in subs:
-        # Bring current view to 2k axes and swap i with (k+i)
         rho_t = np.swapaxes(rho_t, i, k + i)
 
-    # Back to (N, N)
     rho_pt = rho_t.reshape(N, N)
 
-    # --- Negativity by chosen method ---
     if method == "tracenorm":
         # ||ρ^{T_A}||_1 = sum singular values; negativity = (||·||_1 - 1)/2
         svals = np.linalg.svd(rho_pt, compute_uv=False)
         Nval = 0.5 * (float(np.sum(svals)).real - 1.0)
     elif method == "eigenvalues":
         # Sum of |λ| - λ over eigenvalues (equivalent to twice the sum of negatives), /2
-        evals = np.linalg.eigvalsh(
-            (rho_pt + rho_pt.conj().T) / 2.0
-        )  # enforce Hermitian numerically
+        evals = np.linalg.eigvalsh((rho_pt + rho_pt.conj().T) / 2.0)
         Nval = 0.5 * float(np.sum(np.abs(evals) - evals).real)
     else:
         raise ValueError(
             f"Unknown method '{method}'; choose 'tracenorm' or 'eigenvalues'."
         )
 
-    # Logarithmic negativity if requested
     if logarithmic:
-        # Guard against tiny negative round-off
         Npos = max(0.0, Nval)
         return float(np.log2(2.0 * Npos + 1.0))
     else:
-        return float(max(0.0, Nval))  # clip tiny negatives from numeric noise
+        return float(max(0.0, Nval))
 
 
 def nmr_chemical_shift_imaginary_modulation(
@@ -1403,22 +1330,16 @@ def purity(rho):
     :math:`P = 1`, while a maximally mixed state in a Hilbert space of
     dimension :math:`d` has :math:`P = 1/d`.
 
-    Parameters
-    ----------
-    rho : ndarray of shape (N, N)
-        Density matrix of the quantum state. The matrix is expected to be
-        square and (approximately) Hermitian, with unit trace, although these
-        conditions are not enforced inside the function.
+    Args:
 
-    Returns
-    -------
-    float
-        Purity of the state, computed as ``real(trace(rho @ rho))``.
+            rho (ndarray of shape (N, N)): Density matrix of the quantum state.
+            The matrix is expected to be square and (approximately) Hermitian,
+            with unit trace, although these conditions are not enforced inside
+            the function.
 
-    Notes
-    -----
-    The real part of the trace is returned to suppress small imaginary
-    components that can arise from numerical round-off.
+    Returns:
+
+            float: Purity of the state, computed as ``real(trace(rho @ rho))``.
     """
     return np.real(np.trace(rho @ rho))
 
@@ -2035,21 +1956,19 @@ def spin_character(state: np.ndarray, character: np.ndarray) -> float:
       :math:`\\mathrm{Tr}(P ρ)`, i.e. the population of the subspace in the
       mixed state ``ρ``.
 
-    Parameters
-    ----------
-    state : ndarray
-        Either a state vector of shape ``(N,)`` or a density matrix of shape
-        ``(N, N)``. The dimension ``N`` must match that of the kets in
-        ``character``.
-    character : list of ndarray
-        List of basis kets (each of shape ``(N,)``) that span the subspace
-        whose character is to be measured.
+    Args:
 
-    Returns
-    -------
-    float
-        The subspace weight / character, in the range ``[0, 1]`` for
-        normalised inputs.
+            state (ndarray): Either a state vector of shape ``(N,)`` or a density
+            matrix of shape ``(N, N)``. The dimension ``N`` must match that of
+            the kets in ``character``.
+
+            character (list of ndarray): List of basis kets (each of shape ``(N,)``)
+            that span the subspace whose character is to be measured.
+
+    Returns:
+
+            float: The subspace weight / character, in the range ``[0, 1]`` for
+                normalised inputs.
     """
     operator = sum(np.outer(ket, ket.conj().T) for ket in character)
     if state.ndim == 1:
@@ -2091,7 +2010,6 @@ def spherical_average(
         for i in range(nth)
         for j in range(nph)
     )
-
     return spherical_avg * theta[1] * phi[1] / (4 * np.pi) / 9
 
 
@@ -2122,28 +2040,30 @@ def s_t0_omega(
     """
     Compute the two radical pair frequencies ω+ and ω- (in rad/s) for S-T0 mixing.
 
-    Parameters
-    ----------
-    deltag : float
-        Difference in g-factors of the two radicals.
-    b0 : float
-        External magnetic field strength (Tesla).
-    hfc_star : float
-        Hyperfine coupling constant (rad/s) of the nucleus of interest.
-    onuc_all : np.ndarray
-        Array of total hyperfine contributions from all other nuclei (rad/s).
+    Args:
 
-    Returns
-    -------
-    omega_plus : float
-        The ω+ frequency (rad/s).
-    omega_minus : float
-        The ω- frequency (rad/s).
+            deltag (float): Difference in g-factors of the two radicals.
+
+            b0 (float): External magnetic field strength (Tesla).
+
+            hfc_star (float): Hyperfine coupling constant (rad/s) of the nucleus of interest.
+
+            onuc_all (np.ndarray): Array of total hyperfine contributions from all other nuclei (rad/s).
+
+    Returns:
+
+            omega_plus (float): The ω+ frequency (rad/s).
+            omega_minus (float): The ω- frequency (rad/s).
     """
     base_omega = (deltag * C.mu_B * B0) / C.hbar  # Δg μB B0 / ħ
     omega_plus = base_omega + 0.5 * hfc_star + onuc_all
     omega_minus = base_omega - 0.5 * hfc_star + onuc_all
     return omega_plus, omega_minus
+
+
+def vector_to_matrix(v: np.ndarray, N: int):
+    """Convert a column vector into a matrix."""
+    return v.reshape((N, N), order="F")
 
 
 def von_neumann_entropy(rho):
@@ -2158,23 +2078,16 @@ def von_neumann_entropy(rho):
     This implementation uses the natural logarithm, so the entropy is
     returned in **nats**.
 
-    Parameters
-    ----------
-    rho : ndarray of shape (N, N)
-        Density matrix. For physical states, ``rho`` should be Hermitian,
-        positive semidefinite, and trace-normalised (``Tr(rho)=1``), though
-        the function does not explicitly enforce these constraints.
+    Args:
 
-    Returns
-    -------
-    float
-        The von Neumann entropy :math:`S(\\rho)` in nats.
+            rho (ndarray of shape (N, N)): Density matrix.
+            For physical states, ``rho`` should be Hermitian,
+            positive semidefinite, and trace-normalised (``Tr(rho)=1``), though
+            the function does not explicitly enforce these constraints.
 
-    Notes
-    -----
-    - Eigenvalues that are numerically non-positive are **ignored** in the
-      sum to avoid evaluating ``log(0)``.
-    - To obtain entropy in **bits**, divide the returned value by ``np.log(2)``.
+    Returns:
+
+            float: The von Neumann entropy :math:`S(\\rho)` in nats.
     """
     evals, evecs = np.linalg.eig(rho)
     ids = evals.argsort()
@@ -2442,7 +2355,6 @@ def write_orca_from_pdb(
     epr_filename = epr_filename or f"{stem}.EPRII.inp"
     xyz_sidecar = xyz_sidecar or f"{stem}.opt.xyz"
 
-    # --- write OPT .inp (embedded coords), honoring your exact block order/format ---
     opt_lines: List[str] = []
     opt_lines.append(f"# {title}")
     opt_lines.append(_line_opt_header(opt_method, opt_basis, opt_flags))
@@ -2456,7 +2368,6 @@ def write_orca_from_pdb(
     with open(opt_path, "w", encoding="utf-8") as f:
         f.write("\n".join(opt_lines) + "\n")
 
-    # --- write XYZ sidecar as referenced in EPR job ---
     xyz_path = out_dir / xyz_sidecar
     with open(xyz_path, "w", encoding="utf-8") as xf:
         xf.write(f"{len(atoms)}\n")
@@ -2464,7 +2375,6 @@ def write_orca_from_pdb(
         for el, x, y, z in atoms:
             xf.write(f"{el:2s}  {x: .8f}  {y: .8f}  {z: .8f}\n")
 
-    # --- write EPR .inp (XYZFile reference + %EPRNMR block) ---
     epr_lines: List[str] = []
     epr_lines.append(f"# {title}")
     epr_lines.append(_line_epr_header(epr_method, epr_basis, epr_autoaux))
@@ -2477,7 +2387,6 @@ def write_orca_from_pdb(
     epr_path = out_dir / epr_filename
     with open(epr_path, "w", encoding="utf-8") as f:
         f.write("\n".join(epr_lines) + "\n")
-
     return [opt_path, epr_path, xyz_path]
 
 
@@ -2488,7 +2397,7 @@ def write_pdb(mol, path):
             mol (rdkit.Chem.Mol): Molecule to serialise.
             path (str | Path): Destination ``.pdb`` filepath.
 
-    Side effects:
+    Returns:
             Prints a confirmation line with the saved path.
     """
     block = Chem.MolToPDBBlock(mol)

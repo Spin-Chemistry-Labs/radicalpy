@@ -8,53 +8,52 @@ space (vectorised densities / superoperators). It focuses on electron–nuclear
 spin systems typical of radical pairs and triplet pairs and supports common
 interactions and observables used in magnetic resonance and spin chemistry.
 
-Main classes
-------------
-- `State` :
-    Enumerates common initial/observable spin states (singlet/triplet manifold,
-    EPR observable, thermal equilibrium, etc.).
-- `Basis` :
-    Choice of electron-pair basis: Zeeman or singlet–triplet (S/T).
-- `HilbertSimulation` :
-    Core simulator that assembles Hamiltonians (Zeeman, hyperfine, exchange,
-    dipolar, optional zero-field splitting), prepares initial density matrices,
-    propagates them unitarily, and evaluates product probabilities/yields.
-- `LiouvilleSimulation` :
-    Extends `HilbertSimulation` with Liouville-space evolution (superoperators,
-    vectorised densities) for convenient inclusion of incoherent processes.
-- `HilbertIncoherentProcessBase` / `LiouvilleIncoherentProcessBase` :
-    Base hooks to augment Hamiltonians or measured probabilities with
-    phenomenological kinetics / relaxation.
-- `SparseCholeskyHilbertSimulation` :
-    Hilbert-space variant optimised for large systems via sparse algebra and a
-    Cholesky-factor time-stepping scheme.
-- `SemiclassicalSimulation` :
-    Generates random semiclassical Hamiltonians for ensemble treatments.
+Main classes:
 
-Key features
-------------
-- Spin operators for arbitrary particles and bases.
-- Zeeman (1D/3D), hyperfine (isotropic/tensor), exchange (J), dipolar (1D/3D),
-  and ZFS Hamiltonians.
-- Initial states: projection-based (S, T, etc.) and thermal equilibrium.
-- Time evolution: Hilbert (ρ → U ρ U†) and Liouville (ρ → e^{Lt} ρ).
-- Observables: projection operators and product probabilities/yields.
-- Shape conventions:
-    - Hilbert density: `(dim, dim)`
-    - Liouville density (vectorised): `(dim**2, 1)`
+    - `State` :
+        Enumerates common initial/observable spin states (singlet/triplet manifold,
+        EPR observable, thermal equilibrium, etc.).
+    - `Basis` :
+        Choice of electron-pair basis: Zeeman or singlet–triplet (S/T).
+    - `HilbertSimulation` :
+        Core simulator that assembles Hamiltonians (Zeeman, hyperfine, exchange,
+        dipolar, optional zero-field splitting), prepares initial density matrices,
+        propagates them unitarily, and evaluates product probabilities/yields.
+    - `LiouvilleSimulation` :
+        Extends `HilbertSimulation` with Liouville-space evolution (superoperators,
+        vectorised densities) for convenient inclusion of incoherent processes.
+    - `HilbertIncoherentProcessBase` / `LiouvilleIncoherentProcessBase` :
+        Base hooks to augment Hamiltonians or measured probabilities with
+        phenomenological kinetics / relaxation.
+    - `SparseCholeskyHilbertSimulation` :
+        Hilbert-space variant optimised for large systems via sparse algebra and a
+        Cholesky-factor time-stepping scheme.
+    - `SemiclassicalSimulation` :
+        Generates random semiclassical Hamiltonians for ensemble treatments.
 
-Units & conventions
--------------------
-- Magnetic fields in mT; gyromagnetic ratios provided as `gamma_mT`.
-- Tensors follow x/y/z Cartesian ordering.
-- S/T transform from the Zeeman basis.
+Key features:
 
-See also
---------
-- `utils.spherical_to_cartesian` for field orientation.
-- Module docstrings of related packages/classes for data structures (`Molecule`,
-  nuclei, radicals, hyperfine data).
+    - Spin operators for arbitrary particles and bases.
+    - Zeeman (1D/3D), hyperfine (isotropic/tensor), exchange (J), dipolar (1D/3D),
+    and ZFS Hamiltonians.
+    - Initial states: projection-based (S, T, etc.) and thermal equilibrium.
+    - Time evolution: Hilbert (ρ → U ρ U†) and Liouville (ρ → e^{Lt} ρ).
+    - Observables: projection operators and product probabilities/yields.
+    - Shape conventions:
+        - Hilbert density: `(dim, dim)`
+        - Liouville density (vectorised): `(dim**2, 1)`
 
+Units & conventions:
+
+    - Magnetic fields in mT; gyromagnetic ratios provided as `gamma_mT`.
+    - Tensors follow x/y/z Cartesian ordering.
+    - S/T transform from the Zeeman basis.
+
+See also:
+
+    - `utils.spherical_to_cartesian` for field orientation.
+    - Module docstrings of related packages/classes for data structures (`Molecule`,
+    nuclei, radicals, hyperfine data).
 """
 
 import enum
@@ -64,6 +63,8 @@ from typing import Optional, Sequence
 import numpy as np
 import scipy as sp
 from numpy.typing import NDArray
+from scipy.integrate import ode
+from tqdm import tqdm
 
 from . import utils
 from .data import Molecule
@@ -945,6 +946,65 @@ class HilbertSimulation:
             result += Emod * ((Sx @ Sx) - (Sy @ Sy))
         return result
 
+    def spin_orbit_hamiltonian(
+        self,
+        soc_vectors,
+        electron_spins=None,
+        sparse: bool = False,
+    ):
+        """
+        Spin–orbit interaction Hamiltonian.
+
+        H_SO = sum_i (Lx_i * S_i,x + Ly_i * S_i,y + Lz_i * S_i,z)
+
+        Args:
+
+            soc_vectors: list[int], optional
+                Which electrons (0-based) to include. Default: all.
+            sparse: Return sparse CSR if True, else dense ndarray.
+
+        Returns:
+
+            H_SO: ndarray or csr_matrix
+        """
+        dim = int(self.hamiltonian_size)
+        n_electrons = len(self.radicals)
+
+        soc_vectors = np.asarray(soc_vectors, dtype=float) * abs(
+            self.radicals[0].gamma_mT
+        )
+        if soc_vectors.ndim == 1:
+            # one vector for all electrons
+            soc_vectors = np.repeat(soc_vectors[np.newaxis, :], n_electrons, axis=0)
+        elif soc_vectors.shape[0] != n_electrons:
+            raise ValueError("soc_vectors must be (3,) or (n_electrons, 3)")
+
+        if electron_spins is None:
+            electron_spins = list(range(n_electrons))
+
+        if sparse:
+            H = sp.csr_matrix((dim, dim), dtype=complex)
+        else:
+            H = np.zeros((dim, dim), dtype=complex)
+
+        for e_idx in electron_spins:
+            Lx, Ly, Lz = soc_vectors[e_idx]
+            if Lx == Ly == Lz == 0:
+                continue
+
+            Sx = self.spin_operator(e_idx, "x", kron_eye=True)
+            Sy = self.spin_operator(e_idx, "y", kron_eye=True)
+            Sz = self.spin_operator(e_idx, "z", kron_eye=True)
+
+            term = Lx * Sx + Ly * Sy + Lz * Sz
+
+            if sparse:
+                H = H + sp.csr_matrix(term)
+            else:
+                H = H + term
+
+        return H
+
     def total_hamiltonian(
         self,
         B0: float,
@@ -1057,158 +1117,179 @@ class HilbertSimulation:
     def bloch_redfield_liouvillian(
         self,
         H: np.ndarray,
-        channels: Sequence,
-        *,
+        bath: list[np.ndarray],
+        noise: list[np.ndarray],
         secular: bool = True,
-        secular_cutoff: float = 0.01,
-    ) -> np.ndarray:
-        r"""Construct the Bloch–Redfield Liouvillian from a Hilbert–space Hamiltonian.
-
-        The generator returned acts on vec(ρ) (column-stacking convention) and
-        includes both the coherent commutator and the Redfield dissipator,
-        constructed in the energy basis of ``H`` and similarity-transformed
-        back to the current lab basis.
+    ):
+        """
+        Bloch-Redfield tensor builder.
 
         Args:
 
-            H: Hilbert-space Hamiltonian in angular-frequency units
-                (rad/s).  Must be square; a complex dtype
-                (e.g. complex128) is recommended.
+                H (np.ndarray): Hamiltonian (time-independent).
 
-            channels: Iterable of ``(A, S_like)`` pairs where ``A``
-                is a Hilbert-space coupling operator (N×N) and
-                ``S_like`` is either:
+                bath (list[np.ndarray]): System operators coupling to the bath.
 
-                - a callable ``S(ω) -> float`` giving the noise power
-                  spectrum evaluated at the Bohr frequency ω (in
-                  rad/s), or
+                noise (list[np.ndarray]): spectra[k](w) gives noise power at frequency w, for bath[k].
 
-                - a numeric correlation time ``τ_c``; in this case a
-                  Lorentzian spectrum ``S(ω)=τ_c/(1+ω² τ_c²)`` is
-                  used.
-
-            secular: If True (default), apply a secular/Davies filter:
-                matrix elements coupling coherences whose frequency
-                mismatch :math:`\lvert \Delta \rvert` exceeds ``gmax *
-                secular_cutoff`` are dropped, where ``gmax`` is the
-                largest sampled spectral value across channel spectra on
-                the Bohr grid.
-
-            secular_cutoff: Relative cutoff used by the secular
-                filter. Default ``0.01``.
+                secular (bool): If True, use the dw_min/10 frequency matching.
 
         Returns:
 
-            L_lab : ndarray of shape (N*N, N*N), complex128
-                Bloch–Redfield Liouvillian in the lab basis, suitable
-                for subtraction from the working Liouvillian (i.e., it
-                already includes the coherent part ``-i(I⊗H −
-                Hᵀ⊗I)``).
-
+                L (np.ndarray): Bloch-Redfield Liouvillian in the **energy basis**.
+                eigvecs (np.ndarray): Columns are eigenkets of H.
         """
-
-        # --- helpers -------------------------------------------------------------
-        def _spectral_from(S_like):
-            if callable(S_like):
-                return S_like
-            tau_c = float(S_like)
-
-            def _S(w):
-                ww = float(w)
-                return float(tau_c / (1.0 + (ww * tau_c) * (ww * tau_c)))
-
-            return _S
-
-        # --- input hygiene -------------------------------------------------------
-        H = np.asarray(H, dtype=np.complex128)
-        if H.ndim != 2 or H.shape[0] != H.shape[1]:
-            raise ValueError(f"H must be square; got shape {H.shape}.")
+        H = np.asarray(H, dtype=complex)
         N = H.shape[0]
+        K = len(bath)
 
-        # eigenbasis of H (Hermitian path preferred)
-        evals, V = np.linalg.eigh(H)
-        # ensure ascending order explicitly
-        perm = np.argsort(evals.real)
-        evals = evals[perm]
-        V = V[:, perm]
+        evals, eigvecs = np.linalg.eigh(H)
+        H_e = np.diag(evals)
 
-        # transform coupling operators to energy basis, attach callable spectra
-        a_ops_E = []
-        for A, S_like in channels:
-            A = np.asarray(A, dtype=np.complex128)
-            if A.shape != (N, N):
-                raise ValueError(
-                    f"Coupling operator shape {A.shape} incompatible with H {(N, N)}."
+        if K == 0:
+            L = utils.hilbert_to_liouville(H_e)
+            return L, eigvecs
+
+        A = np.zeros((K, N, N), dtype=complex)
+        for k, Ak in enumerate(bath):
+            Ak = np.asarray(Ak, dtype=complex)
+            A[k] = eigvecs.conj().T @ Ak @ eigvecs
+
+        W = np.real(evals[:, None] - evals[None, :])
+        Jw = np.zeros((K, N, N), dtype=complex)
+        for k in range(K):
+            f = noise[k]
+            for n in range(N):
+                for m in range(N):
+                    Jw[k, n, m] = f(W[n, m])
+
+        nonzero = W[np.nonzero(W)]
+        dw_min = np.abs(nonzero).min() if nonzero.size else 0.0
+
+        L = utils.hilbert_to_liouville(H_e)
+        R = np.zeros((N * N, N * N), dtype=complex)
+
+        idx_map = []
+        for a in range(N):
+            for b in range(N):
+                idx_map.append((a, b))
+
+        for I, (a, b) in enumerate(idx_map):
+            if secular and dw_min > 0.0:
+                # |W[a,b] - W[c,d]| < dw_min / 10
+                candidate_J = []
+                for J, (c, d) in enumerate(idx_map):
+                    if abs(W[a, b] - W[c, d]) < dw_min / 10.0:
+                        candidate_J.append((J, c, d))
+            else:
+                candidate_J = [(J,) + idx_map[J] for J in range(N * N)]
+
+            for J, c, d in candidate_J:
+                elem = 0.0 + 0.0j
+                elem += 0.5 * np.sum(
+                    A[:, a, c] * A[:, d, b] * (Jw[:, c, a] + Jw[:, d, b])
                 )
-            S_fn = _spectral_from(S_like)
-            A_E = V.conj().T @ A @ V
-            a_ops_E.append((A_E, S_fn))
+                if b == d:
+                    elem -= 0.5 * np.sum(
+                        A[:, a, :] * A[:, :, c] * Jw[:, c, :], axis=(0, 1)
+                    )
+                if a == c:
+                    elem -= 0.5 * np.sum(
+                        A[:, d, :] * A[:, :, b] * Jw[:, d, :], axis=(0, 1)
+                    )
+                if elem != 0.0:
+                    R[I, J] += elem
 
-        # index pairs and Bohr frequencies
-        pairs = [(a, b) for a in range(N) for b in range(N)]
-        bohr = np.array(
-            [evals[a] - evals[b] for a in range(N) for b in range(N)],
-            dtype=np.complex128,
+        L = L + R
+        return L, eigvecs
+
+    def bloch_redfield_solver(
+        self,
+        L_e: np.ndarray,
+        eigvecs: np.ndarray,
+        rho0: np.ndarray,
+        time: np.ndarray,
+        obs: list[np.ndarray] = None,
+        rtol=1e-7,
+        atol=1e-7,
+    ):
+        """
+        Evolve Bloch-Redfield master equation in the **energy basis**.
+
+        Args:
+
+                L_e (np.ndarray): Liouvillian in energy basis.
+
+                eigvecs (np.ndarray): Energy eigenvectors.
+
+                rho0 (np.ndarray): Initial density matrix in **lab** basis.
+
+                time (np.ndarray): Time in seconds.
+
+                obs (list[np.ndarray]): Expectation operator in **lab** basis.
+
+        Returns:
+
+                results (dict): {'states': [...]} or {'expect': [arrays...]}
+        """
+        N = rho0.shape[0]
+        rho0 = np.asarray(rho0, dtype=complex)
+
+        # transform initial state to energy basis: rho_e = V† rho V
+        V = eigvecs
+        rho_e = V.conj().T @ rho0 @ V
+
+        y0 = utils.matrix_to_vector(rho_e).ravel()
+        # transform obs to energy basis
+        obs = obs or []
+        e_ops_e = [V.conj().T @ E @ V for E in obs]
+
+        def rhs(t, y):
+
+            return L_e @ y
+
+        solver = ode(rhs).set_integrator("zvode", method="bdf", rtol=rtol, atol=atol)
+        solver.set_initial_value(y0, time[0])
+
+        out_expect = [np.zeros(len(time), dtype=complex) for _ in obs]
+        out_states = []
+
+        for it, t in enumerate(tqdm(time)):
+            if it > 0:
+                solver.integrate(t)
+            y = solver.y
+            rho_e_t = utils.vector_to_matrix(y, N)
+            if obs:
+                for m, E in enumerate(e_ops_e):
+                    out_expect[m][it] = np.trace(E @ rho_e_t)
+            else:
+                rho_lab = V @ rho_e_t @ V.conj().T
+                out_states.append(rho_lab)
+
+        if obs:
+            return {"expect": out_expect}
+        else:
+            return {"states": out_states}
+
+    def bloch_redfield_time_evolution(
+        self,
+        H: np.ndarray,
+        rho0: np.ndarray,
+        time: np.ndarray,
+        bath: list[np.ndarray],
+        noise: list[np.ndarray] = None,
+        obs: list[np.ndarray] = None,
+        secular: bool = True,
+        **kwargs,
+    ):
+        """
+        Bloch-Redfield Liouvillian time evolution solver.
+        """
+        noise_callables = noise or [lambda omega: 1.0 for _ in bath]
+        L_e, eigvecs = self.bloch_redfield_liouvillian(
+            H, bath, noise_callables, secular=secular
         )
-        abs_bohr = np.unique(np.abs(bohr.real))
-
-        # allocate R (energy basis) and add unitary part on the diagonal
-        R_E = np.zeros((N * N, N * N), dtype=np.complex128)
-        for j, (a, b) in enumerate(pairs):
-            R_E[j, j] += -1j * (evals[a] - evals[b])
-
-        # secular cutoff reference gmax across channels on Bohr grid
-        gmax = 0.0
-        if secular and abs_bohr.size:
-            for _, S_fn in a_ops_E:
-                vals = [max(0.0, abs(float(S_fn(+w)))) for w in abs_bohr]
-                if vals:
-                    gmax = max(gmax, max(vals))
-
-        # dissipator (energy basis)
-        for j, (a, b) in enumerate(pairs):
-            for k, (c, d) in enumerate(pairs):
-                if secular and gmax > 0.0:
-                    Delta = (evals[a] - evals[b]) - (evals[c] - evals[d])
-                    if abs(Delta.real) > gmax * float(secular_cutoff):
-                        continue
-
-                total = 0.0 + 0.0j
-                for A, S_fn in a_ops_E:
-                    term = 0.0 + 0.0j
-
-                    if b == d:
-                        s1 = 0.0 + 0.0j
-                        for n in range(N):
-                            w = float((evals[c] - evals[n]).real)
-                            r = max(0.0, float(S_fn(w)))
-                            s1 += A[a, n] * A[n, c] * r
-                        term += s1
-
-                    w_ac = float((evals[c] - evals[a]).real)
-                    term -= A[a, c] * A[d, b] * max(0.0, float(S_fn(w_ac)))
-
-                    if a == c:
-                        s2 = 0.0 + 0.0j
-                        for n in range(N):
-                            w = float((evals[d] - evals[n]).real)
-                            r = max(0.0, float(S_fn(w)))
-                            s2 += A[d, n] * A[n, b] * r
-                        term += s2
-
-                    w_db = float((evals[d] - evals[b]).real)
-                    term -= A[a, c] * A[d, b] * max(0.0, float(S_fn(w_db)))
-
-                    total += (-0.5) * term
-
-                R_E[j, k] += total
-
-        # similarity transform to lab Liouville basis:
-        # vec(ρ_lab) = (V̄ ⊗ V) vec(ρ_E)  ⇒  T = kron(V.T, V.conj())
-        T = np.kron(V.T, V.conj()).astype(np.complex128, copy=False)
-        Tinv = np.linalg.inv(T)
-        L_lab = (Tinv @ R_E @ T).astype(np.complex128, copy=False)
-        return L_lab
+        return self.bloch_redfield_solver(L_e, eigvecs, rho0, time, obs=obs, **kwargs)
 
     def time_evolution(
         self, init_state: State, time: np.ndarray, H: np.ndarray
@@ -1630,12 +1711,6 @@ class LiouvilleIncoherentProcessBase(HilbertIncoherentProcessBase):
 
 
 class SemiclassicalSimulation(LiouvilleSimulation):
-    # Expectations:
-    #   - self.radicals: list/tuple of two spin-1/2 radicals
-    #   - self.molecules: length-2 container aligned with radicals
-    #   - self.spin_operator(ri, ax): returns D×D operator for radical ri and axis in {"x","y","z"}
-    #   - External field accessor: self.external_field_mT() -> np.ndarray shape (3,) in mT (default zeros)
-
     def external_field_mT(self) -> np.ndarray:
         """Lab field B0 in mT as a 3-vector. Override if you have a field in the simulation."""
         return np.zeros(3, dtype=float)
@@ -1654,20 +1729,18 @@ class SemiclassicalSimulation(LiouvilleSimulation):
             add the external field B0, then convert to ω_r = γ_r * (B0 + B_hf,r),
             and construct H = Σ_r ω_r · S_r. Repeat num_samples times.
 
-        Parameters
-        ----------
-        num_samples : int
-            Number of random Hamiltonian realisations.
-        anisotropic : bool, optional
-            If True, draws from a 3D Gaussian with covariance Σ_r determined by anisotropic A tensors.
-            If False (default), uses isotropic SW width.
+        Args:
 
-        Returns
-        -------
-        np.ndarray
-            Array (num_samples, D, D) of complex Hamiltonians.
+                num_samples (int): Number of random Hamiltonian realisations.
+
+                anisotropic (bool, optional): If True, draws from a 3D Gaussian
+                with covariance Σ_r determined by anisotropic A tensors.
+                If False (default), uses isotropic SW width.
+
+        Returns:
+
+                np.ndarray: Array (num_samples, D, D) of complex Hamiltonians.
         """
-        # two S=1/2 radicals
         assert len(self.radicals) == 2
         assert self.radicals[0].multiplicity == 2
         assert self.radicals[1].multiplicity == 2
@@ -1694,7 +1767,6 @@ class SemiclassicalSimulation(LiouvilleSimulation):
         if B0.shape != (3,):
             raise ValueError("external_field_mT() must return shape (3,) in mT.")
 
-        # --- Draw hyperfine fields ---
         if not anisotropic:
             # Isotropic SW width: per-radical σ_B from σ_ω / γ
             stds_B = np.array(
@@ -1708,7 +1780,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
                 size=(num_samples, R, 3),
             )
         else:
-            # --- Anisotropic version ---
+            # Anisotropic
             # Build per-radical 3x3 covariance matrices Σ_B,r in mT^2:
             #   Σ_ω,r = (1/3) Σ_k I_k(I_k+1) A_{rk} A_{rk}^T   (angular-frequency)
             #   Σ_B,r = Σ_ω,r / γ_r^2
@@ -1731,7 +1803,7 @@ class SemiclassicalSimulation(LiouvilleSimulation):
             # Draw from multivariate normal for each radical independently
             hf_fields = np.empty((num_samples, R, 3), dtype=float)
             for r in range(R):
-                # Factorisation (np.linalg.cholesky requires SPD; use eigh)
+                # Factorisation
                 w, V = np.linalg.eigh(covs_B[r])
                 w = np.clip(w, a_min=0.0, a_max=None)
                 L = V @ np.diag(np.sqrt(w))
@@ -1746,7 +1818,6 @@ class SemiclassicalSimulation(LiouvilleSimulation):
         HHs = np.einsum(
             "nra,raxy->nxy", comps, spinops, optimize=True
         )  # (N,D,D), complex
-
         return HHs
 
     @property
