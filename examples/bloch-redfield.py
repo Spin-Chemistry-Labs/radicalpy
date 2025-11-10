@@ -14,9 +14,8 @@ from radicalpy.utils import is_fast_run
 def main():
     m1 = Molecule.fromdb("flavin_anion", ["N5"])
     m2 = Molecule.fromdb("tryptophan_cation", [])
-    simH = HilbertSimulation([m1, m2])
-    sim = LiouvilleSimulation([m1, m2])
-    H = simH.total_hamiltonian(B0=0, J=0, D=0)
+    sim = HilbertSimulation([m1, m2])
+    H = sim.total_hamiltonian(B0=0, J=0, D=0)
 
     rho0 = sim.projection_operator(State.SINGLET)
     obs = sim.projection_operator(State.SINGLET)

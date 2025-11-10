@@ -245,27 +245,18 @@ def energy_levels(sim: HilbertSimulation, B: np.ndarray, J=0, D=0):
         type(sim) == HilbertSimulation
     ), "plot.energy_levels assumes Hilbert space simulation"
     H_base = sim.total_hamiltonian(0, J, D)
-    # H_zee = sim.zeeman_hamiltonian(1)
-
-    # E = np.zeros([len(B), len(H_base)], dtype=np.complex128)
     data = []
 
     for i, B0 in enumerate(B):
-        # H = H_base + B0 * H_zee
-        # eigval = np.linalg.eig(H)
-        # E[i] = eigval[0]  # 0 = eigenvalues, 1 = eigenvectors
-        temp = H_base + sim.zeeman_hamiltonian(B)
+        temp = H_base + sim.zeeman_hamiltonian(B0)
         evals, _ = np.linalg.eig(temp)
         evals = np.sort(evals)
-        # append results in
         data.append(evals)
 
     fig = plt.figure()
     ax = fig.add_axes([0, 0, 1, 1])
     for evals in np.array(data).T:
         ax.plot(B, evals, "k-", linewidth=2)
-    # ax.plot(B, np.real(E[:, ::-1]), linewidth=2)
-    # ax.set_title(title, size=18)
     ax.set_xlabel("$B_0 / T$", size=14)
     ax.set_ylabel("Spin state energy / J", size=14)
     plt.tick_params(labelsize=14)
