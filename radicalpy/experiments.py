@@ -1993,6 +1993,7 @@ def semiclassical_mary(
 
 def steady_state_mary(
     sim: LiouvilleSimulation,
+    init: State,
     obs: State,
     Bs: NDArray[float],
     D: float,
@@ -2032,15 +2033,16 @@ def steady_state_mary(
         - Phi_s: Projection `rhos @ Q.flatten()` giving steady-state signal per field.
     """
     HZFS = sim.zero_field_splitting_hamiltonian(D, E)
-    HJ = sim.exchange_hamiltonian(-J, prod_coeff=1)
+    HJ = sim.exchange_hamiltonian(J, prod_coeff=1)
     rhos = np.zeros(shape=(len(Bs), sim.hamiltonian_size))
+    rho0 = sim.projection_operator(init)
     Q = sim.projection_operator(obs)
     for i, B in enumerate(tqdm(Bs)):
         HZ = sim.zeeman_hamiltonian(B, theta=theta, phi=phi)
         H = HZ + HZFS + HJ
         H = sim.convert(H)
         sim.apply_liouville_hamiltonian_modifiers(H, kinetics)  # + relaxations)
-        rhos[i] = np.linalg.solve(H, Q.flatten())
+        rhos[i] = np.linalg.solve(H, rho0.flatten())
 
-    Phi_s = rhos @ Q.flatten()
-    return rhos, Phi_s
+    productyield = rhos @ Q.flatten()
+    return rhos, productyield

@@ -11,7 +11,7 @@ from radicalpy.simulation import Basis, LiouvilleSimulation, State
 
 def main(
     Bs=np.arange(0, 2500, 10),
-    D=-6.2,
+    D=6.2,
     E=35,
     J=499.55,
     k0=1,
@@ -22,6 +22,7 @@ def main(
     sim = LiouvilleSimulation(molecules=[m, m], basis=Basis.ZEEMAN)
     rhos, Phi_s = steady_state_mary(
         sim,
+        init=State.TP_SINGLET,
         obs=State.TP_SINGLET,
         Bs=Bs,
         D=D,
