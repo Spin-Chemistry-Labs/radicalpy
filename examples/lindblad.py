@@ -24,7 +24,7 @@ def main():
     sigmaz = simH.spin_operator(0, "z") + simH.spin_operator(1, "z")
 
     Ls = [np.sqrt(gamma) * sigmax, np.sqrt(gamma) * sigmay, np.sqrt(gamma) * sigmaz]
-    linblad = sim.linblad_liouvillian(H=H, Ls=Ls)
+    linblad = sim.lindblad_liouvillian(H=H, Ls=Ls)
 
     dB = 0.5
     B0 = np.arange(0.0, 20.0 + 1e-9, dB)

@@ -1046,7 +1046,7 @@ class HilbertSimulation:
         )
         return self.convert(H)
 
-    def linblad_liouvillian(self, H: np.ndarray, Ls=[]):
+    def lindblad_liouvillian(self, H: np.ndarray, Ls=[]):
         r"""Assemble the Liouville-space generator for coherent + Lindblad dynamics.
 
         This builds the superoperator
