@@ -26,8 +26,8 @@ if isinstance(D, float):
 
 methyl = rp.data.Molecule.fromisotopes(
     name="methyl",
-    isotopes=["1H", "1H", "1H"],
-    hfcs=[0.5, 1.0, 1.5],
+    isotopes=["1H", "1H", "1H", "1H"],
+    hfcs=[0.5, 1.0, 1.5, 1.5],
 )
 sim = tn.LocallyPurifiedMPSSimulation(
     [methyl, methyl],

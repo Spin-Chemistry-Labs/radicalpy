@@ -1359,7 +1359,7 @@ def modulated_mary_brute_force(
                     )  # Reference * envelope
 
                     # Calculate the MARY spectra
-                    sa = sa + np.trapz(t, s * r)  # Integrate
+                    sa = sa + np.trapezoid(t, s * r)  # Integrate
                 sa = sa
                 S[i, j, k] = sa * np.sqrt(2)  # RMS signal
     return S
