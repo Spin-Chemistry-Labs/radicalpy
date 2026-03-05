@@ -242,12 +242,11 @@ class HilbertSimulation:
             ]
         )
 
-    def ST_basis(self, M, kron_eye: bool = True):
+    def ST_basis(self, M):
         """Transform an operator from the Zeeman basis to the S/T basis.
 
         Args:
             M: Operator in the Zeeman basis.
-            kron_eye: Whether to Kronecker-product the identity matrix is inserted.
 
         Returns:
             The operator expressed in the S/T basis.
@@ -261,13 +260,10 @@ class HilbertSimulation:
                 [0, 0, 0, 1],
             ]
         )
-        if kron_eye:
-            C = np.kron(ST, np.eye(prod([n.multiplicity for n in self.nuclei])))
-        else:
-            C = ST
+        C = np.kron(ST, np.eye(prod([n.multiplicity for n in self.nuclei])))
         return C @ M @ C.T
 
-    def spin_operator(self, idx: int, axis: str, kron_eye: bool = True) -> np.ndarray:
+    def spin_operator(self, idx: int, axis: str) -> np.ndarray:
         """Construct the spin operator.
 
         Construct the spin operator for the particle with index `idx`
@@ -278,8 +274,6 @@ class HilbertSimulation:
             idx (int): Index of the particle.
 
             axis (str): Axis, i.e. ``"x"``, ``"y"`` or ``"z"``.
-
-            kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
 
         Returns:
             np.ndarray:
@@ -292,27 +286,16 @@ class HilbertSimulation:
         assert axis in "xyzpmu"
 
         sigma = self.particles[idx].pauli[axis]
-        if kron_eye:
-            before_size = prod(p.multiplicity for p in self.particles[:idx])
-            after_size = prod(p.multiplicity for p in self.particles[idx + 1 :])
-            spinop = np.kron(np.eye(before_size), sigma)
-            spinop = np.kron(spinop, np.eye(after_size))
-        else:
-            # Only electronic states are kron-producted with the identity matrix
-            if idx == 0:
-                spinop = np.kron(sigma, np.eye(2))
-            elif idx == 1:
-                spinop = np.kron(np.eye(2), sigma)
-            else:
-                spinop = sigma
+        before_size = prod(p.multiplicity for p in self.particles[:idx])
+        after_size = prod(p.multiplicity for p in self.particles[idx + 1 :])
+        spinop = np.kron(np.eye(before_size), sigma)
+        spinop = np.kron(spinop, np.eye(after_size))
         if self.basis == Basis.ST:
-            return self.ST_basis(spinop, kron_eye=kron_eye)
+            return self.ST_basis(spinop)
         else:
             return spinop
 
-    def product_operator(
-        self, idx1: int, idx2: int, h: float = 1.0, kron_eye: bool = True
-    ) -> np.ndarray:
+    def product_operator(self, idx1: int, idx2: int, h: float = 1.0) -> np.ndarray:
         """Construct the (1D) product operator.
 
         Construct the 1D (isotropic) product operator of two particles
@@ -326,8 +309,6 @@ class HilbertSimulation:
 
             h (float): Isotropic interaction constant.
 
-            kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
-
         Returns:
             np.ndarray:
 
@@ -336,16 +317,12 @@ class HilbertSimulation:
         """
         return h * sum(
             [
-                self.spin_operator(idx1, axis, kron_eye=kron_eye).dot(
-                    self.spin_operator(idx2, axis, kron_eye=kron_eye)
-                )
+                self.spin_operator(idx1, axis).dot(self.spin_operator(idx2, axis))
                 for axis in "xyz"
             ]
         )
 
-    def product_operator_3d(
-        self, idx1: int, idx2: int, h: np.ndarray, kron_eye: bool = True
-    ) -> np.ndarray:
+    def product_operator_3d(self, idx1: int, idx2: int, h: np.ndarray) -> np.ndarray:
         """Construct the 3D product operator.
 
         Construct the 3D (anisotropic) product operator of two
@@ -359,8 +336,6 @@ class HilbertSimulation:
 
             h (np.ndarray): Anisotropic interaction tensor.
 
-            kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
-
         Returns:
             np.ndarray:
 
@@ -370,9 +345,7 @@ class HilbertSimulation:
         return sum(
             (
                 h[i, j]
-                * self.spin_operator(idx1, ax1, kron_eye=kron_eye).dot(
-                    self.spin_operator(idx2, ax2, kron_eye=kron_eye)
-                )
+                * self.spin_operator(idx1, ax1).dot(self.spin_operator(idx2, ax2))
                 for i, ax1 in enumerate("xyz")
                 for j, ax2 in enumerate("xyz")
             )
@@ -387,7 +360,6 @@ class HilbertSimulation:
         state: State,
         T: float = 298,
         chi: float = np.pi / 2,
-        kron_eye: bool = True,
     ):
         """Construct the projection operator corresponding to a `state`.
 
@@ -398,8 +370,6 @@ class HilbertSimulation:
             T (float): Temperature for the EQUILIBRIUM projection operator (K).
             chi (float): Degree of polarisation for the CISS projection operator.
 
-            kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
-
         Returns:
             np.ndarray:
 
@@ -407,11 +377,11 @@ class HilbertSimulation:
                 `state`.
         """
         # Spin operators
-        SAx, SAy, SAz = [self.spin_operator(0, ax, kron_eye=kron_eye) for ax in "xyz"]
-        SBx, SBy, SBz = [self.spin_operator(1, ax, kron_eye=kron_eye) for ax in "xyz"]
+        SAx, SAy, SAz = [self.spin_operator(0, ax) for ax in "xyz"]
+        SBx, SBy, SBz = [self.spin_operator(1, ax) for ax in "xyz"]
 
         # Product operators
-        SASB = self.product_operator(0, 1, kron_eye=kron_eye)
+        SASB = self.product_operator(0, 1)
         eye = self.get_eye(SASB.shape[0])
 
         result = {
@@ -760,9 +730,7 @@ class HilbertSimulation:
             )
         )
 
-    def exchange_hamiltonian(
-        self, J: float, prod_coeff: float = 2, kron_eye: bool = True
-    ) -> np.ndarray:
+    def exchange_hamiltonian(self, J: float, prod_coeff: float = 2) -> np.ndarray:
         """Construct the exchange Hamiltonian.
 
         Construct the exchange (J-coupling) Hamiltonian based on the
@@ -781,8 +749,6 @@ class HilbertSimulation:
                 (default, radical-pair convention uses 2.0,
                 spintronics convention uses 1.0).
 
-            kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
-
         Returns:
             np.ndarray:
 
@@ -791,13 +757,11 @@ class HilbertSimulation:
                 and the coupling constant `J`.
         """
         Jcoupling = -J * abs(self.radicals[0].gamma_mT)
-        SASB = self.product_operator(0, 1, kron_eye=kron_eye)
+        SASB = self.product_operator(0, 1)
         E = self.get_eye(SASB.shape[0])
         return Jcoupling * (prod_coeff * SASB + 0.5 * E)
 
-    def dipolar_hamiltonian(
-        self, D: float | np.ndarray, kron_eye: bool = True
-    ) -> np.ndarray:
+    def dipolar_hamiltonian(self, D: float | np.ndarray) -> np.ndarray:
         """Construct the Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
@@ -815,8 +779,6 @@ class HilbertSimulation:
             D (float | np.ndarray): dipolar coupling constant or
                 dipolar interaction tensor.
 
-            kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
-
         Returns:
             np.ndarray:
 
@@ -826,11 +788,11 @@ class HilbertSimulation:
                 tensor `D`.
         """
         if isinstance(D, np.ndarray):
-            return self.dipolar_hamiltonian_3d(D, kron_eye=kron_eye)
+            return self.dipolar_hamiltonian_3d(D)
         else:
-            return self.dipolar_hamiltonian_1d(D, kron_eye=kron_eye)
+            return self.dipolar_hamiltonian_1d(D)
 
-    def dipolar_hamiltonian_1d(self, D: float, kron_eye: bool = True) -> np.ndarray:
+    def dipolar_hamiltonian_1d(self, D: float) -> np.ndarray:
         """Construct the 1D Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar coupling
@@ -850,9 +812,9 @@ class HilbertSimulation:
                 described by the `HilbertSimulation` object and
                 dipolar coupling constant `D`.
         """
-        SASB = self.product_operator(0, 1, kron_eye=kron_eye)
-        SAz = self.spin_operator(0, "z", kron_eye=kron_eye)
-        SBz = self.spin_operator(1, "z", kron_eye=kron_eye)
+        SASB = self.product_operator(0, 1)
+        SAz = self.spin_operator(0, "z")
+        SBz = self.spin_operator(1, "z")
         if D > 0.0:
             print(
                 f"WARNING: D is {D} mT, which is positive. In point dipole approximation, D should be negative."
@@ -860,9 +822,7 @@ class HilbertSimulation:
         omega = (2 / 3) * abs(self.radicals[0].gamma_mT) * D
         return omega * (3 * SAz @ SBz - SASB)
 
-    def dipolar_hamiltonian_3d(
-        self, dipolar_tensor: np.ndarray, kron_eye: bool = True
-    ) -> np.ndarray:
+    def dipolar_hamiltonian_3d(self, dipolar_tensor: np.ndarray) -> np.ndarray:
         """Construct the 3D Dipolar Hamiltonian.
 
         Construct the Dipolar Hamiltonian based on dipolar interaction
@@ -875,8 +835,6 @@ class HilbertSimulation:
 
             dipolar_tensor (np.ndarray): dipolar interaction tensor in mT.
 
-            kron_eye: Whether to Kronecker-product of the identity matrix is inserted.
-
         Returns:
             np.ndarray:
 
@@ -885,7 +843,7 @@ class HilbertSimulation:
                 dipolar interaction tensor `D`.
         """
         spinops = [
-            [self.spin_operator(r, ax, kron_eye=kron_eye) for ax in "xyz"]
+            [self.spin_operator(r, ax) for ax in "xyz"]
             for r, _ in enumerate(self.radicals)
         ]
         return sum(
@@ -896,9 +854,7 @@ class HilbertSimulation:
             )
         )
 
-    def zero_field_splitting_hamiltonian(
-        self, D, E, kron_eye: bool = True
-    ) -> np.ndarray:
+    def zero_field_splitting_hamiltonian(self, D, E) -> np.ndarray:
         """Build the zero-field splitting (ZFS) Hamiltonian.
 
         Constructs the second-rank ZFS contribution for (typically
@@ -915,9 +871,6 @@ class HilbertSimulation:
                 elsewhere; internally scaled by ``-radicals[0].gamma_mT``).
 
             E: Rhombic ZFS parameter (scaled identically to ``D``).
-
-            kron_eye: Whether to Kronecker-product of the identity
-                matrix is inserted.
 
         Returns:
 
@@ -938,9 +891,9 @@ class HilbertSimulation:
         Emod = E * abs(self.radicals[0].gamma_mT)
         result = complex(0.0)
         for idx, p in enumerate(self.particles):
-            Sx = self.spin_operator(idx, "x", kron_eye=kron_eye)
-            Sy = self.spin_operator(idx, "y", kron_eye=kron_eye)
-            Sz = self.spin_operator(idx, "z", kron_eye=kron_eye)
+            Sx = self.spin_operator(idx, "x")
+            Sy = self.spin_operator(idx, "y")
+            Sz = self.spin_operator(idx, "z")
             Ssquared = Sx @ Sx + Sy @ Sy + Sz @ Sz
             result += Dmod * (Sz @ Sz - (1 / 3) * Ssquared)
             result += Emod * ((Sx @ Sx) - (Sy @ Sy))
@@ -992,9 +945,9 @@ class HilbertSimulation:
             if Lx == Ly == Lz == 0:
                 continue
 
-            Sx = self.spin_operator(e_idx, "x", kron_eye=True)
-            Sy = self.spin_operator(e_idx, "y", kron_eye=True)
-            Sz = self.spin_operator(e_idx, "z", kron_eye=True)
+            Sx = self.spin_operator(e_idx, "x")
+            Sy = self.spin_operator(e_idx, "y")
+            Sz = self.spin_operator(e_idx, "z")
 
             term = Lx * Sx + Ly * Sy + Lz * Sz
 
@@ -1844,15 +1797,12 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
     This class accelerates the time evolution for the system with large Hilbert space (> 10^3).
     """
 
-    def ST_basis(
-        self, M: NDArray | sp.sparse.sparray, kron_eye: bool = True
-    ) -> sp.sparse.sparray:
+    def ST_basis(self, M: NDArray | sp.sparse.sparray) -> sp.sparse.sparray:
         """Sparse S/T-basis transform of an operator.
 
         Accepts dense or sparse input, converts to sparse as needed, and applies
         the electron-only change-of-basis while preserving sparsity.
         """
-        assert kron_eye
         if not sp.sparse.issparse(M):
             M = sp.sparse.csc_matrix(M)
         # T+  T0  S  T-
@@ -1870,9 +1820,7 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
         )
         return C @ M @ C.T
 
-    def spin_operator(
-        self, idx: int, axis: str, kron_eye: bool = True
-    ) -> sp.sparse.sparray:
+    def spin_operator(self, idx: int, axis: str) -> sp.sparse.sparray:
         """Construct the spin operator.
 
         Construct the spin operator for the particle with index `idx`
@@ -1893,7 +1841,6 @@ class SparseCholeskyHilbertSimulation(HilbertSimulation):
         """
         assert 0 <= idx and idx < len(self.particles)
         assert axis in "xyzpmu"
-        assert kron_eye
         sigma = self.particles[idx].pauli[axis]
         before_size = prod(p.multiplicity for p in self.particles[:idx])
         after_size = prod(p.multiplicity for p in self.particles[idx + 1 :])
