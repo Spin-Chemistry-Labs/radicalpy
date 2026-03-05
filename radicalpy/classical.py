@@ -500,7 +500,7 @@ def randomwalk_3d(
             theta, phi = random_theta_phi()
             new_pos = pos[i - 1] + delta_r * utils.spherical_to_cartesian(theta, phi)
             d = np.linalg.norm(new_pos)
-        angle[i] = theta
+        angle[i] = theta.item()
         pos[i] = new_pos
         dist[i] = d
     return pos, dist, angle
