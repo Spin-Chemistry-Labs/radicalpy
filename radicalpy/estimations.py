@@ -101,7 +101,6 @@ See also:
         - `experiments.py` for simulations (MARY, EPR/ODMR/OMFE) that can consume these estimates.
 """
 
-
 from __future__ import annotations
 
 import numpy as np
