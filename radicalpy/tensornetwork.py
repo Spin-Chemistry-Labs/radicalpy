@@ -115,12 +115,7 @@ except ModuleNotFoundError:
     IS_PYTDSCF_AVAILABLE = False
 
 try:
-    from pympo import (
-        AssignManager,
-        OpSite,
-        SumOfProducts,
-        get_eye_site,
-    )
+    from pympo import AssignManager, OpSite, SumOfProducts, get_eye_site
     from sympy import Symbol
 
     IS_PYMPO_AVAILABLE = True

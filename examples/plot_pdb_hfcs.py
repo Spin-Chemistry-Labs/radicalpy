@@ -8,11 +8,7 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy.plot import plot_molecule, set_equal_aspect, visualise_tensor
-from radicalpy.utils import (
-    define_xyz,
-    parse_pdb,
-    rotate_axes,
-)
+from radicalpy.utils import define_xyz, parse_pdb, rotate_axes
 
 # Import PDB and plot 3D structure with HFCs from RadicalPy database
 

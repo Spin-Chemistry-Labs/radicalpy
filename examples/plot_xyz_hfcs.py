@@ -8,11 +8,7 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy.plot import plot_molecule, visualise_tensor
-from radicalpy.utils import (
-    define_xyz,
-    infer_bonds,
-    parse_xyz,
-)
+from radicalpy.utils import define_xyz, infer_bonds, parse_xyz
 
 # Import xyz file and plot 3D structure with HFCs from RadicalPy database
 

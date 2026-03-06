@@ -8,12 +8,7 @@ import numpy as np
 
 import radicalpy as rp
 from radicalpy.plot import plot_molecule, visualise_tensor
-from radicalpy.utils import (
-    define_xyz,
-    infer_bonds,
-    parse_xyz,
-    read_orca_hyperfine,
-)
+from radicalpy.utils import define_xyz, infer_bonds, parse_xyz, read_orca_hyperfine
 
 # Import xyz file and plot 3D structure with HFCs from ORCA DFT calculation
 
