@@ -36,7 +36,7 @@ def main():
     plt.rc("axes", edgecolor="k")
     plt.plot(t / t_convert, dist * 1e9, "r")
     plt.title("Time evolution of radical pair separation", size=16)
-    plt.xlabel("$t$ ($\mu s$)", size=14)
+    plt.xlabel(r"$t$ ($\mu s$)", size=14)
     plt.ylabel("$r$ (nm)", size=14)
     plt.tick_params(labelsize=14)
     path = __file__[:-3] + f"_{1}.png"
@@ -51,7 +51,7 @@ def main():
     plt.rc("axes", edgecolor="k")
     plt.plot(t / t_convert, J)
     plt.title("Time evolution of the exchange interaction", size=16)
-    plt.xlabel("$t$ ($\mu s$)", size=14)
+    plt.xlabel(r"$t$ ($\mu s$)", size=14)
     plt.ylabel("$J$ (mT)", size=14)
     plt.tick_params(labelsize=14)
     path = __file__[:-3] + f"_{2}.png"
@@ -67,7 +67,7 @@ def main():
     plt.rc("axes", edgecolor="k")
     plt.plot(t / t_convert, D, "g")
     plt.title("Time evolution of the dipolar interaction", size=16)
-    plt.xlabel("$t$ ($\mu s$)", size=14)
+    plt.xlabel(r"$t$ ($\mu s$)", size=14)
     plt.ylabel("$D$ (mT)", size=14)
     plt.tick_params(labelsize=14)
     path = __file__[:-3] + f"_{3}.png"

@@ -246,6 +246,61 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         self.integrator = integrator
         self.jobname = jobname
 
+    def ST_basis(self, M):
+        """Transform an operator from the Zeeman basis to the S/T basis.
+
+        Args:
+            M: Operator in the Zeeman basis.
+
+        Returns:
+            The operator expressed in the S/T basis.
+        """
+        # T+  T0  S  T-
+        ST = np.array(
+            [
+                [1, 0, 0, 0],
+                [0, 1 / np.sqrt(2), 1 / np.sqrt(2), 0],
+                [0, -1 / np.sqrt(2), 1 / np.sqrt(2), 0],
+                [0, 0, 0, 1],
+            ]
+        )
+        return ST @ M @ ST.T
+
+    def spin_operator(self, idx: int, axis: str) -> np.ndarray:
+        """Construct the spin operator.
+
+        Construct the spin operator for the particle with index `idx`
+        in the `HilbertSimulation`.
+
+        Args:
+
+            idx (int): Index of the particle.
+
+            axis (str): Axis, i.e. ``"x"``, ``"y"`` or ``"z"``.
+
+        Returns:
+            np.ndarray:
+
+                Spin operator for a particle in the
+                `HilbertSimulation` system with indexing `idx` and
+                axis `axis`.
+        """
+        assert 0 <= idx and idx < len(self.particles)
+        assert axis in "xyzpmu"
+
+        sigma = self.particles[idx].pauli[axis]
+        # Only electronic states are kron-producted with the identity matrix
+        if idx == 0:
+            spinop = np.kron(sigma, np.eye(2))
+        elif idx == 1:
+            spinop = np.kron(np.eye(2), sigma)
+        else:
+            spinop = sigma
+        if self.basis == Basis.ST:
+            return self.ST_basis(spinop)
+        else:
+            return spinop
+
     def _sort_nuclei(self):
         hf_abs = []
         nucs = self.molecules[0].nuclei
@@ -288,15 +343,15 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         return subs, g_ele_sym, g_nuc_sym
 
     def _get_electron_ops(self):
-        sx_1 = self.spin_operator(0, "x", kron_eye=False)
-        sy_1 = self.spin_operator(0, "y", kron_eye=False)
-        sz_1 = self.spin_operator(0, "z", kron_eye=False)
-        sx_2 = self.spin_operator(1, "x", kron_eye=False)
-        sy_2 = self.spin_operator(1, "y", kron_eye=False)
-        sz_2 = self.spin_operator(1, "z", kron_eye=False)
+        sx_1 = self.spin_operator(0, "x")
+        sy_1 = self.spin_operator(0, "y")
+        sz_1 = self.spin_operator(0, "z")
+        sx_2 = self.spin_operator(1, "x")
+        sy_2 = self.spin_operator(1, "y")
+        sz_2 = self.spin_operator(1, "z")
 
-        Qs = self.projection_operator(State.SINGLET, kron_eye=False)
-        Qt = self.projection_operator(State.TRIPLET, kron_eye=False)
+        Qs = self.projection_operator(State.SINGLET)
+        Qt = self.projection_operator(State.TRIPLET)
         return sx_1, sy_1, sz_1, sx_2, sy_2, sz_2, Qs, Qt
 
     def zeeman_hamiltonian(
@@ -446,9 +501,7 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         haberkorn = haberkorn.simplify()
         return haberkorn
 
-    def zero_field_splitting_hamiltonian(
-        self, D, E, kron_eye: bool = True
-    ) -> np.ndarray:
+    def zero_field_splitting_hamiltonian(self, D, E) -> np.ndarray:
         """
         Zero-field splitting Hamiltonian is not implemented.
         """
@@ -563,7 +616,7 @@ class BaseMPSSimulation(HilbertSimulation, ABC):
         )
 
     def observable_projection_operator(self, state: State) -> np.ndarray:
-        return self.projection_operator(state, kron_eye=False)
+        return self.projection_operator(state)
 
     def _set_ele_opsites(self):
         sx_1, sy_1, sz_1, sx_2, sy_2, sz_2, Qs, Qt = self._get_electron_ops()
