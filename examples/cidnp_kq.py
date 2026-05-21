@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from radicalpy.classical import Rate, RateEquations
-from radicalpy.experiments import kine_quantum_mary
-from radicalpy.simulation import Molecule, SemiclassicalSimulation
+from radicalpy.experiments import mary
+from radicalpy.simulation import LiouvilleSimulation, Molecule
 from radicalpy.utils import is_fast_run
 
 
@@ -50,7 +50,7 @@ def rate_equations():
     return rate_eq, kfr
 
 
-def main(tmax=5e-6, dt=5e-9, Bmax=20, dB=0.25, num_samples=200):
+def main(tmax=5e-6, dt=5e-9, Bmax=20, dB=0.25, num_samples=10):
     time = np.arange(0, tmax, dt)
     B = np.arange(0, Bmax + dB, dB)
 
@@ -81,15 +81,15 @@ def main(tmax=5e-6, dt=5e-9, Bmax=20, dB=0.25, num_samples=200):
 
     r1 = Molecule.fromisotopes(isotopes=["1H"], hfcs=[0.5])
     r2 = Molecule("radical 2")
-    sim = SemiclassicalSimulation([r1, r2])
+    sim = LiouvilleSimulation([r1, r2])
 
-    results = kine_quantum_mary(
+    results = mary(
         sim,
-        num_samples=num_samples,
         init_state=rho0,
-        radical_pair=[1, 17],
-        ts=time,
-        Bs=B,
+        obs_state=None,
+        # radical_pair=[1, 17],
+        time=time,
+        B=B,
         D=0,
         J=0,
         kinetics=mat,
@@ -99,13 +99,13 @@ def main(tmax=5e-6, dt=5e-9, Bmax=20, dB=0.25, num_samples=200):
     dt = time[1] - time[0]
     free_radical = np.real(results["yield"][:, 0, :])
     recombination = kfr.value * free_radical
-    product_yields = np.cumsum(recombination, axis=0) * dt
+    product_yields = np.cumulative_sum(recombination, axis=0) * dt
     product_yield_sums = product_yields[-1, :]
-    mary = (product_yield_sums - product_yield_sums[0]) / product_yield_sums[0] * 100
-    lfe = (mary.min() if abs(mary.min()) > abs(mary.max()) else mary.max())
-    hfe = mary[-1]
+    hary = (product_yield_sums - product_yield_sums[0]) / product_yield_sums[0] * 100
+    lfe = hary.min() if abs(hary.min()) > abs(hary.max()) else hary.max()
+    hfe = hary[-1]
 
-    plt.plot(B, mary, color="red", linewidth=2)
+    plt.plot(B, hary, color="red", linewidth=2)
     plt.xlabel("$B_0$ (mT)")
     plt.ylabel("MFE (%)")
     plt.title("1H radical pair kinetic-quantum MARY")
