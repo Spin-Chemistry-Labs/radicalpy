@@ -1139,7 +1139,6 @@ def mary(
         - HFE: high field effect (%)
     """
     H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
-
     sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
     rhos = magnetic_field_loop(
         sim, init_state, time, H, B, B_axis="z", theta=theta, phi=phi
