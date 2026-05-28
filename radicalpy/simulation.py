@@ -376,6 +376,8 @@ class HilbertSimulation:
                 Projection operator corresponding to the `State`
                 `state`.
         """
+        if not isinstance(state, State):
+            return state
         # Spin operators
         SAx, SAy, SAz = [self.spin_operator(0, ax) for ax in "xyz"]
         SBx, SBy, SBz = [self.spin_operator(1, ax) for ax in "xyz"]
@@ -1245,7 +1247,7 @@ class HilbertSimulation:
         return self.bloch_redfield_solver(L_e, eigvecs, rho0, time, obs=obs, **kwargs)
 
     def time_evolution(
-        self, init_state: State, time: np.ndarray, H: np.ndarray
+        self, init_rho: np.ndarray, time: np.ndarray, H: np.ndarray
     ) -> np.ndarray:
         """Evolve the system through time.
 
@@ -1257,8 +1259,7 @@ class HilbertSimulation:
 
         Args:
 
-            init_state (State): Initial `State` of the density matrix
-                (see `projection_operator`).
+            init_rho (np.ndarray): Initial density matrix.
 
             time (np.ndarray): An sequence of (uniform) time points,
                 usually created using `np.arange` or `np.linspace`.
@@ -1286,16 +1287,16 @@ class HilbertSimulation:
         """
         dt = time[1] - time[0]
         propagator = self.unitary_propagator(H, dt)
-        rho0 = self.initial_density_matrix(init_state, H)
-        rhos = np.zeros([len(time), *rho0.shape], dtype=complex)
-        rhos[0] = rho0
+
+        rhos = np.zeros([len(time), *init_rho.shape], dtype=complex)
+        rhos[0] = init_rho
         for t in range(1, len(time)):
             rhos[t] = self.propagate(propagator, rhos[t - 1])
         return rhos
 
     def product_probability(self, obs: State, rhos: np.ndarray) -> np.ndarray:
         """Calculate the probability of the observable from the densities."""
-        if obs == State.EQUILIBRIUM:
+        if obs is State.EQUILIBRIUM:
             raise ValueError("Observable state should not be EQUILIBRIUM")
         Q = self.observable_projection_operator(obs)
         if isinstance(rhos, list):
@@ -1400,7 +1401,7 @@ class HilbertSimulation:
         """
         Pi = self.projection_operator(state)
 
-        if state == State.EQUILIBRIUM:
+        if state is State.EQUILIBRIUM:
             rho0eq = sp.sparse.linalg.expm(-1j * sp.sparse.csc_matrix(H) * Pi).toarray()
             rho0 = rho0eq / rho0eq.trace()
         else:
@@ -1582,7 +1583,7 @@ class LiouvilleSimulation(HilbertSimulation):
             A matrix in Liouville space
         """
         Pi = self.liouville_projection_operator(state)
-        if state == State.EQUILIBRIUM:
+        if state is State.EQUILIBRIUM:
             rho0eq = sp.sparse.linalg.expm(-1j * H * Pi)
             rho0 = rho0eq / np.trace(rho0eq)
             rho0 = np.reshape(rho0, (len(H) ** 2, 1))

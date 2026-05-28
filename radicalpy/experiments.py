@@ -181,7 +181,8 @@ def anisotropy_loop(
     for (i, th), (j, ph) in tqdm(list(iters)):
         H_zee = sim.zeeman_hamiltonian(B0, theta=th, phi=ph)
         H = H_base + sim.convert(H_zee)
-        rho = sim.time_evolution(init_state, time, H)
+        init_rho = sim.initial_density_matrix(init_state, H)
+        rho = sim.time_evolution(init_rho, time, H)
         product_probabilities[i, j] = sim.product_probability(obs_state, rho)
     return product_probabilities
 
