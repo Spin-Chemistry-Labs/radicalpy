@@ -92,7 +92,7 @@ def main(tmax=5e-6, dt=5e-9, Bmax=20, dB=0.25, num_samples=10):
         B=B,
         D=0,
         J=0,
-        kinetics=[mat],
+        kinetics=[KineQuantumKinetics(mat)],
         relaxations=[],
     )
 

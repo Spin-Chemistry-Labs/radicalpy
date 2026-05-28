@@ -1751,7 +1751,7 @@ def kine_quantum_mary(
     dt = ts[1] - ts[0]
     total_yield = np.zeros((len(ts), len(init_state), len(Bs)), dtype=complex)
     kinetic_matrix = np.zeros((len(kinetics), len(kinetics)), dtype=complex)
-    loop_rho = np.zeros((len(ts), len(init_state)), dtype=complex)
+    ### loop_rho = np.zeros((len(ts), len(init_state)), dtype=complex)
     HHs = sim.semiclassical_HHs(num_samples)
     HJ = sim.exchange_hamiltonian(J)
     HD = sim.dipolar_hamiltonian(D)
@@ -1768,12 +1768,13 @@ def kine_quantum_mary(
                 radical_pair[0] : radical_pair[1], radical_pair[0] : radical_pair[1]
             ] = L
             kinetic = kinetics + kinetic_matrix
-            rho0 = init_state
-            propagator = sp.sparse.linalg.expm(kinetic * dt)
-
-            for k in range(0, len(ts)):
-                loop_rho[k, :] = rho0
-                rho0 = propagator @ rho0
+            loop_rho = sim.time_evolution(init_state, ts, kinetic)
+            print("FOO BAR")
+            ### rho0 = init_state
+            ### propagator = sp.sparse.linalg.expm(kinetic * dt)
+            ### for k in range(0, len(ts)):
+            ###     loop_rho[k, :] = rho0
+            ###     rho0 = propagator @ rho0
 
             loop_yield = loop_yield + loop_rho
         total_yield[:, :, i] = loop_yield / num_samples
