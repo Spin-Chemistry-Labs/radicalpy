@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import itertools
+import math
 from typing import Optional
 
 import numpy as np
@@ -58,11 +59,11 @@ def mary_loop(
 
     .. todo:: Write proper docs.
     """
-    H_zee = sim.convert(sim.zeeman_hamiltonian(1, theta, phi))
-    shape = sim._get_rho_shape(H_zee.shape[0])
+    Hz = sim.zeeman_hamiltonian(1, theta, phi)
+    shape = sim._get_rho_shape(math.prod(Hz.shape))
     rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
     for i, B0 in enumerate(tqdm(B)):
-        H = H_base + B0 * H_zee
+        H = sim.convert(H_base + B0 * Hz)
         H_sparse = sp.sparse.csc_matrix(H)
         init_rho = sim.initial_density_matrix(init_state, H_sparse)
         rhos[i] = sim.time_evolution(init_rho, time, H_sparse)

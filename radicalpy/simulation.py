@@ -606,7 +606,7 @@ class HilbertSimulation:
             + self.exchange_hamiltonian(J)
             + self.dipolar_hamiltonian(D)
         )
-        return self.convert(H)
+        return H
 
     def time_evolution(
         self, init_rho: np.ndarray, time: np.ndarray, H: np.ndarray
@@ -847,11 +847,12 @@ class LiouvilleSimulation(HilbertSimulation):
         """
         Pi = self.liouville_projection_operator(state)
         if state is State.EQUILIBRIUM:
-            rho0eq = sp.sparse.linalg.expm(-1j * H * Pi)
+            rho0eq = sp.sparse.linalg.expm(-1j * H * Pi.item()).toarray()
             rho0 = rho0eq / np.trace(rho0eq)
-            rho0 = np.reshape(rho0, (len(H) ** 2, 1))
+            rho0 = np.reshape(rho0, (H.shape[0] ** 2, 1))
         else:
             rho0 = Pi / np.vdot(Pi, Pi)
+        print(">>>>>>>>>>>>", rho0.shape)
         return rho0
 
     @staticmethod
