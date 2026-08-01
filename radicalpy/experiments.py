@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import itertools
-import math
 from typing import Optional
 
 import numpy as np
@@ -45,6 +44,7 @@ def mary_loop(
     theta: Optional[float] = None,
     phi: Optional[float] = None,
     hfc_anisotropy: bool = False,
+    hamiltonian_modifiers: Optional[list[HilbertIncoherentProcessBase]] = None,
 ) -> np.ndarray:
     """Generate density matrices (rhos) for MARY.
 
@@ -59,13 +59,21 @@ def mary_loop(
 
     .. todo:: Write proper docs.
     """
+    if hamiltonian_modifiers is None:
+        hamiltonian_modifiers = []
+
     Hz = sim.zeeman_hamiltonian(1, theta, phi)
-    shape = sim._get_rho_shape(math.prod(Hz.shape))
+    for modifier in hamiltonian_modifiers:
+        modifier.init(sim)
+    shape = sim._get_rho_shape(sim.hamiltonian_size)
     rhos = np.zeros([len(B), len(time), *shape], dtype=complex)
     for i, B0 in enumerate(tqdm(B)):
-        H = sim.convert(H_base + B0 * Hz)
+        H_hilbert = H_base + B0 * Hz
+        init_rho = sim.initial_density_matrix(init_state, H_hilbert)
+        H = sim.convert(H_hilbert)
+        for modifier in hamiltonian_modifiers:
+            modifier.adjust_hamiltonian(H)
         H_sparse = sp.sparse.csc_matrix(H)
-        init_rho = sim.initial_density_matrix(init_state, H_sparse)
         rhos[i] = sim.time_evolution(init_rho, time, H_sparse)
     return rhos
 
@@ -86,8 +94,16 @@ def mary(
 ) -> dict:
     H = sim.total_hamiltonian(B0=0, D=D, J=J, hfc_anisotropy=hfc_anisotropy)
 
-    sim.apply_liouville_hamiltonian_modifiers(H, kinetics + relaxations)
-    rhos = mary_loop(sim, init_state, time, B, H, theta=theta, phi=phi)
+    rhos = mary_loop(
+        sim,
+        init_state,
+        time,
+        B,
+        H,
+        theta=theta,
+        phi=phi,
+        hamiltonian_modifiers=kinetics + relaxations,
+    )
     product_probabilities = sim.product_probability(obs_state, rhos)
 
     sim.apply_hilbert_kinetics(time, product_probabilities, kinetics)

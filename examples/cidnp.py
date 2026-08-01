@@ -65,15 +65,21 @@ def main(tmax=5e-6, dt=5e-9, Bmax=20000, dB=100):
     S1z = sim.spin_operator(0, "z")
     Ix = sim.spin_operator(2, "x")
 
-    # Construct the Hamiltonian and convert to Liouville space --> see Eq. 5
+    # Construct the Hamiltonian in Hilbert space --> see Eq. 5
     H = d * sim.particles[0].gamma_mT * (S1p.dot(S2m) + S1m.dot(S2p))
     H += a * sim.particles[2].gamma_mT * S1z.dot(Iz)
     H += b * sim.particles[2].gamma_mT * S1z.dot(Ix)
-    HL = Liouv.convert(H)
-
     # Run the magnetic field loop
-    sim.apply_liouville_hamiltonian_modifiers(HL, kinetic + relaxations)
-    rhos = mary_loop(sim, init_state, time, B, HL, theta=None, phi=None)
+    rhos = mary_loop(
+        sim,
+        init_state,
+        time,
+        B,
+        H,
+        theta=None,
+        phi=None,
+        hamiltonian_modifiers=kinetic + relaxations,
+    )
 
     # Calculate CIDNP of both singlet and triplet yields --> see Eqs. 6 and 7
     product_probabilities1 = np.real(np.trace(obs_state1 @ rhos, axis1=-2, axis2=-1))

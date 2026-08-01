@@ -847,12 +847,12 @@ class LiouvilleSimulation(HilbertSimulation):
         """
         Pi = self.liouville_projection_operator(state)
         if state is State.EQUILIBRIUM:
-            rho0eq = sp.sparse.linalg.expm(-1j * H * Pi.item()).toarray()
+            H_sparse = sp.sparse.csc_matrix(H)
+            rho0eq = sp.sparse.linalg.expm(-1j * H_sparse * Pi.item()).toarray()
             rho0 = rho0eq / np.trace(rho0eq)
             rho0 = np.reshape(rho0, (H.shape[0] ** 2, 1))
         else:
             rho0 = Pi / np.vdot(Pi, Pi)
-        print(">>>>>>>>>>>>", rho0.shape)
         return rho0
 
     @staticmethod

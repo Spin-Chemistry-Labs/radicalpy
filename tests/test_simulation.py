@@ -524,6 +524,20 @@ class LiouvilleTests(unittest.TestCase):
         unitary = self.sim.unitary_propagator(H, dt)
         np.testing.assert_almost_equal(unitary, unitary_true)
 
+    def test_mary_equilibrium_initial_state(self):
+        results = mary(
+            self.sim,
+            init_state=rp.simulation.State.EQUILIBRIUM,
+            obs_state=rp.simulation.State.SINGLET,
+            time=np.arange(0, 3e-9, 1e-9),
+            B=np.array([0.0, 1.0]),
+            D=0,
+            J=0,
+        )
+
+        self.assertEqual(results["rhos"].shape, (2, 3, 8, 8))
+        self.assertTrue(np.isfinite(results["rhos"]).all())
+
     @unittest.skipUnless(RUN_SLOW_TESTS, "slow")
     def test_kinetics(self):
         kwargs = dict(
