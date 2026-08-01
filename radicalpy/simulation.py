@@ -643,7 +643,8 @@ class HilbertSimulation:
             >>> time = np.arange(0, 2e-6, 5e-9)
             >>> time.shape
             (400,)
-            >>> rhos = sim.time_evolution(State.SINGLET, time, H)
+            >>> rho0 = sim.initial_density_matrix(State.SINGLET, H)
+            >>> rhos = sim.time_evolution(rho0, time, H)
             >>> rhos.shape
             (400, 12, 12)
 

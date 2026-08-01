@@ -340,7 +340,8 @@ class HilbertTests(unittest.TestCase):
                     H,
                     "Hilbert",
                 )
-                rhos = self.sim.time_evolution(init_state, self.time, H)
+                init_rho = self.sim.initial_density_matrix(init_state, H)
+                rhos = self.sim.time_evolution(init_rho, self.time, H)
                 pprob = self.sim.product_probability(obs_state, rhos)
                 pprob = pprob[1:]
                 Kexp.adjust_product_probabilities(pprob, self.time[:-1])
@@ -620,7 +621,8 @@ class TripletTests(unittest.TestCase):
     def test_time_evolution(self):
         init_state = rp.simulation.State.TRIPLET
         H = self.sim.total_hamiltonian(B0=0, J=0, D=100)
-        rhos = self.sim.time_evolution(init_state, self.time, H)
+        init_rho = self.sim.initial_density_matrix(init_state, H)
+        rhos = self.sim.time_evolution(init_rho, self.time, H)
         obs = rp.simulation.State.SINGLET
         k = 0
         prod_prob = self.sim.product_probability(obs, rhos)

@@ -15,7 +15,8 @@ def main():
     # plt.spy(H)
     # plt.show()
     time = np.arange(0, 3e-6, 5e-9)
-    rhos = sim.time_evolution(State.SINGLET, time, H)
+    rho0 = sim.initial_density_matrix(State.SINGLET, H)
+    rhos = sim.time_evolution(rho0, time, H)
 
     # k = 3e6
     # kinetics = [rp.kinetics.Exponential(k)]
