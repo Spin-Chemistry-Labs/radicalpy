@@ -888,7 +888,8 @@ class LiouvilleSimulation(HilbertSimulation):
             ...              Molecule("Z")]
             >>> sim = LiouvilleSimulation(molecules)
             >>> H = sim.total_hamiltonian(B0=0, J=0, D=0)
-            >>> sim.unitary_propagator(H, 3e-9).shape
+            >>> L = sim.convert(H)
+            >>> sim.unitary_propagator(L, 3e-9).shape
             (144, 144)
 
         """

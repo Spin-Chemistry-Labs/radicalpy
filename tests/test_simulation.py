@@ -521,8 +521,9 @@ class LiouvilleTests(unittest.TestCase):
     def test_unitary_propagator(self):
         dt = np.random.uniform(0, 1e-6)
         H = self.sim.total_hamiltonian(PARAMS["B"][0], PARAMS["J"], PARAMS["D"])
-        unitary_true = radpy.UnitaryPropagator(H, dt, "Liouville")
-        unitary = self.sim.unitary_propagator(H, dt)
+        L = self.sim.convert(H)
+        unitary_true = radpy.UnitaryPropagator(L, dt, "Liouville")
+        unitary = self.sim.unitary_propagator(L, dt)
         np.testing.assert_almost_equal(unitary, unitary_true)
 
     def test_mary_equilibrium_initial_state(self):
