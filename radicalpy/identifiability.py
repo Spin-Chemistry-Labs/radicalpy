@@ -167,6 +167,28 @@ def log_sensitivity_jacobian(
     ]
 
 
+def _canonical_signs(right_vectors: np.ndarray) -> np.ndarray:
+    """Fix the arbitrary sign of each singular vector so output is reproducible.
+
+    An SVD determines singular vectors only up to sign: v and -v span the
+    same direction, and LAPACK's choice varies between BLAS implementations.
+    Without this, the same degeneracy is reported as +0.707*k_a -0.707*k_b on
+    macOS Accelerate and -0.707*k_a +0.707*k_b on OpenBLAS -- identical
+    physics, different string. That matters for a tool whose null directions get
+    quoted and pinned in tests.
+
+    Convention: the component of largest magnitude is made positive, ties
+    resolving to the earliest such component.
+    """
+    if right_vectors.size == 0:
+        return right_vectors
+
+    leading = np.argmax(np.abs(right_vectors), axis=1)
+    signs = np.sign(right_vectors[np.arange(right_vectors.shape[0]), leading])
+    signs[signs == 0.0] = 1.0
+    return right_vectors * signs[:, np.newaxis]
+
+
 @dataclass(frozen=True, eq=False)
 class IdentifiabilityReport:
     """Outcome of a rank analysis on one observable and one parameter set.
@@ -260,6 +282,7 @@ def analyze_jacobian(
         )
 
     _, computed, right_vectors = np.linalg.svd(jacobian, full_matrices=True)
+    right_vectors = _canonical_signs(right_vectors)
 
     singular_values = np.zeros(parameter_count, dtype=float)
     singular_values[: computed.size] = computed
