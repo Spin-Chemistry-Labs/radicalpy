@@ -162,9 +162,10 @@ def log_sensitivity_jacobian(
     if np.any(params <= 0.0):
         raise ValueError("log-sensitivity requires strictly positive parameters")
 
-    return finite_difference_jacobian(function, params, rel_step=rel_step) * params[
-        np.newaxis, :
-    ]
+    return (
+        finite_difference_jacobian(function, params, rel_step=rel_step)
+        * params[np.newaxis, :]
+    )
 
 
 def _canonical_signs(right_vectors: np.ndarray) -> np.ndarray:
