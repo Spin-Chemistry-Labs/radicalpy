@@ -1383,15 +1383,9 @@ class HilbertSimulation:
         - For most states (e.g. singlet, triplet), this is simply the
           normalised projection operator.
 
-        - For the special case `State.EQUILIBRIUM`, the density is
-          taken as the thermal equilibrium state, approximated via
-          :math:`\\rho_0 \\propto e^{-i H \\beta}` where :math:`\\beta
-          = \\hbar / (k_B T)` is provided via `projection_operator`.
-
         Args:
 
-            state (State): Target spin state (e.g., `SINGLET`, `TRIPLET`,
-                `EQUILIBRIUM`).
+            state (State): Target spin state (e.g., `SINGLET`, `TRIPLET`).
 
             H (np.ndarray): Spin Hamiltonian in Hilbert space.
 
@@ -1399,13 +1393,19 @@ class HilbertSimulation:
             np.ndarray: Normalised density matrix in Hilbert space.
 
         """
-        Pi = self.projection_operator(state)
-
         if state is State.EQUILIBRIUM:
-            rho0eq = sp.sparse.linalg.expm(-1j * sp.sparse.csc_matrix(H) * Pi).toarray()
-            rho0 = rho0eq / rho0eq.trace()
-        else:
-            rho0 = Pi / Pi.trace()
+            raise ValueError("Equilibrium is state not supported")
+        Pi = self.projection_operator(state)
+        # if state is State.EQUILIBRIUM:
+        #     rho0eq = sp.sparse.linalg.expm(-1j * sp.sparse.csc_matrix(H) * Pi).toarray()
+        #     rho0 = rho0eq / rho0eq.trace()
+        # FROM THE DOCS
+        # - For the special case `State.EQUILIBRIUM`, the density is
+        #   taken as the thermal equilibrium state, approximated via
+        #   :math:`\\rho_0 \\propto e^{-i H \\beta}` where :math:`\\beta
+        #   = \\hbar / (k_B T)` is provided via `projection_operator`.
+
+        rho0 = Pi / Pi.trace()
         return rho0
 
     @staticmethod
